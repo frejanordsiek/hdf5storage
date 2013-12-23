@@ -248,8 +248,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 set_attribute_string(grp[name], 'MATLAB_class', '')
 
             if tp in (np.string_, np.unicode):
-                set_attribute(grp[name], 'MATLAB_int_decode',
-                              {np.string_: 2, np.unicode: 4}[tp])
+                set_attribute(grp[name], 'MATLAB_int_decode', np.int64(
+                              {np.string_: 2, np.unicode: 4}[tp]))
             else:
                 del_attribute(grp[name], 'MATLAB_int_decode')
 
