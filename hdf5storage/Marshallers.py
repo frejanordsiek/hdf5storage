@@ -178,8 +178,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             grp.create_dataset(name, data=data_to_store,
                                **options.array_options)
         elif not isinstance(grp[name], h5py.Dataset) \
-                or grp[name].dtype != data.dtype \
-                or grp[name].shape != data.shape:
+                or grp[name].dtype != data_to_store.dtype \
+                or grp[name].shape != data_to_store.shape:
             del grp[name]
             grp.create_dataset(name, data=data_to_store,
                                **options.array_options)
