@@ -70,7 +70,7 @@ class TypeMarshaller(object):
         if options.MATLAB_compatible:
             attributes_used |= self.matlab_attributes
 
-        for attribute in (set(grp[name].attrs.keys) - attributes_used):
+        for attribute in (set(grp[name].attrs.keys()) - attributes_used):
             del_attribute(grp[name], attribute)
 
     def read(self, f, grp, name, options):
