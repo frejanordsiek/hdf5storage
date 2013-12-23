@@ -36,6 +36,7 @@ import h5py
 from hdf5storage.utilities import *
 
 from hdf5storage.lowlevel import write_data
+from hdf5storage import Marshallers
 
 
 class Options(object):
