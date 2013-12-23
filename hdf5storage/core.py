@@ -23,6 +23,9 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+""" Module contains the high level read/write interface and code.
+
+"""
 
 import sys
 import os
@@ -40,18 +43,324 @@ from hdf5storage import Marshallers
 
 
 class Options(object):
-    def __init__(self):
-        self.store_type_information = True
-        self.MATLAB_compatible = True
+    """ Set of options governing how data is read/written to/from disk.
+
+    There are many ways that data can be transformed as it is read or
+    written from a file, and many attributes can be used to describe the
+    data depending on its format. The option with the most effect is the
+    `MATLAB_compatible` option. It makes sure that the file is
+    compatible with MATLAB's HDF5 based version 7.3 mat file format. It
+    overrides several options to the values in the following table.
+
+    =========================  ====================
+    attribute                  value
+    =========================  ====================
+    delete_unused_variables    ``True``
+    convert_scalars_to_arrays  ``True``
+    convert_strings_to_utf16   ``True``
+    reverse_dimension_order    ``True``
+    store_shape_for_empty      ``True``
+    complex_names              ``('real', 'imag')``
+    =========================  ====================
+
+    In addition to setting these options, a specially formatted block of
+    bytes is put at the front of the file so that MATLAB can recognize
+    its format.
+
+    Parameters
+    ----------
+    store_type_information : bool, optional
+        See Attributes.
+    MATLAB_compatible : bool, optional
+        See Attributes. Note, this overrides the value of every argument
+        except `store_type_information`.
+    delete_unused_variables:  : bool, optional
+        See Attributes.
+    convert_scalars_to_arrays : bool, optional
+        See Attributes.
+    convert_strings_to_utf16 : bool, optional
+        See Attributes.
+    reverse_dimension_order : bool, optional
+        See Attributes.
+    store_shape_for_empty : bool, optional
+        See Attributes.
+    complex_names : tuple of two str, optional
+        See Attributes.
+
+    Attributes
+    ----------
+    store_type_information : bool
+    MATLAB_compatible : bool
+    delete_unused_variables : bool
+    convert_scalars_to_arrays : bool
+    convert_strings_to_utf16 : bool
+    reverse_dimension_order : bool
+    store_shape_for_empty : bool
+    complex_names : tuple of two str
+    scalar_options : dict
+        Keyword options given to :py:func:`h5py.Group.create_dataset`
+        when writing scalars. Default is ``{}``
+    array_options : dict
+        Keyword options given to :py:func:`h5py.Group.create_dataset`
+        when writing arrays. Default is ``{}``
+    marshaller_collection : MarshallerCollection
+        The :py:class:`MarshallerCollection` to be used for marshalling
+        data types to and from disk. Default has no user provided
+        marshallers.
+
+    """
+    def __init__(self, store_type_information=True,
+                 MATLAB_compatible=True,
+                 delete_unused_variables=False,
+                 convert_scalars_to_arrays=False,
+                 convert_strings_to_utf16=False,
+                 reverse_dimension_order=False,
+                 store_shape_for_empty=False,
+                 complex_names=('r','i')):
+        # Set the defaults.
+
+        self._store_type_information = True
+        self._delete_unused_variables = False
+        self._convert_scalars_to_arrays = False
+        self._convert_strings_to_utf16 = False
+        self._reverse_dimension_order = False
+        self._store_shape_for_empty = False
+        self._complex_names = ('r', 'i')
+        self._MATLAB_compatible = True
+
+        # Apply all the given options using the setters, making sure to
+        # do MATLAB_compatible last since it will override most of the
+        # other ones.
+
+        self.store_type_information = store_type_information
+        self.delete_unused_variables = delete_unused_variables
+        self.convert_scalars_to_arrays = convert_scalars_to_arrays
+        self.convert_strings_to_utf16 = convert_strings_to_utf16
+        self.reverse_dimension_order = reverse_dimension_order
+        self.store_shape_for_empty = store_shape_for_empty
+        self.complex_names = complex_names
+        self.MATLAB_compatible = MATLAB_compatible
+
+        # Set the h5py options to use for writing scalars and arrays to
+        # blank for now.
+
         self.scalar_options = {}
         self.array_options = {}
-        self.delete_unused_variables = True
-        self.convert_scalars_to_arrays = True
-        self.reverse_dimension_order = True
-        self.convert_strings_to_utf16 = True
-        self.store_shape_for_empty = True
-        self.complex_names = ('real', 'imag')
+
+        # Use the default collection of marshallers.
+
         self.marshaller_collection = MarshallerCollection()
+
+    @property
+    def store_type_information(self):
+        """ bool : whether or not to store Python type information.
+
+        If ``True`` (default), information on the Python type for each
+        object written to disk is put in its attributes so that it can
+        be read back into Python as the same type.
+
+        """
+        return self._store_type_information
+
+    @store_type_information.setter
+    def store_type_information(self, value):
+        # Check that it is a bool, and then set it. This option does not
+        # effect MATLAB compatibility
+        if isinstance(value, bool):
+            self._store_type_information = value
+
+    @property
+    def MATLAB_compatible(self):
+        """ bool : whether to make the file compatible with MATLAB.
+
+        If ``True`` (default), data is written to file in such a way
+        that it compatible with MATLAB's version 7.3 mat file format
+        which is HDF5 based. Setting it to ``True`` forces other options
+        to hold the specific values in the table below.
+
+        =========================  ====================
+        attribute                  value
+        =========================  ====================
+        delete_unused_variables    ``True``
+        convert_scalars_to_arrays  ``True``
+        convert_strings_to_utf16   ``True``
+        reverse_dimension_order    ``True``
+        store_shape_for_empty      ``True``
+        complex_names              ``('real', 'imag')``
+        =========================  ====================
+
+        In addition to setting these options, a specially formatted
+        block of bytes is put at the front of the file so that MATLAB
+        can recognize its format.
+
+        """
+        return self._MATLAB_compatible
+
+    @MATLAB_compatible.setter
+    def MATLAB_compatible(self, value):
+        # If it is a bool, it can be set. If it is set to true, then
+        # several other options need to be set appropriately.
+        if isinstance(value, bool):
+            self._MATLAB_compatible = value
+            if value:
+                self._delete_unused_variables = True
+                self._convert_scalars_to_arrays = True
+                self._convert_strings_to_utf16 = True
+                self._reverse_dimension_order = True
+                self._store_shape_for_empty = True
+                self._complex_names = ('real', 'imag')
+
+    @property
+    def delete_unused_variables(self):
+        """ bool : whether to delete file variables not written to.
+
+        If ``True`` (defaults to ``False`` unless MATLAB compatibility
+        is being done), variables in the file below where writing starts
+        that are not written to are deleted.
+
+        Must be ``True`` if doing MATLAB compatibility (see
+        :py:attr:`MATLAB_compatible`).
+
+        """
+        return self._delete_unused_variables
+
+    @delete_unused_variables.setter
+    def delete_unused_variables(self, value):
+        # Check that it is a bool, and then set it. If it is false, we
+        # are not doing MATLAB compatible formatting.
+        if isinstance(value, bool):
+            self._delete_unused_variables = value
+        if not self._delete_unused_variables:
+            self._MATLAB_compatible = False
+
+    @property
+    def convert_scalars_to_arrays(self):
+        """ bool : whether to convert scalar types to 2D arrays.
+
+        If ``True`` (defaults to ``False`` unless MATLAB compatibility
+        is being done), all scalar types are converted to 2D arrays when
+        written to file.
+
+        Must be ``True`` if doing MATLAB compatibility (see
+        :py:attr:`MATLAB_compatible`). MATLAB can only import 2D and
+        higher dimensional arrays.
+
+        """
+        return self._convert_scalars_to_arrays
+
+    @convert_scalars_to_arrays.setter
+    def convert_scalars_to_arrays(self, value):
+        # Check that it is a bool, and then set it. If it is false, we
+        # are not doing MATLAB compatible formatting.
+        if isinstance(value, bool):
+            self._convert_scalars_to_arrays = value
+        if not self._convert_scalars_to_arrays:
+            self._MATLAB_compatible = False
+
+    @property
+    def convert_strings_to_utf16(self):
+        """ bool : whether to convert strings to UTF-16.
+
+        If ``True`` (defaults to ``False`` unless MATLAB compatibility
+        is being done), string types except for :py:class:`numpy.str_`
+        (``str``, ``bytes``, and ``numpy.string_``) are converted to
+        UTF-16 before being written to file.
+
+        Must be ``True`` if doing MATLAB compatibility (see
+        :py:attr:`MATLAB_compatible`). MATLAB uses UTF-16 for its
+        strings.
+
+        """
+        return self._convert_strings_to_utf16
+
+    @convert_strings_to_utf16.setter
+    def convert_strings_to_utf16(self, value):
+        # Check that it is a bool, and then set it. If it is false, we
+        # are not doing MATLAB compatible formatting.
+        if isinstance(value, bool):
+            self._convert_strings_to_utf16 = value
+        if not self._convert_strings_to_utf16:
+            self._MATLAB_compatible = False
+
+    @property
+    def reverse_dimension_order(self):
+        """ bool : whether to reverse the order of array dimensions.
+
+        If ``True`` (defaults to ``False`` unless MATLAB compatibility
+        is being done), the dimension order of ``numpy.ndarray`` and
+        ``numpy.matrix`` are reversed. This switches them from C
+        ordering to Fortran ordering. The switch of ordering is
+        essentially a transpose.
+
+        Must be ``True`` if doing MATLAB compatibility (see
+        :py:attr:`MATLAB_compatible`). MATLAB uses Fortran ordering.
+
+        """
+        return self._reverse_dimension_order
+
+    @reverse_dimension_order.setter
+    def reverse_dimension_order(self, value):
+        # Check that it is a bool, and then set it. If it is false, we
+        # are not doing MATLAB compatible formatting.
+        if isinstance(value, bool):
+            self._reverse_dimension_order = value
+        if not self._reverse_dimension_order:
+            self._MATLAB_compatible = False
+
+    @property
+    def store_shape_for_empty(self):
+        """ bool : whether to the shape if an object has no elements.
+
+        If ``True`` (defaults to ``False`` unless MATLAB compatibility
+        is being done), objects that have no elements (e.g. a
+        0x0x2 array) will have their shape (an array of the number of
+        elements along each axis) written to disk in place of nothing,
+        which would otherwise be written.
+
+        Must be ``True`` if doing MATLAB compatibility (see
+        :py:attr:`MATLAB_compatible`). For empty arrays, MATLAB requires
+        that the shape array be written in its place along with the
+        attribute 'MATLAB_empty' set to 1 to flag it.
+
+        """
+        return self._store_shape_for_empty
+
+    @store_shape_for_empty.setter
+    def store_shape_for_empty(self, value):
+        # Check that it is a bool, and then set it. If it is false, we
+        # are not doing MATLAB compatible formatting.
+        if isinstance(value, bool):
+            self._store_shape_for_empty = value
+        if not self._store_shape_for_empty:
+            self._MATLAB_compatible = False
+
+    @property
+    def complex_names(self):
+        """ tuple of two str : names for real and complex fields.
+
+        (r, i) where `r` and `i` are two ``str``. When reading and
+        writing complex numbers, the real part gets the name in `r` and
+        the imaginary part gets the name in `i`. :py:mod:`h5py` uses
+        ``('r', 'i')`` by default, unless MATLAB compatibility is being
+        done in which case its default is ``('real', 'imag')``.
+
+        Must be ``('real', 'imag')`` if doing MATLAB compatibility (see
+        :py:attr:`MATLAB_compatible`).
+
+        """
+        return self._complex_names
+
+    @complex_names.setter
+    def complex_names(self, value):
+        # Check that it is a tuple of two strings, and then set it. If
+        # it is something other than ('real', 'imag'), then we are not
+        # doing MATLAB compatible formatting.
+        if isinstance(value, tuple) and len(value) == 2 \
+              and isinstance(value[0], str) \
+              and isinstance(value[1], str):
+            self._complex_names = value
+        if self._complex_names != ('real', 'imag'):
+            self._MATLAB_compatible = False
 
 
 class MarshallerCollection(object):
@@ -161,31 +470,17 @@ def write(filename='data.h5', name='/data', data=None,
           convert_strings_to_utf16=False,
           store_shape_for_empty=False,
           complex_names=('r','i')):
-    # Pack the different options into an Options class.
+    # Pack the different options into an Options class. The easiest way
+    # to do this is to get all the arguments (locals() gets them since
+    # they are the only symbols in the local table at this point) and
+    # remove filename, name, and data.
 
-    options = Options()
+    args = locals().copy()
+    del args['filename']
+    del args['name']
+    del args['data']
 
-    options.store_type_information = store_type_information
-    options.MATLAB_compatible = MATLAB_compatible
-    options.scalar_options = {}
-    options.array_options = {}
-    options.delete_unused_variables = delete_unused_variables
-    options.convert_scalars_to_arrays = convert_scalars_to_arrays
-    options.reverse_dimension_order = reverse_dimension_order
-    options.convert_strings_to_utf16 = convert_strings_to_utf16
-    options.store_shape_for_empty = store_shape_for_empty
-    options.complex_names = complex_names
-
-    # Now, if we are doing MATLAB compatibility, certain options must be
-    # overridden.
-
-    if MATLAB_compatible:
-        options.delete_unused_variables = True
-        options.convert_scalars_to_arrays = True
-        options.convert_strings_to_utf16 = True
-        options.reverse_dimension_order = True
-        options.store_shape_for_empty = True
-        options.complex_names = ('real','imag')
+    options = Options(**args)
 
     # Reset the list of MATLAB_fields attributes to set.
 
