@@ -59,10 +59,8 @@ class TypeMarshaller(object):
         Types the marshaller can work on.
     cpython_type_strings : list of str
         Type strings of readable types.
-    makes_datasets : bool
-        At least one type marshalled as Dataset.
-    makes_groups : bool
-        At least one type marshalled as Group.
+    matlab_classes : list of str
+        Readable MATLAB classes.
 
     See Also
     --------
@@ -107,23 +105,13 @@ class TypeMarshaller(object):
         #: able to read it back correctly. Default value is ``[]``.
         self.cpython_type_strings = []
 
-        #: At least one type marshalled as Dataset.
+        #: MATLAB class strings of readable types.
         #:
-        #: bool
+        #: list of str
         #:
-        #: Whether or not at least one of the types that this marshaller
-        #: works with get put into HDF5 Datasets. Default value is
-        #: ``False``.
-        self.makes_datasets = False
-
-        #: At least one type marshalled as Group.
-        #:
-        #: bool
-        #:
-        #: Whether or not at least one of the types that this marshaller
-        #: works with get put into HDF5 Groups. Default value is
-        #: ``False``.
-        self.makes_groups = False
+        #: ``list`` of the MATLAB class ``str`` that the marshaller can
+        #: read into Python objects. Default value is ``[]``.
+        self.matlab_classes = []
 
     def get_type_string(self, data, type_string):
         """ Gets type string.
@@ -257,34 +245,6 @@ class TypeMarshaller(object):
         for attribute in (set(grp[name].attrs.keys()) - attributes_used):
             del_attribute(grp[name], attribute)
 
-    def can_read(self, f, grp, name, options):
-        """ Whether the marshaller can read the object from file.
-
-        Parameters
-        ----------
-        f : h5py.File
-            The HDF5 file handle that is open.
-        grp : h5py.Group or h5py.File
-            The parent HDF5 Group (or File if at '/') that contains the
-            object with the specified name.
-        name : str
-            Name of the object.
-        options : hdf5storage.core.Options
-            hdf5storage options object.
-
-        Returns
-        -------
-        bool
-            Whether this marshaller can read the object from file or
-            not.
-
-        Notes
-        -----
-        Unless replaced in a subclass, it is always ``False``.
-
-        """
-        return False
-
     def read(self, f, grp, name, options):
         """ Read a Python object from file.
 
@@ -365,6 +325,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                  np.complex128: 'double',
                                  np.string_: 'char',
                                  np.unicode: 'char'}
+
+        # Set matlab_classes to the supported classes (the values).
+        self.matlab_classes = list(self.__MATLAB_classes.values())
 
 
     def write(self, f, grp, name, data, type_string, options):
@@ -504,6 +467,9 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         NumpyScalarArrayMarshaller.__init__(self)
         self.types = [bool, int, float, complex]
         self.cpython_type_strings = ['bool', 'int', 'float', 'complex']
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = []
 
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to the appropriate numpy type
@@ -524,6 +490,9 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         NumpyScalarArrayMarshaller.__init__(self)
         self.types = [str, bytes, bytearray]
         self.cpython_type_strings = ['str', 'bytes', 'bytearray']
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = []
 
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to a numpy string, unless it
@@ -549,6 +518,8 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
         NumpyScalarArrayMarshaller.__init__(self)
         self.types = [type(None)]
         self.cpython_type_strings = ['builtins.NoneType']
+        # None corresponds to no MATLAB class.
+        self.matlab_classes = []
     def write(self, f, grp, name, data, type_string, options):
         # Just going to use the parent function with an empty double
         # (two dimensional so that MATLAB will import it as a []) as the
@@ -567,7 +538,9 @@ class PythonDictMarshaller(TypeMarshaller):
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty'}
         self.types = [dict]
         self.cpython_type_strings = ['dict']
-        self.__MATLAB_classes = ['struct']
+        self.__MATLAB_classes = {dict: 'struct'}
+        # Set matlab_classes to the supported classes (the values).
+        self.matlab_classes = list(self.__MATLAB_classes.values())
 
     def write(self, f, grp, name, data, type_string, options):
         # If the group doesn't exist, it needs to be created. If it

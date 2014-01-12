@@ -416,10 +416,12 @@ class MarshallerCollection(object):
 
         # A list of all the marshallers will be needed along with
         # dictionaries to lookup up the marshaller to use for given
-        # types or type strings (they are the keys).
+        # types, type string, or MATLAB class string (they are the
+        # keys).
         self._marshallers = []
-        self._out = dict()
-        self._in = dict()
+        self._types = dict()
+        self._type_strings = dict()
+        self._matlab_classes = dict()
 
         # Add any user given marshallers.
         self.add_marshaller(copy.deepcopy(marshallers))
@@ -440,14 +442,23 @@ class MarshallerCollection(object):
         # Construct the dictionary to look up the appropriate marshaller
         # by type.
 
-        self._out = {tp: m for m in self._marshallers for tp in m.types}
+        self._types = {tp: m for m in self._marshallers for tp in m.types}
 
         # The equivalent one to read data types given type strings needs
         # to be created from it. Basically, we have to make the key be
         # the cpython_type_string from it.
 
-        self._in = {type_string: m for key, m in self._out.items()
-                    for type_string in m.cpython_type_strings}
+        self._type_strings = {type_string: m for key, m in
+                              self._types.items() for type_string in
+                              m.cpython_type_strings}
+
+        # The equivalent one to read data types given MATLAB class
+        # strings needs to be created from it. Basically, we have to
+        # make the key be the matlab_class from it.
+
+        self._matlab_classes = {matlab_class: m for key, m in
+                                self._types.items() for matlab_class in
+                                m.matlab_classes}
 
     def add_marshaller(self, marshallers):
         """ Add a marshaller/s to the user provided list.
@@ -524,8 +535,8 @@ class MarshallerCollection(object):
         hdf5storage.Marshallers.TypeMarshaller.types
 
         """
-        if tp in self._out:
-            return copy.deepcopy(self._out[tp])
+        if tp in self._types:
+            return copy.deepcopy(self._types[tp])
         else:
             return None
 
@@ -551,8 +562,35 @@ class MarshallerCollection(object):
         hdf5storage.Marshallers.TypeMarshaller.cpython_type_strings
 
         """
-        if type_string in self._in:
-            return copy.deepcopy(self._in[type_string])
+        if type_string in self._type_strings:
+            return copy.deepcopy(self._type_strings[type_string])
+        else:
+            return None
+
+    def get_marshaller_for_matlab_class(self, matlab_class):
+        """ Gets the appropriate marshaller for a MATLAB class string.
+
+        Retrieves the marshaller, if any, that can be used to read/write
+        a Python object associated with the given MATLAB class string.
+
+        Parameters
+        ----------
+        matlab_class : str
+            MATLAB class string for a Python object.
+
+        Returns
+        -------
+        marshaller
+            The marshaller that can read/write the type to
+            file. ``None`` if no appropriate marshaller is found.
+
+        See Also
+        --------
+        hdf5storage.Marshallers.TypeMarshaller.cpython_type_strings
+
+        """
+        if type_string in self._matlab_classes:
+            return copy.deepcopy(self._matlab_classes[matlab_class])
         else:
             return None
 
