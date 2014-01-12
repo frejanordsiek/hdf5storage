@@ -32,15 +32,124 @@ from hdf5storage.lowlevel import write_data
 
 
 class TypeMarshaller(object):
+    """ Base class for marshallers of Python types.
+
+    Base class providing the class interface for marshallers of Python
+    types to/from disk. All marshallers should inherit from this class
+    or at least replicate its functionality. This includes several
+    attributes that are needed in order for reading/writing methods to
+    know if it is the appropriate marshaller to use and methods to
+    actually do the reading and writing.
+
+    Subclasses should run this class's ``__init__()`` first
+    thing. Inheritance information is in the **Notes** section of each
+    method.
+
+    Attributes
+    ----------
+    cpython_attributes : set of str
+        Attributes used to store type information.
+    matlab_attributes : set of str
+        Attributes used for MATLAB compatibility.
+    types : list of types
+        Types the marshaller can work on.
+    cpython_type_strings : list of str
+        Type strings of readable types.
+    makes_datasets : bool
+        At least one type marshalled as Dataset.
+    makes_groups : bool
+        At least one type marshalled as Group.
+
+    See Also
+    --------
+    hdf5storage.core.Options
+    h5py.Dataset
+    h5py.Group
+    h5py.AttributeManager
+
+    """
     def __init__(self):
+        #: Attributes used to store type information.
+        #:
+        #: set of str
+        #:
+        #: ``set`` of attribute names the marshaller uses when
+        #: an ``Option.store_type_information`` is ``True``.
         self.cpython_attributes = {'CPython.Type'}
+
+        #: Attributes used for MATLAB compatibility.
+        #:
+        #: ``set`` of ``str``
+        #:
+        #: ``set`` of attribute names the marshaller uses when maintaing
+        #: Matlab HDF5 based mat file compatibility
+        #: (``Option.MATLAB_compatible`` is ``True``).
         self.matlab_attributes = {'H5PATH'}
+
+        #: List of Python types that can be marshalled.
+        #:
+        #: list of types
+        #:
+        #: ``list`` of the types (gotten by doing ``type(data)``) that the
+        #: marshaller can marshall. Default value is ``[]``.
         self.types = []
+
+        #: Type strings of readable types.
+        #:
+        #: list of str
+        #:
+        #: ``list`` of the ``str`` that the marshaller would put in the
+        #: HDF5 attribute 'CPython.Type' to identify the Python type to be
+        #: able to read it back correctly. Default value is ``[]``.
         self.cpython_type_strings = []
+
+        #: At least one type marshalled as Dataset.
+        #:
+        #: bool
+        #:
+        #: Whether or not at least one of the types that this marshaller
+        #: works with get put into HDF5 Datasets. Default value is
+        #: ``False``.
         self.makes_datasets = False
+
+        #: At least one type marshalled as Group.
+        #:
+        #: bool
+        #:
+        #: Whether or not at least one of the types that this marshaller
+        #: works with get put into HDF5 Groups. Default value is
+        #: ``False``.
         self.makes_groups = False
 
     def get_type_string(self, data, type_string):
+        """ Gets type string.
+
+        Finds the type string for 'data' contained in
+        ``cpython_type_strings`` using its ``type``. Non-``None``
+        'type_string` overrides whatever type string is looked up.
+        The override makes it easier for subclasses to convert something
+        that the parent marshaller can write to disk but still put the
+        right type string in place).
+
+        Parameters
+        ----------
+        data : type to be marshalled
+            The Python object that is being written to disk.
+        type_string : str or None
+            If it is a ``str``, it overrides any looked up type
+            string. ``None`` means don't override.
+
+        Returns
+        -------
+        str
+            The type string associated with 'data'. Will be
+            'type_string' if it is not ``None``.
+
+        Notes
+        -----
+        Subclasses probably do not need to override this method.
+
+        """
         if type_string is not None:
             return type_string
         else:
@@ -48,10 +157,79 @@ class TypeMarshaller(object):
             return self.cpython_type_strings[i]
 
     def write(self, f, grp, name, data, type_string, options):
+        """ Writes an object's metadata to file.
+
+        Writes the Python object 'data' to 'name' in h5py.Group 'grp'.
+
+        Parameters
+        ----------
+        f : h5py.File
+            The HDF5 file handle that is open.
+        grp : h5py.Group or h5py.File
+            The parent HDF5 Group (or File if at '/') that contains the
+            object with the specified name.
+        name : str
+            Name of the object.
+        data
+            The object to write to file.
+        type_string : str or None
+            The type string for 'data'. If it is ``None``, one will have
+            to be gotten by ``get_type_string``.
+        options : hdf5storage.core.Options
+            hdf5storage options object.
+
+        Raises
+        ------
+        NotImplementedError
+            If writing 'data' to file is currently not supported.
+
+        Notes
+        -----
+        Must be overridden in a subclass because a
+        ``NotImplementedError`` is thrown immediately.
+
+        """
         raise NotImplementedError('Can''t write data type: '
                                   + str(type(data)))
 
     def write_metadata(self, f, grp, name, data, type_string, options):
+        """ Writes an object to file.
+
+        Writes the metadata for a Python object 'data' to file at 'name'
+        in h5py.Group 'grp'. Metadata is written to HDF5
+        Attributes. Existing Attributes that are not being used are
+        deleted.
+
+        Parameters
+        ----------
+        f : h5py.File
+            The HDF5 file handle that is open.
+        grp : h5py.Group or h5py.File
+            The parent HDF5 Group (or File if at '/') that contains the
+            object with the specified name.
+        name : str
+            Name of the object.
+        data
+            The object to write to file.
+        type_string : str or None
+            The type string for 'data'. If it is ``None``, one will have
+            to be gotten by ``get_type_string``.
+        options : hdf5storage.core.Options
+            hdf5storage options object.
+
+        Notes
+        -----
+        The attribute 'CPython.Type' is set to the type string. All H5PY
+        Attributes not in ``cpython_attributes`` and/or
+        ``matlab_attributes`` (depending on the attributes of 'options')
+        are deleted. These are needed functions for writting essentially
+        any Python object, so subclasses should probably call the
+        baseclass's version of this function if they override it and
+        just provide the additional functionality needed. This requires
+        that the names of any additional HDF5 Attributes are put in the
+        appropriate set.
+
+        """
         # Make sure we have a complete type_string.
         type_string = self.get_type_string(data, type_string)
 
@@ -76,9 +254,67 @@ class TypeMarshaller(object):
             del_attribute(grp[name], attribute)
 
     def can_read(self, f, grp, name, options):
+        """ Whether the marshaller can read the object from file.
+
+        Parameters
+        ----------
+        f : h5py.File
+            The HDF5 file handle that is open.
+        grp : h5py.Group or h5py.File
+            The parent HDF5 Group (or File if at '/') that contains the
+            object with the specified name.
+        name : str
+            Name of the object.
+        options : hdf5storage.core.Options
+            hdf5storage options object.
+
+        Returns
+        -------
+        bool
+            Whether this marshaller can read the object from file or
+            not.
+
+        Notes
+        -----
+        Unless replaced in a subclass, it is always ``False``.
+
+        """
         return False
 
     def read(self, f, grp, name, options):
+        """ Read a Python object from file.
+
+        Reads the Python object 'name' from the HDF5 Group 'grp', if
+        possible, and returns it.
+
+        Parameters
+        ----------
+        f : h5py.File
+            The HDF5 file handle that is open.
+        grp : h5py.Group or h5py.File
+            The parent HDF5 Group (or File if at '/') that contains the
+            object with the specified name.
+        name : str
+            Name of the object.
+        options : hdf5storage.core.Options
+            hdf5storage options object.
+
+        Raises
+        ------
+        NotImplementedError
+            If reading the object from file is currently not supported.
+
+        Returns
+        -------
+        data
+            The Python object 'name' in the HDF5 Group 'grp'.
+
+        Notes
+        -----
+        Must be overridden in a subclass because a
+        ``NotImplementedError`` is thrown immediately.
+
+        """
         raise NotImplementedError('Can''t read data: ' + name)
 
 
