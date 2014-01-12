@@ -37,6 +37,8 @@ class TypeMarshaller(object):
         self.matlab_attributes = {'H5PATH'}
         self.types = []
         self.cpython_type_strings = []
+        self.makes_datasets = False
+        self.makes_groups = False
 
     def get_type_string(self, data, type_string):
         if type_string is not None:
@@ -72,6 +74,9 @@ class TypeMarshaller(object):
 
         for attribute in (set(grp[name].attrs.keys()) - attributes_used):
             del_attribute(grp[name], attribute)
+
+    def can_read(self, f, grp, name, options):
+        return False
 
     def read(self, f, grp, name, options):
         raise NotImplementedError('Can''t read data: ' + name)
