@@ -72,8 +72,7 @@ class Options(object):
     store_type_information : bool, optional
         See Attributes.
     MATLAB_compatible : bool, optional
-        See Attributes. Note, this overrides the value of every argument
-        except `store_type_information`.
+        See Attributes.
     delete_unused_variables:  : bool, optional
         See Attributes.
     convert_scalars_to_arrays : bool, optional
@@ -98,15 +97,11 @@ class Options(object):
     store_shape_for_empty : bool
     complex_names : tuple of two str
     scalar_options : dict
-        Keyword options given to :py:func:`h5py.Group.create_dataset`
-        when writing scalars. Default is ``{}``
+        ``h5py.Group.create_dataset`` options for writing scalars.
     array_options : dict
-        Keyword options given to :py:func:`h5py.Group.create_dataset`
-        when writing arrays. Default is ``{}``
+        ``h5py.Group.create_dataset`` options for writing scalars.
     marshaller_collection : MarshallerCollection
-        The :py:class:`MarshallerCollection` to be used for marshalling
-        data types to and from disk. Default has no user provided
-        marshallers.
+        Collection of marshallers to disk.
 
     """
     def __init__(self, store_type_information=True,
@@ -116,7 +111,7 @@ class Options(object):
                  convert_strings_to_utf16=False,
                  reverse_dimension_order=False,
                  store_shape_for_empty=False,
-                 complex_names=('r','i')):
+                 complex_names=('r', 'i')):
         # Set the defaults.
 
         self._store_type_information = True
@@ -153,7 +148,9 @@ class Options(object):
 
     @property
     def store_type_information(self):
-        """ bool : whether or not to store Python type information.
+        """ Whether or not to store Python type information.
+
+        bool
 
         If ``True`` (default), information on the Python type for each
         object written to disk is put in its attributes so that it can
@@ -171,7 +168,9 @@ class Options(object):
 
     @property
     def MATLAB_compatible(self):
-        """ bool : whether to make the file compatible with MATLAB.
+        """ Whether or not to make the file compatible with MATLAB.
+
+        bool
 
         If ``True`` (default), data is written to file in such a way
         that it compatible with MATLAB's version 7.3 mat file format
@@ -212,14 +211,15 @@ class Options(object):
 
     @property
     def delete_unused_variables(self):
-        """ bool : whether to delete file variables not written to.
+        """ Whether or not to delete file variables not written to.
+
+        bool
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
         is being done), variables in the file below where writing starts
         that are not written to are deleted.
 
-        Must be ``True`` if doing MATLAB compatibility (see
-        :py:attr:`MATLAB_compatible`).
+        Must be ``True`` if doing MATLAB compatibility.
 
         """
         return self._delete_unused_variables
@@ -235,15 +235,16 @@ class Options(object):
 
     @property
     def convert_scalars_to_arrays(self):
-        """ bool : whether to convert scalar types to 2D arrays.
+        """ Whether or not to convert scalar types to 2D arrays.
+
+        bool
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
         is being done), all scalar types are converted to 2D arrays when
         written to file.
 
-        Must be ``True`` if doing MATLAB compatibility (see
-        :py:attr:`MATLAB_compatible`). MATLAB can only import 2D and
-        higher dimensional arrays.
+        Must be ``True`` if doing MATLAB compatibility. MATLAB can only
+        import 2D and higher dimensional arrays.
 
         """
         return self._convert_scalars_to_arrays
@@ -259,16 +260,22 @@ class Options(object):
 
     @property
     def convert_strings_to_utf16(self):
-        """ bool : whether to convert strings to UTF-16.
+        """ Whether or not to convert strings to UTF-16.
+
+        bool
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
-        is being done), string types except for :py:class:`numpy.str_`
+        is being done), string types except for ``numpy.str_``
         (``str``, ``bytes``, and ``numpy.string_``) are converted to
         UTF-16 before being written to file.
 
-        Must be ``True`` if doing MATLAB compatibility (see
-        :py:attr:`MATLAB_compatible`). MATLAB uses UTF-16 for its
-        strings.
+        Must be ``True`` if doing MATLAB compatibility. MATLAB uses
+        UTF-16 for its strings.
+
+        See Also
+        --------
+        numpy.str_
+        numpy.string_
 
         """
         return self._convert_strings_to_utf16
@@ -284,7 +291,9 @@ class Options(object):
 
     @property
     def reverse_dimension_order(self):
-        """ bool : whether to reverse the order of array dimensions.
+        """ Whether or not to reverse the order of array dimensions.
+
+        bool
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
         is being done), the dimension order of ``numpy.ndarray`` and
@@ -292,8 +301,8 @@ class Options(object):
         ordering to Fortran ordering. The switch of ordering is
         essentially a transpose.
 
-        Must be ``True`` if doing MATLAB compatibility (see
-        :py:attr:`MATLAB_compatible`). MATLAB uses Fortran ordering.
+        Must be ``True`` if doing MATLAB compatibility. MATLAB uses
+        Fortran ordering.
 
         """
         return self._reverse_dimension_order
@@ -309,7 +318,9 @@ class Options(object):
 
     @property
     def store_shape_for_empty(self):
-        """ bool : whether to the shape if an object has no elements.
+        """ Whether to write the shape if an object has no elements.
+
+        bool
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
         is being done), objects that have no elements (e.g. a
@@ -317,10 +328,10 @@ class Options(object):
         elements along each axis) written to disk in place of nothing,
         which would otherwise be written.
 
-        Must be ``True`` if doing MATLAB compatibility (see
-        :py:attr:`MATLAB_compatible`). For empty arrays, MATLAB requires
-        that the shape array be written in its place along with the
-        attribute 'MATLAB_empty' set to 1 to flag it.
+        Must be ``True`` if doing MATLAB compatibility. For empty
+        arrays, MATLAB requires that the shape array be written in its
+        place along with the attribute 'MATLAB_empty' set to 1 to flag
+        it.
 
         """
         return self._store_shape_for_empty
@@ -336,16 +347,17 @@ class Options(object):
 
     @property
     def complex_names(self):
-        """ tuple of two str : names for real and complex fields.
+        """ Names to use for the real and imaginary fields.
 
-        (r, i) where `r` and `i` are two ``str``. When reading and
+        tuple of two str
+
+        ``(r, i)`` where `r` and `i` are two ``str``. When reading and
         writing complex numbers, the real part gets the name in `r` and
         the imaginary part gets the name in `i`. :py:mod:`h5py` uses
         ``('r', 'i')`` by default, unless MATLAB compatibility is being
         done in which case its default is ``('real', 'imag')``.
 
-        Must be ``('real', 'imag')`` if doing MATLAB compatibility (see
-        :py:attr:`MATLAB_compatible`).
+        Must be ``('real', 'imag')`` if doing MATLAB compatibility.
 
         """
         return self._complex_names
@@ -356,8 +368,8 @@ class Options(object):
         # it is something other than ('real', 'imag'), then we are not
         # doing MATLAB compatible formatting.
         if isinstance(value, tuple) and len(value) == 2 \
-              and isinstance(value[0], str) \
-              and isinstance(value[1], str):
+                and isinstance(value[0], str) \
+                and isinstance(value[1], str):
             self._complex_names = value
         if self._complex_names != ('real', 'imag'):
             self._MATLAB_compatible = False
