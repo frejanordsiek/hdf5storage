@@ -31,6 +31,31 @@ import numpy as np
 import h5py
 
 
+def get_attribute(target, name):
+    """ Gets an attribute from a Dataset or Group.
+
+    Gets the value of an Attribute if it is present (get ``None`` if
+    not).
+    
+    Parameters
+    ----------
+    target : Dataset or Group
+        :py:class:`h5py.Dataset` or :py:class:`h5py.Group` to get the
+        attribute of.
+    name : str
+        Name of the attribute to get.
+
+    Returns
+    -------
+    The value of the attribute if it is present, or ``None`` if it
+    isn't.
+
+    """
+    if name not in target.attrs:
+        return None
+    else:
+        return target.attrs[name]
+
 def set_attribute(target, name, value):
     """ Sets an attribute on a Dataset or Group.
 
