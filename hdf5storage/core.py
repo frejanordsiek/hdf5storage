@@ -380,20 +380,21 @@ class MarshallerCollection(object):
 
     Maintains a list of marshallers used to marshal data types to and
     from HDF5 files. It includes the builtin marshallers from the
-    :py:mod:`hdf5storage.Marshallers` module as well as any user
-    supplied or added marshallers. While the builtin list cannot be
-    changed; user ones can be added or removed. Also has functions to
-    get the marshaller appropriate for ``type`` or type_string for a
-    python data type.
+    ``hdf5storage.Marshallers`` module as well as any user supplied or
+    added marshallers. While the builtin list cannot be changed; user
+    ones can be added or removed. Also has functions to get the
+    marshaller appropriate for ``type`` or type_string for a python data
+    type.
 
     User marshallers must provide the same interface as
-    :py:class:`hdf5storage.Marshallers.TypeMarshaller`, which is
-    probably most easily done by inheriting from it.
+    ``hdf5storage.Marshallers.TypeMarshaller``, which is probably most
+    easily done by inheriting from it.
 
     Parameters
     ----------
     marshallers : marshaller or list of marshallers, optional
-        The user marshaller/s to add to the collection.
+        The user marshaller/s to add to the collection. Could also be a
+        ``tuple``, ``set``, or ``frozenset`` of marshallers.
 
     See Also
     --------
@@ -424,6 +425,14 @@ class MarshallerCollection(object):
         self.add_marshaller(copy.deepcopy(marshallers))
 
     def _update_marshallers(self):
+        """ Update the full marshaller list and other data structures.
+
+        Makes a full list of both builtin and user marshallers and
+        rebuilds internal data structures used for looking up which
+        marshaller to use for reading/writing Python objects to/from
+        file.
+
+        """
         # Combine both sets of marshallers.
         self._marshallers = self._builtin_marshallers.copy()
         self._marshallers.extend(self._user_marshallers)
@@ -441,6 +450,19 @@ class MarshallerCollection(object):
                     for type_string in m.cpython_type_strings}
 
     def add_marshaller(self, marshallers):
+        """ Add a marshaller/s to the user provided list.
+
+        Adds a marshaller or a list of them to the user provided set of
+        marshallers.
+
+        Parameters
+        ----------
+        marshallers : marshaller or list of marshallers
+            The user marshaller/s to add to the user provided
+            collection. Could also be a ``tuple``, ``set``, or
+            ``frozenset`` of marshallers.
+
+        """
         if not isinstance(marshallers, (list, tuple, set, frozenset)):
             marshallers = [marshallers]
         for m in marshallers:
@@ -449,6 +471,19 @@ class MarshallerCollection(object):
         self._update_marshallers()
 
     def remove_marshaller(self, marshallers):
+        """ Removes a marshaller/s from the user provided list.
+
+        Removes a marshaller or a list of them from the user provided set
+        of marshallers.
+
+        Parameters
+        ----------
+        marshallers : marshaller or list of marshallers
+            The user marshaller/s to from the user provided collection.
+            Could also be a ``tuple``, ``set``, or ``frozenset`` of
+            marshallers.
+
+        """
         if not isinstance(marshallers, (list, tuple, set, frozenset)):
             marshallers = [marshallers]
         for m in marshallers:
@@ -460,16 +495,64 @@ class MarshallerCollection(object):
         """ Clears the list of user provided marshallers.
 
         Removes all user provided marshallers, but not the builtin ones
-        from the :py:mod:`hdf5storage.Marshallers` module, from the list
-        of marshallers used.
+        from the ``hdf5storage.Marshallers`` module, from the list of
+        marshallers used.
 
         """
         self._user_marshallers.clear()
         self._update_marshallers()
 
     def get_marshaller_for_type(self, tp):
+        """ Gets the appropriate marshaller for a type.
+
+        Retrieves the marshaller, if any, that can be used to read/write
+        a Python object with type 'tp'.
+
+        Parameters
+        ----------
+        tp : type
+            Python object ``type``.
+
+        Returns
+        -------
+        marshaller
+            The marshaller that can read/write the type to
+            file. ``None`` if no appropriate marshaller is found.
+
+        See Also
+        --------
+        hdf5storage.Marshallers.TypeMarshaller.types
+
+        """
         if tp in self._out:
             return copy.deepcopy(self._out[tp])
+        else:
+            return None
+
+    def get_marshaller_for_type_string(self, type_string):
+        """ Gets the appropriate marshaller for a type string.
+
+        Retrieves the marshaller, if any, that can be used to read/write
+        a Python object with the given type string.
+
+        Parameters
+        ----------
+        type_string : str
+            Type string for a Python object.
+
+        Returns
+        -------
+        marshaller
+            The marshaller that can read/write the type to
+            file. ``None`` if no appropriate marshaller is found.
+
+        See Also
+        --------
+        hdf5storage.Marshallers.TypeMarshaller.cpython_type_strings
+
+        """
+        if type_string in self._in:
+            return copy.deepcopy(self._in[type_string])
         else:
             return None
 
