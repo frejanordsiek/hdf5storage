@@ -122,14 +122,15 @@ def decode_to_numpy_ascii(data):
         return data
 
 
-def decode_complex(data):
+def decode_complex(data, complex_names=(None, None)):
     """ Decodes possibly complex data read from an HDF5 file.
 
     Decodes possibly complex datasets read from an HDF5 file. HDF5
     doesn't have a native complex type, so they are stored as
     H5T_COMPOUND types with fields such as 'r' and 'i' for the real and
     imaginary parts. As there is no standardization for field names, the
-    field names have to be analyzed for proper decoding. A variety of
+    field names have to be given explicitly, or the fieldnames in `data`
+    analyzed for proper decoding to figure out the names. A variety of
     reasonably expected combinations of field names are checked and used
     if available to decode. If decoding is not possible, it is returned
     as is.
@@ -139,6 +140,10 @@ def decode_complex(data):
     data : arraylike
         The data read from an HDF5 file, that might be complex, to
         decode into the proper Numpy complex type.
+    complex_names : tuple of 2 str and/or Nones, optional
+        ``tuple`` of the names to use (in order) for the real and
+        imaginary fields. A ``None`` indicates that various common
+        field names should be tried.
 
     Returns
     -------
@@ -150,6 +155,12 @@ def decode_complex(data):
     See Also
     --------
     encode_complex
+
+    Notes
+    -----
+    Currently looks for real field names of ``('r', 're', 'real')`` and
+    imaginary field names of ``('i', 'im', 'imag', 'imaginary')``
+    ignoring case.
 
     """
     # Now, complex types are stored in HDF5 files as an H5T_COMPOUND type
@@ -175,23 +186,20 @@ def decode_complex(data):
     # is and setting variables to the proper name if it is in it (they
     # are initialized to None so that we know if one isn't found).
 
-    real_name = None
-    imag_name = None
-
     real_fields = ['r', 're', 'real']
     imag_fields = ['i', 'im', 'imag', 'imaginary']
 
     for s in fields:
         if s.lower() in real_fields:
-            real_name = s
+            complex_names[0] = s
         elif s.lower() in imag_fields:
-            imag_name = s
+            complex_names = s
 
     # If the real and imaginary fields were found, construct the complex
     # form from the fields. Otherwise, return what we were given because
     # it isn't in the right form.
-    if real_name is not None and imag_name is not None:
-        return data[real_name] + 1j*data[imag_name]
+    if complex_names[0] is not None and complex_names[1] is not None:
+        return data[complex_names[0]] + 1j*data[complex_names[1]]
     else:
         return data
 
