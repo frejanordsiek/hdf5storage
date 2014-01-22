@@ -602,7 +602,7 @@ def write(filename='data.h5', name='/data', data=None,
           reverse_dimension_order=False,
           convert_strings_to_utf16=False,
           store_shape_for_empty=False,
-          complex_names=('r','i')):
+          complex_names=('r', 'i')):
     # Pack the different options into an Options class. The easiest way
     # to do this is to get all the arguments (locals() gets them since
     # they are the only symbols in the local table at this point) and
@@ -641,15 +641,9 @@ def write(filename='data.h5', name='/data', data=None,
     # Open the hdf5 file and start writing the data (and making the
     # group groupname at the same time if it doesn't exist). This is all
     # wrapped in a try block, so that the file can be closed if any
-    # errors happen (the error is re-raised). The
-    # h5py.get_config().complex_names is changed to complex_names. The
-    # previous value is restored at the end. Obviously, this makes this
-    # whole function thread unsafe as it changes it for h5py globally.
-
-    backup_complex_names = h5py.get_config().complex_names
+    # errors happen (the error is re-raised).
 
     try:
-        h5py.get_config().complex_names = options.complex_names
 
         # If the file already exists, we just open it. If it doesn't
         # exist yet and we are doing any MATLAB formatting, we need to
@@ -676,7 +670,6 @@ def write(filename='data.h5', name='/data', data=None,
     finally:
         userblock_size = f.userblock_size
         f.close()
-        h5py.get_config().complex_names = backup_complex_names
 
     # If we are doing MATLAB formatting and there is a sufficiently
     # large userblock, write the new userblock. The same sort of error

@@ -392,6 +392,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if options.reverse_dimension_order:
             data_to_store = data_to_store.T
 
+        # If it is a complex type, then it needs to be encoded to have
+        # the proper complex field names.
+        if np.iscomplexobj(data_to_store):
+            data_to_store = encode_complex(data_to_store,
+                                           options.complex_names)
+
         # The data must first be written. If name is not present yet,
         # then it must be created. If it is present, but not a Dataset,
         # has the wrong dtype, or is the wrong shape; then it must be
