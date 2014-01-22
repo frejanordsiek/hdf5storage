@@ -147,6 +147,10 @@ def decode_complex(data):
         complex version is returned. Otherwise, `data` is returned
         unchanged.
 
+    See Also
+    --------
+    encode_complex
+
     """
     # Now, complex types are stored in HDF5 files as an H5T_COMPOUND type
     # with fields along the lines of ('r', 're', 'real') and ('i', 'im',
@@ -190,6 +194,53 @@ def decode_complex(data):
         return data[real_name] + 1j*data[imag_name]
     else:
         return data
+
+
+def encode_complex(data, complex_names):
+    """ Encodes complex data to having arbitrary complex field names.
+
+    Encodes complex `data` to have the real and imaginary field names
+    given in `complex_numbers`. This is needed because the field names
+    have to be set so that it can be written to an HDF5 file with the
+    right field names (HDF5 doesn't have a native complex type, so
+    H5T_COMPOUND have to be used).
+
+    Parameters
+    ----------
+    data : arraylike
+        The data to encode as a complex type with the desired real and
+        imaginary part field names.
+    complex_names : tuple of 2 str
+        ``tuple`` of the names to use (in order) for the real and
+        imaginary fields.
+
+    Returns
+    -------
+    encoded data
+        `data` encoded into having the specified field names for the
+        real and imaginary parts.
+
+    See Also
+    --------
+    decode_complex
+
+    """
+    # Grab the dtype name, and convert it to the right non-complex type
+    # if it isn't already one.
+    dtype_name = data.dtype.name
+    if dtype_name[0:7] == 'complex':
+        dtype_name = 'float' + str(int(dtype_name[7:]))
+
+    # Create the new version of the data with the right field names for
+    # the real and complex parts and the right shape.
+    new_data = np.ndarray(shape=data.shape,
+                          dtype=[(complex_names[0], dtype_name),
+                          (complex_names[1], dtype_name)])
+
+    # Set the real and complex parts and return it.
+    new_data[complex_names[0]] = np.real(data)
+    new_data[complex_names[1]] = np.imag(data)
+    return new_data
 
 
 def get_attribute(target, name):
