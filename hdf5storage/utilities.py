@@ -229,7 +229,7 @@ def encode_complex(data, complex_names):
     # if it isn't already one.
     dtype_name = data.dtype.name
     if dtype_name[0:7] == 'complex':
-        dtype_name = 'float' + str(int(dtype_name[7:]))
+        dtype_name = 'float' + str(int(float(dtype_name[7:])/2))
 
     # Create the new version of the data with the right field names for
     # the real and complex parts and the right shape.
