@@ -326,6 +326,23 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                  np.string_: 'char',
                                  np.unicode: 'char'}
 
+        # Make a dict to look up the opposite direction (given a matlab
+        # class, what numpy type to use.
+
+        self.__MATLAB_classes_reverse = {'logical': np.bool8,
+                                         'uint8': np.uint8,
+                                         'uint16': np.uint16,
+                                         'uint32': np.uint32,
+                                         'uint64': np.uint64,
+                                         'int8': np.int8,
+                                         'int16': np.int16,
+                                         'int32': np.int32,
+                                         'int64': np.int64,
+                                         'single': np.float32,
+                                         'double': np.float64,
+                                         'char': np.unicode}
+
+
         # Set matlab_classes to the supported classes (the values).
         self.matlab_classes = list(self.__MATLAB_classes.values())
 
@@ -461,6 +478,105 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             else:
                 del_attribute(grp[name], 'MATLAB_int_decode')
 
+    def read(self, f, grp, name, options):
+        # If name is not present or is not a Dataset, then we can't read
+        # it and have to throw an error.
+        if name not in grp or not isinstance(grp[name], h5py.Dataset):
+            raise NotImplementedError('No Dataset ' + name +
+                                      ' is present.')
+
+        # Grab the data's datatype and dtype.
+        datatype = grp[name].id.get_type()
+        h5_dt = datatype.dtype
+
+        # Get the different attributes this marshaller uses.
+
+        type_string = get_attribute_string(grp[name], 'CPython.Type')
+        underlying_type = get_attribute_string(grp[name], \
+            'CPython.numpy.UnderlyingType')
+        shape = get_attribute(grp[name], 'CPython.Shape')
+        cpython_empty = get_attribute(grp[name], 'CPython.Empty')
+
+        matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
+        matlab_empty = get_attribute(grp[name], 'MATLAB_empty')
+
+        # Read the data and get its dtype. Figuring it out and doing any
+        # conversions can be done later.
+        data = grp[name][...]
+        dt = data.dtype
+
+        # If metadata is present, that can be used to do convert to the
+        # desired/closest Python data types. If none is present, or not
+        # enough of it, then no conversions can be done.
+
+        if type_string is not None and underlying_type and \
+                shape is not None:
+            # If it is empty ('CPython.Empty' set to 1), then the shape
+            # information is stored in data and we need to set data to
+            # the empty array of the proper type (in underlying_type)
+            # and the given shape.
+            if cpython_empty == 1:
+                data = np.zeros(tuple(np.uint64(data)),
+                                dtype=underlying_type)
+
+            # If MATLAB attributes are present or the reverse dimension
+            # order option was given, the dimension order needs to be
+            # reversed. This needs to be done before any reshaping as
+            # the shape was stored before any dimensional reordering.
+            if matlab_class is not None or \
+                    options.reverse_dimension_order:
+                data = data.T
+
+            # If the shape of data and the shape attribute are
+            # different but give the same number of elements, then data
+            # needs to be reshaped.
+            if tuple(shape) != data.shape \
+                    and np.prod(shape) == np.prod(data.shape):
+                data.shape = tuple(shape)
+
+            # String types might have to be decoded depending on the
+            # underlying type, and MATLAB class if given.
+            if underlying_type[0:5] == 'bytes':
+                data = decode_to_numpy_ascii(data)
+            elif underlying_type[0:3] == 'str' \
+                    or matlab_class == 'char':
+                data = decode_to_numpy_unicode(data)
+
+            # If it is a complex type, then it needs to be decoded
+            # properly.
+            if underlying_type[0:7] == 'complex':
+                data = decode_complex(data)
+
+        elif matlab_class in self.__MATLAB_classes_reverse:
+            # MATLAB formatting information was given. The extraction
+            # did most of the work except handling empties, array
+            # dimension order, and string conversion.
+
+            # If it is empty ('MATLAB_empty' set to 1), then the shape
+            # information is stored in data and we need to set data to
+            # the empty array of the proper type.
+            if matlab_empty == 1:
+                data = np.zeros(tuple(np.uint64(data)), \
+                    dtype=self.__MATLAB_classes_reverse[matlab_class])
+
+            # The order of the dimensions must be switched from Fortran
+            # order which MATLAB uses to C order which Python uses.
+            data = data.T
+
+            # Now, if the matlab class is 'single' or 'double', data
+            # could possibly be a complex type which needs to be
+            # properly decoded.
+            if matlab_class in ['single', 'double']:
+                data = decode_complex(data)
+
+            # If it is a 'char' type, the proper conversion to
+            # numpy.unicode needs to be done.
+            if matlab_class == 'char':
+                data = decode_to_numpy_unicode(data)
+
+        # Done adjusting data, so it can be returned.
+        return data
+
 
 class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
@@ -499,7 +615,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # is a bytearray in which case it needs to be converted to a
         # uint8 array.
 
-        if isinstance(data,bytearray):
+        if isinstance(data, bytearray):
             cdata = np.uint8(data)
         else:
             cdata = np.string_(data)
@@ -526,7 +642,7 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
         # data and the right type_string set (parent can't guess right
         # from the modified form).
         NumpyScalarArrayMarshaller.write(self, f, grp, name,
-                                         np.ndarray(shape=(0,0),
+                                         np.ndarray(shape=(0, 0),
                                          dtype='float64'),
                                          self.get_type_string(data,
                                          type_string), options)

@@ -38,7 +38,7 @@ import h5py
 
 from hdf5storage.utilities import *
 
-from hdf5storage.lowlevel import write_data
+from hdf5storage.lowlevel import write_data, read_data
 from hdf5storage import Marshallers
 
 
@@ -589,7 +589,7 @@ class MarshallerCollection(object):
         hdf5storage.Marshallers.TypeMarshaller.cpython_type_strings
 
         """
-        if type_string in self._matlab_classes:
+        if matlab_class in self._matlab_classes:
             return copy.deepcopy(self._matlab_classes[matlab_class])
         else:
             return None
