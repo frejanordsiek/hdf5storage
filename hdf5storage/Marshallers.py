@@ -606,6 +606,22 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
+    def read(self, f, grp, name, options):
+        # Use the parent class version to read it and do most of the
+        # work.
+        data = NumpyScalarArrayMarshaller.read(self, f, grp, name,
+                                               options)
+
+        # The type string determines how to convert it back to a Python
+        # type (just look up the entry in types). Otherwise, return it
+        # as is.
+        type_string = get_attribute_string(grp[name], 'CPython.Type')
+        if type_string in self.cpython_type_strings:
+            return self.types[self.cpython_type_strings.find( \
+                type_string)](data)
+        else:
+            return data
+
 
 class PythonStringMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
@@ -642,6 +658,7 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
         self.cpython_type_strings = ['builtins.NoneType']
         # None corresponds to no MATLAB class.
         self.matlab_classes = []
+
     def write(self, f, grp, name, data, type_string, options):
         # Just going to use the parent function with an empty double
         # (two dimensional so that MATLAB will import it as a []) as the
@@ -652,6 +669,11 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
                                          dtype='float64'),
                                          self.get_type_string(data,
                                          type_string), options)
+
+    def read(self, f, grp, name, options):
+        # There is only one value, so return it.
+        return None
+
 
 class PythonDictMarshaller(TypeMarshaller):
     def __init__(self):
