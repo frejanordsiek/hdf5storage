@@ -346,7 +346,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # Set matlab_classes to the supported classes (the values).
         self.matlab_classes = list(self.__MATLAB_classes.values())
 
-
     def write(self, f, grp, name, data, type_string, options):
         # Need to make a set of data that will be stored. It will start
         # out as a copy of data and then be steadily manipulated.
@@ -718,11 +717,16 @@ class PythonDictMarshaller(TypeMarshaller):
                                           + ' keys are not supported: '
                                           + repr(fieldname))
 
-        # Return a tuple holding the group to store in, all the elements
-        # of data, and their values to the calling function so that it
-        # can recurse over all the elements.
-
-        return ([grp2], [(n, v) for n, v in data.items()])
+        # Go through all the elements of data and write them. The H5PATH
+        # needs to be set as the path of grp2 on all of them if we are
+        # doing MATLAB compatibility (otherwise, the attribute needs to
+        # be deleted).
+        for k, v in data.items():
+            write_data(f, grp2, k, v, None, Options)
+            if options.MATLAB_compatible:
+                set_attribute_string(grp2[k], 'H5PATH', grp2.name)
+            else:
+                del_attribute(grp2[k], 'H5PATH')
 
     def write_metadata(self, f, grp, name, data, type_string, options):
         # First, call the inherited version to do most of the work.

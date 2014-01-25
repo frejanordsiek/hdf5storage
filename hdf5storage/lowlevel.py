@@ -53,29 +53,7 @@ def write_data(f, grp, name, data, type_string, options):
     # attribute to be the path to the containing group.
 
     if m is not None:
-        outputs = m.write(f, grp, name, data, type_string, options)
-        if outputs is not None:
-            if len(outputs) > 2:
-                _MATLAB_fields_pairs.extend(outputs[2])
-            for i, v in enumerate(outputs[1]):
-                if len(outputs[0]) == 1:
-                    write_data(f, outputs[0][0], v[0], v[1], None,
-                               options)
-                    if options.MATLAB_compatible:
-                        set_attribute_string(outputs[0][0][v[0]],
-                                             'H5PATH',
-                                             outputs[0][0].name)
-                    else:
-                        del_attribute(outputs[0][0][v[0]], 'H5PATH')
-                else:
-                    write_data(f, outputs[0][i], v[0], v[1], None,
-                               options)
-                    if options.MATLAB_compatible:
-                        set_attribute_string(outputs[0][i][v[0]],
-                                             'H5PATH',
-                                             outputs[0][i].name)
-                    else:
-                        del_attribute(outputs[0][i][v[0]], 'H5PATH')
+        m.write(f, grp, name, data, type_string, options)
     else:
         raise NotImplementedError('Can''t write data type: '+str(tp))
 
@@ -96,7 +74,7 @@ def read_data(f, grp, name, options):
     # use the fallback (NumpyScalarArrayMarshaller for Datasets and
     # PythonDictMarshaller for Groups). If calls to the marshaller
     # collection to get the right marshaller don't return one (return
-    # None, we also go to the default).
+    # None), we also go to the default).
 
     m = None
     mc = options.marshaller_collection
