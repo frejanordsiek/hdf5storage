@@ -32,7 +32,7 @@ import numpy as np
 import h5py
 
 from hdf5storage.utilities import *
-from hdf5storage.lowlevel import write_data
+from hdf5storage.lowlevel import write_data, read_data
 
 
 class TypeMarshaller(object):
@@ -781,3 +781,25 @@ class PythonDictMarshaller(TypeMarshaller):
 
             # set_attribute_string_array(grp[name], \
             #     'MATLAB_fields', [k for k in data])
+
+    def read(self, f, grp, name, options):
+        # If name is not present or is not a Group, then we can't read
+        # it and have to throw an error.
+        if name not in grp or not isinstance(grp[name], h5py.Group):
+            raise NotImplementedError('No Group ' + name +
+                                      ' is present.')
+
+        # Starting with an empty dict, all that has to be done is
+        # iterate through all the Datasets and Groups in grp[name] and
+        # add them to the dict with their name as the key. Since we
+        # don't want an exception thrown by reading an element to stop
+        # the whole reading process, the reading is wrapped in a try
+        # block that just catches exceptions and then does nothing about
+        # them (nothing needs to be done).
+        data = dict()
+        for k in grp[name]:
+            try:
+                data[k] = read_data(f, grp[name], k, options)
+            except:
+                pass
+        return data
