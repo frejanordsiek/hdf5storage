@@ -632,14 +632,8 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         self.matlab_classes = []
 
     def write(self, f, grp, name, data, type_string, options):
-        # data just needs to be converted to a numpy string, unless it
-        # is a bytearray in which case it needs to be converted to a
-        # uint8 array.
-
-        if isinstance(data, bytearray):
-            cdata = np.uint8(data)
-        else:
-            cdata = np.string_(data)
+        # data just needs to be converted to a numpy string.
+        cdata = np.string_(data)
 
         # Now pass it to the parent version of this function to write
         # it. The proper type_string needs to be grabbed now as the
@@ -648,6 +642,25 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         NumpyScalarArrayMarshaller.write(self, f, grp, name, cdata,
                                          self.get_type_string(data,
                                          type_string), options)
+
+    def read(self, f, grp, name, options):
+        # Use the parent class version to read it and do most of the
+        # work.
+        data = NumpyScalarArrayMarshaller.read(self, f, grp, name,
+                                               options)
+
+        # The type string determines how to convert it back to a Python
+        # type (just look up the entry in types). Otherwise, return it
+        # as is.
+        type_string = get_attribute_string(grp[name], 'CPython.Type')
+        if type_string == 'str':
+            return data.decode()
+        elif type_string == 'bytes':
+            return data.tostring()
+        elif type_string == 'bytearray':
+            return bytearray(data.tostring())
+        else:
+            return data
 
 
 class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
