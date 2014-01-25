@@ -615,10 +615,6 @@ def write(filename='data.h5', name='/data', data=None,
 
     options = Options(**args)
 
-    # Reset the list of MATLAB_fields attributes to set.
-
-    _MATLAB_fields_pairs = []
-
     # Remove double slashes and a non-root trailing slash.
 
     name = posixpath.normpath(name)
@@ -715,10 +711,3 @@ def write(filename='data.h5', name='/data', data=None,
             raise
         finally:
             fd.close()
-
-
-# Set an empty list of path-string_array pairs to set the
-# MATLAB_fields attributes on all the things that correspond to MATLAB
-# structures.
-
-_MATLAB_fields_pairs = []
