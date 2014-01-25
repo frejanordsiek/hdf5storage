@@ -31,6 +31,58 @@ import numpy as np
 import h5py
 
 
+def decode_to_str(data):
+    """ Decodes data to the Python str type.
+
+    Decodes `data` to a Python str, which is. If it can't be decoded, it
+    is returned as is. Unsigned integers, Python ``bytes``, and Numpy
+    strings (``numpy.str_`` and ``numpy.string_``).
+
+    Parameters
+    ----------
+    data : some type
+        Data decode into an ``str`` string.
+
+    Returns
+    -------
+    str or data
+        If `data` can be decoded into a ``str``, the decoded version is
+        returned. Otherwise, `data` is returned unchanged.
+
+    See Also
+    --------
+    decode_to_numpy_unicode
+    decode_to_numpy_ascii
+
+    """
+    # How the conversion is done depends on the exact  underlying
+    # type. Numpy types are handled separately. For uint types, it is
+    # assumed to be stored as ASCII, UTF-16, or UTF-32 depending on the
+    # size when converting to an str. numpy.string_ is just like
+    # converting a bytes. numpy.unicode has to be encoded into bytes
+    # before it can be decoded back into an str. bytes is decoded
+    # assuming it is in ASCII. Otherwise, data has to be returned as is.
+
+    if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
+                  np.string_, np.unicode)):
+        if data.dtype.name == 'uint8':
+            return data.data.tobytes().decode(encoding='ASCII')
+        elif data.dtype.name == 'uint16':
+            return data.data.tobytes().decode(encoding='UTF-16')
+        elif data.dtype.name == 'uint32':
+            return data.data.tobytes().decode(encoding='UTF-32')
+        elif data.dtype.name.startswith('bytes'):
+            return data.decode(encoding='ASCII')
+        else:
+            return data.encode(encoding='UTF-32').decode( \
+                encoding='UTF-32', errors='replace')
+
+    if isinstance(data, bytes):
+        return data.decode(encoding='ASCII')
+    else:
+        return data
+
+
 def decode_to_numpy_unicode(data):
     """ Decodes data to Numpy unicode string (str_).
 
@@ -52,25 +104,21 @@ def decode_to_numpy_unicode(data):
 
     See Also
     --------
+    decode_to_str
     decode_to_numpy_ascii
     numpy.str_
 
     """
-    # How the conversion is done depends on the exact  underlying
-    # type. For uint types, it is assumed to be stored as ASCII, UTF-16,
-    # or UTF-32 depending on the size.
-    if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32)):
-        if data.dtype.name == 'uint8':
-            data = data.data.tobytes().decode(encoding='ASCII')
-        elif data.dtype.name == 'uint16':
-            data = data.data.tobytes().decode(encoding='UTF-16')
-        elif data.dtype.name == 'uint32':
-            data = data.data.tobytes().decode(encoding='UTF-32')
+    # Convert first to a Python str if it isn't already an np.unicode.
+    if not isinstance(data, np.unicode) \
+            and not (isinstance(data, np.ndarray) \
+            and data.dtype.name.startswith('str')):
+        data = decode_to_str(data)
 
+    # If it is an str, then we can wrap it in unicode. Otherwise, we
+    # have to return it as is.
     if isinstance(data, str):
         return np.unicode(data)
-    elif isinstance(data, (bytes, np.string_)):
-        return np.unicode(data.decode())
     else:
         return data
 
@@ -96,27 +144,22 @@ def decode_to_numpy_ascii(data):
 
     See Also
     --------
+    decode_to_str
     decode_to_numpy_unicode
-    numpy.str_
+    numpy.string_
 
     """
-    # How the conversion is done depends on the exact  underlying
-    # type. For uint types, it is assumed to be stored as ASCII, UTF-16,
-    # or UTF-32 depending on the size when converting to an str. Then,
-    # conversions from str, bytes, and numpy.unicode can be done.
+    # Convert first to a Python str if it isn't already an np.string_.
+    if not isinstance(data, np.string) \
+            and not (isinstance(data, np.ndarray) \
+            and data.dtype.name.startswith('bytes')):
+        data = decode_to_str(data)
 
-    if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32)):
-        if data.dtype.name == 'uint8':
-            data = data.data.tobytes().decode(encoding='ASCII')
-        elif data.dtype.name == 'uint16':
-            data = data.data.tobytes().decode(encoding='UTF-16')
-        elif data.dtype.name == 'uint32':
-            data = data.data.tobytes().decode(encoding='UTF-32')
-
-    if isinstance(data, bytes):
-        return np.string_(data)
-    elif isinstance(data, (str, np.unicode)):
-        return np.string_(data.encode(encoding='ascii',
+    # If it is an str, then we can wrap it in string_ while performing a
+    # conversion to ASCII. Otherwise, we
+    # have to return it as is.
+    if isinstance(data, str):
+        return np.string_(data.encode(encoding='ASCII',
                           errors='replace'))
     else:
         return data
