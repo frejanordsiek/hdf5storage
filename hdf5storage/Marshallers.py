@@ -537,7 +537,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # needs to be reshaped.
             if tuple(shape) != data.shape \
                     and np.prod(shape) == np.prod(data.shape):
-                data.shape = tuple(shape)
+                data = data.reshape(tuple(shape))
 
             # String types might have to be decoded depending on the
             # underlying type, and MATLAB class if given.
@@ -612,13 +612,16 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
                                                options)
 
         # The type string determines how to convert it back to a Python
-        # type (just look up the entry in types). Otherwise, return it
-        # as is.
+        # type (just look up the entry in types). As it might be
+        # returned as an ndarray, it needs to be run through
+        # np.asscalar.
         type_string = get_attribute_string(grp[name], 'CPython.Type')
         if type_string in self.cpython_type_strings:
-            return self.types[self.cpython_type_strings.find( \
-                type_string)](data)
+            tp = self.types[self.cpython_type_strings.index(
+                            type_string)]
+            return tp(np.asscalar(data))
         else:
+            # Must be some other type, so return it as is.
             return data
 
 
@@ -654,7 +657,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # as is.
         type_string = get_attribute_string(grp[name], 'CPython.Type')
         if type_string == 'str':
-            return data.decode()
+            return data.tostring().decode()
         elif type_string == 'bytes':
             return data.tostring()
         elif type_string == 'bytearray':
@@ -735,7 +738,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # doing MATLAB compatibility (otherwise, the attribute needs to
         # be deleted).
         for k, v in data.items():
-            write_data(f, grp2, k, v, None, Options)
+            write_data(f, grp2, k, v, None, options)
             if options.MATLAB_compatible:
                 set_attribute_string(grp2[k], 'H5PATH', grp2.name)
             else:

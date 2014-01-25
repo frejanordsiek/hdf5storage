@@ -150,7 +150,7 @@ def decode_to_numpy_ascii(data):
 
     """
     # Convert first to a Python str if it isn't already an np.string_.
-    if not isinstance(data, np.string) \
+    if not isinstance(data, np.string_) \
             and not (isinstance(data, np.ndarray) \
             and data.dtype.name.startswith('bytes')):
         data = decode_to_str(data)
