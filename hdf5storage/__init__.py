@@ -33,4 +33,4 @@ Version 0.1
 
 __version__ = "0.1"
 
-from hdf5storage.core import write, MarshallerCollection
+from hdf5storage.core import write, read, MarshallerCollection

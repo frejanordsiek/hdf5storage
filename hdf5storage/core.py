@@ -38,7 +38,7 @@ import h5py
 
 from hdf5storage.utilities import *
 
-from hdf5storage.lowlevel import write_data, read_data
+from hdf5storage.lowlevel import write_data, read_data, CantReadError
 from hdf5storage import Marshallers
 
 
@@ -711,3 +711,59 @@ def write(filename='data.h5', name='/data', data=None,
             raise
         finally:
             fd.close()
+
+
+def read(filename='data.h5', name='/data', MATLAB_compatible=True,
+         reverse_dimension_order=False, complex_names=('r', 'i')):
+    # Pack the different options into an Options class. The easiest way
+    # to do this is to get all the arguments (locals() gets them since
+    # they are the only symbols in the local table at this point) and
+    # remove filename, name, and data.
+
+    args = locals().copy()
+    del args['filename']
+    del args['name']
+
+    options = Options(**args)
+
+    # Remove double slashes and a non-root trailing slash.
+
+    name = posixpath.normpath(name)
+
+    # Extract the group name and the target name (will be a dataset if
+    # data can be mapped to it, but will end up being made into a group
+    # otherwise. As HDF5 files use posix path, conventions, posixpath
+    # will do everything.
+    groupname = posixpath.dirname(name)
+    targetname = posixpath.basename(name)
+
+    # If groupname got turned into blank, then it is just root.
+    if groupname == '':
+        groupname = '/'
+
+    # If targetname got turned blank, then it is the current directory.
+    if targetname == '':
+        targetname = '.'
+
+    # Open the hdf5 file and start reading the data. This is all wrapped
+    # in a try block, so that the file can be closed if any errors
+    # happen (the error is re-raised).
+    try:
+        f = h5py.File(filename, mode='r')
+
+        # Check that the containing group is in f and is indeed a
+        # group. If it isn't an error needs to be thrown.
+        if groupname not in f \
+                or not isinstance(f[groupname], h5py.Group):
+            raise CantReadError('Could not find containing Group '
+                                + groupname + '.')
+
+        # Hand off everything to the low level reader.
+        data = read_data(f, f[groupname], targetname, options)
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
+    finally:
+        f.close()
+
+    return data
