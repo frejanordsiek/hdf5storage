@@ -383,18 +383,16 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if options.convert_scalars_to_arrays:
             data_to_store = np.atleast_2d(data_to_store)
 
+        # Reverse the dimension order if that option is set.
+
+        if options.reverse_dimension_order:
+            data_to_store = data_to_store.T
+
         # If data is empty, we instead need to store the shape of the
         # array if the appropriate option is set.
 
         if options.store_shape_for_empty and data.size == 0:
             data_to_store = np.uint64(data.shape)
-            if options.convert_scalars_to_arrays:
-                data_to_store = np.atleast_2d(data_to_store)
-
-        # Reverse the dimension order if that option is set.
-
-        if options.reverse_dimension_order:
-            data_to_store = data_to_store.T
 
         # If it is a complex type, then it needs to be encoded to have
         # the proper complex field names.
