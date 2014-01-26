@@ -286,7 +286,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
         self.cpython_attributes |= {'CPython.Shape', 'CPython.Empty',
-                                    'CPython.numpy.UnderlyingType'}
+                                    'CPython.numpy.UnderlyingType',
+                                    'CPython.numpy.Container'}
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
                                    'MATLAB_int_decode'}
         self.types = [np.ndarray, np.matrix,
@@ -314,12 +315,16 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # need to be properly mapped to the right strings. Some types do
         # not have a string since MATLAB does not support them.
 
-        self.__MATLAB_classes = {np.bool8: 'logical', np.uint8: 'uint8',
+        self.__MATLAB_classes = {np.bool8: 'logical',
+                                 np.uint8: 'uint8',
                                  np.uint16: 'uint16',
                                  np.uint32: 'uint32',
-                                 np.uint64: 'uint64', np.int8: 'int8',
-                                 np.int16: 'int16', np.int32: 'int32',
-                                 np.int64: 'int64', np.float32: 'single',
+                                 np.uint64: 'uint64',
+                                 np.int8: 'int8',
+                                 np.int16: 'int16',
+                                 np.int32: 'int32',
+                                 np.int64: 'int64',
+                                 np.float32: 'single',
                                  np.float64: 'double',
                                  np.complex64: 'single',
                                  np.complex128: 'double',
@@ -430,17 +435,24 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # Write the underlying numpy type if we are storing type
         # information.
 
-        if options.store_type_information:
-            set_attribute_string(grp[name],
-                                 'CPython.numpy.UnderlyingType',
-                                 data.dtype.name)
-
-        # If we are storing type information, the shape needs to be
-        # stored in CPython.Shape.
+        # If we are storing type information; the shape, underlying
+        # numpy type, and its type of container ('scalar', 'ndarray', or
+        # 'matrix') need to be stored.
 
         if options.store_type_information:
             set_attribute(grp[name], 'CPython.Shape',
                           np.uint64(data.shape))
+            set_attribute_string(grp[name],
+                                 'CPython.numpy.UnderlyingType',
+                                 data.dtype.name)
+            if isinstance(data, np.matrix):
+                container = 'matrix'
+            elif isinstance(data, np.ndarray):
+                container = 'ndarray'
+            else:
+                container = 'scalar'
+            set_attribute_string(grp[name], 'CPython.numpy.Container',
+                                 container)
 
         # If data is empty and we are supposed to store shape info for
         # empty data, we need to set the CPython.Empty and MATLAB_empty
@@ -500,6 +512,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         underlying_type = get_attribute_string(grp[name], \
             'CPython.numpy.UnderlyingType')
         shape = get_attribute(grp[name], 'CPython.Shape')
+        container = get_attribute_string(grp[name], \
+            'CPython.numpy.Container')
         cpython_empty = get_attribute(grp[name], 'CPython.Empty')
 
         matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
@@ -514,7 +528,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # desired/closest Python data types. If none is present, or not
         # enough of it, then no conversions can be done.
 
-        if type_string is not None and underlying_type and \
+        if type_string is not None and underlying_type is not None and \
                 shape is not None:
             # If it is empty ('CPython.Empty' set to 1), then the shape
             # information is stored in data and we need to set data to
@@ -539,18 +553,27 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     and np.prod(shape) == np.prod(data.shape):
                 data = data.reshape(tuple(shape))
 
-            # String types might have to be decoded depending on the
-            # underlying type, and MATLAB class if given.
-            if underlying_type[0:5] == 'bytes':
-                data = decode_to_numpy_ascii(data)
-            elif underlying_type[0:3] == 'str' \
-                    or matlab_class == 'char':
-                data = decode_to_numpy_unicode(data)
-
             # If it is a complex type, then it needs to be decoded
             # properly.
-            if underlying_type[0:7] == 'complex':
+            if underlying_type.startswith('complex'):
                 data = decode_complex(data)
+
+            # Convert to scalar, matrix, or ndarray depending on the
+            # container type.
+            if container == 'scalar':
+                data = data[()]
+            elif container == 'matrix':
+                data = np.asmatrix(data)
+            elif container == 'ndarray':
+                data = np.asarray(data)
+
+            # String types might have to be decoded depending on the
+            # underlying type, and MATLAB class if given.
+            if underlying_type.startswith('bytes'):
+                data = decode_to_numpy_ascii(data)
+            elif underlying_type.startswith('str') \
+                    or matlab_class == 'char':
+                data = decode_to_numpy_unicode(data)
 
         elif matlab_class in self.__MATLAB_classes_reverse:
             # MATLAB formatting information was given. The extraction
@@ -772,31 +795,27 @@ class PythonDictMarshaller(TypeMarshaller):
             del_attribute(grp[name], 'MATLAB_empty')
 
         # If we are making it MATLAB compatible, the MATLAB_class
-        # attribute needs to be set for the data type. Also, all the
-        # field names need to be stored in the attribute MATLAB_fields.
-        # If the type cannot be found, an error needs to be thrown. If
-        # we are not doing MATLAB compatibility, the attributes need to
-        # be deleted.
+        # attribute needs to be set for the data type. If the type
+        # cannot be found or if we are not doing MATLAB compatibility,
+        # the attributes need to be deleted.
 
-        if options.MATLAB_compatible:
-            tp = type(data)
-            if tp in self.types:
-                set_attribute_string(grp[name], \
-                            'MATLAB_class', self.__MATLAB_classes[ \
-                            self.types.index(tp)])
-            else:
-                raise NotImplementedError('Can''t write data type: '
-                                          + str(tp))
+        tp = type(data)
+        if options.MATLAB_compatible and tp in self.types \
+                and self.types.index(tp) in self.__MATLAB_classes:
+            set_attribute_string(grp[name], 'MATLAB_class', \
+                self.__MATLAB_classes[self.types.index(tp)])
+        else:
+            del_attribute(grp[name], 'MATLAB_class')
 
-            # Write an array of all the fields to the attribute that
-            # lists them.
-
-            # NOTE: Can't make it do a variable length set of strings
-            # like MATLAB likes. However, not including them seems to
-            # cause no problem.
-
-            # set_attribute_string_array(grp[name], \
-            #     'MATLAB_fields', [k for k in data])
+        # Write an array of all the fields to the attribute that lists
+        # them.
+        #
+        # NOTE: Can't make it do a variable length set of strings like
+        # MATLAB likes. However, not including them seems to cause no
+        # problem.
+        #
+        # set_attribute_string_array(grp[name], \
+        #     'MATLAB_fields', [k for k in data])
 
     def read(self, f, grp, name, options):
         # If name is not present or is not a Group, then we can't read

@@ -232,17 +232,18 @@ def decode_complex(data, complex_names=(None, None)):
     real_fields = ['r', 're', 'real']
     imag_fields = ['i', 'im', 'imag', 'imaginary']
 
+    cnames = list(complex_names)
     for s in fields:
         if s.lower() in real_fields:
-            complex_names[0] = s
+            cnames[0] = s
         elif s.lower() in imag_fields:
-            complex_names = s
+            cnames[1] = s
 
     # If the real and imaginary fields were found, construct the complex
     # form from the fields. Otherwise, return what we were given because
     # it isn't in the right form.
-    if complex_names[0] is not None and complex_names[1] is not None:
-        return data[complex_names[0]] + 1j*data[complex_names[1]]
+    if cnames[0] is not None and cnames[1] is not None:
+        return data[cnames[0]] + 1j*data[cnames[1]]
     else:
         return data
 
