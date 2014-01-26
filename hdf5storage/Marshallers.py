@@ -388,6 +388,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if options.reverse_dimension_order:
             data_to_store = data_to_store.T
 
+        # Bools need to be converted to uint8 if the option is given.
+        if data_to_store.dtype.name == 'bool' \
+                and options.convert_bools_to_uint8:
+            data_to_store = np.uint8(data_to_store)
+
         # If data is empty, we instead need to store the shape of the
         # array if the appropriate option is set.
 
@@ -475,9 +480,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set looking up the data type (gotten
-        # using np.dtype.type) and if it is a string type, then the
-        # MATLAB_int_decode attribute must be set properly. Otherwise,
-        # the attributes must be deleted.
+        # using np.dtype.type) and if it is a string or bool type, then
+        # the MATLAB_int_decode attribute must be set
+        # properly. Otherwise, the attributes must be deleted.
 
         if options.MATLAB_compatible:
             tp = data.dtype.type
@@ -487,9 +492,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             else:
                 set_attribute_string(grp[name], 'MATLAB_class', '')
 
-            if tp in (np.string_, np.unicode):
+            if tp in (np.string_, np.unicode, np.bool8):
                 set_attribute(grp[name], 'MATLAB_int_decode', np.int64(
-                              {np.string_: 2, np.unicode: 4}[tp]))
+                              {np.bool8: 1, np.string_: 2,
+                              np.unicode: 4}[tp]))
             else:
                 del_attribute(grp[name], 'MATLAB_int_decode')
 
@@ -556,6 +562,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             if underlying_type.startswith('complex'):
                 data = decode_complex(data)
 
+            # If its underlying type is 'bool' but it is something else,
+            # then it needs to be converted (means it was written with
+            # the convert_bools_to_uint8 option).
+            if underlying_type == 'bool8' and data.dtype.name != 'bool':
+                data = np.bool8(data)
+
             # Convert to scalar, matrix, or ndarray depending on the
             # container type.
             if container == 'scalar':
@@ -594,6 +606,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # properly decoded.
             if matlab_class in ['single', 'double']:
                 data = decode_complex(data)
+
+            # If it is a logical, then it must be converted to
+            # numpy.bool8.
+            if matlab_class == 'logical':
+                data = np.bool8(data)
 
             # If it is a 'char' type, the proper conversion to
             # numpy.unicode needs to be done.

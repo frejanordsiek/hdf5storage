@@ -58,6 +58,7 @@ class Options(object):
     delete_unused_variables    ``True``
     convert_scalars_to_arrays  ``True``
     convert_strings_to_utf16   ``True``
+    convert_bools_to_uint8     ``True``
     reverse_dimension_order    ``True``
     store_shape_for_empty      ``True``
     complex_names              ``('real', 'imag')``
@@ -79,6 +80,8 @@ class Options(object):
         See Attributes.
     convert_strings_to_utf16 : bool, optional
         See Attributes.
+    convert_bools_to_uint8 : bool, optional
+        See Attributes.
     reverse_dimension_order : bool, optional
         See Attributes.
     store_shape_for_empty : bool, optional
@@ -93,6 +96,7 @@ class Options(object):
     delete_unused_variables : bool
     convert_scalars_to_arrays : bool
     convert_strings_to_utf16 : bool
+    convert_bools_to_uint8 : bool
     reverse_dimension_order : bool
     store_shape_for_empty : bool
     complex_names : tuple of two str
@@ -109,6 +113,7 @@ class Options(object):
                  delete_unused_variables=False,
                  convert_scalars_to_arrays=False,
                  convert_strings_to_utf16=False,
+                 convert_bools_to_uint8=False,
                  reverse_dimension_order=False,
                  store_shape_for_empty=False,
                  complex_names=('r', 'i')):
@@ -118,6 +123,7 @@ class Options(object):
         self._delete_unused_variables = False
         self._convert_scalars_to_arrays = False
         self._convert_strings_to_utf16 = False
+        self._convert_bools_to_uint8 = False
         self._reverse_dimension_order = False
         self._store_shape_for_empty = False
         self._complex_names = ('r', 'i')
@@ -131,6 +137,7 @@ class Options(object):
         self.delete_unused_variables = delete_unused_variables
         self.convert_scalars_to_arrays = convert_scalars_to_arrays
         self.convert_strings_to_utf16 = convert_strings_to_utf16
+        self.convert_bools_to_uint8 = convert_bools_to_uint8
         self.reverse_dimension_order = reverse_dimension_order
         self.store_shape_for_empty = store_shape_for_empty
         self.complex_names = complex_names
@@ -183,6 +190,7 @@ class Options(object):
         delete_unused_variables    ``True``
         convert_scalars_to_arrays  ``True``
         convert_strings_to_utf16   ``True``
+        convert_bools_to_uint8     ``True``
         reverse_dimension_order    ``True``
         store_shape_for_empty      ``True``
         complex_names              ``('real', 'imag')``
@@ -205,6 +213,7 @@ class Options(object):
                 self._delete_unused_variables = True
                 self._convert_scalars_to_arrays = True
                 self._convert_strings_to_utf16 = True
+                self._convert_bools_to_uint8 = True
                 self._reverse_dimension_order = True
                 self._store_shape_for_empty = True
                 self._complex_names = ('real', 'imag')
@@ -287,6 +296,32 @@ class Options(object):
         if isinstance(value, bool):
             self._convert_strings_to_utf16 = value
         if not self._convert_strings_to_utf16:
+            self._MATLAB_compatible = False
+
+    @property
+    def convert_bools_to_uint8(self):
+        """ Whether or not to convert bools to ``numpy.uint8``.
+
+        bool
+
+        If ``True`` (defaults to ``False`` unless MATLAB compatibility
+        is being done), bool types are converted to ``numpy.uint8``
+        before being written to file.
+
+        Must be ``True`` if doing MATLAB compatibility. MATLAB doesn't
+        use the enums that ``h5py`` wants to use by default and also
+        uses uint8 intead of int8.
+
+        """
+        return self._convert_bools_to_uint8
+
+    @convert_bools_to_uint8.setter
+    def convert_bools_to_uint8(self, value):
+        # Check that it is a bool, and then set it. If it is false, we
+        # are not doing MATLAB compatible formatting.
+        if isinstance(value, bool):
+            self._convert_bools_to_uint8 = value
+        if not self._convert_bools_to_uint8:
             self._MATLAB_compatible = False
 
     @property
@@ -601,6 +636,7 @@ def write(filename='data.h5', name='/data', data=None,
           convert_scalars_to_arrays=False,
           reverse_dimension_order=False,
           convert_strings_to_utf16=False,
+          convert_bools_to_uint8=False,
           store_shape_for_empty=False,
           complex_names=('r', 'i')):
     # Pack the different options into an Options class. The easiest way
