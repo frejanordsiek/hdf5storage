@@ -749,7 +749,7 @@ def write(filename='data.h5', name='/data', data=None,
             fd.close()
 
 
-def read(filename='data.h5', name='/data', MATLAB_compatible=True,
+def read(filename='data.h5', name='/data', MATLAB_compatible=False,
          reverse_dimension_order=False, complex_names=('r', 'i')):
     # Pack the different options into an Options class. The easiest way
     # to do this is to get all the arguments (locals() gets them since
