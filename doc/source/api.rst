@@ -4,8 +4,8 @@ hdf5storage API
 .. toctree::
    :maxdepth: 2
 
-   core
-   lowlevel
-   Marshallers
-   utilities
+   hdf5storage
+   hdf5storage.lowlevel
+   hdf5storage.Marshallers
+   hdf5storage.utilities
 

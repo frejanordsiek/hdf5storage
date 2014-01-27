@@ -1,7 +1,7 @@
-utilities
-=========
+hdf5storage.utilities
+=====================
 
-.. currentmodule:: hdf5storage
+.. currentmodule:: hdf5storage.utilities
 
 .. automodule:: hdf5storage.utilities
 

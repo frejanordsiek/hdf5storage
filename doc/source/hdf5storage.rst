@@ -1,9 +1,9 @@
-core
-====
+hdf5storage
+===========
 
-.. currentmodule:: hdf5storage.core
+.. currentmodule:: hdf5storage
 
-.. automodule:: hdf5storage.core
+.. automodule:: hdf5storage
 
 
 write

@@ -1,7 +1,7 @@
-lowlevel
-========
+hdf5storage.lowlevel
+====================
 
-.. currentmodule:: hdf5storage
+.. currentmodule:: hdf5storage.lowlevel
 
 .. automodule:: hdf5storage.lowlevel
 

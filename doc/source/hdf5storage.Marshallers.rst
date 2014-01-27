@@ -1,5 +1,5 @@
-Marshallers
-===========
+hdf5storage.Marshallers
+=======================
 
 .. currentmodule:: hdf5storage.Marshallers
 
