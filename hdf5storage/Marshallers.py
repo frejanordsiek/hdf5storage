@@ -294,8 +294,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.bool8,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
-                      np.float16, np.float32, np.float64, np.float128,
-                      np.complex64, np.complex128, np.complex256,
+                      np.float16, np.float32, np.float64,
+                      np.complex64, np.complex128,
                       np.string_, np.unicode]
         self.cpython_type_strings = ['numpy.ndarray', 'numpy.matrix',
                                      'numpy.bool8',
@@ -304,10 +304,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                      'numpy.int8', 'numpy.int16',
                                      'numpy.int32', 'numpy.int64',
                                      'numpy.float16', 'numpy.float32',
-                                     'numpy.float64', 'numpy.float128',
+                                     'numpy.float64',
                                      'numpy.complex64',
                                      'numpy.complex128',
-                                     'numpy.complex256',
                                      'numpy.string_', 'numpy.unicode']
 
         # If we are storing in MATLAB format, we will need to be able to
