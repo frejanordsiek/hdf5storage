@@ -646,28 +646,11 @@ class MarshallerCollection(object):
 
 
 def write(filename='data.h5', name='/', data=None,
-          options=None,
-          store_type_information=True, MATLAB_compatible=True,
-          delete_unused_variables=False,
-          convert_scalars_to_arrays=False,
-          reverse_dimension_order=False,
-          convert_strings_to_utf16=False,
-          convert_bools_to_uint8=False,
-          store_shape_for_empty=False,
-          complex_names=('r', 'i'),
-          marshaller_collection=None):
+          options=None, **keywords):
     # Pack the different options into an Options class if an Options was
-    # not given. The easiest way to do this is to get all the arguments
-    # (locals() gets them since they are the only symbols in the local
-    # table at this point) and remove filename, name, and data.
-
+    # not given.
     if not isinstance(options, Options):
-        args = locals().copy()
-        del args['filename']
-        del args['name']
-        del args['data']
-        del args['options']
-        options = Options(**args)
+        options = Options(**keywords)
 
     # Remove double slashes and a non-root trailing slash.
 
@@ -767,20 +750,12 @@ def write(filename='data.h5', name='/', data=None,
             fd.close()
 
 
-def read(filename='data.h5', name='/', options=None,
-         MATLAB_compatible=False, reverse_dimension_order=False,
-         marshaller_collection=None):
+def read(filename='data.h5', name='/',
+         options=None, **keywords):
     # Pack the different options into an Options class if an Options was
-    # not given. The easiest way to do this is to get all the arguments
-    # (locals() gets them since they are the only symbols in the local
-    # table at this point) and remove filename, name, and data.
-
+    # not given.
     if not isinstance(options, Options):
-        args = locals().copy()
-        del args['filename']
-        del args['name']
-        del args['options']
-        options = Options(**args)
+        options = Options(**keywords)
 
     # Remove double slashes and a non-root trailing slash.
 
