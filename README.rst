@@ -66,14 +66,14 @@ Python                  MATLAB
 Type           Version  Class    Version
 =============  =======  =======  ========
 bool           0.1      logical  0.1
-None           0.1      []       0.1
+None           0.1      ``[]``   0.1
 int            0.1      int64    0.1
 float          0.1      double   0.1
 complex        0.1      double   0.1
 str            0.1      char     0.1 [1]_
 bytes          0.1      char     0.1
 bytearray      0.1      char     0.1
-np.bool_       0.1      logical  0.1
+np.bool\_      0.1      logical  0.1
 np.uint8       0.1      uint8    0.1
 np.float16     0.1
 np.float32     0.1      single   0.1
@@ -81,8 +81,8 @@ np.float64     0.1      double   0.1
 np.complex32   0.1
 np.complex64   0.1      single   0.1
 np.complex128  0.1      double   0.1
-np.str_        0.1      uint32   0.1 [2]_
-np.bytes_      0.1      char     0.1
+np.str\_       0.1      uint32   0.1 [2]_
+np.bytes\_     0.1      char     0.1
 dict           0.1      struct   0.1 [3]_
 =============  =======  =======  ========
 
@@ -90,7 +90,7 @@ dict           0.1      struct   0.1 [3]_
 ============  =======  ================================
 MATLAB Class  Version  Python Type
 ============  =======  ================================
-logical       0.1      np.bool_
+logical       0.1      np.bool\_
 single        0.1      np.float32 or np.complex64 [4]_
 double        0.1      np.float64 or np.complex128 [4]_
 uint8         0.1      np.uint8
