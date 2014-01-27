@@ -646,6 +646,7 @@ class MarshallerCollection(object):
 
 
 def write(filename='data.h5', name='/data', data=None,
+          options=None,
           store_type_information=True, MATLAB_compatible=True,
           delete_unused_variables=False,
           convert_scalars_to_arrays=False,
@@ -655,17 +656,18 @@ def write(filename='data.h5', name='/data', data=None,
           store_shape_for_empty=False,
           complex_names=('r', 'i'),
           marshaller_collection=None):
-    # Pack the different options into an Options class. The easiest way
-    # to do this is to get all the arguments (locals() gets them since
-    # they are the only symbols in the local table at this point) and
-    # remove filename, name, and data.
+    # Pack the different options into an Options class if an Options was
+    # not given. The easiest way to do this is to get all the arguments
+    # (locals() gets them since they are the only symbols in the local
+    # table at this point) and remove filename, name, and data.
 
-    args = locals().copy()
-    del args['filename']
-    del args['name']
-    del args['data']
-
-    options = Options(**args)
+    if not isinstance(options, Options):
+        args = locals().copy()
+        del args['filename']
+        del args['name']
+        del args['data']
+        del args['options']
+        options = Options(**args)
 
     # Remove double slashes and a non-root trailing slash.
 
@@ -765,18 +767,20 @@ def write(filename='data.h5', name='/data', data=None,
             fd.close()
 
 
-def read(filename='data.h5', name='/data', MATLAB_compatible=False,
-         reverse_dimension_order=False, marshaller_collection=None):
-    # Pack the different options into an Options class. The easiest way
-    # to do this is to get all the arguments (locals() gets them since
-    # they are the only symbols in the local table at this point) and
-    # remove filename, name, and data.
+def read(filename='data.h5', name='/data', options=None,
+         MATLAB_compatible=False, reverse_dimension_order=False,
+         marshaller_collection=None):
+    # Pack the different options into an Options class if an Options was
+    # not given. The easiest way to do this is to get all the arguments
+    # (locals() gets them since they are the only symbols in the local
+    # table at this point) and remove filename, name, and data.
 
-    args = locals().copy()
-    del args['filename']
-    del args['name']
-
-    options = Options(**args)
+    if not isinstance(options, Options):
+        args = locals().copy()
+        del args['filename']
+        del args['name']
+        del args['options']
+        options = Options(**args)
 
     # Remove double slashes and a non-root trailing slash.
 
