@@ -19,7 +19,7 @@ random.seed()
 
 class TestWriteReadbackCpythonMatlab(unittest.TestCase):
     def setUp(self):
-        self.filename = 'data.h5'
+        self.filename = 'data.mat'
 
         # Use the default options.
         self.options = hdf5storage.Options()
@@ -171,6 +171,16 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
         out = self.write_readback_bytearray(data, self.random_name(),
                                             self.options)
         self.assert_equal_bytearray(data, out)
+
+
+class TestWriteReadbackCpython(TestWriteReadbackCpythonMatlab):
+    def setUp(self):
+        # The parent does most of the setup. All that has to be changed
+        # is turning MATLAB compatibility off and changing the file
+        # name.
+        TestWriteReadbackCpythonMatlab.setUp(self)
+        self.options = hdf5storage.Options(MATLAB_compatible=False)
+        self.filename = 'data.h5'
 
 if __name__ == '__main__':
     unittest.main()
