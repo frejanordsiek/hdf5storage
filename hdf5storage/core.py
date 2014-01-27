@@ -645,7 +645,7 @@ class MarshallerCollection(object):
             return None
 
 
-def write(filename='data.h5', name='/data', data=None,
+def write(filename='data.h5', name='/', data=None,
           options=None,
           store_type_information=True, MATLAB_compatible=True,
           delete_unused_variables=False,
@@ -767,7 +767,7 @@ def write(filename='data.h5', name='/data', data=None,
             fd.close()
 
 
-def read(filename='data.h5', name='/data', options=None,
+def read(filename='data.h5', name='/', options=None,
          MATLAB_compatible=False, reverse_dimension_order=False,
          marshaller_collection=None):
     # Pack the different options into an Options class if an Options was
