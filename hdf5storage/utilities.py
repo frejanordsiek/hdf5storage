@@ -65,7 +65,7 @@ def decode_to_str(data):
     # assuming it is in ASCII. Otherwise, data has to be returned as is.
 
     if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
-                  np.string_, np.unicode)):
+                  np.bytes_, np.str_)):
         if data.dtype.name == 'uint8':
             return data.data.tobytes().decode(encoding='ASCII')
         elif data.dtype.name == 'uint16':
@@ -110,8 +110,8 @@ def decode_to_numpy_unicode(data):
     numpy.str_
 
     """
-    # Convert first to a Python str if it isn't already an np.unicode.
-    if not isinstance(data, np.unicode) \
+    # Convert first to a Python str if it isn't already an np.str_.
+    if not isinstance(data, np.str_) \
             and not (isinstance(data, np.ndarray) \
             and data.dtype.name.startswith('str')):
         data = decode_to_str(data)
@@ -119,7 +119,7 @@ def decode_to_numpy_unicode(data):
     # If it is an str, then we can wrap it in unicode. Otherwise, we
     # have to return it as is.
     if isinstance(data, str):
-        return np.unicode(data)
+        return np.str_(data)
     else:
         return data
 
@@ -150,8 +150,8 @@ def decode_to_numpy_ascii(data):
     numpy.bytes_
 
     """
-    # Convert first to a Python str if it isn't already an np.string_.
-    if not isinstance(data, np.string_) \
+    # Convert first to a Python str if it isn't already an np.bytes_.
+    if not isinstance(data, np.bytes_) \
             and not (isinstance(data, np.ndarray) \
             and data.dtype.name.startswith('bytes')):
         data = decode_to_str(data)
@@ -160,8 +160,8 @@ def decode_to_numpy_ascii(data):
     # conversion to ASCII. Otherwise, we
     # have to return it as is.
     if isinstance(data, str):
-        return np.string_(data.encode(encoding='ASCII',
-                          errors='replace'))
+        return np.bytes_(data.encode(encoding='ASCII',
+                         errors='replace'))
     else:
         return data
 
@@ -348,9 +348,9 @@ def get_attribute_string(target, name):
         return value
     elif isinstance(value, bytes):
         return value.decode()
-    elif isinstance(value, np.unicode):
+    elif isinstance(value, np.str_):
         return str(value)
-    elif isinstance(value, np.string_):
+    elif isinstance(value, np.bytes_):
         return value.decode()
     else:
         return None
@@ -398,7 +398,7 @@ def set_attribute_string(target, name, value):
         that will convert to a ``numpy.bytes_``
 
     """
-    set_attribute(target, name, np.string_(value))
+    set_attribute(target, name, np.bytes_(value))
 
 
 def set_attribute_string_array(target, name, string_list):
@@ -419,7 +419,7 @@ def set_attribute_string_array(target, name, string_list):
         that will convert to a ``numpy.bytes_``
 
     """
-    target.attrs.create(name, np.string_(string_list),
+    target.attrs.create(name, np.bytes_(string_list),
                         dtype=h5py.special_dtype(vlen=bytes))
 
 

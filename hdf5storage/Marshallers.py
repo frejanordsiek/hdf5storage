@@ -51,6 +51,10 @@ class TypeMarshaller(object):
     to be overridden and the different attributes set to the proper
     values.
 
+    For marshalling types that are containers of other data, one will
+    need to appropriate read/write them with the lowlevel functions
+    ``lowlevel.read_data`` and ``lowlevel.write_data``.
+
     Attributes
     ----------
     cpython_attributes : set of str
@@ -70,6 +74,8 @@ class TypeMarshaller(object):
     h5py.Dataset
     h5py.Group
     h5py.AttributeManager
+    hdf5storage.lowlevel.read_data
+    hdf5storage.lowlevel.write_data
 
     """
     def __init__(self):
@@ -182,6 +188,10 @@ class TypeMarshaller(object):
         Must be overridden in a subclass because a
         ``NotImplementedError`` is thrown immediately.
 
+        See Also
+        --------
+        hdf5storage.lowlevel.write_data
+
         """
         raise NotImplementedError('Can''t write data type: '
                                   + str(type(data)))
@@ -280,6 +290,10 @@ class TypeMarshaller(object):
         Must be overridden in a subclass because a
         ``NotImplementedError`` is thrown immediately.
 
+        See Also
+        --------
+        hdf5storage.lowlevel.read_data
+
         """
         raise NotImplementedError('Can''t read data: ' + name)
 
@@ -293,14 +307,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
                                    'MATLAB_int_decode'}
         self.types = [np.ndarray, np.matrix,
-                      np.bool8,
+                      np.bool_,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
                       np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
-                      np.string_, np.unicode]
+                      np.bytes_, np.str_]
         self.cpython_type_strings = ['numpy.ndarray', 'numpy.matrix',
-                                     'numpy.bool8',
+                                     'numpy.bool_',
                                      'numpy.uint8', 'numpy.uint16',
                                      'numpy.uint32', 'numpy.uint64',
                                      'numpy.int8', 'numpy.int16',
@@ -309,14 +323,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                      'numpy.float64',
                                      'numpy.complex64',
                                      'numpy.complex128',
-                                     'numpy.string_', 'numpy.unicode']
+                                     'numpy.bytes_', 'numpy.str_']
 
         # If we are storing in MATLAB format, we will need to be able to
         # set the MATLAB_class attribute. The different numpy types just
         # need to be properly mapped to the right strings. Some types do
         # not have a string since MATLAB does not support them.
 
-        self.__MATLAB_classes = {np.bool8: 'logical',
+        self.__MATLAB_classes = {np.bool_: 'logical',
                                  np.uint8: 'uint8',
                                  np.uint16: 'uint16',
                                  np.uint32: 'uint32',
@@ -329,13 +343,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                  np.float64: 'double',
                                  np.complex64: 'single',
                                  np.complex128: 'double',
-                                 np.string_: 'char',
-                                 np.unicode: 'char'}
+                                 np.bytes_: 'char',
+                                 np.str_: 'char'}
 
         # Make a dict to look up the opposite direction (given a matlab
         # class, what numpy type to use.
 
-        self.__MATLAB_classes_reverse = {'logical': np.bool8,
+        self.__MATLAB_classes_reverse = {'logical': np.bool_,
                                          'uint8': np.uint8,
                                          'uint16': np.uint16,
                                          'uint32': np.uint32,
@@ -346,7 +360,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                          'int64': np.int64,
                                          'single': np.float32,
                                          'double': np.float64,
-                                         'char': np.unicode}
+                                         'char': np.str_}
 
 
         # Set matlab_classes to the supported classes (the values).
@@ -364,7 +378,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         if options.convert_strings_to_utf16 and not (data.size == 0 \
                 and options.store_shape_for_empty) \
-                and data.dtype.type == np.string_:
+                and data.dtype.type == np.bytes_:
             data_to_store = np.uint16(np.atleast_1d( \
                             data_to_store).view(np.uint8))
 
@@ -375,7 +389,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # are not always 2 bytes long in UTF-16. So, converting them to
         # uint32 makes the most sense.
 
-        if data.dtype.type == np.unicode and not (data.size == 0 \
+        if data.dtype.type == np.str_ and not (data.size == 0 \
                 and options.store_shape_for_empty):
             data_to_store = np.atleast_1d(data_to_store).view(np.uint32)
 
@@ -493,10 +507,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             else:
                 set_attribute_string(grp[name], 'MATLAB_class', '')
 
-            if tp in (np.string_, np.unicode, np.bool8):
+            if tp in (np.bytes_, np.str_, np.bool_):
                 set_attribute(grp[name], 'MATLAB_int_decode', np.int64(
-                              {np.bool8: 1, np.string_: 2,
-                              np.unicode: 4}[tp]))
+                              {np.bool_: 1, np.bytes_: 2,
+                              np.str_: 4}[tp]))
             else:
                 del_attribute(grp[name], 'MATLAB_int_decode')
 
@@ -567,7 +581,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # then it needs to be converted (means it was written with
             # the convert_bools_to_uint8 option).
             if underlying_type == 'bool8' and data.dtype.name != 'bool':
-                data = np.bool8(data)
+                data = np.bool_(data)
 
             # Convert to scalar, matrix, or ndarray depending on the
             # container type.
@@ -611,7 +625,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # If it is a logical, then it must be converted to
             # numpy.bool8.
             if matlab_class == 'logical':
-                data = np.bool8(data)
+                data = np.bool_(data)
 
             # If it is a 'char' type, the proper conversion to
             # numpy.unicode needs to be done.
@@ -675,7 +689,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
 
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to a numpy string.
-        cdata = np.string_(data)
+        cdata = np.bytes_(data)
 
         # Now pass it to the parent version of this function to write
         # it. The proper type_string needs to be grabbed now as the
