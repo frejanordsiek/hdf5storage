@@ -23,6 +23,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 """ Module of functions to set and delete HDF5 attributes.
 
 """
@@ -36,7 +37,7 @@ def decode_to_str(data):
 
     Decodes `data` to a Python str, which is. If it can't be decoded, it
     is returned as is. Unsigned integers, Python ``bytes``, and Numpy
-    strings (``numpy.str_`` and ``numpy.string_``).
+    strings (``numpy.str_`` and ``numpy.bytes_``).
 
     Parameters
     ----------
@@ -89,7 +90,7 @@ def decode_to_numpy_unicode(data):
     Decodes `data` to a  Numpy unicode string (UTF-32), which is
     ``numpy.str_``. If it can't be decoded, it is returned as
     is. Unsigned integers, Python string types (``str``, ``bytes``), and
-    ``numpy.string_`` are supported.
+    ``numpy.bytes_`` are supported.
 
     Parameters
     ----------
@@ -124,10 +125,10 @@ def decode_to_numpy_unicode(data):
 
 
 def decode_to_numpy_ascii(data):
-    """ Decodes data to Numpy ASCII string (string_).
+    """ Decodes data to Numpy ASCII string (bytes_).
 
     Decodes `data` to a  Numpy ASCII string, which is
-    ``numpy.string_``. If it can't be decoded, it is returned as
+    ``numpy.bytes_``. If it can't be decoded, it is returned as
     is. Unsigned integers, Python string types (``str``, ``bytes``), and
     ``numpy.str_`` (UTF-32) are supported.
 
@@ -138,15 +139,15 @@ def decode_to_numpy_ascii(data):
 
     Returns
     -------
-    numpy.string_ or data
-        If `data` can be decoded into a ``numpy.string_``, the decoded
+    numpy.bytes_ or data
+        If `data` can be decoded into a ``numpy.bytes_``, the decoded
         version is returned. Otherwise, `data` is returned unchanged.
 
     See Also
     --------
     decode_to_str
     decode_to_numpy_unicode
-    numpy.string_
+    numpy.bytes_
 
     """
     # Convert first to a Python str if it isn't already an np.string_.
@@ -304,8 +305,7 @@ def get_attribute(target, name):
     Parameters
     ----------
     target : Dataset or Group
-        :py:class:`h5py.Dataset` or :py:class:`h5py.Group` to get the
-        attribute of.
+        Dataset or Group to get the attribute of.
     name : str
         Name of the attribute to get.
 
@@ -330,8 +330,7 @@ def get_attribute_string(target, name):
     Parameters
     ----------
     target : Dataset or Group
-        :py:class:`h5py.Dataset` or :py:class:`h5py.Group` to get the
-        string attribute of.
+        Dataset or Group to get the string attribute of.
     name : str
         Name of the attribute to get.
 
@@ -366,11 +365,10 @@ def set_attribute(target, name, value):
     Parameters
     ----------
     target : Dataset or Group
-        :py:class:`h5py.Dataset` or :py:class:`h5py.Group` to set the
-        attribute of.
+        Dataset or Group to set the attribute of.
     name : str
         Name of the attribute to set.
-    value : numpy type other than :py:class:`str_`
+    value : numpy type other than ``numpy.str_``
         Value to set the attribute to.
 
     """
@@ -392,13 +390,12 @@ def set_attribute_string(target, name, value):
     Parameters
     ----------
     target : Dataset or Group
-        :py:class:`h5py.Dataset` or :py:class:`h5py.Group` to set the
-        attribute of.
+        Dataset or Group to set the string attribute of.
     name : str
         Name of the attribute to set.
     value : string
         Value to set the attribute to. Can be any sort of string type
-        that will convert to a :py:class:`numpy.string_`
+        that will convert to a ``numpy.bytes_``
 
     """
     set_attribute(target, name, np.string_(value))
@@ -414,13 +411,12 @@ def set_attribute_string_array(target, name, string_list):
     Parameters
     ----------
     target : Dataset or Group
-        :py:class:`h5py.Dataset` or :py:class:`h5py.Group` to set the
-        attribute of.
+        Dataset or Group to set the string array attribute of.
     name : str
         Name of the attribute to set.
     string_list : list, tuple
         List of strings to set the attribute to. Can be any string type
-        that will convert to a :py:class:`numpy.string_`
+        that will convert to a ``numpy.bytes_``
 
     """
     target.attrs.create(name, np.string_(string_list),
@@ -435,8 +431,7 @@ def del_attribute(target, name):
     Parameters
     ----------
     target : Dataset or Group
-        :py:class:`h5py.Dataset` or :py:class:`h5py.Group` to set the
-        attribute of.
+        Dataset or Group to delete attribute of.
     name : str
         Name of the attribute to delete.
 

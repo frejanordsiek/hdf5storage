@@ -47,7 +47,9 @@ class TypeMarshaller(object):
 
     Subclasses should run this class's ``__init__()`` first
     thing. Inheritance information is in the **Notes** section of each
-    method.
+    method. Generally, ``read``, ``write``, and ``write_metadata`` need
+    to be overridden and the different attributes set to the proper
+    values.
 
     Attributes
     ----------
@@ -165,7 +167,7 @@ class TypeMarshaller(object):
         data
             The object to write to file.
         type_string : str or None
-            The type string for 'data'. If it is ``None``, one will have
+            The type string for `data`. If it is ``None``, one will have
             to be gotten by ``get_type_string``.
         options : hdf5storage.core.Options
             hdf5storage options object.
@@ -187,8 +189,8 @@ class TypeMarshaller(object):
     def write_metadata(self, f, grp, name, data, type_string, options):
         """ Writes an object to file.
 
-        Writes the metadata for a Python object 'data' to file at 'name'
-        in h5py.Group 'grp'. Metadata is written to HDF5
+        Writes the metadata for a Python object `data` to file at `name`
+        in h5py.Group `grp`. Metadata is written to HDF5
         Attributes. Existing Attributes that are not being used are
         deleted.
 
@@ -204,7 +206,7 @@ class TypeMarshaller(object):
         data
             The object to write to file.
         type_string : str or None
-            The type string for 'data'. If it is ``None``, one will have
+            The type string for `data`. If it is ``None``, one will have
             to be gotten by ``get_type_string``.
         options : hdf5storage.core.Options
             hdf5storage options object.

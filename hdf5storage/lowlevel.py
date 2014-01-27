@@ -23,6 +23,9 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+""" Module of Exceptions and low level read and write functions.
+
+"""
 
 import posixpath
 
@@ -42,6 +45,39 @@ class CantReadError(Hdf5storageError):
 
 
 def write_data(f, grp, name, data, type_string, options):
+    """ Writes a piece of data into an open HDF5 file.
+
+    Low level function to store a Python type (`data`) into the
+    specified Group.
+
+    Parameters
+    ----------
+    f : h5py.File
+        The open HDF5 file.
+    grp : h5py.Group or h5py.File
+        The Group to place the data in.
+    name : str
+        The name to write the data to.
+    data : any
+        The data to write.
+    type_string : str or None
+        The type string of the data, or ``None`` to deduce
+        automatically.
+    options : hdf5storage.core.Options
+        The options to use when writing.
+
+    Raises
+    ------
+    NotImplementedError
+        If writing `data` is not supported.
+
+    See Also
+    --------
+    hdf5storage.core.write : Higher level version.
+    read_data
+    hdf5storage.core.Options
+
+    """
     # Get the marshaller for type(data).
 
     tp = type(data)
@@ -59,6 +95,39 @@ def write_data(f, grp, name, data, type_string, options):
 
 
 def read_data(f, grp, name, options):
+    """ Writes a piece of data into an open HDF5 file.
+
+    Low level function to read a Python type of the specified name from
+    specified Group.
+
+    Parameters
+    ----------
+    f : h5py.File
+        The open HDF5 file.
+    grp : h5py.Group or h5py.File
+        The Group to read the data from.
+    name : str
+        The name of the data to read.
+    options : hdf5storage.core.Options
+        The options to use when reading.
+
+    Returns
+    -------
+    data
+        The data named `name` in Group `grp`.
+
+    Raises
+    ------
+    CantReadError
+        If the data cannot be read successfully.
+
+    See Also
+    --------
+    hdf5storage.core.read : Higher level version.
+    write_data
+    hdf5storage.core.Options
+
+    """
     # If name isn't found, return error.
     if name not in grp:
         raise CantReadError('Could not find '

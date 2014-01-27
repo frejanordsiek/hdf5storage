@@ -23,6 +23,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 """ Module contains the high level read/write interface and code.
 
 """
@@ -38,7 +39,8 @@ import h5py
 
 from hdf5storage.utilities import *
 
-from hdf5storage.lowlevel import write_data, read_data, CantReadError
+from hdf5storage.lowlevel import write_data, read_data, \
+    Hdf5storageError, CantReadError
 from hdf5storage import Marshallers
 
 
@@ -88,6 +90,8 @@ class Options(object):
         See Attributes.
     complex_names : tuple of two str, optional
         See Attributes.
+    marshaller_collection : MarshallerCollection, optional
+        See Attributes.
 
     Attributes
     ----------
@@ -116,7 +120,8 @@ class Options(object):
                  convert_bools_to_uint8=False,
                  reverse_dimension_order=False,
                  store_shape_for_empty=False,
-                 complex_names=('r', 'i')):
+                 complex_names=('r', 'i'),
+                 marshaller_collection=None):
         # Set the defaults.
 
         self._store_type_information = True
@@ -149,9 +154,19 @@ class Options(object):
         self.scalar_options = {}
         self.array_options = {}
 
-        # Use the default collection of marshallers.
+        # Use the given marshaller collection if it was
+        # given. Otherwise, use the default.
 
-        self.marshaller_collection = MarshallerCollection()
+        #: Collection of marshallers to disk.
+        #:
+        #: MarshallerCollection
+        #:
+        #: See Also
+        #: --------
+        #: MarshallerCollection
+        self.marshaller_collection = marshaller_collection
+        if not isinstance(marshaller_collection, MarshallerCollection):
+            self.marshaller_collection = MarshallerCollection()
 
     @property
     def store_type_information(self):
@@ -275,7 +290,7 @@ class Options(object):
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
         is being done), string types except for ``numpy.str_``
-        (``str``, ``bytes``, and ``numpy.string_``) are converted to
+        (``str``, ``bytes``, and ``numpy.bytes_``) are converted to
         UTF-16 before being written to file.
 
         Must be ``True`` if doing MATLAB compatibility. MATLAB uses
@@ -388,7 +403,7 @@ class Options(object):
 
         ``(r, i)`` where `r` and `i` are two ``str``. When reading and
         writing complex numbers, the real part gets the name in `r` and
-        the imaginary part gets the name in `i`. :py:mod:`h5py` uses
+        the imaginary part gets the name in `i`. ``h5py`` uses
         ``('r', 'i')`` by default, unless MATLAB compatibility is being
         done in which case its default is ``('real', 'imag')``.
 
@@ -638,7 +653,8 @@ def write(filename='data.h5', name='/data', data=None,
           convert_strings_to_utf16=False,
           convert_bools_to_uint8=False,
           store_shape_for_empty=False,
-          complex_names=('r', 'i')):
+          complex_names=('r', 'i'),
+          marshaller_collection=None):
     # Pack the different options into an Options class. The easiest way
     # to do this is to get all the arguments (locals() gets them since
     # they are the only symbols in the local table at this point) and
@@ -750,7 +766,7 @@ def write(filename='data.h5', name='/data', data=None,
 
 
 def read(filename='data.h5', name='/data', MATLAB_compatible=False,
-         reverse_dimension_order=False, complex_names=('r', 'i')):
+         reverse_dimension_order=False, marshaller_collection=None):
     # Pack the different options into an Options class. The easiest way
     # to do this is to get all the arguments (locals() gets them since
     # they are the only symbols in the local table at this point) and
