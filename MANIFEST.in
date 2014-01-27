@@ -1,3 +1,5 @@
 include *.txt
 include *.md
 include *.rst
+recursive-include doc *
+prune doc/build
