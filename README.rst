@@ -60,31 +60,31 @@ will be what it is read back as) the MATLAB class it becomes if
 targetting a MAT file, and the first version of this package to
 support writing it so MATlAB can read it.
 
-=============  =======  ================  =======  ========
-Python                                    MATLAB
-----------------------------------------  -----------------
-Type           Version  Converted to      Class    Version
-=============  =======  ================  =======  ========
-bool           0.1      np.bool\_          logical  0.1
-None           0.1      ``np.array([])``  ``[]``   0.1
-int            0.1      np.int64          int64    0.1
-float          0.1      np.float64        double   0.1
-complex        0.1      np.complex128     double   0.1
-str            0.1      np.bytes\_        char     0.1 [1]_
-bytes          0.1      np.bytes\_        char     0.1
-bytearray      0.1      np.bytes\_        char     0.1
-np.bool\_      0.1                        logical  0.1
-np.uint8       0.1                        uint8    0.1
+=============  =======  ==================  =======  ========
+Python                                      MATLAB
+------------------------------------------  -----------------
+Type           Version  Converted to        Class    Version
+=============  =======  ==================  =======  ========
+bool           0.1      np.bool\_           logical  0.1
+None           0.1      ``np.float64([])``  ``[]``   0.1
+int            0.1      np.int64            int64    0.1
+float          0.1      np.float64          double   0.1
+complex        0.1      np.complex128       double   0.1
+str            0.1      np.bytes\_          char     0.1 [1]_
+bytes          0.1      np.bytes\_          char     0.1
+bytearray      0.1      np.bytes\_          char     0.1
+np.bool\_      0.1                          logical  0.1
+np.uint8       0.1                          uint8    0.1
 np.float16     0.1
-np.float32     0.1                        single   0.1
-np.float64     0.1                        double   0.1
+np.float32     0.1                          single   0.1
+np.float64     0.1                          double   0.1
 np.complex32   0.1
-np.complex64   0.1                        single   0.1
-np.complex128  0.1                        double   0.1
-np.str\_       0.1      np.uint32         uint32   0.1 [2]_
-np.bytes\_     0.1                        char     0.1
-dict           0.1                        struct   0.1 [3]_
-=============  =======  ================  =======  ========
+np.complex64   0.1                          single   0.1
+np.complex128  0.1                          double   0.1
+np.str\_       0.1      np.uint32           uint32   0.1 [2]_
+np.bytes\_     0.1                          char     0.1
+dict           0.1                          struct   0.1 [3]_
+=============  =======  ==================  =======  ========
 
 .. [1] Converted to ASCII, so characters outside of that set are lost.
 .. [2] Simply copied over as the uint32 versions of each UTF-32 character.

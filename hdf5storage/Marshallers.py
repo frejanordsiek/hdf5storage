@@ -717,8 +717,7 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
         # data and the right type_string set (parent can't guess right
         # from the modified form).
         NumpyScalarArrayMarshaller.write(self, f, grp, name,
-                                         np.ndarray(shape=(0, 0),
-                                         dtype='float64'),
+                                         np.float64([]),
                                          self.get_type_string(data,
                                          type_string), options)
 
