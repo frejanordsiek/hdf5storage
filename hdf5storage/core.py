@@ -645,8 +645,49 @@ class MarshallerCollection(object):
             return None
 
 
-def write(filename='data.h5', name='/', data=None,
+def write(data, name='/', filename='data.h5',
           options=None, **keywords):
+    """ Writes data into an HDF5 file (high level).
+
+    High level function to store a Python type (`data`) to a specified
+    name (`name`) in an HDF5 file. The name is specified as a POSIX
+    style path where the directory name is the Group to put it in and
+    the basename is the name to write it to.
+
+    There are various options that can be used to influence how the data
+    is written. They can be passed as an already constructed ``Options``
+    into `options` or as additional keywords that will be used to make
+    one by ``options = Options(**keywords)``.
+
+    Parameters
+    ----------
+    data : any
+        The data to write.
+    name : str, optional
+        The name to write `data` to. Must be a POSIX style path where
+         the directory name is the Group to put it in and the basename
+         is the name to write it to.
+    filename : str, optional
+        The name of the HDF5 file to write `data` to.
+    options : Options, optional
+        The options to use when writing. Is mutually exclusive with any
+        additional keyword arguments given (set to ``None`` or don't
+        provide to use them).
+    **keywords :
+        If `options` was not provided or was ``None``, these are used as
+        arguments to make a ``Options``.
+
+    Raises
+    ------
+    NotImplementedError
+        If writing `data` is not supported.
+
+    See Also
+    --------
+    read
+    Options
+    hdf5storage.lowlevel.write_data : Low level version.
+    """
     # Pack the different options into an Options class if an Options was
     # not given.
     if not isinstance(options, Options):
@@ -744,14 +785,51 @@ def write(filename='data.h5', name='/', data=None,
             fd = open(filename, 'r+b')
             fd.write(b)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
             raise
         finally:
             fd.close()
 
 
-def read(filename='data.h5', name='/',
+def read(name='/', filename='data.h5',
          options=None, **keywords):
+    """ Reads data from an HDF5 file (high level).
+
+    High level function to read data from an HDF5 file located at `name`
+    into Python types. The name is specified as a POSIX style path where
+    the data to read is located.
+
+    There are various options that can be used to influence how the data
+    is read. They can be passed as an already constructed ``Options``
+    into `options` or as additional keywords that will be used to make
+    one by ``options = Options(**keywords)``.
+
+    Parameters
+    ----------
+    name : str, optional
+        The name to read data from. Must be a POSIX style path where
+         the directory name is the Group to put it in and the basename
+         is the name to write it to.
+    filename : str, optional
+        The name of the HDF5 file to read data from.
+    options : Options, optional
+        The options to use when reading. Is mutually exclusive with any
+        additional keyword arguments given (set to ``None`` or don't
+        provide to use them).
+    **keywords :
+        If `options` was not provided or was ``None``, these are used as
+        arguments to make a ``Options``.
+
+    Raises
+    ------
+    CantReadError
+        If reading the data can't be done.
+
+    See Also
+    --------
+    write
+    Options
+    hdf5storage.lowlevel.read_data : Low level version.
+    """
     # Pack the different options into an Options class if an Options was
     # not given.
     if not isinstance(options, Options):
@@ -792,7 +870,6 @@ def read(filename='data.h5', name='/',
         # Hand off everything to the low level reader.
         data = read_data(f, f[groupname], targetname, options)
     except:
-        print("Unexpected error:", sys.exc_info()[0])
         raise
     finally:
         f.close()
