@@ -1013,6 +1013,7 @@ def read(name='/', filename='data.h5',
     # in a try block, so that the file can be closed if any errors
     # happen (the error is re-raised).
     try:
+        f = None
         f = h5py.File(filename, mode='r')
 
         # Check that the containing group is in f and is indeed a
@@ -1027,6 +1028,7 @@ def read(name='/', filename='data.h5',
     except:
         raise
     finally:
-        f.close()
+        if f is not None:
+            f.close()
 
     return data

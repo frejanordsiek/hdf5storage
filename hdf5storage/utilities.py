@@ -75,8 +75,12 @@ def decode_to_str(data):
         elif data.dtype.name.startswith('bytes'):
             return data.decode(encoding='ASCII')
         else:
-            return data.encode(encoding='UTF-32').decode( \
-                encoding='UTF-32', errors='replace')
+            if isinstance(data, np.ndarray):
+                return data.tostring().decode(encoding='UTF-32',
+                                              errors='replace')
+            else:
+                return data.encode(encoding='UTF-32').decode( \
+                    encoding='UTF-32', errors='replace')
 
     if isinstance(data, bytes):
         return data.decode(encoding='ASCII')

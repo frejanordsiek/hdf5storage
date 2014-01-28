@@ -139,7 +139,6 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
                                       self.options)
         self.assert_equal_str(data, out)
 
-    @unittest.expectedFailure
     def test_str_empty(self):
         data = ''
         out = self.write_readback_str(data, self.random_name(),
@@ -152,7 +151,6 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
                                         self.options)
         self.assert_equal_bytes(data, out)
 
-    @unittest.expectedFailure
     def test_bytes_empty(self):
         data = b''
         out = self.write_readback_bytes(data, self.random_name(),
@@ -165,7 +163,6 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
                                             self.options)
         self.assert_equal_bytearray(data, out)
 
-    @unittest.expectedFailure
     def test_bytearray_empty(self):
         data = bytearray(b'')
         out = self.write_readback_bytearray(data, self.random_name(),

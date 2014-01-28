@@ -376,11 +376,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # simply converting to uint16's. This will require making them
         # at least 1 dimensinal.
 
-        if options.convert_strings_to_utf16 and not (data.size == 0 \
-                and options.store_shape_for_empty) \
-                and data.dtype.type == np.bytes_:
-            data_to_store = np.uint16(np.atleast_1d( \
-                            data_to_store).view(np.uint8))
+        if data.dtype.type == np.bytes_ \
+                and options.convert_strings_to_utf16:
+            if data_to_store.nbytes == 0:
+                data_to_store = np.uint16([])
+            else:
+                data_to_store = np.uint16(np.atleast_1d( \
+                    data_to_store).view(np.uint8))
 
         # As of 2013-12-13, h5py cannot write numpy.unicode (UTF-32
         # encoding) types. If it is just a numpy.unicode object, we can
@@ -389,9 +391,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # are not always 2 bytes long in UTF-16. So, converting them to
         # uint32 makes the most sense.
 
-        if data.dtype.type == np.str_ and not (data.size == 0 \
-                and options.store_shape_for_empty):
-            data_to_store = np.atleast_1d(data_to_store).view(np.uint32)
+        if data.dtype.type == np.str_:
+            if data_to_store.nbytes == 0:
+                data_to_store = np.uint32([])
+            else:
+                data_to_store = np.atleast_1d( \
+                    data_to_store).view(np.uint32)
 
         # Convert scalars to arrays if that option is set.
 
@@ -411,8 +416,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # If data is empty, we instead need to store the shape of the
         # array if the appropriate option is set.
 
-        if options.store_shape_for_empty and data.size == 0:
-            data_to_store = np.uint64(data.shape)
+        if options.store_shape_for_empty and (data.size == 0 \
+                or ((data.dtype.type == np.bytes_ \
+                or data.dtype.type == np.str_) \
+                and data.nbytes == 0)):
+            data_to_store = np.uint64(data_to_store.shape)
 
         # If it is a complex type, then it needs to be encoded to have
         # the proper complex field names.
@@ -472,13 +480,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             set_attribute_string(grp[name], 'CPython.numpy.Container',
                                  container)
 
-        # If data is empty and we are supposed to store shape info for
-        # empty data, we need to set the CPython.Empty and MATLAB_empty
-        # attributes to 1 if we are storing type info or making it
-        # MATLAB compatible. Otherwise, no empty attribute is set and
-        # existing ones must be deleted.
+        # If data is empty, we need to set the CPython.Empty and
+        # MATLAB_empty attributes to 1 if we are storing type info or
+        # making it MATLAB compatible. Otherwise, no empty attribute is
+        # set and existing ones must be deleted.
 
-        if options.store_shape_for_empty and data.size == 0:
+        if data.size == 0  or ((data.dtype.type == np.bytes_ \
+                or data.dtype.type == np.str_)
+                and data.nbytes == 0):
             if options.store_type_information:
                 set_attribute(grp[name], 'CPython.Empty',
                                           np.uint8(1))
@@ -552,10 +561,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # If it is empty ('CPython.Empty' set to 1), then the shape
             # information is stored in data and we need to set data to
             # the empty array of the proper type (in underlying_type)
-            # and the given shape.
+            # and the given shape. If we are going to transpose it
+            # later, we need to transpose it now so that it still keeps
+            # the right shape.
             if cpython_empty == 1:
-                data = np.zeros(tuple(np.uint64(data)),
+                data = np.zeros(tuple(shape),
                                 dtype=underlying_type)
+                if matlab_class is not None or \
+                        options.reverse_dimension_order:
+                    data = data.T
 
             # If MATLAB attributes are present or the reverse dimension
             # order option was given, the dimension order needs to be
@@ -584,9 +598,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 data = np.bool_(data)
 
             # Convert to scalar, matrix, or ndarray depending on the
-            # container type.
+            # container type. For an empty scalar string, it needs to be
+            # manually set to '' and b'' or there will be problems.
             if container == 'scalar':
                 data = data[()]
+                if cpython_empty == 1:
+                    if underlying_type == 'bytes':
+                        data = np.bytes_(b'')
+                    elif underlying_type == 'str':
+                        data = np.str_('')
             elif container == 'matrix':
                 data = np.asmatrix(data)
             elif container == 'ndarray':
@@ -710,11 +730,14 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # as is.
         type_string = get_attribute_string(grp[name], 'CPython.Type')
         if type_string == 'str':
-            return data.tostring().decode()
+            if isinstance(data, np.ndarray):
+                return data.tostring().decode()
+            else:
+                return data.decode()
         elif type_string == 'bytes':
-            return data.tostring()
+            return bytes(data)
         elif type_string == 'bytearray':
-            return bytearray(data.tostring())
+            return bytearray(data)
         else:
             return data
 
