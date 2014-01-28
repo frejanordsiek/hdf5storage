@@ -29,6 +29,7 @@
 """
 
 import posixpath
+import collections
 
 import numpy as np
 import h5py
@@ -991,3 +992,41 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
         # Passing it through list does all the work of making it a list
         # again.
         return list(data)
+
+
+class PythonTupleSetDequeMarshaller(PythonListMarshaller):
+    def __init__(self):
+        PythonListMarshaller.__init__(self)
+        self.types = [tuple, set, frozenset, collections.deque]
+        self.cpython_type_strings = ['tuple', 'set', 'frozenset',
+                                     'collections.deque']
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = []
+
+    def write(self, f, grp, name, data, type_string, options):
+        # data just needs to be converted to a list and then pass it to
+        # the parent version of this function. The proper type_string
+        # needs to be grabbed now as the parent function will have a
+        # modified form of data to guess from if not given the right one
+        # explicitly.
+        PythonListMarshaller.write(self, f, grp, name, list(data),
+                                  self.get_type_string(data,
+                                  type_string), options)
+
+    def read(self, f, grp, name, options):
+        # Use the parent class version to read it and do most of the
+        # work.
+        data = PythonListMarshaller.read(self, f, grp, name,
+                                        options)
+
+        # The type string determines how to convert it back to a Python
+        # type (just look up the entry in types).
+        type_string = get_attribute_string(grp[name], 'CPython.Type')
+        if type_string in self.cpython_type_strings:
+            tp = self.types[self.cpython_type_strings.index(
+                            type_string)]
+            return tp(data)
+        else:
+            # Must be some other type, so return it as is.
+            return data

@@ -49,8 +49,10 @@ read and write support for a limited set of Python and MATLAB types.
 Supported Types
 ===============
 
-The supported Python and MATLAB types are given in the tables below.  The tables assume that one has imported numpy as::
+The supported Python and MATLAB types are given in the tables below.
+The tables assume that one has imported collections and numpy as::
 
+    import collections as cl
     import numpy as np
 
 The table gives which Python types can be read and written, the first
@@ -85,6 +87,10 @@ np.bytes\_     0.1                          char     0.1
 np.object\_    0.1                          cell     0.1
 dict           0.1                          struct   0.1 [3]_
 list           0.1      np.object\_         cell     0.1
+tuple          0.1      np.object\_         cell     0.1
+set            0.1      np.object\_         cell     0.1
+frozenset      0.1      np.object\_         cell     0.1
+cl.deque       0.1      np.object\_         cell     0.1
 =============  =======  ==================  =======  ========
 
 .. [1] Converted to ASCII, so characters outside of that set are lost.

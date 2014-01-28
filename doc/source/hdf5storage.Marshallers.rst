@@ -195,3 +195,29 @@ PythonListMarshaller
    .. autoinstanceattribute:: PythonListMarshaller.matlab_classes
       :annotation: = []
 
+
+PythonTupleSetDequeMarshaller
+----------------------
+
+.. autoclass:: PythonTupleSetDequeMarshaller
+   :members: read, write
+   :show-inheritance:
+
+   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.cpython_attributes
+      :annotation: = {'CPython.Type', 'CPython.Shape', 'CPython.Empty',
+		      'CPython.numpy.UnderlyingType',
+                      'CPython.numpy.Container'}
+
+   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.matlab_attributes
+      :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
+		      'MATLAB_int_decode'}
+
+   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.types
+      :annotation: = [tuple, set, frozenset, collections.deque]
+
+   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.cpython_type_strings
+      :annotation: = ['tuple', 'set', 'frozenset', 'collections.deque']
+
+   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.matlab_classes
+      :annotation: = []
+
