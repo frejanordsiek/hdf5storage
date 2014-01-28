@@ -207,6 +207,7 @@ class Options(object):
     reverse_dimension_order    ``True``
     store_shape_for_empty      ``True``
     complex_names              ``('real', 'imag')``
+    group_for_references       ``'/#refs#'``
     =========================  ====================
 
     In addition to setting these options, a specially formatted block of
@@ -233,6 +234,8 @@ class Options(object):
         See Attributes.
     complex_names : tuple of two str, optional
         See Attributes.
+    group_for_references : str, optional
+        See Attributes.
     marshaller_collection : MarshallerCollection, optional
         See Attributes.
 
@@ -247,6 +250,7 @@ class Options(object):
     reverse_dimension_order : bool
     store_shape_for_empty : bool
     complex_names : tuple of two str
+    group_for_references : str
     scalar_options : dict
         ``h5py.Group.create_dataset`` options for writing scalars.
     array_options : dict
@@ -264,6 +268,7 @@ class Options(object):
                  reverse_dimension_order=False,
                  store_shape_for_empty=False,
                  complex_names=('r', 'i'),
+                 group_for_references="/#refs#",
                  marshaller_collection=None):
         # Set the defaults.
 
@@ -275,6 +280,7 @@ class Options(object):
         self._reverse_dimension_order = False
         self._store_shape_for_empty = False
         self._complex_names = ('r', 'i')
+        self._group_for_references = "/#refs#"
         self._MATLAB_compatible = True
 
         # Apply all the given options using the setters, making sure to
@@ -289,6 +295,7 @@ class Options(object):
         self.reverse_dimension_order = reverse_dimension_order
         self.store_shape_for_empty = store_shape_for_empty
         self.complex_names = complex_names
+        self.group_for_references = group_for_references
         self.MATLAB_compatible = MATLAB_compatible
 
         # Set the h5py options to use for writing scalars and arrays to
@@ -352,6 +359,7 @@ class Options(object):
         reverse_dimension_order    ``True``
         store_shape_for_empty      ``True``
         complex_names              ``('real', 'imag')``
+        group_for_references       ``'/#refs#'``
         =========================  ====================
 
         In addition to setting these options, a specially formatted
@@ -375,6 +383,7 @@ class Options(object):
                 self._reverse_dimension_order = True
                 self._store_shape_for_empty = True
                 self._complex_names = ('real', 'imag')
+                self._group_for_references = "/#refs#"
 
     @property
     def delete_unused_variables(self):
@@ -565,6 +574,34 @@ class Options(object):
                 and isinstance(value[1], str):
             self._complex_names = value
         if self._complex_names != ('real', 'imag'):
+            self._MATLAB_compatible = False
+
+    @property
+    def group_for_references(self):
+        """ Path for where to put objects pointed at by references.
+
+        str
+
+        The absolute POSIX path for the Group to place all data that is
+        pointed to by another piece of data (needed for
+        ``numpy.object_`` and similar types). This path is automatically
+        excluded from its parent group when reading back a ``dict``.
+
+        Must be ``'/#refs#`` if doing MATLAB compatibility.
+
+        """
+        return self._group_for_references
+
+    @group_for_references.setter
+    def group_for_references(self, value):
+        # Check that it an str and a valid absolute POSIX path, and then
+        # set it. If it is something other than "/#refs#", then we are
+        # not doing MATLAB compatible formatting.
+        if isinstance(value, str):
+            pth = posixpath.normpath(value)
+            if len(pth) > 1 and posixpath.isabs(pth):
+                self._group_for_references = value
+        if self._group_for_references != "/#refs#":
             self._MATLAB_compatible = False
 
 

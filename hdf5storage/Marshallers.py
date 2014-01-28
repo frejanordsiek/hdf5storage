@@ -28,6 +28,8 @@
 
 """
 
+import posixpath
+
 import numpy as np
 import h5py
 
@@ -312,7 +314,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.int8, np.int16, np.int32, np.int64,
                       np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
-                      np.bytes_, np.str_]
+                      np.bytes_, np.str_, np.object_]
         self.cpython_type_strings = ['numpy.ndarray', 'numpy.matrix',
                                      'numpy.bool_',
                                      'numpy.uint8', 'numpy.uint16',
@@ -323,7 +325,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                      'numpy.float64',
                                      'numpy.complex64',
                                      'numpy.complex128',
-                                     'numpy.bytes_', 'numpy.str_']
+                                     'numpy.bytes_', 'numpy.str_',
+                                     'numpy.object_']
 
         # If we are storing in MATLAB format, we will need to be able to
         # set the MATLAB_class attribute. The different numpy types just
@@ -344,7 +347,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                  np.complex64: 'single',
                                  np.complex128: 'double',
                                  np.bytes_: 'char',
-                                 np.str_: 'char'}
+                                 np.str_: 'char',
+                                 np.object_: 'cell'}
 
         # Make a dict to look up the opposite direction (given a matlab
         # class, what numpy type to use.
@@ -360,7 +364,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                          'int64': np.int64,
                                          'single': np.float32,
                                          'double': np.float64,
-                                         'char': np.str_}
+                                         'char': np.str_,
+                                         'cell': np.object_}
 
 
         # Set matlab_classes to the supported classes (the values).
@@ -427,6 +432,46 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if np.iscomplexobj(data_to_store):
             data_to_store = encode_complex(data_to_store,
                                            options.complex_names)
+
+        # If we are storing an object type and it isn't empty
+        # (data_to_store is still an object), then we must recursively
+        # write what each element points to and make an array of the
+        # references to them.
+
+        if data_to_store.dtype.name == 'object':
+            ref_dtype = h5py.special_dtype(ref=h5py.Reference)
+            data_refs = data_to_store.copy()
+
+            # Go through all the elements of data and write them,
+            # gabbing their references and putting them in
+            # data_refs. They will be put in group_for_references, which
+            # is also what the H5PATH needs to be set to if we are doing
+            # MATLAB compatibility (otherwise, the attribute needs to be
+            # deleted).
+
+            if options.group_for_references not in f:
+                f.create_group(options.group_for_references)
+
+            grp2 = f[options.group_for_references]
+
+            if not isinstance(grp2, h5py.Group):
+                del f[options.group_for_references]
+                grp2 = f[options.group_for_references]
+
+            for index, x in np.ndenumerate(data_to_store):
+                data_refs[index] = None
+                name_for_ref = next_unused_name_in_group(grp2, 16)
+                write_data(f, grp2, name_for_ref, x, None, options)
+                data_refs[index] = grp2[name_for_ref].ref
+                if options.MATLAB_compatible:
+                    set_attribute_string(grp2[name_for_ref],
+                                         'H5PATH', grp2.name)
+                else:
+                    del_attribute(grp2[k], 'H5PATH')
+
+            # Now, the dtype needs to be changed to the reference type
+            # and the whole thing copied over to data_to_store.
+            data_to_store = data_refs.astype(dtype=ref_dtype)
 
         # The data must first be written. If name is not present yet,
         # then it must be created. If it is present, but not a Dataset,
@@ -551,6 +596,27 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # conversions can be done later.
         data = grp[name][...]
         dt = data.dtype
+
+        # If it is a reference type, then we need to make an object
+        # array that is its replicate, but with the objects they are
+        # pointing to in their elements instead of just the references.
+        if h5py.check_dtype(ref=grp[name].dtype) is not None:
+            data_derefed = data.copy().astype(np.dtype('object'))
+
+            # Go through all the elements of data and read them using
+            # their references, and the putting the output in
+            # data_derefed. If they can't be read, None is put in.
+
+            for index, x in np.ndenumerate(data):
+                data_derefed[index] = None
+                try:
+                    data_derefed[index] = read_data(f, f[x].parent, \
+                        posixpath.basename(f[x].name), options)
+                except:
+                    raise
+
+            # Now all that needs to be done is copy back to data.
+            data = data_derefed.copy()
 
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not
@@ -885,6 +951,9 @@ class PythonDictMarshaller(TypeMarshaller):
         # them (nothing needs to be done).
         data = dict()
         for k in grp[name]:
+            # We must exclude group_for_references
+            if grp[name][k].name == options.group_for_references:
+                continue
             try:
                 data[k] = read_data(f, grp[name], k, options)
             except:

@@ -28,9 +28,42 @@
 
 """
 
+import string
+import random
+
 import numpy as np
 import h5py
 
+
+def next_unused_name_in_group(grp, length):
+    """ Gives a name that isn't used in a Group.
+
+    Generates a name of the desired length that is not a Dataset or
+    Group in the given group. Note, if length is not large enough and
+    `grp` is full enough, there may be no available names meaning that
+    this function will hang.
+
+    Parameters
+    ----------
+    grp : h5py.Group or h5py.File
+        The HDF5 Group (or File if at '/') to generate an unused name
+        in.
+    length : int
+        Number of characters the name should be.
+
+    Returns
+    -------
+    str
+        A name that isn't already an existing Dataset or Group in
+        `grp`.
+
+    """
+    ltrs = string.ascii_letters + string.digits
+    existing_names = set(grp.keys())
+    while True:
+        name = ''.join([random.choice(ltrs) for i in range(0, length)])
+        if name not in existing_names:
+            return name
 
 def decode_to_str(data):
     """ Decodes data to the Python str type.

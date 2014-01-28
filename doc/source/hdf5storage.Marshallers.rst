@@ -52,7 +52,7 @@ NumpyScalarArrayMarshaller
                       np.int8, np.int16, np.int32, np.int64,
                       np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
-                      np.bytes_, np.str_]
+                      np.bytes_, np.str_, np.object_]
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.cpython_type_strings
       :annotation: = ['numpy.ndarray', 'numpy.matrix',
@@ -61,12 +61,12 @@ NumpyScalarArrayMarshaller
 		      'numpy.int16', 'numpy.int32', 'numpy.int64',
                       'numpy.float16', 'numpy.float32', 'numpy.float64',
                       'numpy.complex64', 'numpy.complex128',
-                      'numpy.bytes_', 'numpy.str_']
+                      'numpy.bytes_', 'numpy.str_', 'numpy.object_']
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.matlab_classes
       :annotation: = ['logical', 'char', 'single', 'double', 'uint8',
 	              'uint16', 'uint32', 'uint64', 'int8', 'int16',
-                      'int32', 'int64']
+                      'int32', 'int64', 'cell']
 
 
 PythonScalarMarshaller

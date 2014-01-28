@@ -6,6 +6,12 @@ hdf5storage.utilities
 .. automodule:: hdf5storage.utilities
 
 
+next_unused_name_in_group
+-------------------------
+
+.. autofunction:: next_unused_name_in_group
+
+
 decode_to_str
 -------------
 

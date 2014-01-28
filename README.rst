@@ -82,6 +82,7 @@ np.complex64   0.1                          single   0.1
 np.complex128  0.1                          double   0.1
 np.str\_       0.1      np.uint32           uint32   0.1 [2]_
 np.bytes\_     0.1                          char     0.1
+np.object\_    0.1                          cell     0.1
 dict           0.1                          struct   0.1 [3]_
 =============  =======  ==================  =======  ========
 
@@ -108,6 +109,7 @@ int16         0.1      np.int16
 int32         0.1      np.int32
 int64         0.1      np.int64
 struct        0.1      dict [5]_
+cell          0.1      np.object\_
 ============  =======  ================================
 
 .. [4] Depends on whether there is a complex part or not.
