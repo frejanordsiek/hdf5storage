@@ -959,3 +959,35 @@ class PythonDictMarshaller(TypeMarshaller):
             except:
                 pass
         return data
+
+
+class PythonListMarshaller(NumpyScalarArrayMarshaller):
+    def __init__(self):
+        NumpyScalarArrayMarshaller.__init__(self)
+        self.types = [list]
+        self.cpython_type_strings = ['list']
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = []
+
+    def write(self, f, grp, name, data, type_string, options):
+        # data just needs to be converted to the appropriate numpy type
+        # (pass it through np.object_ to get the and then pass it to the
+        # parent version of this function. The proper type_string needs
+        # to be grabbed now as the parent function will have a modified
+        # form of data to guess from if not given the right one
+        # explicitly.
+        NumpyScalarArrayMarshaller.write(self, f, grp, name,
+                                         np.object_(data),
+                                         self.get_type_string(data,
+                                         type_string), options)
+
+    def read(self, f, grp, name, options):
+        # Use the parent class version to read it and do most of the
+        # work.
+        data = NumpyScalarArrayMarshaller.read(self, f, grp, name,
+                                               options)
+
+        # Passing it through list does all the work of making it a list
+        # again.
+        return list(data)

@@ -169,3 +169,29 @@ PythonDictMarshaller
    .. autoinstanceattribute:: PythonDictMarshaller.matlab_classes
       :annotation: = ['struct']
 
+
+PythonListMarshaller
+----------------------
+
+.. autoclass:: PythonListMarshaller
+   :members: read, write
+   :show-inheritance:
+
+   .. autoinstanceattribute:: PythonListMarshaller.cpython_attributes
+      :annotation: = {'CPython.Type', 'CPython.Shape', 'CPython.Empty',
+		      'CPython.numpy.UnderlyingType',
+                      'CPython.numpy.Container'}
+
+   .. autoinstanceattribute:: PythonListMarshaller.matlab_attributes
+      :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
+		      'MATLAB_int_decode'}
+
+   .. autoinstanceattribute:: PythonListMarshaller.types
+      :annotation: = [list]
+
+   .. autoinstanceattribute:: PythonListMarshaller.cpython_type_strings
+      :annotation: = ['list']
+
+   .. autoinstanceattribute:: PythonListMarshaller.matlab_classes
+      :annotation: = []
+

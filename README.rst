@@ -84,6 +84,7 @@ np.str\_       0.1      np.uint32           uint32   0.1 [2]_
 np.bytes\_     0.1                          char     0.1
 np.object\_    0.1                          cell     0.1
 dict           0.1                          struct   0.1 [3]_
+list           0.1      np.object\_         cell     0.1
 =============  =======  ==================  =======  ========
 
 .. [1] Converted to ASCII, so characters outside of that set are lost.
