@@ -135,7 +135,7 @@ def read_data(f, grp, name, options):
 
     # Get the different attributes that can be used to identify they
     # type, which are the type string and the MATLAB class.
-    type_string = get_attribute_string(grp[name], 'CPython.Type')
+    type_string = get_attribute_string(grp[name], 'Python.Type')
     matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
 
     # If the type_string is present, get the marshaller for it. If it is

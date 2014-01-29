@@ -676,11 +676,11 @@ class MarshallerCollection(object):
 
         # The equivalent one to read data types given type strings needs
         # to be created from it. Basically, we have to make the key be
-        # the cpython_type_string from it.
+        # the python_type_string from it.
 
         self._type_strings = {type_string: m for key, m in
                               self._types.items() for type_string in
-                              m.cpython_type_strings}
+                              m.python_type_strings}
 
         # The equivalent one to read data types given MATLAB class
         # strings needs to be created from it. Basically, we have to
@@ -789,7 +789,7 @@ class MarshallerCollection(object):
 
         See Also
         --------
-        hdf5storage.Marshallers.TypeMarshaller.cpython_type_strings
+        hdf5storage.Marshallers.TypeMarshaller.python_type_strings
 
         """
         if type_string in self._type_strings:
@@ -816,7 +816,7 @@ class MarshallerCollection(object):
 
         See Also
         --------
-        hdf5storage.Marshallers.TypeMarshaller.cpython_type_strings
+        hdf5storage.Marshallers.TypeMarshaller.python_type_strings
 
         """
         if matlab_class in self._matlab_classes:

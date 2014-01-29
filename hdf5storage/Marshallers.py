@@ -60,13 +60,13 @@ class TypeMarshaller(object):
 
     Attributes
     ----------
-    cpython_attributes : set of str
+    python_attributes : set of str
         Attributes used to store type information.
     matlab_attributes : set of str
         Attributes used for MATLAB compatibility.
     types : list of types
         Types the marshaller can work on.
-    cpython_type_strings : list of str
+    python_type_strings : list of str
         Type strings of readable types.
     matlab_classes : list of str
         Readable MATLAB classes.
@@ -88,7 +88,7 @@ class TypeMarshaller(object):
         #:
         #: ``set`` of attribute names the marshaller uses when
         #: an ``Option.store_type_information`` is ``True``.
-        self.cpython_attributes = {'CPython.Type'}
+        self.python_attributes = {'Python.Type'}
 
         #: Attributes used for MATLAB compatibility.
         #:
@@ -112,9 +112,9 @@ class TypeMarshaller(object):
         #: list of str
         #:
         #: ``list`` of the ``str`` that the marshaller would put in the
-        #: HDF5 attribute 'CPython.Type' to identify the Python type to be
+        #: HDF5 attribute 'Python.Type' to identify the Python type to be
         #: able to read it back correctly. Default value is ``[]``.
-        self.cpython_type_strings = []
+        self.python_type_strings = []
 
         #: MATLAB class strings of readable types.
         #:
@@ -128,7 +128,7 @@ class TypeMarshaller(object):
         """ Gets type string.
 
         Finds the type string for 'data' contained in
-        ``cpython_type_strings`` using its ``type``. Non-``None``
+        ``python_type_strings`` using its ``type``. Non-``None``
         'type_string` overrides whatever type string is looked up.
         The override makes it easier for subclasses to convert something
         that the parent marshaller can write to disk but still put the
@@ -157,7 +157,7 @@ class TypeMarshaller(object):
             return type_string
         else:
             i = self.types.index(type(data))
-            return self.cpython_type_strings[i]
+            return self.python_type_strings[i]
 
     def write(self, f, grp, name, data, type_string, options):
         """ Writes an object's metadata to file.
@@ -226,8 +226,8 @@ class TypeMarshaller(object):
 
         Notes
         -----
-        The attribute 'CPython.Type' is set to the type string. All H5PY
-        Attributes not in ``cpython_attributes`` and/or
+        The attribute 'Python.Type' is set to the type string. All H5PY
+        Attributes not in ``python_attributes`` and/or
         ``matlab_attributes`` (depending on the attributes of 'options')
         are deleted. These are needed functions for writting essentially
         any Python object, so subclasses should probably call the
@@ -243,16 +243,16 @@ class TypeMarshaller(object):
         # The metadata that is written depends on the format.
 
         if options.store_type_information:
-            set_attribute_string(grp[name], 'CPython.Type', type_string)
+            set_attribute_string(grp[name], 'Python.Type', type_string)
 
         # If we are not storing type information or doing MATLAB
-        # compatibility, then attributes not in the cpython and/or
+        # compatibility, then attributes not in the python and/or
         # MATLAB lists need to be removed.
 
         attributes_used = set()
 
         if options.store_type_information:
-            attributes_used |= self.cpython_attributes
+            attributes_used |= self.python_attributes
 
         if options.MATLAB_compatible:
             attributes_used |= self.matlab_attributes
@@ -304,9 +304,9 @@ class TypeMarshaller(object):
 class NumpyScalarArrayMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.cpython_attributes |= {'CPython.Shape', 'CPython.Empty',
-                                    'CPython.numpy.UnderlyingType',
-                                    'CPython.numpy.Container'}
+        self.python_attributes |= {'Python.Shape', 'Python.Empty',
+                                   'Python.numpy.UnderlyingType',
+                                   'Python.numpy.Container'}
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
                                    'MATLAB_int_decode'}
         self.types = [np.ndarray, np.matrix,
@@ -316,18 +316,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
                       np.bytes_, np.str_, np.object_]
-        self.cpython_type_strings = ['numpy.ndarray', 'numpy.matrix',
-                                     'numpy.bool_',
-                                     'numpy.uint8', 'numpy.uint16',
-                                     'numpy.uint32', 'numpy.uint64',
-                                     'numpy.int8', 'numpy.int16',
-                                     'numpy.int32', 'numpy.int64',
-                                     'numpy.float16', 'numpy.float32',
-                                     'numpy.float64',
-                                     'numpy.complex64',
-                                     'numpy.complex128',
-                                     'numpy.bytes_', 'numpy.str_',
-                                     'numpy.object_']
+        self.python_type_strings = ['numpy.ndarray', 'numpy.matrix',
+                                    'numpy.bool_',
+                                    'numpy.uint8', 'numpy.uint16',
+                                    'numpy.uint32', 'numpy.uint64',
+                                    'numpy.int8', 'numpy.int16',
+                                    'numpy.int32', 'numpy.int64',
+                                    'numpy.float16', 'numpy.float32',
+                                    'numpy.float64',
+                                    'numpy.complex64',
+                                    'numpy.complex128',
+                                    'numpy.bytes_', 'numpy.str_',
+                                    'numpy.object_']
 
         # If we are storing in MATLAB format, we will need to be able to
         # set the MATLAB_class attribute. The different numpy types just
@@ -512,10 +512,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # 'matrix') need to be stored.
 
         if options.store_type_information:
-            set_attribute(grp[name], 'CPython.Shape',
+            set_attribute(grp[name], 'Python.Shape',
                           np.uint64(data.shape))
             set_attribute_string(grp[name],
-                                 'CPython.numpy.UnderlyingType',
+                                 'Python.numpy.UnderlyingType',
                                  data.dtype.name)
             if isinstance(data, np.matrix):
                 container = 'matrix'
@@ -523,10 +523,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 container = 'ndarray'
             else:
                 container = 'scalar'
-            set_attribute_string(grp[name], 'CPython.numpy.Container',
+            set_attribute_string(grp[name], 'Python.numpy.Container',
                                  container)
 
-        # If data is empty, we need to set the CPython.Empty and
+        # If data is empty, we need to set the Python.Empty and
         # MATLAB_empty attributes to 1 if we are storing type info or
         # making it MATLAB compatible. Otherwise, no empty attribute is
         # set and existing ones must be deleted.
@@ -535,17 +535,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or data.dtype.type == np.str_)
                 and data.nbytes == 0):
             if options.store_type_information:
-                set_attribute(grp[name], 'CPython.Empty',
+                set_attribute(grp[name], 'Python.Empty',
                                           np.uint8(1))
             else:
-                del_attribute(grp[name], 'CPython.Empty')
+                del_attribute(grp[name], 'Python.Empty')
             if options.MATLAB_compatible:
                 set_attribute(grp[name], 'MATLAB_empty',
                                           np.uint8(1))
             else:
                 del_attribute(grp[name], 'MATLAB_empty')
         else:
-            del_attribute(grp[name], 'CPython.Empty')
+            del_attribute(grp[name], 'Python.Empty')
             del_attribute(grp[name], 'MATLAB_empty')
 
         # If we are making it MATLAB compatible, the MATLAB_class
@@ -582,13 +582,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Get the different attributes this marshaller uses.
 
-        type_string = get_attribute_string(grp[name], 'CPython.Type')
+        type_string = get_attribute_string(grp[name], 'Python.Type')
         underlying_type = get_attribute_string(grp[name], \
-            'CPython.numpy.UnderlyingType')
-        shape = get_attribute(grp[name], 'CPython.Shape')
+            'Python.numpy.UnderlyingType')
+        shape = get_attribute(grp[name], 'Python.Shape')
         container = get_attribute_string(grp[name], \
-            'CPython.numpy.Container')
-        cpython_empty = get_attribute(grp[name], 'CPython.Empty')
+            'Python.numpy.Container')
+        python_empty = get_attribute(grp[name], 'Python.Empty')
 
         matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
         matlab_empty = get_attribute(grp[name], 'MATLAB_empty')
@@ -625,13 +625,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         if type_string is not None and underlying_type is not None and \
                 shape is not None:
-            # If it is empty ('CPython.Empty' set to 1), then the shape
+            # If it is empty ('Python.Empty' set to 1), then the shape
             # information is stored in data and we need to set data to
             # the empty array of the proper type (in underlying_type)
             # and the given shape. If we are going to transpose it
             # later, we need to transpose it now so that it still keeps
             # the right shape.
-            if cpython_empty == 1:
+            if python_empty == 1:
                 data = np.zeros(tuple(shape),
                                 dtype=underlying_type)
                 if matlab_class is not None or \
@@ -669,7 +669,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # manually set to '' and b'' or there will be problems.
             if container == 'scalar':
                 data = data[()]
-                if cpython_empty == 1:
+                if python_empty == 1:
                     if underlying_type == 'bytes':
                         data = np.bytes_(b'')
                     elif underlying_type == 'str':
@@ -727,7 +727,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
         self.types = [bool, int, float, complex]
-        self.cpython_type_strings = ['bool', 'int', 'float', 'complex']
+        self.python_type_strings = ['bool', 'int', 'float', 'complex']
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
@@ -755,9 +755,9 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # type (just look up the entry in types). As it might be
         # returned as an ndarray, it needs to be run through
         # np.asscalar.
-        type_string = get_attribute_string(grp[name], 'CPython.Type')
-        if type_string in self.cpython_type_strings:
-            tp = self.types[self.cpython_type_strings.index(
+        type_string = get_attribute_string(grp[name], 'Python.Type')
+        if type_string in self.python_type_strings:
+            tp = self.types[self.python_type_strings.index(
                             type_string)]
             return tp(np.asscalar(data))
         else:
@@ -769,7 +769,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
         self.types = [str, bytes, bytearray]
-        self.cpython_type_strings = ['str', 'bytes', 'bytearray']
+        self.python_type_strings = ['str', 'bytes', 'bytearray']
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
@@ -795,7 +795,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). Otherwise, return it
         # as is.
-        type_string = get_attribute_string(grp[name], 'CPython.Type')
+        type_string = get_attribute_string(grp[name], 'Python.Type')
         if type_string == 'str':
             if isinstance(data, np.ndarray):
                 return data.tostring().decode()
@@ -813,7 +813,7 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
         self.types = [type(None)]
-        self.cpython_type_strings = ['builtins.NoneType']
+        self.python_type_strings = ['builtins.NoneType']
         # None corresponds to no MATLAB class.
         self.matlab_classes = []
 
@@ -835,10 +835,10 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
 class PythonDictMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.cpython_attributes |= {'CPython.Empty'}
+        self.python_attributes |= {'Python.Empty'}
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty'}
         self.types = [dict]
-        self.cpython_type_strings = ['dict']
+        self.python_type_strings = ['dict']
         self.__MATLAB_classes = {dict: 'struct'}
         # Set matlab_classes to the supported classes (the values).
         self.matlab_classes = list(self.__MATLAB_classes.values())
@@ -893,24 +893,24 @@ class PythonDictMarshaller(TypeMarshaller):
                                       type_string, options)
 
         # If data is empty and we are supposed to store shape info for
-        # empty data, we need to set the CPython.Empty and MATLAB_empty
+        # empty data, we need to set the Python.Empty and MATLAB_empty
         # attributes to 1 if we are storing type info or making it
         # MATLAB compatible. Otherwise, no empty attribute is set and
         # existing ones must be deleted.
 
         if options.store_shape_for_empty and len(data) == 0:
             if options.store_type_information:
-                set_attribute(grp[name], 'CPython.Empty',
+                set_attribute(grp[name], 'Python.Empty',
                                           np.uint8(1))
             else:
-                del_attribute(grp[name], 'CPython.Empty')
+                del_attribute(grp[name], 'Python.Empty')
             if options.MATLAB_compatible:
                 set_attribute(grp[name], 'MATLAB_empty',
                                           np.uint8(1))
             else:
                 del_attribute(grp[name], 'MATLAB_empty')
         else:
-            del_attribute(grp[name], 'CPython.Empty')
+            del_attribute(grp[name], 'Python.Empty')
             del_attribute(grp[name], 'MATLAB_empty')
 
         # If we are making it MATLAB compatible, the MATLAB_class
@@ -966,7 +966,7 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
         self.types = [list]
-        self.cpython_type_strings = ['list']
+        self.python_type_strings = ['list']
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
@@ -998,8 +998,8 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
     def __init__(self):
         PythonListMarshaller.__init__(self)
         self.types = [tuple, set, frozenset, collections.deque]
-        self.cpython_type_strings = ['tuple', 'set', 'frozenset',
-                                     'collections.deque']
+        self.python_type_strings = ['tuple', 'set', 'frozenset',
+                                    'collections.deque']
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
@@ -1022,9 +1022,9 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types).
-        type_string = get_attribute_string(grp[name], 'CPython.Type')
-        if type_string in self.cpython_type_strings:
-            tp = self.types[self.cpython_type_strings.index(
+        type_string = get_attribute_string(grp[name], 'Python.Type')
+        if type_string in self.python_type_strings:
+            tp = self.types[self.python_type_strings.index(
                             type_string)]
             return tp(data)
         else:

@@ -13,8 +13,8 @@ TypeMarshaller
    :members: get_type_string, read, write, write_metadata 
    :show-inheritance:
 
-   .. autoinstanceattribute:: TypeMarshaller.cpython_attributes
-      :annotation: = {'CPython.Type'}
+   .. autoinstanceattribute:: TypeMarshaller.python_attributes
+      :annotation: = {'Python.Type'}
 
    .. autoinstanceattribute:: TypeMarshaller.matlab_attributes
       :annotation: = {'H5PATH'}
@@ -22,7 +22,7 @@ TypeMarshaller
    .. autoinstanceattribute:: TypeMarshaller.types
       :annotation: = []
 
-   .. autoinstanceattribute:: TypeMarshaller.cpython_type_strings
+   .. autoinstanceattribute:: TypeMarshaller.python_type_strings
       :annotation: = []
 
    .. autoinstanceattribute:: TypeMarshaller.matlab_classes
@@ -36,10 +36,10 @@ NumpyScalarArrayMarshaller
    :members: read, write, write_metadata 
    :show-inheritance:
 
-   .. autoinstanceattribute:: NumpyScalarArrayMarshaller.cpython_attributes
-      :annotation: = {'CPython.Type', 'CPython.Shape', 'CPython.Empty',
-		      'CPython.numpy.UnderlyingType',
-                      'CPython.numpy.Container'}
+   .. autoinstanceattribute:: NumpyScalarArrayMarshaller.python_attributes
+      :annotation: = {'Python.Type', 'Python.Shape', 'Python.Empty',
+		      'Python.numpy.UnderlyingType',
+                      'Python.numpy.Container'}
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.matlab_attributes
       :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
@@ -54,7 +54,7 @@ NumpyScalarArrayMarshaller
                       np.complex64, np.complex128,
                       np.bytes_, np.str_, np.object_]
 
-   .. autoinstanceattribute:: NumpyScalarArrayMarshaller.cpython_type_strings
+   .. autoinstanceattribute:: NumpyScalarArrayMarshaller.python_type_strings
       :annotation: = ['numpy.ndarray', 'numpy.matrix',
                       'numpy.bool_', 'numpy.uint8', 'numpy.uint16',
                       'numpy.uint32', 'numpy.uint64', 'numpy.int8',
@@ -76,10 +76,10 @@ PythonScalarMarshaller
    :members: read, write
    :show-inheritance:
 
-   .. autoinstanceattribute:: PythonScalarMarshaller.cpython_attributes
-      :annotation: = {'CPython.Type', 'CPython.Shape', 'CPython.Empty',
-		      'CPython.numpy.UnderlyingType',
-                      'CPython.numpy.Container'}
+   .. autoinstanceattribute:: PythonScalarMarshaller.python_attributes
+      :annotation: = {'Python.Type', 'Python.Shape', 'Python.Empty',
+		      'Python.numpy.UnderlyingType',
+                      'Python.numpy.Container'}
 
    .. autoinstanceattribute:: PythonScalarMarshaller.matlab_attributes
       :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
@@ -88,7 +88,7 @@ PythonScalarMarshaller
    .. autoinstanceattribute:: PythonScalarMarshaller.types
       :annotation: = [bool, int, float, complex]
 
-   .. autoinstanceattribute:: PythonScalarMarshaller.cpython_type_strings
+   .. autoinstanceattribute:: PythonScalarMarshaller.python_type_strings
       :annotation: = ['bool', 'int', 'float', 'complex']
 
    .. autoinstanceattribute:: PythonScalarMarshaller.matlab_classes
@@ -102,10 +102,10 @@ PythonStringMarshaller
    :members: read, write
    :show-inheritance:
 
-   .. autoinstanceattribute:: PythonStringMarshaller.cpython_attributes
-      :annotation: = {'CPython.Type', 'CPython.Shape', 'CPython.Empty',
-		      'CPython.numpy.UnderlyingType',
-                      'CPython.numpy.Container'}
+   .. autoinstanceattribute:: PythonStringMarshaller.python_attributes
+      :annotation: = {'Python.Type', 'Python.Shape', 'Python.Empty',
+		      'Python.numpy.UnderlyingType',
+                      'Python.numpy.Container'}
 
    .. autoinstanceattribute:: PythonStringMarshaller.matlab_attributes
       :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
@@ -114,7 +114,7 @@ PythonStringMarshaller
    .. autoinstanceattribute:: PythonStringMarshaller.types
       :annotation: = [str, bytes, bytearray]
 
-   .. autoinstanceattribute:: PythonStringMarshaller.cpython_type_strings
+   .. autoinstanceattribute:: PythonStringMarshaller.python_type_strings
       :annotation: = ['str', 'bytes', 'bytearray']
 
    .. autoinstanceattribute:: PythonStringMarshaller.matlab_classes
@@ -128,10 +128,10 @@ PythonNoneMarshaller
    :members: read, write
    :show-inheritance:
 
-   .. autoinstanceattribute:: PythonNoneMarshaller.cpython_attributes
-      :annotation: = {'CPython.Type', 'CPython.Shape', 'CPython.Empty',
-		      'CPython.numpy.UnderlyingType',
-                      'CPython.numpy.Container'}
+   .. autoinstanceattribute:: PythonNoneMarshaller.python_attributes
+      :annotation: = {'Python.Type', 'Python.Shape', 'Python.Empty',
+		      'Python.numpy.UnderlyingType',
+                      'Python.numpy.Container'}
 
    .. autoinstanceattribute:: PythonNoneMarshaller.matlab_attributes
       :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
@@ -140,7 +140,7 @@ PythonNoneMarshaller
    .. autoinstanceattribute:: PythonNoneMarshaller.types
       :annotation: = [builtins.NoneType]
 
-   .. autoinstanceattribute:: PythonNoneMarshaller.cpython_type_strings
+   .. autoinstanceattribute:: PythonNoneMarshaller.python_type_strings
       :annotation: = ['builtins.NoneType']
 
    .. autoinstanceattribute:: PythonNoneMarshaller.matlab_classes
@@ -154,8 +154,8 @@ PythonDictMarshaller
    :members: read, write, write_metadata
    :show-inheritance:
 
-   .. autoinstanceattribute:: PythonDictMarshaller.cpython_attributes
-      :annotation: = {'CPython.Type', 'CPython.Empty'}
+   .. autoinstanceattribute:: PythonDictMarshaller.python_attributes
+      :annotation: = {'Python.Type', 'Python.Empty'}
 
    .. autoinstanceattribute:: PythonDictMarshaller.matlab_attributes
       :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty'}
@@ -163,7 +163,7 @@ PythonDictMarshaller
    .. autoinstanceattribute:: PythonDictMarshaller.types
       :annotation: = [dict]
 
-   .. autoinstanceattribute:: PythonDictMarshaller.cpython_type_strings
+   .. autoinstanceattribute:: PythonDictMarshaller.python_type_strings
       :annotation: = ['dict']
 
    .. autoinstanceattribute:: PythonDictMarshaller.matlab_classes
@@ -177,10 +177,10 @@ PythonListMarshaller
    :members: read, write
    :show-inheritance:
 
-   .. autoinstanceattribute:: PythonListMarshaller.cpython_attributes
-      :annotation: = {'CPython.Type', 'CPython.Shape', 'CPython.Empty',
-		      'CPython.numpy.UnderlyingType',
-                      'CPython.numpy.Container'}
+   .. autoinstanceattribute:: PythonListMarshaller.python_attributes
+      :annotation: = {'Python.Type', 'Python.Shape', 'Python.Empty',
+		      'Python.numpy.UnderlyingType',
+                      'Python.numpy.Container'}
 
    .. autoinstanceattribute:: PythonListMarshaller.matlab_attributes
       :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
@@ -189,7 +189,7 @@ PythonListMarshaller
    .. autoinstanceattribute:: PythonListMarshaller.types
       :annotation: = [list]
 
-   .. autoinstanceattribute:: PythonListMarshaller.cpython_type_strings
+   .. autoinstanceattribute:: PythonListMarshaller.python_type_strings
       :annotation: = ['list']
 
    .. autoinstanceattribute:: PythonListMarshaller.matlab_classes
@@ -203,10 +203,10 @@ PythonTupleSetDequeMarshaller
    :members: read, write
    :show-inheritance:
 
-   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.cpython_attributes
-      :annotation: = {'CPython.Type', 'CPython.Shape', 'CPython.Empty',
-		      'CPython.numpy.UnderlyingType',
-                      'CPython.numpy.Container'}
+   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.python_attributes
+      :annotation: = {'Python.Type', 'Python.Shape', 'Python.Empty',
+		      'Python.numpy.UnderlyingType',
+                      'Python.numpy.Container'}
 
    .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.matlab_attributes
       :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
@@ -215,7 +215,7 @@ PythonTupleSetDequeMarshaller
    .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.types
       :annotation: = [tuple, set, frozenset, collections.deque]
 
-   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.cpython_type_strings
+   .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.python_type_strings
       :annotation: = ['tuple', 'set', 'frozenset', 'collections.deque']
 
    .. autoinstanceattribute:: PythonTupleSetDequeMarshaller.matlab_classes
