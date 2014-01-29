@@ -10,6 +10,7 @@ import random
 import unittest
 
 import numpy as np
+import numpy.random
 
 import hdf5storage
 
@@ -50,6 +51,14 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
         return random.uniform(-1.0, 1.0) \
             * 10.0**random.randint(-300, 300)
 
+    def random_numpy(self, shape, dtype):
+        nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
+        return np.ndarray(shape=shape, dtype=dtype,
+                          buffer=np.random.bytes(nbytes*np.prod(shape)))
+
+    def random_numpy_scalar(self, dtype):
+        return self.random_numpy(tuple(), dtype)[()]
+
     def random_name(self):
         depth = random.randint(1, 5)
         path = '/'
@@ -78,6 +87,10 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
 
     def assert_equal(self, a, b):
         self.assertEqual(a, b)
+
+    def assert_equal_numpy(self, a, b):
+        self.assertTrue(type(a) == type(b) and a.dtype == b.dtype
+                        and a.shape == b.shape and np.all(a == b))
 
     def test_None(self):
         data = None
@@ -168,6 +181,142 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
         out = self.write_readback_bytearray(data, self.random_name(),
                                             self.options)
         self.assert_equal_bytearray(data, out)
+
+    def t_numpy_scalar(self, dtype):
+        data = self.random_numpy_scalar(dtype)
+        out = self.write_readback_bytearray(data, self.random_name(),
+                                            self.options)
+        self.assert_equal_numpy(data, out)
+
+    def t_numpy(self, dtype):
+        shape = (random.randint(1, 12), random.randint(1, 12))
+        data = self.random_numpy(shape, dtype)
+        out = self.write_readback_bytearray(data, self.random_name(),
+                                            self.options)
+        self.assert_equal_numpy(data, out)
+
+    def t_numpy_empty(self, dtype):
+        data = np.array([], dtype)
+        out = self.write_readback_bytearray(data, self.random_name(),
+                                            self.options)
+        self.assert_equal_numpy(data, out)
+
+    def test_numpy_uint8_scalar(self):
+        self.t_numpy_scalar('uint8')
+
+    def test_numpy_uint16_scalar(self):
+        self.t_numpy_scalar('uint16')
+
+    def test_numpy_uint32_scalar(self):
+        self.t_numpy_scalar('uint32')
+
+    def test_numpy_uint64_scalar(self):
+        self.t_numpy_scalar('uint64')
+
+    def test_numpy_int8_scalar(self):
+        self.t_numpy_scalar('int8')
+
+    def test_numpy_int16_scalar(self):
+        self.t_numpy_scalar('int16')
+
+    def test_numpy_int32_scalar(self):
+        self.t_numpy_scalar('int32')
+
+    def test_numpy_int64_scalar(self):
+        self.t_numpy_scalar('int64')
+
+    def test_numpy_float16_scalar(self):
+        self.t_numpy_scalar('float16')
+
+    def test_numpy_float32_scalar(self):
+        self.t_numpy_scalar('float32')
+
+    def test_numpy_float64_scalar(self):
+        self.t_numpy_scalar('float64')
+
+    def test_numpy_complex64_scalar(self):
+        self.t_numpy_scalar('complex64')
+
+    def test_numpy_complex128_scalar(self):
+        self.t_numpy_scalar('complex128')
+
+    def test_numpy_uint8(self):
+        self.t_numpy('uint8')
+
+    def test_numpy_uint16(self):
+        self.t_numpy('uint16')
+
+    def test_numpy_uint32(self):
+        self.t_numpy('uint32')
+
+    def test_numpy_uint64(self):
+        self.t_numpy('uint64')
+
+    def test_numpy_int8(self):
+        self.t_numpy('int8')
+
+    def test_numpy_int16(self):
+        self.t_numpy('int16')
+
+    def test_numpy_int32(self):
+        self.t_numpy('int32')
+
+    def test_numpy_int64(self):
+        self.t_numpy('int64')
+
+    def test_numpy_float16(self):
+        self.t_numpy('float16')
+
+    def test_numpy_float32(self):
+        self.t_numpy('float32')
+
+    def test_numpy_float64(self):
+        self.t_numpy('float64')
+
+    def test_numpy_complex64(self):
+        self.t_numpy('complex64')
+
+    def test_numpy_complex128(self):
+        self.t_numpy('complex128')
+
+    def test_numpy_uint8_empty(self):
+        self.t_numpy_empty('uint8')
+
+    def test_numpy_uint16_empty(self):
+        self.t_numpy_empty('uint16')
+
+    def test_numpy_uint32_empty(self):
+        self.t_numpy_empty('uint32')
+
+    def test_numpy_uint64_empty(self):
+        self.t_numpy_empty('uint64')
+
+    def test_numpy_int8_empty(self):
+        self.t_numpy_empty('int8')
+
+    def test_numpy_int16_empty(self):
+        self.t_numpy_empty('int16')
+
+    def test_numpy_int32_empty(self):
+        self.t_numpy_empty('int32')
+
+    def test_numpy_int64_empty(self):
+        self.t_numpy_empty('int64')
+
+    def test_numpy_float16_empty(self):
+        self.t_numpy_empty('float16')
+
+    def test_numpy_float32_empty(self):
+        self.t_numpy_empty('float32')
+
+    def test_numpy_float64_empty(self):
+        self.t_numpy_empty('float64')
+
+    def test_numpy_complex64_empty(self):
+        self.t_numpy_empty('complex64')
+
+    def test_numpy_complex128_empty(self):
+        self.t_numpy_empty('complex128')
 
 
 class TestWriteReadbackCpython(TestWriteReadbackCpythonMatlab):
