@@ -89,8 +89,9 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
         self.assertEqual(a, b)
 
     def assert_equal_numpy(self, a, b):
-        self.assertTrue(type(a) == type(b) and a.dtype == b.dtype
-                        and a.shape == b.shape and np.all(a == b))
+        self.assertTrue(type(a) == type(b) and a.dtype == b.dtype \
+                        and a.shape == b.shape and np.all((a == b) \
+                        | (np.isnan(a) & np.isnan(b))))
 
     def test_None(self):
         data = None
