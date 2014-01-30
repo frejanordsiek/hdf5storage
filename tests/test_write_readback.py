@@ -53,8 +53,11 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
 
     def random_numpy(self, shape, dtype):
         nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
-        return np.ndarray(shape=shape, dtype=dtype,
-                          buffer=np.random.bytes(nbytes*np.prod(shape)))
+        bts = np.random.bytes(nbytes * np.prod(shape))
+        if dtype == 'bool':
+            bts = b''.join([{True: b'\x01', False: b'\x00'}[ \
+                ch > 127] for ch in bts])
+        return np.ndarray(shape=shape, dtype=dtype, buffer=bts)
 
     def random_numpy_scalar(self, dtype):
         return self.random_numpy(tuple(), dtype)[()]
@@ -202,6 +205,9 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
                                             self.options)
         self.assert_equal_numpy(data, out)
 
+    def test_numpy_bool_scalar(self):
+        self.t_numpy_scalar('bool')
+
     def test_numpy_uint8_scalar(self):
         self.t_numpy_scalar('uint8')
 
@@ -241,6 +247,9 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
     def test_numpy_complex128_scalar(self):
         self.t_numpy_scalar('complex128')
 
+    def test_numpy_bool(self):
+        self.t_numpy('bool')
+
     def test_numpy_uint8(self):
         self.t_numpy('uint8')
 
@@ -279,6 +288,9 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
 
     def test_numpy_complex128(self):
         self.t_numpy('complex128')
+
+    def test_numpy_bool_empty(self):
+        self.t_numpy_empty('bool')
 
     def test_numpy_uint8_empty(self):
         self.t_numpy_empty('uint8')
