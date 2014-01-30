@@ -643,6 +643,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             if underlying_type.startswith('complex'):
                 data = decode_complex(data)
 
+            # If its underlying type is 'bool' but it is something else,
+            # then it needs to be converted (means it was written with
+            # the convert_bools_to_uint8 option).
+            if underlying_type == 'bool' and data.dtype.name != 'bool':
+                data = np.bool_(data)
+
             # If MATLAB attributes are present or the reverse dimension
             # order option was given, the dimension order needs to be
             # reversed. This needs to be done before any reshaping as
@@ -657,12 +663,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             if tuple(shape) != data.shape \
                     and np.prod(shape) == np.prod(data.shape):
                 data = data.reshape(tuple(shape))
-
-            # If its underlying type is 'bool' but it is something else,
-            # then it needs to be converted (means it was written with
-            # the convert_bools_to_uint8 option).
-            if underlying_type == 'bool8' and data.dtype.name != 'bool':
-                data = np.bool_(data)
 
             # Convert to scalar, matrix, or ndarray depending on the
             # container type. For an empty scalar string, it needs to be
