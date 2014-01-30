@@ -322,15 +322,11 @@ def encode_complex(data, complex_names):
         dtype_name = 'float' + str(int(float(dtype_name[7:])/2))
 
     # Create the new version of the data with the right field names for
-    # the real and complex parts and the right shape.
-    new_data = np.ndarray(shape=data.shape,
-                          dtype=[(complex_names[0], dtype_name),
-                          (complex_names[1], dtype_name)])
-
-    # Set the real and complex parts and return it.
-    new_data[complex_names[0]] = np.real(data)
-    new_data[complex_names[1]] = np.imag(data)
-    return new_data
+    # the real and complex parts. This is easy to do with putting the
+    # right detype in the view function.
+    dt = np.dtype([(complex_names[0], dtype_name),
+                   (complex_names[1], dtype_name)])
+    return data.view(dt).copy()
 
 
 def get_attribute(target, name):

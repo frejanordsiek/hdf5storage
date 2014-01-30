@@ -638,6 +638,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         options.reverse_dimension_order:
                     data = data.T
 
+            # If it is a complex type, then it needs to be decoded
+            # properly.
+            if underlying_type.startswith('complex'):
+                data = decode_complex(data)
+
             # If MATLAB attributes are present or the reverse dimension
             # order option was given, the dimension order needs to be
             # reversed. This needs to be done before any reshaping as
@@ -652,11 +657,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             if tuple(shape) != data.shape \
                     and np.prod(shape) == np.prod(data.shape):
                 data = data.reshape(tuple(shape))
-
-            # If it is a complex type, then it needs to be decoded
-            # properly.
-            if underlying_type.startswith('complex'):
-                data = decode_complex(data)
 
             # If its underlying type is 'bool' but it is something else,
             # then it needs to be converted (means it was written with
