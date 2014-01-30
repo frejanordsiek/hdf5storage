@@ -35,7 +35,7 @@ hierarchal form modelling a Unix filesystem (Datasets are equivalent to
 files, Groups are equivalent to directories, and links are supported).
 
 This package interfaces HDF5 files using the h5py package
-(http://www.h5py.org/) as opposed to the tables package
+(http://www.h5py.org/) as opposed to the PyTables package
 (http://www.pytables.org/).
 
 MATLAB MAT v7.3 file support
