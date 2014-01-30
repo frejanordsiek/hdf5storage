@@ -825,8 +825,8 @@ class MarshallerCollection(object):
             return None
 
 
-def write(data, name='/', filename='data.h5',
-          options=None, **keywords):
+def write(data, name='/', filename='data.h5', truncate_existing=False,
+          truncate_invalid_matlab=False, options=None, **keywords):
     """ Writes data into an HDF5 file (high level).
 
     High level function to store a Python type (`data`) to a specified
@@ -860,6 +860,13 @@ def write(data, name='/', filename='data.h5',
          is the name to write it to.
     filename : str, optional
         The name of the HDF5 file to write `data` to.
+    truncate_existing : bool, optional
+        Whether to truncate the file if it already exists before writing
+        to it.
+    truncate_invalid_matlab : bool, optional
+        Whether to truncate a file if matlab_compatibility is being
+        done and the file doesn't have the proper header (userblock in
+        HDF5 terms) setup for MATLAB metadata to be placed.
     options : Options, optional
         The options to use when writing. Is mutually exclusive with any
         additional keyword arguments given (set to ``None`` or don't
@@ -911,23 +918,38 @@ def write(data, name='/', filename='data.h5',
 
     try:
 
-        # If the file already exists, we just open it. If it doesn't
-        # exist yet and we are doing any MATLAB formatting, we need to
-        # allocate a 512 byte user block (need metadata for MATLAB to
-        # tell it is a valid .mat file). The user_block size is also
-        # grabbed right before closing, so that if there is a userblock
-        # and we are doing MATLAB formatting, we know to set it.
+        # If the file doesn't already exist or the option is set to
+        # truncate it if it does, just open it truncating whatever is
+        # there. Otherwise, open it for read/write access without
+        # truncating. Now, if we are doing matlab compatibility and it
+        # doesn't have a big enough userblock (for metadata for MATLAB
+        # to be able to tell it is a valid .mat file) and the
+        # truncate_invalid_matlab is set, then it needs to be closed and
+        # re-opened with truncation. Whenever we create the file from
+        # scratch, even if matlab compatibility isn't being done, a
+        # sufficiently sized userblock is going to be allocated
+        # (smallest size is 512) for future use (after all, someone
+        # might want to turn it to a .mat file later and need it and it
+        # is only 512 bytes).
 
-        if os.path.isfile(filename) or not options.matlab_compatible:
-            f = h5py.File(filename)
-        else:
+        if truncate_existing or not os.path.isfile(filename):
             f = h5py.File(filename, mode='w', userblock_size=512)
+        else:
+            f = h5py.File(filename)
+            if options.matlab_compatible and truncate_invalid_matlab \
+                    and f.userblock_size < 128:
+                f.close()
+                f = h5py.File(filename, mode='w', userblock_size=512)
+
+        # Need to make sure groupname is a valid group in f and grab its
+        # handle to pass on to the low level function.
 
         if groupname not in f:
             grp = f.require_group(groupname)
         else:
             grp = f[groupname]
 
+        # Hand off to the low level function.
         lowlevel.write_data(f, grp, targetname, data,
                             None, options)
     except:
