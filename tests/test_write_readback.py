@@ -326,7 +326,7 @@ class TestWriteReadbackCpython(TestWriteReadbackCpythonMatlab):
         # is turning MATLAB compatibility off and changing the file
         # name.
         TestWriteReadbackCpythonMatlab.setUp(self)
-        self.options = hdf5storage.Options(MATLAB_compatible=False)
+        self.options = hdf5storage.Options(matlab_compatible=False)
         self.filename = 'data.h5'
 
 if __name__ == '__main__':

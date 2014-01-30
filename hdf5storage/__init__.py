@@ -47,7 +47,7 @@ information or MATLAB metadata.
          'gg': {'123': 1}}}
 >>> hdf5storage.write(data=a, name='/', filename='data.h5',
                       store_type_information=False,
-                      MATLAB_compatible=False)
+                      matlab_compatible=False)
 >>> hdf5storage.read(name='/', filename='data.h5')
 {'a': array(2),
  'b': array(2.3),
@@ -84,7 +84,7 @@ type information but not MATLAB metadata.
          'gg': {'123': 1}}}
 >>> hdf5storage.write(data=a, name='/', filename='data_typeinfo.h5',
                       store_type_information=True,
-                      MATLAB_compatible=False)
+                      matlab_compatible=False)
 >>> hdf5storage.read(name='/', filename='data_typeinfo.h5')
 {'a': 2,
  'b': 2.3,
@@ -117,7 +117,7 @@ MATLAB metadata (making it a MAT v7.3 file) but not type information.
          'gg': {'123': 1}}}
 >>> hdf5storage.write(data=a, name='/', filename='data.mat',
                       store_type_information=False,
-                      MATLAB_compatible=True)
+                      matlab_compatible=True)
 >>> hdf5storage.read(name='/', filename='data.mat')
 {'a': array([[2]]),
  'b': array([[ 2.3]]),
@@ -150,7 +150,7 @@ both type information and MATLAB metadata (making it a MAT v7.3 file).
          'gg': {'123': 1}}}
 >>> hdf5storage.write(data=a, name='/', filename='data_typeinfo.mat',
                       store_type_information=True,
-                      MATLAB_compatible=True)
+                      matlab_compatible=True)
 >>> hdf5storage.read(name='/', filename='data_typeinfo.mat')
 {'a': 2,
  'b': 2.3,
@@ -193,7 +193,7 @@ class Options(object):
     There are many ways that data can be transformed as it is read or
     written from a file, and many attributes can be used to describe the
     data depending on its format. The option with the most effect is the
-    `MATLAB_compatible` option. It makes sure that the file is
+    `matlab_compatible` option. It makes sure that the file is
     compatible with MATLAB's HDF5 based version 7.3 mat file format. It
     overrides several options to the values in the following table.
 
@@ -218,7 +218,7 @@ class Options(object):
     ----------
     store_type_information : bool, optional
         See Attributes.
-    MATLAB_compatible : bool, optional
+    matlab_compatible : bool, optional
         See Attributes.
     delete_unused_variables:  : bool, optional
         See Attributes.
@@ -242,7 +242,7 @@ class Options(object):
     Attributes
     ----------
     store_type_information : bool
-    MATLAB_compatible : bool
+    matlab_compatible : bool
     delete_unused_variables : bool
     convert_scalars_to_arrays : bool
     convert_strings_to_utf16 : bool
@@ -260,7 +260,7 @@ class Options(object):
 
     """
     def __init__(self, store_type_information=True,
-                 MATLAB_compatible=True,
+                 matlab_compatible=True,
                  delete_unused_variables=False,
                  convert_scalars_to_arrays=False,
                  convert_strings_to_utf16=False,
@@ -281,10 +281,10 @@ class Options(object):
         self._store_shape_for_empty = False
         self._complex_names = ('r', 'i')
         self._group_for_references = "/#refs#"
-        self._MATLAB_compatible = True
+        self._matlab_compatible = True
 
         # Apply all the given options using the setters, making sure to
-        # do MATLAB_compatible last since it will override most of the
+        # do matlab_compatible last since it will override most of the
         # other ones.
 
         self.store_type_information = store_type_information
@@ -296,7 +296,7 @@ class Options(object):
         self.store_shape_for_empty = store_shape_for_empty
         self.complex_names = complex_names
         self.group_for_references = group_for_references
-        self.MATLAB_compatible = MATLAB_compatible
+        self.matlab_compatible = matlab_compatible
 
         # Set the h5py options to use for writing scalars and arrays to
         # blank for now.
@@ -339,7 +339,7 @@ class Options(object):
             self._store_type_information = value
 
     @property
-    def MATLAB_compatible(self):
+    def matlab_compatible(self):
         """ Whether or not to make the file compatible with MATLAB.
 
         bool
@@ -367,14 +367,14 @@ class Options(object):
         can recognize its format.
 
         """
-        return self._MATLAB_compatible
+        return self._matlab_compatible
 
-    @MATLAB_compatible.setter
-    def MATLAB_compatible(self, value):
+    @matlab_compatible.setter
+    def matlab_compatible(self, value):
         # If it is a bool, it can be set. If it is set to true, then
         # several other options need to be set appropriately.
         if isinstance(value, bool):
-            self._MATLAB_compatible = value
+            self._matlab_compatible = value
             if value:
                 self._delete_unused_variables = True
                 self._convert_scalars_to_arrays = True
@@ -407,7 +407,7 @@ class Options(object):
         if isinstance(value, bool):
             self._delete_unused_variables = value
         if not self._delete_unused_variables:
-            self._MATLAB_compatible = False
+            self._matlab_compatible = False
 
     @property
     def convert_scalars_to_arrays(self):
@@ -432,7 +432,7 @@ class Options(object):
         if isinstance(value, bool):
             self._convert_scalars_to_arrays = value
         if not self._convert_scalars_to_arrays:
-            self._MATLAB_compatible = False
+            self._matlab_compatible = False
 
     @property
     def convert_strings_to_utf16(self):
@@ -463,7 +463,7 @@ class Options(object):
         if isinstance(value, bool):
             self._convert_strings_to_utf16 = value
         if not self._convert_strings_to_utf16:
-            self._MATLAB_compatible = False
+            self._matlab_compatible = False
 
     @property
     def convert_bools_to_uint8(self):
@@ -489,7 +489,7 @@ class Options(object):
         if isinstance(value, bool):
             self._convert_bools_to_uint8 = value
         if not self._convert_bools_to_uint8:
-            self._MATLAB_compatible = False
+            self._matlab_compatible = False
 
     @property
     def reverse_dimension_order(self):
@@ -516,7 +516,7 @@ class Options(object):
         if isinstance(value, bool):
             self._reverse_dimension_order = value
         if not self._reverse_dimension_order:
-            self._MATLAB_compatible = False
+            self._matlab_compatible = False
 
     @property
     def store_shape_for_empty(self):
@@ -545,7 +545,7 @@ class Options(object):
         if isinstance(value, bool):
             self._store_shape_for_empty = value
         if not self._store_shape_for_empty:
-            self._MATLAB_compatible = False
+            self._matlab_compatible = False
 
     @property
     def complex_names(self):
@@ -574,7 +574,7 @@ class Options(object):
                 and isinstance(value[1], str):
             self._complex_names = value
         if self._complex_names != ('real', 'imag'):
-            self._MATLAB_compatible = False
+            self._matlab_compatible = False
 
     @property
     def group_for_references(self):
@@ -602,7 +602,7 @@ class Options(object):
             if len(pth) > 1 and posixpath.isabs(pth):
                 self._group_for_references = value
         if self._group_for_references != "/#refs#":
-            self._MATLAB_compatible = False
+            self._matlab_compatible = False
 
 
 class MarshallerCollection(object):
@@ -840,7 +840,7 @@ def write(data, name='/', filename='data.h5',
     one by ``options = Options(**keywords)``.
 
     Two very important options are ``store_type_information`` and
-    ``MATLAB_compatible``, which are ``bool``. The first makes it so
+    ``matlab_compatible``, which are ``bool``. The first makes it so
     that enough metadata (HDF5 Attributes) are written that `data` can
     be read back accurately without it (or its contents if it is a
     container type) ending up different types, transposed in the case of
@@ -918,7 +918,7 @@ def write(data, name='/', filename='data.h5',
         # grabbed right before closing, so that if there is a userblock
         # and we are doing MATLAB formatting, we know to set it.
 
-        if os.path.isfile(filename) or not options.MATLAB_compatible:
+        if os.path.isfile(filename) or not options.matlab_compatible:
             f = h5py.File(filename)
         else:
             f = h5py.File(filename, mode='w', userblock_size=512)
@@ -941,7 +941,7 @@ def write(data, name='/', filename='data.h5',
     # large userblock, write the new userblock. The same sort of error
     # handling is used.
 
-    if options.MATLAB_compatible and userblock_size >= 128:
+    if options.matlab_compatible and userblock_size >= 128:
         # Get the time.
         now = datetime.datetime.now()
 

@@ -96,7 +96,7 @@ class TypeMarshaller(object):
         #:
         #: ``set`` of attribute names the marshaller uses when maintaing
         #: Matlab HDF5 based mat file compatibility
-        #: (``Option.MATLAB_compatible`` is ``True``).
+        #: (``Option.matlab_compatible`` is ``True``).
         self.matlab_attributes = {'H5PATH'}
 
         #: List of Python types that can be marshalled.
@@ -254,7 +254,7 @@ class TypeMarshaller(object):
         if options.store_type_information:
             attributes_used |= self.python_attributes
 
-        if options.MATLAB_compatible:
+        if options.matlab_compatible:
             attributes_used |= self.matlab_attributes
 
         for attribute in (set(grp[name].attrs.keys()) - attributes_used):
@@ -464,7 +464,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 name_for_ref = next_unused_name_in_group(grp2, 16)
                 write_data(f, grp2, name_for_ref, x, None, options)
                 data_refs[index] = grp2[name_for_ref].ref
-                if options.MATLAB_compatible:
+                if options.matlab_compatible:
                     set_attribute_string(grp2[name_for_ref],
                                          'H5PATH', grp2.name)
                 else:
@@ -539,7 +539,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                           np.uint8(1))
             else:
                 del_attribute(grp[name], 'Python.Empty')
-            if options.MATLAB_compatible:
+            if options.matlab_compatible:
                 set_attribute(grp[name], 'MATLAB_empty',
                                           np.uint8(1))
             else:
@@ -554,7 +554,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # the MATLAB_int_decode attribute must be set
         # properly. Otherwise, the attributes must be deleted.
 
-        if options.MATLAB_compatible:
+        if options.matlab_compatible:
             tp = data.dtype.type
             if tp in self.__MATLAB_classes:
                 set_attribute_string(grp[name], 'MATLAB_class',
@@ -881,7 +881,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # be deleted).
         for k, v in data.items():
             write_data(f, grp2, k, v, None, options)
-            if options.MATLAB_compatible:
+            if options.matlab_compatible:
                 set_attribute_string(grp2[k], 'H5PATH', grp2.name)
             else:
                 del_attribute(grp2[k], 'H5PATH')
@@ -904,7 +904,7 @@ class PythonDictMarshaller(TypeMarshaller):
                                           np.uint8(1))
             else:
                 del_attribute(grp[name], 'Python.Empty')
-            if options.MATLAB_compatible:
+            if options.matlab_compatible:
                 set_attribute(grp[name], 'MATLAB_empty',
                                           np.uint8(1))
             else:
@@ -919,7 +919,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # the attributes need to be deleted.
 
         tp = type(data)
-        if options.MATLAB_compatible and tp in self.types \
+        if options.matlab_compatible and tp in self.types \
                 and self.types.index(tp) in self.__MATLAB_classes:
             set_attribute_string(grp[name], 'MATLAB_class', \
                 self.__MATLAB_classes[self.types.index(tp)])
