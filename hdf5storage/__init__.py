@@ -916,6 +916,7 @@ def write(data, name='/', filename='data.h5', truncate_existing=False,
     # wrapped in a try block, so that the file can be closed if any
     # errors happen (the error is re-raised).
 
+    f = None
     try:
 
         # If the file doesn't already exist or the option is set to
@@ -956,8 +957,9 @@ def write(data, name='/', filename='data.h5', truncate_existing=False,
         print("Unexpected error:", sys.exc_info()[0])
         raise
     finally:
-        userblock_size = f.userblock_size
-        f.close()
+        if isinstance(f, h5py.File):
+            userblock_size = f.userblock_size
+            f.close()
 
     # If we are doing MATLAB formatting and there is a sufficiently
     # large userblock, write the new userblock. The same sort of error
