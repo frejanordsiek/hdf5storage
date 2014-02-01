@@ -7,9 +7,9 @@ import posixpath
 import string
 import math
 import random
-import unittest
 
 import numpy as np
+import numpy.testing as npt
 import numpy.random
 
 import hdf5storage
@@ -18,12 +18,15 @@ import hdf5storage
 random.seed()
 
 
-class TestWriteReadbackCpythonMatlab(unittest.TestCase):
-    def setUp(self):
+class TestPythonMatlabFormat(object):
+    def __init__(self):
         self.filename = 'data.mat'
-
-        # Use the default options.
         self.options = hdf5storage.Options()
+
+        # Need a list of the supported numeric dtypes to test.
+        self.dtypes = ['bool', 'uint8', 'uint16', 'uint32', 'uint64',
+                       'int8', 'int16', 'int32', 'int64', 'float16',
+                       'float32', 'float64', 'complex64', 'complex128']
 
         # Now, there is a write_readback_X and assert_equal_X where X is
         # a type for every type. Unless one is overridden in a subclass,
@@ -89,36 +92,36 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
         return out
 
     def assert_equal(self, a, b):
-        self.assertEqual(a, b)
+        assert a == b
 
     def assert_equal_numpy(self, a, b):
-        self.assertTrue(type(a) == type(b) and a.dtype == b.dtype \
-                        and a.shape == b.shape and np.all((a == b) \
-                        | (np.isnan(a) & np.isnan(b))))
+        assert (type(a) == type(b) and a.dtype == b.dtype \
+                and a.shape == b.shape and np.all((a == b) \
+                | (np.isnan(a) & np.isnan(b))))
 
     def test_None(self):
         data = None
         out = self.write_readback_None(data, self.random_name(),
                                        self.options)
-        self.assert_equal_None(data, out)
+        self.assert_equal_None(out, data)
 
     def test_bool_True(self):
         data = True
         out = self.write_readback_bool(data, self.random_name(),
                                        self.options)
-        self.assert_equal_bool(data, out)
+        self.assert_equal_bool(out, data)
 
     def test_bool_False(self):
         data = False
         out = self.write_readback_bool(data, self.random_name(),
                                        self.options)
-        self.assert_equal_bool(data, out)
+        self.assert_equal_bool(out, data)
 
     def test_int(self):
         data = self.random_int()
         out = self.write_readback_int(data, self.random_name(),
                                       self.options)
-        self.assert_equal_int(data, out)
+        self.assert_equal_int(out, data)
 
     def test_float(self):
         data = self.random_float()
@@ -130,216 +133,99 @@ class TestWriteReadbackCpythonMatlab(unittest.TestCase):
         data = float(np.inf)
         out = self.write_readback_float(data, self.random_name(),
                                         self.options)
-        self.assert_equal_float(data, out)
+        self.assert_equal_float(out, data)
 
     def test_float_ninf(self):
         data = float(-np.inf)
         out = self.write_readback_float(data, self.random_name(),
                                         self.options)
-        self.assert_equal_float(data, out)
+        self.assert_equal_float(out, data)
 
     def test_float_nan(self):
         data = float(np.nan)
         out = self.write_readback_float(data, self.random_name(),
                                         self.options)
-        self.assertTrue(math.isnan(out))
+        assert math.isnan(out)
 
     def test_complex(self):
         data = self.random_float() + 1j*self.random_float()
         out = self.write_readback_float(data, self.random_name(),
                                         self.options)
-        self.assert_equal_float(data, out)
+        self.assert_equal_complex(out, data)
 
     def test_str(self):
         data = self.random_str_ascii(random.randint(1, 100))
         out = self.write_readback_str(data, self.random_name(),
                                       self.options)
-        self.assert_equal_str(data, out)
+        self.assert_equal_str(out, data)
 
     def test_str_empty(self):
         data = ''
         out = self.write_readback_str(data, self.random_name(),
                                       self.options)
-        self.assert_equal_str(data, out)
+        self.assert_equal_str(out, data)
 
     def test_bytes(self):
         data = self.random_bytes(random.randint(1, 100))
         out = self.write_readback_bytes(data, self.random_name(),
                                         self.options)
-        self.assert_equal_bytes(data, out)
+        self.assert_equal_bytes(out, data)
 
     def test_bytes_empty(self):
         data = b''
         out = self.write_readback_bytes(data, self.random_name(),
                                         self.options)
-        self.assert_equal_bytes(data, out)
+        self.assert_equal_bytes(out, data)
 
     def test_bytearray(self):
         data = bytearray(self.random_bytes(random.randint(1, 100)))
         out = self.write_readback_bytearray(data, self.random_name(),
                                             self.options)
-        self.assert_equal_bytearray(data, out)
+        self.assert_equal_bytearray(out, data)
 
     def test_bytearray_empty(self):
         data = bytearray(b'')
         out = self.write_readback_bytearray(data, self.random_name(),
                                             self.options)
-        self.assert_equal_bytearray(data, out)
+        self.assert_equal_bytearray(out, data)
 
-    def t_numpy_scalar(self, dtype):
+    def check_numpy_scalar(self, dtype):
         data = self.random_numpy_scalar(dtype)
         out = self.write_readback_bytearray(data, self.random_name(),
                                             self.options)
         self.assert_equal_numpy(data, out)
 
-    def t_numpy(self, dtype):
+    def check_numpy_array(self, dtype):
         shape = (random.randint(1, 12), random.randint(1, 12))
         data = self.random_numpy(shape, dtype)
         out = self.write_readback_bytearray(data, self.random_name(),
                                             self.options)
-        self.assert_equal_numpy(data, out)
+        self.assert_equal_numpy(out, data)
 
-    def t_numpy_empty(self, dtype):
+    def check_numpy_empty(self, dtype):
         data = np.array([], dtype)
         out = self.write_readback_bytearray(data, self.random_name(),
                                             self.options)
-        self.assert_equal_numpy(data, out)
+        self.assert_equal_numpy(out, data)
 
-    def test_numpy_bool_scalar(self):
-        self.t_numpy_scalar('bool')
+    def test_numpy_scalar(self):
+        for dt in self.dtypes:
+            yield self.check_numpy_scalar, dt
 
-    def test_numpy_uint8_scalar(self):
-        self.t_numpy_scalar('uint8')
+    def test_numpy_array(self):
+        for dt in self.dtypes:
+            yield self.check_numpy_array, dt
 
-    def test_numpy_uint16_scalar(self):
-        self.t_numpy_scalar('uint16')
-
-    def test_numpy_uint32_scalar(self):
-        self.t_numpy_scalar('uint32')
-
-    def test_numpy_uint64_scalar(self):
-        self.t_numpy_scalar('uint64')
-
-    def test_numpy_int8_scalar(self):
-        self.t_numpy_scalar('int8')
-
-    def test_numpy_int16_scalar(self):
-        self.t_numpy_scalar('int16')
-
-    def test_numpy_int32_scalar(self):
-        self.t_numpy_scalar('int32')
-
-    def test_numpy_int64_scalar(self):
-        self.t_numpy_scalar('int64')
-
-    def test_numpy_float16_scalar(self):
-        self.t_numpy_scalar('float16')
-
-    def test_numpy_float32_scalar(self):
-        self.t_numpy_scalar('float32')
-
-    def test_numpy_float64_scalar(self):
-        self.t_numpy_scalar('float64')
-
-    def test_numpy_complex64_scalar(self):
-        self.t_numpy_scalar('complex64')
-
-    def test_numpy_complex128_scalar(self):
-        self.t_numpy_scalar('complex128')
-
-    def test_numpy_bool(self):
-        self.t_numpy('bool')
-
-    def test_numpy_uint8(self):
-        self.t_numpy('uint8')
-
-    def test_numpy_uint16(self):
-        self.t_numpy('uint16')
-
-    def test_numpy_uint32(self):
-        self.t_numpy('uint32')
-
-    def test_numpy_uint64(self):
-        self.t_numpy('uint64')
-
-    def test_numpy_int8(self):
-        self.t_numpy('int8')
-
-    def test_numpy_int16(self):
-        self.t_numpy('int16')
-
-    def test_numpy_int32(self):
-        self.t_numpy('int32')
-
-    def test_numpy_int64(self):
-        self.t_numpy('int64')
-
-    def test_numpy_float16(self):
-        self.t_numpy('float16')
-
-    def test_numpy_float32(self):
-        self.t_numpy('float32')
-
-    def test_numpy_float64(self):
-        self.t_numpy('float64')
-
-    def test_numpy_complex64(self):
-        self.t_numpy('complex64')
-
-    def test_numpy_complex128(self):
-        self.t_numpy('complex128')
-
-    def test_numpy_bool_empty(self):
-        self.t_numpy_empty('bool')
-
-    def test_numpy_uint8_empty(self):
-        self.t_numpy_empty('uint8')
-
-    def test_numpy_uint16_empty(self):
-        self.t_numpy_empty('uint16')
-
-    def test_numpy_uint32_empty(self):
-        self.t_numpy_empty('uint32')
-
-    def test_numpy_uint64_empty(self):
-        self.t_numpy_empty('uint64')
-
-    def test_numpy_int8_empty(self):
-        self.t_numpy_empty('int8')
-
-    def test_numpy_int16_empty(self):
-        self.t_numpy_empty('int16')
-
-    def test_numpy_int32_empty(self):
-        self.t_numpy_empty('int32')
-
-    def test_numpy_int64_empty(self):
-        self.t_numpy_empty('int64')
-
-    def test_numpy_float16_empty(self):
-        self.t_numpy_empty('float16')
-
-    def test_numpy_float32_empty(self):
-        self.t_numpy_empty('float32')
-
-    def test_numpy_float64_empty(self):
-        self.t_numpy_empty('float64')
-
-    def test_numpy_complex64_empty(self):
-        self.t_numpy_empty('complex64')
-
-    def test_numpy_complex128_empty(self):
-        self.t_numpy_empty('complex128')
+    def test_numpy_empty(self):
+        for dt in self.dtypes:
+            yield self.check_numpy_empty, dt
 
 
-class TestWriteReadbackCpython(TestWriteReadbackCpythonMatlab):
-    def setUp(self):
+class TestPythonFormat(TestPythonMatlabFormat):
+    def __init__(self):
         # The parent does most of the setup. All that has to be changed
         # is turning MATLAB compatibility off and changing the file
         # name.
-        TestWriteReadbackCpythonMatlab.setUp(self)
+        TestPythonMatlabFormat.__init__(self)
         self.options = hdf5storage.Options(matlab_compatible=False)
         self.filename = 'data.h5'
-
-if __name__ == '__main__':
-    unittest.main()
