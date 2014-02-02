@@ -26,7 +26,8 @@ class TestPythonMatlabFormat(object):
         # Need a list of the supported numeric dtypes to test.
         self.dtypes = ['bool', 'uint8', 'uint16', 'uint32', 'uint64',
                        'int8', 'int16', 'int32', 'int64', 'float16',
-                       'float32', 'float64', 'complex64', 'complex128']
+                       'float32', 'float64', 'complex64', 'complex128',
+                       'bytes', 'str']
 
         # Now, there is an assert_equal_X where X is a type for every
         # type. Unless one is overridden in a subclass, they should all
@@ -54,15 +55,34 @@ class TestPythonMatlabFormat(object):
             * 10.0**random.randint(-300, 300)
 
     def random_numpy(self, shape, dtype):
-        nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
-        bts = np.random.bytes(nbytes * np.prod(shape))
-        if dtype == 'bool':
-            bts = b''.join([{True: b'\x01', False: b'\x00'}[ \
-                ch > 127] for ch in bts])
-        return np.ndarray(shape=shape, dtype=dtype, buffer=bts)
+        if dtype in 'bytes':
+            length = random.randint(1, 100)
+            data = np.zeros(shape=shape, dtype='S' + str(length))
+            for x in np.nditer(data, op_flags=['readwrite']):
+                x[...] = np.bytes_(self.random_bytes(length))
+            return data
+        elif dtype == 'str':
+            length = random.randint(1, 100)
+            data = np.zeros(shape=shape, dtype='U' + str(length))
+            for x in np.nditer(data, op_flags=['readwrite']):
+                x[...] = np.str_(self.random_str_ascii(length))
+            return data
+        else:
+            nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
+            bts = np.random.bytes(nbytes * np.prod(shape))
+            if dtype == 'bool':
+                bts = b''.join([{True: b'\x01', False: b'\x00'}[ \
+                    ch > 127] for ch in bts])
+            return np.ndarray(shape=shape, dtype=dtype, buffer=bts)
 
     def random_numpy_scalar(self, dtype):
-        return self.random_numpy(tuple(), dtype)[()]
+        if dtype == 'bytes':
+            return np.bytes_(self.random_bytes(random.randint(1, 100)))
+        elif dtype == 'str':
+            return np.str_(self.random_str_ascii(
+                           random.randint(1, 100)))
+        else:
+            return self.random_numpy(tuple(), dtype)[()]
 
     def random_name(self):
         depth = random.randint(1, 5)
@@ -94,14 +114,10 @@ class TestPythonMatlabFormat(object):
         assert a == b
 
     def assert_equal_numpy(self, a, b):
-        assert (type(a) == type(b) and a.dtype == b.dtype \
-                and a.shape == b.shape and np.all((a == b) \
-                | (np.isnan(a) & np.isnan(b))))
-
-    def assert_equal_numpy_string(self, a, b):
-        assert (type(a) == type(b) and a.dtype == b.dtype \
-                and a.shape == b.shape and a == b)
-
+        assert type(a) == type(b)
+        assert a.dtype == b.dtype
+        npt.assert_equal(a, b)
+    
     def test_None(self):
         data = None
         out = self.write_readback(data, self.random_name(),
