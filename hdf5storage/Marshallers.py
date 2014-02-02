@@ -632,8 +632,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # later, we need to transpose it now so that it still keeps
             # the right shape.
             if python_empty == 1:
-                data = np.zeros(tuple(shape),
-                                dtype=underlying_type)
+                if underlying_type.startswith('bytes'):
+                    data = np.zeros(tuple(shape), dtype='S1')
+                elif underlying_type.startswith('str'):
+                    data = np.zeros(tuple(shape), dtype='U1')
+                else:
+                    data = np.zeros(tuple(shape),
+                                    dtype=underlying_type)
                 if matlab_class is not None or \
                         options.reverse_dimension_order:
                     data = data.T
@@ -657,6 +662,28 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     options.reverse_dimension_order:
                 data = data.T
 
+            # String types might have to be decoded depending on the
+            # underlying type, and MATLAB class if given. They also need
+            # to be properly decoded into strings of the right length if
+            # it originally represented an array of strings (turned into
+            # uints of some sort). The length in bits is contained in
+            # the dtype name, which is the underlying_type.
+            if underlying_type.startswith('bytes'):
+                if underlying_type == 'bytes':
+                    data = np.bytes_(b'')
+                else:
+                    data = decode_to_numpy_ascii(data, \
+                        length=int(underlying_type[5:])//8)
+            elif underlying_type.startswith('str') \
+                    or matlab_class == 'char':
+                if underlying_type == 'str':
+                    data = np.str_('')
+                elif underlying_type.startswith('str'):
+                    data = decode_to_numpy_unicode(data, \
+                        length=int(underlying_type[3:])//32)
+                else:
+                    data = decode_to_numpy_unicode(data)
+
             # If the shape of data and the shape attribute are
             # different but give the same number of elements, then data
             # needs to be reshaped.
@@ -668,24 +695,22 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # container type. For an empty scalar string, it needs to be
             # manually set to '' and b'' or there will be problems.
             if container == 'scalar':
-                data = data[()]
-                if python_empty == 1:
-                    if underlying_type == 'bytes':
+                if underlying_type.startswith('bytes'):
+                    if python_empty == 1:
                         data = np.bytes_(b'')
-                    elif underlying_type == 'str':
-                        data = np.str_('')
+                    elif isinstance(data, np.ndarray):
+                        data = data.flatten()[0]
+                elif underlying_type.startswith('str'):
+                    if python_empty == 1:
+                        data = np.bytes_(b'')
+                    elif isinstance(data, np.ndarray):
+                        data = data.flatten()[0]
+                else:
+                    data = data.flatten()[0]
             elif container == 'matrix':
                 data = np.asmatrix(data)
             elif container == 'ndarray':
                 data = np.asarray(data)
-
-            # String types might have to be decoded depending on the
-            # underlying type, and MATLAB class if given.
-            if underlying_type.startswith('bytes'):
-                data = decode_to_numpy_ascii(data)
-            elif underlying_type.startswith('str') \
-                    or matlab_class == 'char':
-                data = decode_to_numpy_unicode(data)
 
         elif matlab_class in self.__MATLAB_classes_reverse:
             # MATLAB formatting information was given. The extraction

@@ -121,24 +121,44 @@ def decode_to_str(data):
         return data
 
 
-def decode_to_numpy_unicode(data):
+def decode_to_numpy_unicode(data, length=None):
     """ Decodes data to Numpy unicode string (str_).
 
-    Decodes `data` to a  Numpy unicode string (UTF-32), which is
-    ``numpy.str_``. If it can't be decoded, it is returned as
-    is. Unsigned integers, Python string types (``str``, ``bytes``), and
-    ``numpy.bytes_`` are supported.
+    Decodes `data` to Numpy unicode string (UTF-32), which is
+    ``numpy.str_``, or an array of them. If it can't be decoded, it is
+    returned as is. Unsigned integers, Python string types (``str``,
+    ``bytes``), and ``numpy.bytes_`` are supported. If it is an array of
+    ``numpy.bytes_``, an array of those all converted to ``numpy.str_``
+    is returned.
+
+    For an array of unsigned integers, it may be desirable to make an
+    array with strings of some specified length as opposed to an array
+    of the same size with each element being a one element string. This
+    naturally arises when converting strings to unsigned integer types
+    in the first place, so it needs to be reversible.  The `length`
+    parameter specifies how many to group together into a string
+    (desired string length). For 1d arrays, this is along its only
+    dimension. For higher dimensional arrays, it is done along each row
+    (across columns). So, for a 3x10x5 input array of uints and a
+    `length` of 5, the output array would be a 3x2x5 of 5 element
+    strings.
 
     Parameters
     ----------
     data : some type
         Data decode into a Numpy unicode string.
+    length : int or None, optional
+        The number of consecutive elements (in the case of unsigned
+        integer `data`) to compose each string in the output array from.
+        ``None`` indicates the full amount for a 1d array or the number
+        of columns (full length of row) for a higher dimension array.
 
     Returns
     -------
-    numpy.str_ or data
-        If `data` can be decoded into a ``numpy.str_``, the decoded
-        version is returned. Otherwise, `data` is returned unchanged.
+    numpy.str_ or numpy.ndarray of numpy.str_ or data
+        If `data` can be decoded into a ``numpy.str_`` or a
+        ``numpy.ndarray`` of them, the decoded version is returned.
+        Otherwise, `data` is returned unchanged.
 
     See Also
     --------
@@ -147,38 +167,132 @@ def decode_to_numpy_unicode(data):
     numpy.str_
 
     """
-    # Convert first to a Python str if it isn't already an np.str_.
-    if not isinstance(data, np.str_) \
-            and not (isinstance(data, np.ndarray) \
-            and data.dtype.name.startswith('str')):
-        data = decode_to_str(data)
-
-    # If it is an str, then we can wrap it in unicode. Otherwise, we
-    # have to return it as is.
-    if isinstance(data, str):
+    # The method of conversion depends on its type.
+    if isinstance(data, np.str_) or (isinstance(data, np.ndarray) \
+            and data.dtype.char == 'U'):
+        # It is already an np.str_ or array of them, so nothing needs to
+        # be done.
+        return data
+    elif isinstance(data, str):
+        # Easily converted through constructor.
         return np.str_(data)
+    elif isinstance(data, (bytes, bytearray, np.bytes_)):
+        # All of them can be decoded and then passed through the
+        # constructor.
+        return np.str_(data.decode())
+    elif isinstance(data, (np.uint8, np.uint16)):
+        # They are single ASCII or UTF-16 scalars, and are easily
+        # converted to a UTF-8 string and then passed through the
+        # constructor.
+        return np.str_(decode_to_str(data))
+    elif isinstance(data, np.uint32):
+        # It is just the uint32 version of the character, so it just
+        # needs to be have the dtype essentially changed by having its
+        # bytes read into ndarray.
+        return np.ndarray(shape=tuple(), dtype='U1',
+                          buffer=data.tostring())[()]
+    elif isinstance(data, np.ndarray) and data.dtype.char == 'S':
+        # We just need to convert it elementwise.
+        new_data = np.zeros(shape=data.shape,
+                            dtype='U' + str(data.dtype.itemsize))
+        for index, x in np.ndenumerate(data):
+            new_data[index] = np.str_(x.decode())
+        return new_data
+    elif isinstance(data, np.ndarray) \
+            and data.dtype.name in ('uint8', 'uint16', 'uint32'):
+        # It is an ndarray of some uint type. How it is converted
+        # depends on its shape. If its shape is just (), then it is just
+        # a scalar wrapped in an array, which can be converted by
+        # recursing the scalar value back into this function.
+        shape = list(data.shape)
+        if len(shape) == 0:
+            return decode_to_numpy_unicode(data[()])
+
+        # As there are more than one element, it gets a bit more
+        # complicated. We need to take the subarrays of the specified
+        # length along columns (1D arrays will be treated as row arrays
+        # here), each of those converted to an str_ scalar (normal
+        # string) and stuffed into a new array.
+        #
+        # If the length was not given, it needs to be set to full. Then
+        # the shape of the new array needs to be calculated (divide the
+        # appropriate dimension, which depends on the number of
+        # dimentions).
+        if len(shape) == 1:
+            if length is None:
+                length = shape[0]
+            new_shape = (shape[0]//length,)
+        else:
+            if length is None:
+                length = shape[1]
+            new_shape = shape.copy()
+            new_shape[1] //= length
+
+        # The new array can be made as all zeros (nulls) with enough
+        # padding to hold everything (dtype='UL' where 'L' is the
+        # length). It will start out as a 1d array and be reshaped into
+        # the proper shape later (makes indexing easier).
+        new_data = np.zeros(shape=(np.prod(new_shape),),
+                            dtype='U'+str(length))
+
+        # With data flattened into a 1d array, we just need to take
+        # length sized chunks, convert them (if they are uint8 or 16,
+        # then decode to str first, if they are uint32, put them as an
+        # input buffer for an ndarray of type 'U').
+        data = data.flatten()
+        for i in range(0, new_data.shape[0]):
+            chunk = data[(i*length):((i+1)*length)]
+            if data.dtype.name == 'uint32':
+                new_data[i] = np.ndarray(shape=tuple(),
+                                         dtype=new_data.dtype,
+                                         buffer=chunk.tostring())[()]
+            else:
+                new_data[i] = np.str_(decode_to_str(chunk))
+
+        # Only thing is left is to reshape it.
+        return new_data.reshape(tuple(new_shape))
     else:
+        # Couldn't figure out what it is, so nothing can be done but
+        # return it as is.
         return data
 
 
-def decode_to_numpy_ascii(data):
+def decode_to_numpy_ascii(data, length=None):
     """ Decodes data to Numpy ASCII string (bytes_).
 
     Decodes `data` to a  Numpy ASCII string, which is
-    ``numpy.bytes_``. If it can't be decoded, it is returned as
-    is. Unsigned integers, Python string types (``str``, ``bytes``), and
-    ``numpy.str_`` (UTF-32) are supported.
+    ``numpy.bytes_``, or an array of them. If it can't be decoded, it is
+    returned as is. Unsigned integers, Python string types (``str``,
+    ``bytes``), and ``numpy.str_`` (UTF-32) are supported.
+
+    For an array of unsigned integers, it may be desirable to make an
+    array with strings of some specified length as opposed to an array
+    of the same size with each element being a one element string. This
+    naturally arises when converting strings to unsigned integer types
+    in the first place, so it needs to be reversible.  The `length`
+    parameter specifies how many to group together into a string
+    (desired string length). For 1d arrays, this is along its only
+    dimension. For higher dimensional arrays, it is done along each row
+    (across columns). So, for a 3x10x5 input array of uints and a
+    `length` of 5, the output array would be a 3x2x5 of 5 element
+    strings.
 
     Parameters
     ----------
     data : some type
-        Data decode into a Numpy ASCII string.
+        Data decode into a Numpy ASCII string/s.
+    length : int or None, optional
+        The number of consecutive elements (in the case of unsigned
+        integer `data`) to compose each string in the output array from.
+        ``None`` indicates the full amount for a 1d array or the number
+        of columns (full length of row) for a higher dimension array.
 
     Returns
     -------
-    numpy.bytes_ or data
-        If `data` can be decoded into a ``numpy.bytes_``, the decoded
-        version is returned. Otherwise, `data` is returned unchanged.
+    numpy.bytes_ or numpy.ndarray of numpy.bytes_ or data
+        If `data` can be decoded into a ``numpy.bytes_`` or a
+        ``numpy.ndarray`` of them, the decoded version is returned.
+        Otherwise, `data` is returned unchanged.
 
     See Also
     --------
@@ -187,19 +301,90 @@ def decode_to_numpy_ascii(data):
     numpy.bytes_
 
     """
-    # Convert first to a Python str if it isn't already an np.bytes_.
-    if not isinstance(data, np.bytes_) \
-            and not (isinstance(data, np.ndarray) \
-            and data.dtype.name.startswith('bytes')):
-        data = decode_to_str(data)
+    # The method of conversion depends on its type.
+    if isinstance(data, np.bytes_) or (isinstance(data, np.ndarray) \
+            and data.dtype.char == 'S'):
+        # It is already an np.bytes_ or array of them, so nothing needs
+        # to be done.
+        return data
+    elif isinstance(data, (str, bytes, bytearray)):
+        # Easily converted through constructor.
+        return np.str_(data)
+    elif isinstance(data, (np.uint16, np.uint32)):
+        # They are single UTF-16 or UTF-32 scalars, and are easily
+        # converted to a UTF-8 string and then passed through the
+        # constructor.
+        return np.bytes_(decode_to_str(data))
+    elif isinstance(data, np.uint8):
+        # It is just the uint8 version of the character, so it just
+        # needs to be have the dtype essentially changed by having its
+        # bytes read into ndarray.
+        return np.ndarray(shape=tuple(), dtype='S1',
+                          buffer=data.tostring())[()]
+    elif isinstance(data, np.ndarray) and data.dtype.char == 'U':
+        # We just need to convert it elementwise.
+        new_data = np.zeros(shape=data.shape,
+                            dtype='S' + str(data.dtype.itemsize))
+        for index, x in np.ndenumerate(data):
+            new_data[index] = np.bytes_(x.encode(encoding='ASCII',
+                                        errors='replace'))
+        return new_data
+    elif isinstance(data, np.ndarray) \
+            and data.dtype.name in ('uint8', 'uint16', 'uint32'):
+        # It is an ndarray of some uint type. How it is converted
+        # depends on its shape. If its shape is just (), then it is just
+        # a scalar wrapped in an array, which can be converted by
+        # recursing the scalar value back into this function.
+        shape = list(data.shape)
+        if len(shape) == 0:
+            return decode_to_numpy_ascii(data[()])
 
-    # If it is an str, then we can wrap it in string_ while performing a
-    # conversion to ASCII. Otherwise, we
-    # have to return it as is.
-    if isinstance(data, str):
-        return np.bytes_(data.encode(encoding='ASCII',
-                         errors='replace'))
+        # As there are more than one element, it gets a bit more
+        # complicated. We need to take the subarrays of the specified
+        # length along columns (1D arrays will be treated as row arrays
+        # here), each of those converted to an str_ scalar (normal
+        # string) and stuffed into a new array.
+        #
+        # If the length was not given, it needs to be set to full. Then
+        # the shape of the new array needs to be calculated (divide the
+        # appropriate dimension, which depends on the number of
+        # dimentions).
+        if len(shape) == 1:
+            if length is None:
+                length = shape[0]
+            new_shape = (shape[0]//length,)
+        else:
+            if length is None:
+                length = shape[1]
+            new_shape = shape.copy()
+            new_shape[1] //= length
+
+        # The new array can be made as all zeros (nulls) with enough
+        # padding to hold everything (dtype='UL' where 'L' is the
+        # length). It will start out as a 1d array and be reshaped into
+        # the proper shape later (makes indexing easier).
+        new_data = np.zeros(shape=(np.prod(new_shape),),
+                            dtype='S'+str(length))
+
+        # With data flattened into a 1d array, we just need to take
+        # length sized chunks, convert them (if they are uint8 or 16,
+        # then decode to str first, if they are uint32, put them as an
+        # input buffer for an ndarray of type 'U').
+        data = data.flatten()
+        for i in range(0, new_data.shape[0]):
+            chunk = data[(i*length):((i+1)*length)]
+            if data.dtype.name == 'uint8':
+                new_data[i] = np.ndarray(shape=tuple(),
+                                         dtype=new_data.dtype,
+                                         buffer=chunk.tostring())[()]
+            else:
+                new_data[i] = np.bytes_(decode_to_str(chunk))
+
+        # Only thing is left is to reshape it.
+        return new_data.reshape(tuple(new_shape))
     else:
+        # Couldn't figure out what it is, so nothing can be done but
+        # return it as is.
         return data
 
 
