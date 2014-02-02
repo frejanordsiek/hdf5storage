@@ -100,17 +100,17 @@ def decode_to_str(data):
     if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
                   np.bytes_, np.str_)):
         if data.dtype.name == 'uint8':
-            return data.data.tobytes().decode(encoding='ASCII')
+            return data.flatten().tostring().decode(encoding='ASCII')
         elif data.dtype.name == 'uint16':
-            return data.data.tobytes().decode(encoding='UTF-16')
+            return data.tostring().decode(encoding='UTF-16')
         elif data.dtype.name == 'uint32':
-            return data.data.tobytes().decode(encoding='UTF-32')
+            return data.flatten.tostring().decode(encoding='UTF-32')
         elif data.dtype.name.startswith('bytes'):
             return data.decode(encoding='ASCII')
         else:
             if isinstance(data, np.ndarray):
-                return data.tostring().decode(encoding='UTF-32',
-                                              errors='replace')
+                return data.flatten.tostring().decode(encoding='UTF-32',
+                                                      errors='replace')
             else:
                 return data.encode(encoding='UTF-32').decode( \
                     encoding='UTF-32', errors='replace')
@@ -190,7 +190,7 @@ def decode_to_numpy_unicode(data, length=None):
         # needs to be have the dtype essentially changed by having its
         # bytes read into ndarray.
         return np.ndarray(shape=tuple(), dtype='U1',
-                          buffer=data.tostring())[()]
+                          buffer=data.flatten().tostring())[()]
     elif isinstance(data, np.ndarray) and data.dtype.char == 'S':
         # We just need to convert it elementwise.
         new_data = np.zeros(shape=data.shape,
@@ -224,7 +224,7 @@ def decode_to_numpy_unicode(data, length=None):
             new_shape = (shape[0]//length,)
         else:
             if length is None:
-                length = shape[1]
+                length = shape[-1]
             new_shape = shape.copy()
             new_shape[-1] //= length
 
@@ -320,7 +320,7 @@ def decode_to_numpy_ascii(data, length=None):
         # needs to be have the dtype essentially changed by having its
         # bytes read into ndarray.
         return np.ndarray(shape=tuple(), dtype='S1',
-                          buffer=data.tostring())[()]
+                          buffer=data.flatten().tostring())[()]
     elif isinstance(data, np.ndarray) and data.dtype.char == 'U':
         # We just need to convert it elementwise.
         new_data = np.zeros(shape=data.shape,
@@ -355,7 +355,7 @@ def decode_to_numpy_ascii(data, length=None):
             new_shape = (shape[0]//length,)
         else:
             if length is None:
-                length = shape[1]
+                length = shape[-1]
             new_shape = shape.copy()
             new_shape[-1] //= length
 

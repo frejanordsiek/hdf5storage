@@ -401,8 +401,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             if data_to_store.nbytes == 0:
                 data_to_store = np.uint32([])
             else:
-                data_to_store = np.atleast_1d( \
-                    data_to_store).view(np.uint32)
+                shape = list(np.atleast_1d(data_to_store).shape)
+                shape[-1] *= data_to_store.dtype.itemsize//4
+                data_to_store = data_to_store.flatten().view(np.uint32)
+                data_to_store = data_to_store.reshape(tuple(shape))
 
         # Convert scalars to arrays if that option is set.
 
