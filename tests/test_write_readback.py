@@ -20,6 +20,9 @@ random.seed()
 
 
 class TestPythonMatlabFormat(object):
+    # Test for the ability to write python types to an HDF5 file that
+    # type information and matlab information are stored in, and then
+    # read it back and have it be the same.
     def __init__(self):
         self.filename = 'data.mat'
         self.options = hdf5storage.Options()
@@ -31,10 +34,13 @@ class TestPythonMatlabFormat(object):
                        'bytes', 'str']
 
     def random_str_ascii(self, length):
+        # Makes a random ASCII str of the specified length.
         ltrs = string.ascii_letters + string.digits
         return ''.join([random.choice(ltrs) for i in range(0, length)])
 
     def random_bytes(self, length):
+        # Makes a random sequence of bytes of the specified length from
+        # the ASCII set.
         ltrs = bytes(range(1, 127))
         return bytes([random.choice(ltrs) for i in range(0, length)])
 
@@ -46,6 +52,15 @@ class TestPythonMatlabFormat(object):
             * 10.0**random.randint(-300, 300)
 
     def random_numpy(self, shape, dtype):
+        # Makes a random numpy array of the specified shape and dtype
+        # string. The method is slightly different depending on the
+        # type. For 'bytes', 'str', and 'object'; an array of the
+        # specified size is made and then each element is set to either
+        # a numpy.bytes_, numpy.str_, or some other object of any type
+        # (here, it is a randomly typed random numpy array). If it is
+        # any other type, then it is just a matter of constructing the
+        # right sized ndarray from a random sequence of bytes (all must
+        # be forced to 0 and 1 for bool).
         if dtype in 'bytes':
             length = random.randint(1, 100)
             data = np.zeros(shape=shape, dtype='S' + str(length))
@@ -74,6 +89,9 @@ class TestPythonMatlabFormat(object):
             return np.ndarray(shape=shape, dtype=dtype, buffer=bts)
 
     def random_numpy_scalar(self, dtype):
+        # How a random scalar is made depends on th type. For must, it
+        # is just a single number. But for the string types, it is a
+        # string of any length.
         if dtype == 'bytes':
             return np.bytes_(self.random_bytes(random.randint(1, 100)))
         elif dtype == 'str':
@@ -83,10 +101,16 @@ class TestPythonMatlabFormat(object):
             return self.random_numpy(tuple(), dtype)[()]
 
     def random_numpy_shape(self, dimensions, max_length):
+        # Makes a random shape tuple having the specified number of
+        # dimensions. The maximum size along each axis is max_length.
         return tuple([random.randint(1, max_length) for x in range(0,
                      dimensions)])
 
     def random_list(self, N, python_or_numpy='numpy'):
+        # Makes a random list of the specified type. If instructed, it
+        # will be composed entirely from random numpy arrays (make a
+        # random object array and then convert that to a
+        # list). Otherwise, it will be a list of random bytes.
         if python_or_numpy == 'numpy':
             return self.random_numpy((N,), dtype='object').tolist()
         else:
@@ -96,6 +120,7 @@ class TestPythonMatlabFormat(object):
             return data
 
     def random_name(self):
+        # Makes a random POSIX path of a random depth.
         depth = random.randint(1, 5)
         path = '/'
         for i in range(0, depth):
@@ -122,6 +147,13 @@ class TestPythonMatlabFormat(object):
         return out
 
     def assert_equal(self, a, b):
+        # Compares a and b for equality. If they are not numpy types
+        # (aren't or don't inherit from np.generic or np.ndarray), then
+        # it is a matter of just comparing them. Otherwise, their dtypes
+        # and shapes have to be compared. Then, if they are not an
+        # object array, numpy.testing.assert_equal will compare them
+        # elementwise. For object arrays, each element must be iterated
+        # over to be compared.
         assert type(a) == type(b)
         if not isinstance(b, (np.generic, np.ndarray)):
             assert a == b
@@ -135,6 +167,10 @@ class TestPythonMatlabFormat(object):
                     self.assert_equal(a[index], b[index])
 
     def assert_equal_python_collection(self, a, b, tp):
+        # Compares two python collections that are supposed to be the
+        # specified type tp. First, they have to be that type. If the
+        # type is a set type, then a simple comparison is all that is
+        # needed. Otherwise, an elementwise comparison needs to be done.
         assert type(a) == tp
         assert type(b) == tp
         assert len(a) == len(b)
@@ -143,6 +179,42 @@ class TestPythonMatlabFormat(object):
         else:
             for index in range(0, len(a)):
                 self.assert_equal(a[index], b[index])
+
+    def check_numpy_scalar(self, dtype):
+        # Makes a random numpy scalar of the given type, writes it and
+        # reads it back, and then compares it.
+        data = self.random_numpy_scalar(dtype)
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def check_numpy_array(self, dtype, dimensions):
+        # Makes a random numpy array of the given type, writes it and
+        # reads it back, and then compares it.
+        shape = self.random_numpy_shape(dimensions, 12)
+        data = self.random_numpy(shape, dtype)
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def check_numpy_empty(self, dtype):
+        # Makes an empty numpy array of the given type, writes it and
+        # reads it back, and then compares it.
+        data = np.array([], dtype)
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def check_python_collection(self, tp):
+        # Makes a random collection of the specified type, writes it and
+        # reads it back, and then compares it.
+        if tp in (set, frozenset):
+            data = tp(self.random_list(11, python_or_numpy='python'))
+        else:
+            data = tp(self.random_list(11, python_or_numpy='numpy'))
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal_python_collection(out, data, tp)
 
     def test_None(self):
         data = None
@@ -234,25 +306,6 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    def check_numpy_scalar(self, dtype):
-        data = self.random_numpy_scalar(dtype)
-        out = self.write_readback(data, self.random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
-
-    def check_numpy_array(self, dtype, dimensions):
-        shape = self.random_numpy_shape(dimensions, 12)
-        data = self.random_numpy(shape, dtype)
-        out = self.write_readback(data, self.random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
-
-    def check_numpy_empty(self, dtype):
-        data = np.array([], dtype)
-        out = self.write_readback(data, self.random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
-
     def test_numpy_scalar(self):
         for dt in self.dtypes:
             yield self.check_numpy_scalar, dt
@@ -278,15 +331,6 @@ class TestPythonMatlabFormat(object):
     def test_numpy_empty(self):
         for dt in self.dtypes:
             yield self.check_numpy_empty, dt
-
-    def check_python_collection(self, tp):
-        if tp in (set, frozenset):
-            data = tp(self.random_list(11, python_or_numpy='python'))
-        else:
-            data = tp(self.random_list(11, python_or_numpy='numpy'))
-        out = self.write_readback(data, self.random_name(),
-                                  self.options)
-        self.assert_equal_python_collection(out, data, tp)
 
     def test_python_collection(self):
         for tp in (list, tuple, set, frozenset, collections.deque):
