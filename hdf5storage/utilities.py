@@ -226,7 +226,7 @@ def decode_to_numpy_unicode(data, length=None):
             if length is None:
                 length = shape[1]
             new_shape = shape.copy()
-            new_shape[1] //= length
+            new_shape[-1] //= length
 
         # The new array can be made as all zeros (nulls) with enough
         # padding to hold everything (dtype='UL' where 'L' is the
@@ -357,7 +357,7 @@ def decode_to_numpy_ascii(data, length=None):
             if length is None:
                 length = shape[1]
             new_shape = shape.copy()
-            new_shape[1] //= length
+            new_shape[-1] //= length
 
         # The new array can be made as all zeros (nulls) with enough
         # padding to hold everything (dtype='UL' where 'L' is the
