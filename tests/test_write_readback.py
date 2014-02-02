@@ -33,6 +33,15 @@ class TestPythonMatlabFormat(object):
                        'float32', 'float64', 'complex64', 'complex128',
                        'bytes', 'str']
 
+        # Define the sizes of random datasets to use.
+        self.max_string_length = 10
+        self.max_array_axis_length = 8
+        self.max_list_length = 6
+        self.max_posix_path_depth = 5
+        self.max_posix_path_lengths = 17
+        self.object_subarray_dimensions = 2
+        self.max_object_subarray_axis_length = 5
+
     def random_str_ascii(self, length):
         # Makes a random ASCII str of the specified length.
         ltrs = string.ascii_letters + string.digits
@@ -62,13 +71,13 @@ class TestPythonMatlabFormat(object):
         # right sized ndarray from a random sequence of bytes (all must
         # be forced to 0 and 1 for bool).
         if dtype in 'bytes':
-            length = random.randint(1, 100)
+            length = random.randint(1, self.max_string_length)
             data = np.zeros(shape=shape, dtype='S' + str(length))
             for x in np.nditer(data, op_flags=['readwrite']):
                 x[...] = np.bytes_(self.random_bytes(length))
             return data
         elif dtype == 'str':
-            length = random.randint(1, 100)
+            length = random.randint(1, self.max_string_length)
             data = np.zeros(shape=shape, dtype='U' + str(length))
             for x in np.nditer(data, op_flags=['readwrite']):
                 x[...] = np.str_(self.random_str_ascii(length))
@@ -77,7 +86,9 @@ class TestPythonMatlabFormat(object):
             data = np.zeros(shape=shape, dtype='object')
             for index, x in np.ndenumerate(data):
                 data[index] = self.random_numpy( \
-                    shape=self.random_numpy_shape(2, 8), \
+                    shape=self.random_numpy_shape( \
+                    self.object_subarray_dimensions, \
+                    self.max_object_subarray_axis_length), \
                     dtype=random.choice(self.dtypes))
             return data
         else:
@@ -93,10 +104,11 @@ class TestPythonMatlabFormat(object):
         # is just a single number. But for the string types, it is a
         # string of any length.
         if dtype == 'bytes':
-            return np.bytes_(self.random_bytes(random.randint(1, 100)))
+            return np.bytes_(self.random_bytes(random.randint(1,
+                             self.max_string_length)))
         elif dtype == 'str':
             return np.str_(self.random_str_ascii(
-                           random.randint(1, 100)))
+                           random.randint(1, self.max_string_length)))
         else:
             return self.random_numpy(tuple(), dtype)[()]
 
@@ -116,16 +128,18 @@ class TestPythonMatlabFormat(object):
         else:
             data = []
             for i in range(0, N):
-                data.append(self.random_bytes(random.randint(1, 100)))
+                data.append(self.random_bytes(random.randint(1,
+                            self.max_string_length)))
             return data
 
     def random_name(self):
         # Makes a random POSIX path of a random depth.
-        depth = random.randint(1, 5)
+        depth = random.randint(1, self.max_posix_path_depth)
         path = '/'
         for i in range(0, depth):
             path = posixpath.join(path, self.random_str_ascii(
-                                  random.randint(1, 17)))
+                                  random.randint(1,
+                                  self.max_posix_path_lengths)))
         return path
 
     def write_readback(self, data, name, options):
@@ -191,7 +205,8 @@ class TestPythonMatlabFormat(object):
     def check_numpy_array(self, dtype, dimensions):
         # Makes a random numpy array of the given type, writes it and
         # reads it back, and then compares it.
-        shape = self.random_numpy_shape(dimensions, 12)
+        shape = self.random_numpy_shape(dimensions,
+                                        self.max_array_axis_length)
         data = self.random_numpy(shape, dtype)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
@@ -209,9 +224,11 @@ class TestPythonMatlabFormat(object):
         # Makes a random collection of the specified type, writes it and
         # reads it back, and then compares it.
         if tp in (set, frozenset):
-            data = tp(self.random_list(11, python_or_numpy='python'))
+            data = tp(self.random_list(self.max_list_length,
+                      python_or_numpy='python'))
         else:
-            data = tp(self.random_list(11, python_or_numpy='numpy'))
+            data = tp(self.random_list(self.max_list_length,
+                      python_or_numpy='numpy'))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
         self.assert_equal_python_collection(out, data, tp)
@@ -283,7 +300,8 @@ class TestPythonMatlabFormat(object):
         self.assert_equal(out, data)
 
     def test_str(self):
-        data = self.random_str_ascii(random.randint(1, 100))
+        data = self.random_str_ascii(random.randint(1,
+                                     self.max_string_length))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
         self.assert_equal(out, data)
@@ -295,7 +313,8 @@ class TestPythonMatlabFormat(object):
         self.assert_equal(out, data)
 
     def test_bytes(self):
-        data = self.random_bytes(random.randint(1, 100))
+        data = self.random_bytes(random.randint(1,
+                                 self.max_string_length))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
         self.assert_equal(out, data)
@@ -307,7 +326,8 @@ class TestPythonMatlabFormat(object):
         self.assert_equal(out, data)
 
     def test_bytearray(self):
-        data = bytearray(self.random_bytes(random.randint(1, 100)))
+        data = bytearray(self.random_bytes(random.randint(1,
+                         self.max_string_length)))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
         self.assert_equal(out, data)
