@@ -7,6 +7,7 @@ import posixpath
 import string
 import math
 import random
+import collections
 
 import numpy as np
 import numpy.testing as npt
@@ -95,6 +96,15 @@ class TestPythonMatlabFormat(object):
         return tuple([random.randint(1, max_length) for x in range(0,
                      dimensions)])
 
+    def random_list(self, N, python_or_numpy='numpy'):
+        if python_or_numpy == 'numpy':
+            return self.random_numpy((N,), dtype='object').tolist()
+        else:
+            data = []
+            for i in range(0, N):
+                data.append(self.random_bytes(random.randint(1, 100)))
+            return data
+
     def random_name(self):
         depth = random.randint(1, 5)
         path = '/'
@@ -123,6 +133,20 @@ class TestPythonMatlabFormat(object):
 
     def assert_equal(self, a, b):
         assert a == b
+
+    def assert_equal_python_collection(self, a, b, tp):
+        assert type(a) == tp
+        assert type(b) == tp
+        assert len(a) == len(b)
+        if type(b) in (set, frozenset):
+            assert a == b
+        else:
+            for index in range(0, len(a)):
+                assert type(a[index]) == type(b[index])
+                if isinstance(b[index], (np.generic, np.ndarray)):
+                    self.assert_equal_numpy(a[index], b[index])
+                else:
+                    self.assert_equal(a[index], b[index])
 
     def assert_equal_numpy(self, a, b):
         assert type(a) == type(b)
@@ -272,6 +296,19 @@ class TestPythonMatlabFormat(object):
     def test_numpy_empty(self):
         for dt in self.dtypes:
             yield self.check_numpy_empty, dt
+
+    def check_python_collection(self, tp):
+        if tp in (set, frozenset):
+            data = tp(self.random_list(11, python_or_numpy='python'))
+        else:
+            data = tp(self.random_list(11, python_or_numpy='numpy'))
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal_python_collection(out, data, tp)
+
+    def test_python_collection(self):
+        for tp in (list, tuple, set, frozenset, collections.deque):
+            yield self.check_python_collection, tp
 
 
 class TestPythonFormat(TestPythonMatlabFormat):
