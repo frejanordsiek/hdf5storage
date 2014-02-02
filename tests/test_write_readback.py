@@ -67,6 +67,13 @@ class TestPythonMatlabFormat(object):
             for x in np.nditer(data, op_flags=['readwrite']):
                 x[...] = np.str_(self.random_str_ascii(length))
             return data
+        elif dtype == 'object':
+            data = np.zeros(shape=shape, dtype='object')
+            for index, x in np.ndenumerate(data):
+                data[index] = self.random_numpy( \
+                    shape=self.random_numpy_shape(2, 8), \
+                    dtype=random.choice(self.dtypes))
+            return data
         else:
             nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
             bts = np.random.bytes(nbytes * np.prod(shape))
@@ -83,6 +90,10 @@ class TestPythonMatlabFormat(object):
                            random.randint(1, 100)))
         else:
             return self.random_numpy(tuple(), dtype)[()]
+
+    def random_numpy_shape(self, dimensions, max_length):
+        return tuple([random.randint(1, max_length) for x in range(0,
+                     dimensions)])
 
     def random_name(self):
         depth = random.randint(1, 5)
@@ -102,7 +113,7 @@ class TestPythonMatlabFormat(object):
             hdf5storage.write(data, name=name, filename=self.filename,
                               options=options)
             out = hdf5storage.read(name=name, filename=self.filename,
-                                options=options)
+                                   options=options)
         except:
             raise
         finally:
@@ -116,8 +127,17 @@ class TestPythonMatlabFormat(object):
     def assert_equal_numpy(self, a, b):
         assert type(a) == type(b)
         assert a.dtype == b.dtype
-        npt.assert_equal(a, b)
-    
+        if a.dtype.name != 'object':
+            npt.assert_equal(a, b)
+        else:
+            assert a.shape == b.shape
+            for index, x in np.ndenumerate(a):
+                assert type(a[index]) == type(b[index])
+                if isinstance(b[index], (np.generic, np.ndarray)):
+                    self.assert_equal_numpy(a[index], b[index])
+                else:
+                    assert a[index] == b[index]
+
     def test_None(self):
         data = None
         out = self.write_readback(data, self.random_name(),
@@ -215,7 +235,7 @@ class TestPythonMatlabFormat(object):
         self.assert_equal_numpy(out, data)
 
     def check_numpy_array(self, dtype):
-        shape = (random.randint(1, 12), random.randint(1, 12))
+        shape = self.random_numpy_shape(2, 12)
         data = self.random_numpy(shape, dtype)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
@@ -232,7 +252,9 @@ class TestPythonMatlabFormat(object):
             yield self.check_numpy_scalar, dt
 
     def test_numpy_array(self):
-        for dt in self.dtypes:
+        dtypes = self.dtypes.copy()
+        dtypes.append('object')
+        for dt in dtypes:
             yield self.check_numpy_array, dt
 
     def test_numpy_empty(self):
