@@ -30,16 +30,6 @@ class TestPythonMatlabFormat(object):
                        'float32', 'float64', 'complex64', 'complex128',
                        'bytes', 'str']
 
-        # Now, there is an assert_equal_X where X is a type for every
-        # type. Unless one is overridden in a subclass, they should all
-        # the base one. Storing things in the dict self.__dict__ will do
-        # this.
-
-        types = ['None', 'bool', 'int', 'float', 'complex', 'str',
-                 'bytes', 'bytearray']
-        for tp in types:
-            self.__dict__['assert_equal_' + tp] = self.assert_equal
-
     def random_str_ascii(self, length):
         ltrs = string.ascii_letters + string.digits
         return ''.join([random.choice(ltrs) for i in range(0, length)])
@@ -132,7 +122,17 @@ class TestPythonMatlabFormat(object):
         return out
 
     def assert_equal(self, a, b):
-        assert a == b
+        assert type(a) == type(b)
+        if not isinstance(b, (np.generic, np.ndarray)):
+            assert a == b
+        else:
+            assert a.dtype == b.dtype
+            assert a.shape == b.shape
+            if a.dtype.name != 'object':
+                npt.assert_equal(a, b)
+            else:
+                for index, x in np.ndenumerate(a):
+                    self.assert_equal(a[index], b[index])
 
     def assert_equal_python_collection(self, a, b, tp):
         assert type(a) == tp
@@ -142,67 +142,49 @@ class TestPythonMatlabFormat(object):
             assert a == b
         else:
             for index in range(0, len(a)):
-                assert type(a[index]) == type(b[index])
-                if isinstance(b[index], (np.generic, np.ndarray)):
-                    self.assert_equal_numpy(a[index], b[index])
-                else:
-                    self.assert_equal(a[index], b[index])
-
-    def assert_equal_numpy(self, a, b):
-        assert type(a) == type(b)
-        assert a.dtype == b.dtype
-        if a.dtype.name != 'object':
-            npt.assert_equal(a, b)
-        else:
-            assert a.shape == b.shape
-            for index, x in np.ndenumerate(a):
-                assert type(a[index]) == type(b[index])
-                if isinstance(b[index], (np.generic, np.ndarray)):
-                    self.assert_equal_numpy(a[index], b[index])
-                else:
-                    assert a[index] == b[index]
+                self.assert_equal(a[index], b[index])
 
     def test_None(self):
         data = None
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_None(out, data)
+        self.assert_equal(out, data)
 
     def test_bool_True(self):
         data = True
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_bool(out, data)
+        self.assert_equal(out, data)
 
     def test_bool_False(self):
         data = False
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_bool(out, data)
+        self.assert_equal(out, data)
 
     def test_int(self):
         data = self.random_int()
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_int(out, data)
+        self.assert_equal(out, data)
 
     def test_float(self):
         data = self.random_float()
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_float(out, data)
+        self.assert_equal(out, data)
 
     def test_float_inf(self):
         data = float(np.inf)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_float(out, data)
+        self.assert_equal(out, data)
 
     def test_float_ninf(self):
         data = float(-np.inf)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_float(out, data)
+        self.assert_equal(out, data)
 
     def test_float_nan(self):
         data = float(np.nan)
@@ -214,62 +196,62 @@ class TestPythonMatlabFormat(object):
         data = self.random_float() + 1j*self.random_float()
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_complex(out, data)
+        self.assert_equal(out, data)
 
     def test_str(self):
         data = self.random_str_ascii(random.randint(1, 100))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_str(out, data)
+        self.assert_equal(out, data)
 
     def test_str_empty(self):
         data = ''
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_str(out, data)
+        self.assert_equal(out, data)
 
     def test_bytes(self):
         data = self.random_bytes(random.randint(1, 100))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_bytes(out, data)
+        self.assert_equal(out, data)
 
     def test_bytes_empty(self):
         data = b''
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_bytes(out, data)
+        self.assert_equal(out, data)
 
     def test_bytearray(self):
         data = bytearray(self.random_bytes(random.randint(1, 100)))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_bytearray(out, data)
+        self.assert_equal(out, data)
 
     def test_bytearray_empty(self):
         data = bytearray(b'')
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_bytearray(out, data)
+        self.assert_equal(out, data)
 
     def check_numpy_scalar(self, dtype):
         data = self.random_numpy_scalar(dtype)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_numpy(out, data)
+        self.assert_equal(out, data)
 
     def check_numpy_array(self, dtype, dimensions):
         shape = self.random_numpy_shape(dimensions, 12)
         data = self.random_numpy(shape, dtype)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_numpy(out, data)
+        self.assert_equal(out, data)
 
     def check_numpy_empty(self, dtype):
         data = np.array([], dtype)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_numpy(out, data)
+        self.assert_equal(out, data)
 
     def test_numpy_scalar(self):
         for dt in self.dtypes:
@@ -292,7 +274,7 @@ class TestPythonMatlabFormat(object):
         dtypes.append('object')
         for dt in dtypes:
             yield self.check_numpy_array, dt, 3
-    
+
     def test_numpy_empty(self):
         for dt in self.dtypes:
             yield self.check_numpy_empty, dt
