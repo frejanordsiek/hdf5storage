@@ -270,6 +270,18 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    def test_complex_real_nan(self):
+        data = complex(np.nan, self.random_float())
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def test_complex_imaginary_nan(self):
+        data = complex(self.random_float(), np.nan)
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
     def test_str(self):
         data = self.random_str_ascii(random.randint(1, 100))
         out = self.write_readback(data, self.random_name(),
