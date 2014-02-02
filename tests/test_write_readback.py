@@ -234,8 +234,8 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal_numpy(out, data)
 
-    def check_numpy_array(self, dtype):
-        shape = self.random_numpy_shape(2, 12)
+    def check_numpy_array(self, dtype, dimensions):
+        shape = self.random_numpy_shape(dimensions, 12)
         data = self.random_numpy(shape, dtype)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
@@ -251,12 +251,24 @@ class TestPythonMatlabFormat(object):
         for dt in self.dtypes:
             yield self.check_numpy_scalar, dt
 
-    def test_numpy_array(self):
+    def test_numpy_array_1d(self):
         dtypes = self.dtypes.copy()
         dtypes.append('object')
         for dt in dtypes:
-            yield self.check_numpy_array, dt
+            yield self.check_numpy_array, dt, 1
 
+    def test_numpy_array_2d(self):
+        dtypes = self.dtypes.copy()
+        dtypes.append('object')
+        for dt in dtypes:
+            yield self.check_numpy_array, dt, 2
+
+    def test_numpy_array_3d(self):
+        dtypes = self.dtypes.copy()
+        dtypes.append('object')
+        for dt in dtypes:
+            yield self.check_numpy_array, dt, 3
+    
     def test_numpy_empty(self):
         for dt in self.dtypes:
             yield self.check_numpy_empty, dt
