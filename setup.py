@@ -1,4 +1,7 @@
-from distutils.core import setup
+import ez_setup
+ez_setup.use_setuptools()
+
+from setuptools import setup
 
 with open('README.rst') as file:
     long_description = file.read()
@@ -23,5 +26,7 @@ setup(name='hdf5storage',
           "Topic :: Scientific/Engineering",
           "Topic :: Database",
           "Topic :: Software Development :: Libraries :: Python Modules"
-          ]
+          ],
+      test_suite='nose.collector',
+      tests_require='nose>=1.0'
       )
