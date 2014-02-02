@@ -468,7 +468,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     set_attribute_string(grp2[name_for_ref],
                                          'H5PATH', grp2.name)
                 else:
-                    del_attribute(grp2[k], 'H5PATH')
+                    del_attribute(grp2[name_for_ref], 'H5PATH')
 
             # Now, the dtype needs to be changed to the reference type
             # and the whole thing copied over to data_to_store.
