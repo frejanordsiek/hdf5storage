@@ -12,22 +12,34 @@ next_unused_name_in_group
 .. autofunction:: next_unused_name_in_group
 
 
+convert_numpy_str_to_uint16
+---------------------------
+
+.. autofunction:: convert_numpy_str_to_uint16
+
+
+convert_numpy_str_to_uint32
+---------------------------
+
+.. autofunction:: convert_numpy_str_to_uint32
+
+
 decode_to_str
 -------------
 
 .. autofunction:: decode_to_str
 
 
-decode_to_numpy_unicode
------------------------
+decode_to_numpy_str
+-------------------
 
-.. autofunction:: decode_to_numpy_unicode
+.. autofunction:: decode_to_numpy_str
 
 
-decode_to_numpy_ascii
+decode_to_numpy_bytes
 ---------------------
 
-.. autofunction:: decode_to_numpy_ascii
+.. autofunction:: decode_to_numpy_bytes
 
 
 decode_complex
