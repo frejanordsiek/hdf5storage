@@ -65,6 +65,123 @@ def next_unused_name_in_group(grp, length):
         if name not in existing_names:
             return name
 
+def convert_numpy_str_to_uint16(data):
+    """ Converts a numpy.str_ to UTF-16 encoding in numpy.uint16 form.
+
+    Convert a ``numpy.str`` or an array of them (they are UTF-32
+    strings) to UTF-16 in the equivalent array of ``numpy.uint16``. The
+    conversion will throw an exception if any characters cannot be
+    converted to UTF-16. Strings are expanded along rows (across columns)
+    so a 2x3x4 array of 10 element strings will get turned into a 2x30x4
+    array of uint16's if every UTF-32 character converts easily to a
+    UTF-16 singlet, as opposed to a UTF-16 doublet.
+
+    Parameters
+    ----------
+    data : numpy.str_ or numpy.ndarray of numpy.str_
+        The string or array of them to convert.
+
+    Returns
+    -------
+    numpy.ndarray of numpy.uint16
+        The result of the conversion.
+
+    Raises
+    ------
+    UnicodeEncodeError
+        If a UTF-32 character has no UTF-16 representation.
+
+    See Also
+    --------
+    convert_numpy_str_to_uint32
+    decode_to_numpy_unicode
+
+    """
+    # An empty string should be an empty uint16
+    if data.nbytes == 0:
+        return np.uint16([])
+
+    # If it is just a string instead of an array of them, then the
+    # string can simply be converted and returned as a 1d array pretty
+    # easily using ndarray's buffer option. The byte order mark, 2
+    # bytes, needs to be removed.
+    if not isinstance(data, np.ndarray):
+        s = data.encode(encoding='UTF-16', errors='strict')
+        return np.ndarray(shape=((len(s)-2)//2,), dtype='uint16',
+                          buffer=s[2:])
+
+    # It is an array of strings. Each string in the array needs to be
+    # converted. An object array is needed to hold all the converted
+    # forms, as opposed to just constructing the final uint16 array,
+    # because the converted forms could end up greatly differing lengths
+    # depending on how many characters turn into doublets. The sizes of
+    # each one need to be grabbed along the way to be able to construct
+    # the final array. The easiest way to convert each string is to use
+    # recursion.
+    converted_strings = np.ndarray(shape=data.shape, dtype='object')
+    sizes = np.zeros(shape=data.shape, dtype='int64')
+
+    for index, x in np.ndenumerate(data):
+        converted_strings[index] = convert_numpy_str_to_uint16(x)
+        sizes[index] = np.prod(converted_strings[index].shape)
+
+    # The shape of the new array is simply the shape of the old one with
+    # the number of columns increased multiplicatively by the size of
+    # the largest UTF-16 string so that everything will fit.
+    length = np.max(sizes)
+    shape = list(data.shape)
+    shape[-1] *= length
+    new_data = np.zeros(shape=tuple(shape), dtype='uint16')
+
+    # Copy each string into new_data using clever indexing (using the
+    # first part of index returns a 1d subarray that can be
+    # addressed). Then, the conversion is done.
+    for index, x in np.ndenumerate(converted_strings):
+        new_data[index[:-1]][ \
+            (length*index[-1]):(length*index[-1]+sizes[index])] = x
+
+    return new_data
+
+def convert_numpy_str_to_uint32(data):
+    """ Converts a numpy.str_ to its numpy.uint32 representation.
+
+    Convert a ``numpy.str`` or an array of them (they are UTF-32
+    strings) into the equivalent array of ``numpy.uint32`` that is byte
+    for byte identical. Strings are expanded along rows (across columns)
+    so a 2x3x4 array of 10 element strings will get turned into a 2x30x4
+    array of uint32's.
+
+    Parameters
+    ----------
+    data : numpy.str_ or numpy.ndarray of numpy.str_
+        The string or array of them to convert.
+
+    Returns
+    -------
+    numpy.ndarray of numpy.uint32
+        The result of the conversion.
+
+    See Also
+    --------
+    convert_numpy_str_to_uint16
+    decode_to_numpy_unicode
+
+    """
+    if data.nbytes == 0:
+        # An empty string should be an empty uint32.
+        return np.uint32([])
+    else:
+        # We need to calculate the new shape from the current shape,
+        # which will have to be expanded along the rows to fit all the
+        # characters (the dtype.itemsize gets the number of bytes in
+        # each string, which is just 4 times the number of
+        # characters. Then it is a mstter of getting a view of the
+        # string (in flattened form so that it is contiguous) as uint32
+        # and then reshaping it.
+        shape = list(np.atleast_1d(data).shape)
+        shape[-1] *= data.dtype.itemsize//4
+        return data.flatten().view(np.uint32).reshape(tuple(shape))
+
 def decode_to_str(data):
     """ Decodes data to the Python str type.
 

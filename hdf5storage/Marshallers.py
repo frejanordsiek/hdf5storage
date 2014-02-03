@@ -390,21 +390,33 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 data_to_store = np.uint16(np.atleast_1d( \
                     data_to_store).view(np.uint8))
 
-        # As of 2013-12-13, h5py cannot write numpy.unicode (UTF-32
-        # encoding) types. If it is just a numpy.unicode object, we can
-        # force it to UTF-16 or just write it as uint32's. If it is an
-        # array, forcing it to UTF-16 is a bad idea because characters
-        # are not always 2 bytes long in UTF-16. So, converting them to
-        # uint32 makes the most sense.
+        # As of 2013-12-13, h5py cannot write numpy.str_ (UTF-32
+        # encoding) types. If the option is set to try to convert them
+        # to UTF-16, then an attempt at the conversion is made. If no
+        # conversion is to be done, the conversion throws an exception
+        # (a UTF-32 character had no UTF-16 equivalent), or a UTF-32
+        # character gets turned into a UTF-16 doublet (the increase in
+        # the number of columns will be by a factor more than the length
+        # of the strings); then it will be simply converted to uint32's
+        # byte for byte instead.
 
         if data.dtype.type == np.str_:
-            if data_to_store.nbytes == 0:
-                data_to_store = np.uint32([])
+            new_data = None
+            if options.convert_numpy_str_to_utf16:
+                try:
+                    new_data = convert_numpy_str_to_uint16( \
+                        data_to_store)
+                except:
+                    pass
+            if new_data is None or (type(data_to_store) == np.str_ \
+                    and len(data_to_store) == len(new_data)) \
+                    or (isinstance(data_to_store, np.ndarray) \
+                    and new_data.shape[-1] != data_to_store.shape[-1] \
+                    * (data_to_store.dtype.itemsize//4)):
+                data_to_store = convert_numpy_str_to_uint32( \
+                    data_to_store)
             else:
-                shape = list(np.atleast_1d(data_to_store).shape)
-                shape[-1] *= data_to_store.dtype.itemsize//4
-                data_to_store = data_to_store.flatten().view(np.uint32)
-                data_to_store = data_to_store.reshape(tuple(shape))
+                data_to_store = new_data
 
         # Convert scalars to arrays if that option is set.
 
@@ -552,9 +564,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set looking up the data type (gotten
-        # using np.dtype.type) and if it is a string or bool type, then
-        # the MATLAB_int_decode attribute must be set
-        # properly. Otherwise, the attributes must be deleted.
+        # using np.dtype.type). If it is a string or bool type, then
+        # the MATLAB_int_decode attribute must be set to the number of
+        # bytes each element takes up (dtype.itemsize). Otherwise,
+        # the attributes must be deleted.
 
         if options.matlab_compatible:
             tp = data.dtype.type
@@ -566,8 +579,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             if tp in (np.bytes_, np.str_, np.bool_):
                 set_attribute(grp[name], 'MATLAB_int_decode', np.int64(
-                              {np.bool_: 1, np.bytes_: 2,
-                              np.str_: 4}[tp]))
+                              grp[name].dtype.itemsize))
             else:
                 del_attribute(grp[name], 'MATLAB_int_decode')
 

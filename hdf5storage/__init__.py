@@ -203,6 +203,7 @@ class Options(object):
     delete_unused_variables       ``True``
     convert_scalars_to_arrays     ``True``
     convert_numpy_bytes_to_utf16  ``True``
+    convert_numpy_str_to_utf16    ``True``
     convert_bools_to_uint8        ``True``
     reverse_dimension_order       ``True``
     store_shape_for_empty         ``True``
@@ -226,6 +227,8 @@ class Options(object):
         See Attributes.
     convert_numpy_bytes_to_utf16 : bool, optional
         See Attributes.
+    convert_numpy_str_to_utf16 : bool, optional
+        See Attributes.
     convert_bools_to_uint8 : bool, optional
         See Attributes.
     reverse_dimension_order : bool, optional
@@ -246,6 +249,7 @@ class Options(object):
     delete_unused_variables : bool
     convert_scalars_to_arrays : bool
     convert_numpy_bytes_to_utf16 : bool
+    convert_numpy_str_to_utf16 : bool
     convert_bools_to_uint8 : bool
     reverse_dimension_order : bool
     store_shape_for_empty : bool
@@ -264,6 +268,7 @@ class Options(object):
                  delete_unused_variables=False,
                  convert_scalars_to_arrays=False,
                  convert_numpy_bytes_to_utf16=False,
+                 convert_numpy_str_to_utf16=False,
                  convert_bools_to_uint8=False,
                  reverse_dimension_order=False,
                  store_shape_for_empty=False,
@@ -276,6 +281,7 @@ class Options(object):
         self._delete_unused_variables = False
         self._convert_scalars_to_arrays = False
         self._convert_numpy_bytes_to_utf16 = False
+        self._convert_numpy_str_to_utf16 = False
         self._convert_bools_to_uint8 = False
         self._reverse_dimension_order = False
         self._store_shape_for_empty = False
@@ -291,6 +297,7 @@ class Options(object):
         self.delete_unused_variables = delete_unused_variables
         self.convert_scalars_to_arrays = convert_scalars_to_arrays
         self.convert_numpy_bytes_to_utf16 = convert_numpy_bytes_to_utf16
+        self.convert_numpy_str_to_utf16 = convert_numpy_str_to_utf16
         self.convert_bools_to_uint8 = convert_bools_to_uint8
         self.reverse_dimension_order = reverse_dimension_order
         self.store_shape_for_empty = store_shape_for_empty
@@ -355,6 +362,7 @@ class Options(object):
         delete_unused_variables       ``True``
         convert_scalars_to_arrays     ``True``
         convert_numpy_bytes_to_utf16  ``True``
+        convert_numpy_str_to_utf16    ``True``
         convert_bools_to_uint8        ``True``
         reverse_dimension_order       ``True``
         store_shape_for_empty         ``True``
@@ -379,6 +387,7 @@ class Options(object):
                 self._delete_unused_variables = True
                 self._convert_scalars_to_arrays = True
                 self._convert_numpy_bytes_to_utf16 = True
+                self._convert_numpy_str_to_utf16 = True
                 self._convert_bools_to_uint8 = True
                 self._reverse_dimension_order = True
                 self._store_shape_for_empty = True
@@ -442,8 +451,8 @@ class Options(object):
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
         is being done), ``numpy.bytes_`` and anything that is converted
-        to them (``str``, ``bytes``, and ``bytearray``) are converted to
-        UTF-16 before being written to file as ``numpy.uint16``.
+        to them (``bytes``, and ``bytearray``) are converted to UTF-16
+        before being written to file as ``numpy.uint16``.
 
         Must be ``True`` if doing MATLAB compatibility. MATLAB uses
         UTF-16 for its strings.
@@ -451,6 +460,7 @@ class Options(object):
         See Also
         --------
         numpy.bytes_
+        convert_numpy_str_to_utf16
 
         """
         return self._convert_numpy_bytes_to_utf16
@@ -462,6 +472,42 @@ class Options(object):
         if isinstance(value, bool):
             self._convert_numpy_bytes_to_utf16 = value
         if not self._convert_numpy_bytes_to_utf16:
+            self._matlab_compatible = False
+
+    @property
+    def convert_numpy_str_to_utf16(self):
+        """ Whether or not to convert numpy.str_ to UTF-16.
+
+        bool
+
+        If ``True`` (defaults to ``False`` unless MATLAB compatibility
+        is being done), ``numpy.str_`` and anything that is converted
+        to them (``str``) will be converted to UTF-16 if possible before
+        being written to file as ``numpy.uint16``. If doing so would
+        lead to a loss of data (character can't be translated to
+        UTF-16) or would change the shape of an array of ``numpy.str_``
+        due to a character being converted into a pair 2-bytes, the
+        conversion will not be made and the string will be stored in
+        UTF-32 form as a ``numpy.uint32``.
+
+        Must be ``True`` if doing MATLAB compatibility. MATLAB uses
+        UTF-16 for its strings.
+
+        See Also
+        --------
+        numpy.bytes_
+        convert_numpy_str_to_utf16
+
+        """
+        return self._convert_numpy_str_to_utf16
+
+    @convert_numpy_str_to_utf16.setter
+    def convert_numpy_str_to_utf16(self, value):
+        # Check that it is a bool, and then set it. If it is false, we
+        # are not doing MATLAB compatible formatting.
+        if isinstance(value, bool):
+            self._convert_numpy_str_to_utf16 = value
+        if not self._convert_numpy_str_to_utf16:
             self._matlab_compatible = False
 
     @property
