@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 import os
 import os.path
@@ -14,6 +12,8 @@ import numpy.testing as npt
 import numpy.random
 
 import hdf5storage
+
+from asserts import assert_equal, assert_equal_python_collection
 
 
 random.seed()
@@ -161,38 +161,10 @@ class TestPythonMatlabFormat(object):
         return out
 
     def assert_equal(self, a, b):
-        # Compares a and b for equality. If they are not numpy types
-        # (aren't or don't inherit from np.generic or np.ndarray), then
-        # it is a matter of just comparing them. Otherwise, their dtypes
-        # and shapes have to be compared. Then, if they are not an
-        # object array, numpy.testing.assert_equal will compare them
-        # elementwise. For object arrays, each element must be iterated
-        # over to be compared.
-        assert type(a) == type(b)
-        if not isinstance(b, (np.generic, np.ndarray)):
-            assert a == b
-        else:
-            assert a.dtype == b.dtype
-            assert a.shape == b.shape
-            if b.dtype.name != 'object':
-                npt.assert_equal(a, b)
-            else:
-                for index, x in np.ndenumerate(a):
-                    self.assert_equal(a[index], b[index])
+        assert_equal(a, b)
 
     def assert_equal_python_collection(self, a, b, tp):
-        # Compares two python collections that are supposed to be the
-        # specified type tp. First, they have to be that type. If the
-        # type is a set type, then a simple comparison is all that is
-        # needed. Otherwise, an elementwise comparison needs to be done.
-        assert type(a) == tp
-        assert type(b) == tp
-        assert len(a) == len(b)
-        if type(b) in (set, frozenset):
-            assert a == b
-        else:
-            for index in range(0, len(a)):
-                self.assert_equal(a[index], b[index])
+        assert_equal_python_collection(a, b, tp)
 
     def check_numpy_scalar(self, dtype):
         # Makes a random numpy scalar of the given type, writes it and
@@ -483,25 +455,20 @@ class TestMatlabFormat(TestNoneFormat):
                 assert a.shape == (1, 0)
             elif isinstance(b, (bytes, str, bytearray)):
                 if len(b) == 0:
-                    TestPythonMatlabFormat.assert_equal(self, a, \
-                        np.zeros(shape=(1, 0), dtype='U'))
+                    assert_equal(a, np.zeros(shape=(1, 0), dtype='U'))
                 elif isinstance(b, (bytes, bytearray)):
-                    TestPythonMatlabFormat.assert_equal(self, a, \
-                        np.atleast_2d(np.str_(b.decode())))
+                    assert_equal(a, np.atleast_2d(np.str_(b.decode())))
                 else:
-                    TestPythonMatlabFormat.assert_equal(self, a, \
-                        np.atleast_2d(np.str_(b)))
+                    assert_equal(a, np.atleast_2d(np.str_(b)))
             else:
-                TestPythonMatlabFormat.assert_equal(self, a, \
-                    np.atleast_2d(np.array(b)))
+                assert_equal(a, np.atleast_2d(np.array(b)))
         else:
             if b.dtype.name != 'object':
                 if b.dtype.char in ('U', 'S'):
                     if len(b) == 0 and (b.shape == tuple() \
                             or b.shape == (0, )):
-                        TestPythonMatlabFormat.assert_equal(self, a, \
-                            np.zeros(shape=(1, 0), \
-                            dtype='U'))
+                        assert_equal(a, np.zeros(shape=(1, 0),
+                                     dtype='U'))
                     elif b.dtype.char == 'U':
                         c = np.atleast_1d(b)
                         c = np.atleast_2d(c.view(np.dtype('U' \
