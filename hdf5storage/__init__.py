@@ -1178,9 +1178,9 @@ def read(name='/', filename='data.h5',
 def savemat(file_name, mdict, appendmat=True, format='7.3',
             oned_as='row', store_type_information=True,
             marshaller_collection=None, **keywords):
-    """ Save a dictionary of python types to a MATLAB .mat file.
+    """ Save a dictionary of python types to a MATLAB MAT file.
 
-    Saves the data provided in the dictionary `mdict` to a MATLAB .mat
+    Saves the data provided in the dictionary `mdict` to a MATLAB MAT
     file. `format` determines which kind/vesion of file to use. The
     '7.3' version, which is HDF5 based, is handled by this package and
     all types that this package can write are supported. Versions 4 and
@@ -1192,7 +1192,7 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
     Parameters
     ----------
     file_name : str or file-like object
-        Name of the .mat file to store in. The '.mat' extension is
+        Name of the MAT file to store in. The '.mat' extension is
         added on automatically if not present if `appendmat` is set to
         ``True``. An open file-like object can be passed if the writing
         is being dispatched to SciPy (`format` < 7.3).
@@ -1226,8 +1226,17 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
     NotImplementedError
         If writing a variable in `mdict` is not supported.
 
+    Notes
+    -----
+    Writing the same data and then reading it back from disk using the
+    HDF5 based version 7.3 format (the functions in this package) or the
+    older format (SciPy functions) can lead to very different
+    results. Each package supports a different set of data types and
+    converts them to and from the same MATLAB types differently.
+
     See Also
     --------
+    loadmat : Equivelent function to do reading.
     scipy.io.savemat : SciPy function this one models after and
         dispatches to.
     Options
@@ -1263,3 +1272,103 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
               truncate_existing=(not added_first_variable),
               options=options)
         added_first_variable = True
+
+
+def loadmat(file_name, mdict=None, appendmat=True,
+            variable_names=None,
+            marshaller_collection=None, **keywords):
+    """ Loads data to a MATLAB MAT file.
+
+    Reads data from the specified variables (or all) in a  MATLAB MAT
+    file. There are many different formats of MAT files. This package
+    can only handle the HDF5 based ones (the version 7.3 and later).
+    As SciPy's ``scipy.io.loadmat`` function can handle the earlier
+    formats, if this function cannot read the file, it will dispatch it
+    onto the scipy function with all the calling arguments it uses
+    passed on. This function is modelled after the SciPy one (arguments
+    not specific to this package have the same names, etc.).
+
+    Parameters
+    ----------
+    file_name : str
+        Name of the MAT file to read from. The '.mat' extension is
+        added on automatically if not present if `appendmat` is set to
+        ``True``.
+    mdict : dict, optional
+        The dictionary to insert read variables into
+    appendmat : bool, optional
+        Whether to append the '.mat' extension to `file_name` if it
+        doesn't already end in it or not.
+    variable_names: None or sequence, optional
+        The variable names to read from the file. ``None`` selects all.
+    marshaller_collection : MarshallerCollection, optional
+        Collection of marshallers from disk to use. Only applicable if
+        not dispatching to SciPy (version 7.3 and newer files).
+    **keywords :
+        Additional keywords arguments to be passed onto
+        ``scipy.io.loadmat`` if dispatching to SciPy if the file is not
+        a version 7.3 or later format.
+
+    Returns
+    -------
+    dict
+        Dictionary of all the variables read from the MAT file (name
+        as the key, and content as the value).
+
+    Raises
+    ------
+    ImportError
+        If it is not a version 7.3 .mat file and the ``scipy`` module
+        can't be found when dispatching to SciPy.
+    CantReadError
+        If reading the data can't be done.
+
+    Notes
+    -----
+    Writing the same data and then reading it back from disk using the
+    HDF5 based version 7.3 format (the functions in this package) or the
+    older format (SciPy functions) can lead to very different
+    results. Each package supports a different set of data types and
+    converts them to and from the same MATLAB types differently.
+
+    See Also
+    --------
+    savemat : Equivalent function to do writing.
+    scipy.io.loadmat : SciPy function this one models after and
+        dispatches to.
+    Options
+    read : Function used to do the actual reading.
+
+    """
+    # Will first assume that it is the HDF5 based 7.3 format. If an
+    # OSError occurs, then it wasn't an HDF5 file and the scipy function
+    # can be tried instead.
+    try:
+        # Make the options with the given marshallers.
+        options = Options(marshaller_collection=marshaller_collection)
+
+        # Append .mat if it isn't on the end of the file name and we are
+        # supposed to.
+        if appendmat and not file_name.endswith('.mat'):
+            filename = file_name + '.mat'
+        else:
+            filename = file_name
+
+        # Read everything if we were instructed.
+        if variable_names is None:
+            return read(name='/', filename=filename, options=options)
+
+        # Read all the variables, stuff them into mdict, and return it.
+        if mdict is None:
+            mdict = dict()
+
+        for name in variable_names:
+            mdict[name] = read(name=name, filename=filename,
+                               options=options)
+
+        return mdict
+    except OSError:
+        import scipy.io
+        return scipy.io.loadmat(file_name, mdict, appendmat=appendmat,
+                                variable_names=variable_names,
+                                **keywords)

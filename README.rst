@@ -15,7 +15,8 @@ Installation
 
 This package will not work on Python < 3.0.
 
-This package requires the numpy and h5py (>= 2.0) packages.
+This package requires the numpy and h5py (>= 2.0) packages. An optional
+dependency is the scipy package.
 
 To install hdf5storage, download the package and run the command::
 
@@ -45,6 +46,12 @@ MATLAB (http://www.mathworks.com/) MAT files version 7.3 and later are
 HDF5 files with a different file extension (``.mat``) and a very
 specific set of meta-data and storage conventions. This package provides
 read and write support for a limited set of Python and MATLAB types.
+
+SciPy (http://scipy.org/) has functions to read and write the older MAT
+file formats. This package has functions modeled after the
+``scipy.io.savemat`` and ``scipy.io.loadmat`` functions, that have the
+same names and similar arguments. The dispatch to the SciPy versions if
+the MAT file format is not an HDF5 based one.
 
 Supported Types
 ===============

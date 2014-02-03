@@ -24,6 +24,12 @@ savemat
 .. autofunction:: savemat
 
 
+loadmat
+-------
+
+.. autofunction:: loadmat
+
+
 Options
 -------
 
