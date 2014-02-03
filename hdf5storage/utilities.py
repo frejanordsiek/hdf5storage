@@ -94,7 +94,7 @@ def convert_numpy_str_to_uint16(data):
     See Also
     --------
     convert_numpy_str_to_uint32
-    decode_to_numpy_unicode
+    decode_to_numpy_str
 
     """
     # An empty string should be an empty uint16
@@ -164,7 +164,7 @@ def convert_numpy_str_to_uint32(data):
     See Also
     --------
     convert_numpy_str_to_uint16
-    decode_to_numpy_unicode
+    decode_to_numpy_str
 
     """
     if data.nbytes == 0:
@@ -202,8 +202,8 @@ def decode_to_str(data):
 
     See Also
     --------
-    decode_to_numpy_unicode
-    decode_to_numpy_ascii
+    decode_to_numpy_str
+    decode_to_numpy_bytes
 
     """
     # How the conversion is done depends on the exact  underlying
@@ -238,7 +238,7 @@ def decode_to_str(data):
         return data
 
 
-def decode_to_numpy_unicode(data, length=None):
+def decode_to_numpy_str(data, length=None):
     """ Decodes data to Numpy unicode string (str_).
 
     Decodes `data` to Numpy unicode string (UTF-32), which is
@@ -280,7 +280,7 @@ def decode_to_numpy_unicode(data, length=None):
     See Also
     --------
     decode_to_str
-    decode_to_numpy_ascii
+    decode_to_numpy_bytes
     numpy.str_
 
     """
@@ -323,7 +323,7 @@ def decode_to_numpy_unicode(data, length=None):
         # recursing the scalar value back into this function.
         shape = list(data.shape)
         if len(shape) == 0:
-            return decode_to_numpy_unicode(data[()])
+            return decode_to_numpy_str(data[()])
 
         # As there are more than one element, it gets a bit more
         # complicated. We need to take the subarrays of the specified
@@ -374,7 +374,7 @@ def decode_to_numpy_unicode(data, length=None):
         return data
 
 
-def decode_to_numpy_ascii(data, length=None):
+def decode_to_numpy_bytes(data, length=None):
     """ Decodes data to Numpy ASCII string (bytes_).
 
     Decodes `data` to a  Numpy ASCII string, which is
@@ -414,7 +414,7 @@ def decode_to_numpy_ascii(data, length=None):
     See Also
     --------
     decode_to_str
-    decode_to_numpy_unicode
+    decode_to_numpy_str
     numpy.bytes_
 
     """
@@ -454,7 +454,7 @@ def decode_to_numpy_ascii(data, length=None):
         # recursing the scalar value back into this function.
         shape = list(data.shape)
         if len(shape) == 0:
-            return decode_to_numpy_ascii(data[()])
+            return decode_to_numpy_bytes(data[()])
 
         # As there are more than one element, it gets a bit more
         # complicated. We need to take the subarrays of the specified
