@@ -422,7 +422,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # arrays, an option determines whether they become row or column
         # vectors.
 
-        if options.convert_scalars_to_arrays:
+        if options.make_atleast_2d:
             new_data = np.atleast_2d(data_to_store)
             if len(data_to_store.shape) == 1 \
                     and options.oned_as == 'column':

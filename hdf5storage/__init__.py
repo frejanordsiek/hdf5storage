@@ -201,7 +201,7 @@ class Options(object):
     attribute                     value
     ============================  ====================
     delete_unused_variables       ``True``
-    convert_scalars_to_arrays     ``True``
+    make_atleast_2d               ``True``
     convert_numpy_bytes_to_utf16  ``True``
     convert_numpy_str_to_utf16    ``True``
     convert_bools_to_uint8        ``True``
@@ -223,7 +223,7 @@ class Options(object):
         See Attributes.
     delete_unused_variables:  : bool, optional
         See Attributes.
-    convert_scalars_to_arrays : bool, optional
+    make_atleast_2d : bool, optional
         See Attributes.
     convert_numpy_bytes_to_utf16 : bool, optional
         See Attributes.
@@ -249,7 +249,7 @@ class Options(object):
     store_type_information : bool
     matlab_compatible : bool
     delete_unused_variables : bool
-    convert_scalars_to_arrays : bool
+    make_atleast_2d : bool
     convert_numpy_bytes_to_utf16 : bool
     convert_numpy_str_to_utf16 : bool
     convert_bools_to_uint8 : bool
@@ -269,7 +269,7 @@ class Options(object):
     def __init__(self, store_type_information=True,
                  matlab_compatible=True,
                  delete_unused_variables=False,
-                 convert_scalars_to_arrays=False,
+                 make_atleast_2d=False,
                  convert_numpy_bytes_to_utf16=False,
                  convert_numpy_str_to_utf16=False,
                  convert_bools_to_uint8=False,
@@ -283,7 +283,7 @@ class Options(object):
 
         self._store_type_information = True
         self._delete_unused_variables = False
-        self._convert_scalars_to_arrays = False
+        self._make_atleast_2d = False
         self._convert_numpy_bytes_to_utf16 = False
         self._convert_numpy_str_to_utf16 = False
         self._convert_bools_to_uint8 = False
@@ -300,7 +300,7 @@ class Options(object):
 
         self.store_type_information = store_type_information
         self.delete_unused_variables = delete_unused_variables
-        self.convert_scalars_to_arrays = convert_scalars_to_arrays
+        self.make_atleast_2d = make_atleast_2d
         self.convert_numpy_bytes_to_utf16 = convert_numpy_bytes_to_utf16
         self.convert_numpy_str_to_utf16 = convert_numpy_str_to_utf16
         self.convert_bools_to_uint8 = convert_bools_to_uint8
@@ -366,7 +366,7 @@ class Options(object):
         attribute                     value
         ============================  ====================
         delete_unused_variables       ``True``
-        convert_scalars_to_arrays     ``True``
+        make_atleast_2d               ``True``
         convert_numpy_bytes_to_utf16  ``True``
         convert_numpy_str_to_utf16    ``True``
         convert_bools_to_uint8        ``True``
@@ -391,7 +391,7 @@ class Options(object):
             self._matlab_compatible = value
             if value:
                 self._delete_unused_variables = True
-                self._convert_scalars_to_arrays = True
+                self._make_atleast_2d = True
                 self._convert_numpy_bytes_to_utf16 = True
                 self._convert_numpy_str_to_utf16 = True
                 self._convert_bools_to_uint8 = True
@@ -425,7 +425,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def convert_scalars_to_arrays(self):
+    def make_atleast_2d(self):
         """ Whether or not to convert scalar types to 2D arrays.
 
         bool
@@ -443,15 +443,15 @@ class Options(object):
         oned_as
 
         """
-        return self._convert_scalars_to_arrays
+        return self._make_atleast_2d
 
-    @convert_scalars_to_arrays.setter
-    def convert_scalars_to_arrays(self, value):
+    @make_atleast_2d.setter
+    def make_atleast_2d(self, value):
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
-            self._convert_scalars_to_arrays = value
-        if not self._convert_scalars_to_arrays:
+            self._make_atleast_2d = value
+        if not self._make_atleast_2d:
             self._matlab_compatible = False
 
     @property
@@ -666,13 +666,13 @@ class Options(object):
 
         {'row', 'column'}
 
-        When the ``convert_scalars_to_arrays`` option is set (set
-        implicitly by doing MATLAB compatibility), this option controls
-        whether 1D arrays become row vectors or column vectors.
+        When the ``make_atleast_2d`` option is set (set implicitly by
+        doing MATLAB compatibility), this option controls whether 1D
+        arrays become row vectors or column vectors.
 
         See Also
         --------
-        convert_scalars_to_arrays
+        make_atleast_2d
 
         """
         return self._oned_as
