@@ -18,6 +18,12 @@ read
 .. autofunction:: read
 
 
+savemat
+-------
+
+.. autofunction:: savemat
+
+
 Options
 -------
 

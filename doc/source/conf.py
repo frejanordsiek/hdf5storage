@@ -257,6 +257,7 @@ texinfo_documents = [
 
 intersphinx_mapping = {'python': ('http://docs.python.org/3.3', None),
 		       'numpy': ('http://docs.scipy.org/doc/numpy', None),
+		       'scipy': ('http://docs.scipy.org/doc/scipy/reference', None),
 		       'h5py': ('http://www.h5py.org/docs/', None)}
 
 # -- Options for Autosummary ---------------------------------------------------

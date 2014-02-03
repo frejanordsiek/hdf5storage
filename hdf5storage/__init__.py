@@ -1124,6 +1124,7 @@ def read(name='/', filename='data.h5',
     write
     Options
     lowlevel.read_data : Low level version.
+
     """
     # Pack the different options into an Options class if an Options was
     # not given.
@@ -1172,3 +1173,93 @@ def read(name='/', filename='data.h5',
             f.close()
 
     return data
+
+
+def savemat(file_name, mdict, appendmat=True, format='7.3',
+            oned_as='row', store_type_information=True,
+            marshaller_collection=None, **keywords):
+    """ Save a dictionary of python types to a MATLAB .mat file.
+
+    Saves the data provided in the dictionary `mdict` to a MATLAB .mat
+    file. `format` determines which kind/vesion of file to use. The
+    '7.3' version, which is HDF5 based, is handled by this package and
+    all types that this package can write are supported. Versions 4 and
+    5 are not HDF5 based, so everything is dispatched to the SciPy
+    package's ``scipy.io.savemat`` function, which this function is
+    modelled after (arguments not specific to this package have the same
+    names, etc.).
+
+    Parameters
+    ----------
+    file_name : str or file-like object
+        Name of the .mat file to store in. The '.mat' extension is
+        added on automatically if not present if `appendmat` is set to
+        ``True``. An open file-like object can be passed if the writing
+        is being dispatched to SciPy (`format` < 7.3).
+    mdict : dict
+        The dictionary of variables and their contents to store in the
+        file.
+    appendmat : bool, optional
+        Whether to append the '.mat' extension to `file_name` if it
+        doesn't already end in it or not.
+    format : {'4', '5', '7.3'}, optional
+        The MATLAB mat file format to use. The '7.3' format is handled
+        by this package while the '4' and '5' formats are dispatched to
+        SciPy.
+    oned_as : {'row', 'column'}, optional
+        Whether 1D arrays should be turned into row or column vectors.
+    store_type_information : bool, optional
+        Whether or not to store Python type information. Doing so allows
+        most types to be read back perfectly. Only applicable if not
+        dispatching to SciPy (`format` >= 7.3).
+    marshaller_collection : MarshallerCollection, optional
+        Collection of marshallers to disk to use. Only applicable if
+        not dispatching to SciPy (`format` >= 7.3)
+    **keywords :
+        Additional keywords arguments to be passed onto
+        ``scipy.io.savemat`` if dispatching to SciPy (`format` < 7.3).
+
+    Raises
+    ------
+    ImportError
+        If `format` < 7.3 and the ``scipy`` module can't be found.
+    NotImplementedError
+        If writing a variable in `mdict` is not supported.
+
+    See Also
+    --------
+    scipy.io.savemat : SciPy function this one models after and
+        dispatches to.
+    Options
+    write : Function used to do the actual writing.
+
+    """
+    # If format is a number less than 7.3, the call needs to be
+    # dispatched to the scipy version, if it is available, with all the
+    # relevant and extra keywords options provided.
+    if float(format) < 7.3:
+        import scipy.io
+        scipy.io.savemat(file_name, mdict, appendmat=appendmat,
+                         format=format, oned_as=oned_as, **keywords)
+        return
+
+    # Append .mat if it isn't on the end of the file name and we are
+    # supposed to.
+    if appendmat and not file_name.endswith('.mat'):
+        file_name = file_name + '.mat'
+
+    # Make the options with matlab compatibility forced.
+    options = Options(store_type_information=store_type_information,
+                      matlab_compatible=True, oned_as=oned_as,
+                      marshaller_collection=marshaller_collection)
+
+    # Write the variables in the dictionary to file one at a time. For
+    # the first one, the file needs to be truncated, while not for the
+    # other ones (using a flag for when the first variable has been
+    # added to do this).
+    added_first_variable = False
+    for name in mdict:
+        write(mdict[name], name, filename=file_name,
+              truncate_existing=(not added_first_variable),
+              options=options)
+        added_first_variable = True
