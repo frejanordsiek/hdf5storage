@@ -383,7 +383,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # at least 1 dimensinal.
 
         if data.dtype.type == np.bytes_ \
-                and options.convert_strings_to_utf16:
+                and options.convert_numpy_bytes_to_utf16:
             if data_to_store.nbytes == 0:
                 data_to_store = np.uint16([])
             else:

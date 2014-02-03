@@ -197,18 +197,18 @@ class Options(object):
     compatible with MATLAB's HDF5 based version 7.3 mat file format. It
     overrides several options to the values in the following table.
 
-    =========================  ====================
-    attribute                  value
-    =========================  ====================
-    delete_unused_variables    ``True``
-    convert_scalars_to_arrays  ``True``
-    convert_strings_to_utf16   ``True``
-    convert_bools_to_uint8     ``True``
-    reverse_dimension_order    ``True``
-    store_shape_for_empty      ``True``
-    complex_names              ``('real', 'imag')``
-    group_for_references       ``'/#refs#'``
-    =========================  ====================
+    ============================  ====================
+    attribute                     value
+    ============================  ====================
+    delete_unused_variables       ``True``
+    convert_scalars_to_arrays     ``True``
+    convert_numpy_bytes_to_utf16  ``True``
+    convert_bools_to_uint8        ``True``
+    reverse_dimension_order       ``True``
+    store_shape_for_empty         ``True``
+    complex_names                 ``('real', 'imag')``
+    group_for_references          ``'/#refs#'``
+    ============================  ====================
 
     In addition to setting these options, a specially formatted block of
     bytes is put at the front of the file so that MATLAB can recognize
@@ -224,7 +224,7 @@ class Options(object):
         See Attributes.
     convert_scalars_to_arrays : bool, optional
         See Attributes.
-    convert_strings_to_utf16 : bool, optional
+    convert_numpy_bytes_to_utf16 : bool, optional
         See Attributes.
     convert_bools_to_uint8 : bool, optional
         See Attributes.
@@ -245,7 +245,7 @@ class Options(object):
     matlab_compatible : bool
     delete_unused_variables : bool
     convert_scalars_to_arrays : bool
-    convert_strings_to_utf16 : bool
+    convert_numpy_bytes_to_utf16 : bool
     convert_bools_to_uint8 : bool
     reverse_dimension_order : bool
     store_shape_for_empty : bool
@@ -263,7 +263,7 @@ class Options(object):
                  matlab_compatible=True,
                  delete_unused_variables=False,
                  convert_scalars_to_arrays=False,
-                 convert_strings_to_utf16=False,
+                 convert_numpy_bytes_to_utf16=False,
                  convert_bools_to_uint8=False,
                  reverse_dimension_order=False,
                  store_shape_for_empty=False,
@@ -275,7 +275,7 @@ class Options(object):
         self._store_type_information = True
         self._delete_unused_variables = False
         self._convert_scalars_to_arrays = False
-        self._convert_strings_to_utf16 = False
+        self._convert_numpy_bytes_to_utf16 = False
         self._convert_bools_to_uint8 = False
         self._reverse_dimension_order = False
         self._store_shape_for_empty = False
@@ -290,7 +290,7 @@ class Options(object):
         self.store_type_information = store_type_information
         self.delete_unused_variables = delete_unused_variables
         self.convert_scalars_to_arrays = convert_scalars_to_arrays
-        self.convert_strings_to_utf16 = convert_strings_to_utf16
+        self.convert_numpy_bytes_to_utf16 = convert_numpy_bytes_to_utf16
         self.convert_bools_to_uint8 = convert_bools_to_uint8
         self.reverse_dimension_order = reverse_dimension_order
         self.store_shape_for_empty = store_shape_for_empty
@@ -349,18 +349,18 @@ class Options(object):
         which is HDF5 based. Setting it to ``True`` forces other options
         to hold the specific values in the table below.
 
-        =========================  ====================
-        attribute                  value
-        =========================  ====================
-        delete_unused_variables    ``True``
-        convert_scalars_to_arrays  ``True``
-        convert_strings_to_utf16   ``True``
-        convert_bools_to_uint8     ``True``
-        reverse_dimension_order    ``True``
-        store_shape_for_empty      ``True``
-        complex_names              ``('real', 'imag')``
-        group_for_references       ``'/#refs#'``
-        =========================  ====================
+        ============================  ====================
+        attribute                     value
+        ============================  ====================
+        delete_unused_variables       ``True``
+        convert_scalars_to_arrays     ``True``
+        convert_numpy_bytes_to_utf16  ``True``
+        convert_bools_to_uint8        ``True``
+        reverse_dimension_order       ``True``
+        store_shape_for_empty         ``True``
+        complex_names                 ``('real', 'imag')``
+        group_for_references          ``'/#refs#'``
+        ============================  ====================
 
         In addition to setting these options, a specially formatted
         block of bytes is put at the front of the file so that MATLAB
@@ -378,7 +378,7 @@ class Options(object):
             if value:
                 self._delete_unused_variables = True
                 self._convert_scalars_to_arrays = True
-                self._convert_strings_to_utf16 = True
+                self._convert_numpy_bytes_to_utf16 = True
                 self._convert_bools_to_uint8 = True
                 self._reverse_dimension_order = True
                 self._store_shape_for_empty = True
@@ -435,34 +435,33 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def convert_strings_to_utf16(self):
-        """ Whether or not to convert strings to UTF-16.
+    def convert_numpy_bytes_to_utf16(self):
+        """ Whether or not to convert numpy.bytes_ to UTF-16.
 
         bool
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
-        is being done), string types except for ``numpy.str_``
-        (``str``, ``bytes``, and ``numpy.bytes_``) are converted to
-        UTF-16 before being written to file.
+        is being done), ``numpy.bytes_`` and anything that is converted
+        to them (``str``, ``bytes``, and ``bytearray``) are converted to
+        UTF-16 before being written to file as ``numpy.uint16``.
 
         Must be ``True`` if doing MATLAB compatibility. MATLAB uses
         UTF-16 for its strings.
 
         See Also
         --------
-        numpy.str_
-        numpy.string_
+        numpy.bytes_
 
         """
-        return self._convert_strings_to_utf16
+        return self._convert_numpy_bytes_to_utf16
 
-    @convert_strings_to_utf16.setter
-    def convert_strings_to_utf16(self, value):
+    @convert_numpy_bytes_to_utf16.setter
+    def convert_numpy_bytes_to_utf16(self, value):
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
-            self._convert_strings_to_utf16 = value
-        if not self._convert_strings_to_utf16:
+            self._convert_numpy_bytes_to_utf16 = value
+        if not self._convert_numpy_bytes_to_utf16:
             self._matlab_compatible = False
 
     @property
