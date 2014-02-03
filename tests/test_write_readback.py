@@ -41,6 +41,11 @@ class TestPythonMatlabFormat(object):
         self.max_posix_path_lengths = 17
         self.object_subarray_dimensions = 2
         self.max_object_subarray_axis_length = 5
+        self.min_dict_keys = 4
+        self.max_dict_keys = 12
+        self.max_dict_key_length = 10
+        self.dict_value_subarray_dimensions = 2
+        self.max_dict_value_subarray_axis_length = 5
 
     def random_str_ascii(self, length):
         # Makes a random ASCII str of the specified length.
@@ -131,6 +136,18 @@ class TestPythonMatlabFormat(object):
                 data.append(self.random_bytes(random.randint(1,
                             self.max_string_length)))
             return data
+
+    def random_dict(self):
+        # Makes a random dict (random number of randomized keys with
+        # random numpy arrays as values).
+        data = dict()
+        for i in range(0, random.randint(self.min_dict_keys, \
+                self.max_dict_keys)):
+            data[self.random_str_ascii(self.max_dict_key_length)] = \
+                self.random_numpy(self.random_numpy_shape( \
+                self.dict_value_subarray_dimensions, \
+                self.max_dict_value_subarray_axis_length), \
+                dtype=random.choice(self.dtypes))
 
     def random_name(self):
         # Makes a random POSIX path of a random depth.
@@ -336,6 +353,12 @@ class TestPythonMatlabFormat(object):
     def test_python_collection(self):
         for tp in (list, tuple, set, frozenset, collections.deque):
             yield self.check_python_collection, tp
+
+    def test_dict(self):
+        data = self.random_dict()
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
 
 
 class TestPythonFormat(TestPythonMatlabFormat):
