@@ -13,7 +13,7 @@ import numpy.random
 
 import hdf5storage
 
-from asserts import assert_equal, assert_equal_python_collection
+from asserts import *
 
 
 random.seed()
@@ -163,9 +163,6 @@ class TestPythonMatlabFormat(object):
     def assert_equal(self, a, b):
         assert_equal(a, b)
 
-    def assert_equal_python_collection(self, a, b, tp):
-        assert_equal_python_collection(a, b, tp)
-
     def check_numpy_scalar(self, dtype):
         # Makes a random numpy scalar of the given type, writes it and
         # reads it back, and then compares it.
@@ -203,7 +200,7 @@ class TestPythonMatlabFormat(object):
                       python_or_numpy='numpy'))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
-        self.assert_equal_python_collection(out, data, tp)
+        self.assert_equal(out, data)
 
     def test_None(self):
         data = None
@@ -361,61 +358,7 @@ class TestNoneFormat(TestPythonMatlabFormat):
                                            matlab_compatible=False)
 
     def assert_equal(self, a, b):
-        # Compares a and b for equality. b is always the original. If
-        # the original is not a numpy type (isn't or doesn't inherit
-        # from np.generic or np.ndarray), then it is a matter of
-        # converting it to the appropriate numpy type. Otherwise, both
-        # are supposed to be numpy types. For object arrays, each
-        # element must be iterated over to be compared. Then, if it
-        # isn't a string type, then they must have the same dtype,
-        # shape, and all elements. If it is an empty string, then it
-        # would have been stored as just a null byte (recurse to do that
-        # comparison). If it is a bytes_ type, the dtype, shape, and
-        # elements must all be the same. If it is string_ type, we must
-        # convert to uint32 and then everything can be compared.
-        if not isinstance(b, (np.generic, np.ndarray)):
-            if b is None:
-                # It should be np.float64([])
-                assert type(a) == np.ndarray
-                assert a.dtype == np.float64([]).dtype
-                assert a.shape == (0, )
-            elif isinstance(b, (bytes, str, bytearray)):
-                assert a == np.bytes_(b)
-            else:
-                self.assert_equal(a, \
-                    np.array(b)[()])
-        else:
-            if b.dtype.name != 'object':
-                if b.dtype.char in ('U', 'S'):
-                    if b.shape == tuple() and len(b) == 0:
-                        self.assert_equal(a, \
-                            np.zeros(shape=tuple(), dtype=b.dtype.char))
-                    elif b.dtype.char == 'U':
-                        c = np.atleast_1d(b).view(np.uint32)
-                        assert a.dtype == c.dtype
-                        assert a.shape == c.shape
-                        npt.assert_equal(a, c)
-                    else:
-                        assert a.dtype == b.dtype
-                        assert a.shape == b.shape
-                        npt.assert_equal(a, b)
-                else:
-                    assert a.dtype == b.dtype
-                    assert a.shape == b.shape
-                    npt.assert_equal(a, b)
-            else:
-                assert a.dtype == b.dtype
-                assert a.shape == b.shape
-                for index, x in np.ndenumerate(a):
-                    self.assert_equal(a[index], b[index])
-
-    def assert_equal_python_collection(self, a, b, tp):
-        # Compares two python collections that are supposed to be the
-        # specified type tp. As every collection is just getting turned
-        # into a list and then a numpy object array, b must be converted
-        # first before the comparison.
-        c = np.object_(list(b))
-        self.assert_equal(a, c)
+        assert_equal_none_format(a, b)
 
 
 class TestMatlabFormat(TestNoneFormat):
@@ -431,80 +374,4 @@ class TestMatlabFormat(TestNoneFormat):
         self.dtypes.remove('float16')
 
     def assert_equal(self, a, b):
-        # Compares a and b for equality. b is always the original. If
-        # the original is not a numpy type (isn't or doesn't inherit
-        # from np.generic or np.ndarray), then it is a matter of
-        # converting it to the appropriate numpy type. Otherwise, both
-        # are supposed to be numpy types. For object arrays, each
-        # element must be iterated over to be compared. Then, if it
-        # isn't a string type, then they must have the same dtype,
-        # shape, and all elements. All strings are converted to
-        # numpy.str_ on read. If it is empty, it has shape (1, 0). A
-        # numpy.str_ has all of its strings per row compacted
-        # together. A numpy.bytes_ string has to have the same thing
-        # done, but then it needs to be converted up to UTF-32 and to
-        # numpy.str_ through uint32.
-        #
-        # In all cases, we expect things to be at least two dimensional
-        # arrays.
-        if not isinstance(b, (np.generic, np.ndarray)):
-            if b is None:
-                # It should be np.zeros(shape=(0, 1), dtype='float64'))
-                assert type(a) == np.ndarray
-                assert a.dtype == np.dtype('float64')
-                assert a.shape == (1, 0)
-            elif isinstance(b, (bytes, str, bytearray)):
-                if len(b) == 0:
-                    assert_equal(a, np.zeros(shape=(1, 0), dtype='U'))
-                elif isinstance(b, (bytes, bytearray)):
-                    assert_equal(a, np.atleast_2d(np.str_(b.decode())))
-                else:
-                    assert_equal(a, np.atleast_2d(np.str_(b)))
-            else:
-                assert_equal(a, np.atleast_2d(np.array(b)))
-        else:
-            if b.dtype.name != 'object':
-                if b.dtype.char in ('U', 'S'):
-                    if len(b) == 0 and (b.shape == tuple() \
-                            or b.shape == (0, )):
-                        assert_equal(a, np.zeros(shape=(1, 0),
-                                     dtype='U'))
-                    elif b.dtype.char == 'U':
-                        c = np.atleast_1d(b)
-                        c = np.atleast_2d(c.view(np.dtype('U' \
-                            + str(c.shape[-1]*c.dtype.itemsize//4))))
-                        assert a.dtype == c.dtype
-                        assert a.shape == c.shape
-                        npt.assert_equal(a, c)
-                    elif b.dtype.char == 'S':
-                        c = np.atleast_1d(b)
-                        c = c.view(np.dtype('S' \
-                            + str(c.shape[-1]*c.dtype.itemsize)))
-                        c = np.uint32(c.view(np.dtype('uint8')))
-                        c = c.view(np.dtype('U' + str(c.shape[-1])))
-                        c = np.atleast_2d(c)
-                        assert a.dtype == c.dtype
-                        assert a.shape == c.shape
-                        npt.assert_equal(a, c)
-                        pass
-                    else:
-                        c = np.atleast_2d(b)
-                        assert a.dtype == c.dtype
-                        assert a.shape == c.shape
-                        npt.assert_equal(a, c)
-                else:
-                    c = np.atleast_2d(b)
-                    # An empty complex number gets turned into a real
-                    # number when it is stored.
-                    if np.prod(c.shape) == 0 \
-                            and b.dtype.name.startswith('complex'):
-                        c = np.real(c)
-                    assert a.dtype == c.dtype
-                    assert a.shape == c.shape
-                    npt.assert_equal(a, c)
-            else:
-                c = np.atleast_2d(b)
-                assert a.dtype == c.dtype
-                assert a.shape == c.shape
-                for index, x in np.ndenumerate(a):
-                    self.assert_equal(a[index], c[index])
+        assert_equal_matlab_format(a, b)
