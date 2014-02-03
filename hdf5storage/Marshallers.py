@@ -418,10 +418,16 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             else:
                 data_to_store = new_data
 
-        # Convert scalars to arrays if that option is set.
+        # Convert scalars to arrays if that option is set. For 1d
+        # arrays, an option determines whether they become row or column
+        # vectors.
 
         if options.convert_scalars_to_arrays:
-            data_to_store = np.atleast_2d(data_to_store)
+            new_data = np.atleast_2d(data_to_store)
+            if len(data_to_store.shape) == 1 \
+                    and options.oned_as == 'column':
+                new_data = new_data.T
+            data_to_store = new_data
 
         # Reverse the dimension order if that option is set.
 

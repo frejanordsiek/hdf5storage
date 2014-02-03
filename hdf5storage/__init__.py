@@ -239,6 +239,8 @@ class Options(object):
         See Attributes.
     group_for_references : str, optional
         See Attributes.
+    oned_as : str, optional
+        See Attributes.
     marshaller_collection : MarshallerCollection, optional
         See Attributes.
 
@@ -255,6 +257,7 @@ class Options(object):
     store_shape_for_empty : bool
     complex_names : tuple of two str
     group_for_references : str
+    oned_as : {'row', 'column'}
     scalar_options : dict
         ``h5py.Group.create_dataset`` options for writing scalars.
     array_options : dict
@@ -274,6 +277,7 @@ class Options(object):
                  store_shape_for_empty=False,
                  complex_names=('r', 'i'),
                  group_for_references="/#refs#",
+                 oned_as='row',
                  marshaller_collection=None):
         # Set the defaults.
 
@@ -287,6 +291,7 @@ class Options(object):
         self._store_shape_for_empty = False
         self._complex_names = ('r', 'i')
         self._group_for_references = "/#refs#"
+        self._oned_as = 'row'
         self._matlab_compatible = True
 
         # Apply all the given options using the setters, making sure to
@@ -303,6 +308,7 @@ class Options(object):
         self.store_shape_for_empty = store_shape_for_empty
         self.complex_names = complex_names
         self.group_for_references = group_for_references
+        self.oned_as = oned_as
         self.matlab_compatible = matlab_compatible
 
         # Set the h5py options to use for writing scalars and arrays to
@@ -426,10 +432,15 @@ class Options(object):
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
         is being done), all scalar types are converted to 2D arrays when
-        written to file.
+        written to file. ``oned_as`` determines whether 1D arrays are
+        turned into row or column vectors.
 
         Must be ``True`` if doing MATLAB compatibility. MATLAB can only
         import 2D and higher dimensional arrays.
+
+        See Also
+        --------
+        oned_as
 
         """
         return self._convert_scalars_to_arrays
@@ -648,6 +659,29 @@ class Options(object):
                 self._group_for_references = value
         if self._group_for_references != "/#refs#":
             self._matlab_compatible = False
+
+    @property
+    def oned_as(self):
+        """ Vector that 1D arrays become when making everything >= 2D.
+
+        {'row', 'column'}
+
+        When the ``convert_scalars_to_arrays`` option is set (set
+        implicitly by doing MATLAB compatibility), this option controls
+        whether 1D arrays become row vectors or column vectors.
+
+        See Also
+        --------
+        convert_scalars_to_arrays
+
+        """
+        return self._oned_as
+
+    @oned_as.setter
+    def oned_as(self, value):
+        # Check that it is one of the valid values before setting it.
+        if value in ('row', 'column'):
+            self._oned_as = value
 
 
 class MarshallerCollection(object):
