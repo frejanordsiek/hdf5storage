@@ -84,6 +84,13 @@ bytes          0.1      np.bytes\_ or np.uint16  char         0.1 [3]_
 bytearray      0.1      np.bytes\_ or np.uint16  char         0.1 [3]_
 np.bool\_      0.1                               logical      0.1
 np.uint8       0.1                               uint8        0.1
+np.uint16      0.1                               uint16       0.1
+np.uint32      0.1                               uint32       0.1
+np.uint64      0.1                               uint64       0.1
+np.uint8       0.1                               int8         0.1
+np.int16       0.1                               int16        0.1
+np.int32       0.1                               int32        0.1
+np.int64       0.1                               int64        0.1
 np.float16     0.1
 np.float32     0.1                               single       0.1
 np.float64     0.1                               double       0.1
