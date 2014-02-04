@@ -1177,7 +1177,8 @@ def read(name='/', filename='data.h5',
 
 def savemat(file_name, mdict, appendmat=True, format='7.3',
             oned_as='row', store_type_information=True,
-            marshaller_collection=None, **keywords):
+            marshaller_collection=None, truncate_existing=False,
+            truncate_invalid_matlab=False, **keywords):
     """ Save a dictionary of python types to a MATLAB MAT file.
 
     Saves the data provided in the dictionary `mdict` to a MATLAB MAT
@@ -1214,7 +1215,14 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         dispatching to SciPy (`format` >= 7.3).
     marshaller_collection : MarshallerCollection, optional
         Collection of marshallers to disk to use. Only applicable if
-        not dispatching to SciPy (`format` >= 7.3)
+        not dispatching to SciPy (`format` >= 7.3).
+    truncate_existing : bool, optional
+        Whether to truncate the file if it already exists before writing
+        to it.
+    truncate_invalid_matlab : bool, optional
+        Whether to truncate a file if the file doesn't have the proper
+        header (userblock in HDF5 terms) setup for MATLAB metadata to be
+        placed.
     **keywords :
         Additional keywords arguments to be passed onto
         ``scipy.io.savemat`` if dispatching to SciPy (`format` < 7.3).
@@ -1263,15 +1271,23 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
                       marshaller_collection=marshaller_collection)
 
     # Write the variables in the dictionary to file one at a time. For
-    # the first one, the file needs to be truncated, while not for the
-    # other ones (using a flag for when the first variable has been
+    # the first one, the file needs to be truncated or truncated if not
+    # valid in a matlab sense if the option/s are given, while not for
+    # the other ones (using a flag for when the first variable has been
     # added to do this).
     added_first_variable = False
     for name in mdict:
-        write(mdict[name], name, filename=file_name,
-              truncate_existing=(not added_first_variable),
-              options=options)
-        added_first_variable = True
+        if not added_first_variable:
+            write(mdict[name], name, filename=file_name,
+                  truncate_existing=truncate_existing,
+                  truncate_invalid_matlab=truncate_invalid_matlab,
+                  options=options)
+            added_first_variable = True
+        else:
+            write(mdict[name], name, filename=file_name,
+                  truncate_existing=False,
+                  truncate_invalid_matlab=False,
+                  options=options)
 
 
 def loadmat(file_name, mdict=None, appendmat=True,
