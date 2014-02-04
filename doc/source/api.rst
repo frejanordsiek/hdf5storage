@@ -1,5 +1,5 @@
-hdf5storage API
-================
+API
+===
 
 .. toctree::
    :maxdepth: 2
