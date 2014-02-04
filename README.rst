@@ -82,6 +82,12 @@ complex        0.1      np.complex128            double       0.1
 str            0.1      np.uint32/16             char         0.1 [2]_
 bytes          0.1      np.bytes\_ or np.uint16  char         0.1 [3]_
 bytearray      0.1      np.bytes\_ or np.uint16  char         0.1 [3]_
+list           0.1      np.object\_              cell         0.1
+tuple          0.1      np.object\_              cell         0.1
+set            0.1      np.object\_              cell         0.1
+frozenset      0.1      np.object\_              cell         0.1
+cl.deque       0.1      np.object\_              cell         0.1
+dict           0.1                               struct       0.1 [4]_
 np.bool\_      0.1                               logical      0.1
 np.uint8       0.1                               uint8        0.1
 np.uint16      0.1                               uint16       0.1
@@ -99,12 +105,6 @@ np.complex128  0.1                               double       0.1
 np.str\_       0.1      np.uint32/16             char/uint32  0.1 [2]_
 np.bytes\_     0.1      np.bytes\_ or np.uint16  char         0.1 [3]_
 np.object\_    0.1                               cell         0.1
-dict           0.1                               struct       0.1 [4]_
-list           0.1      np.object\_              cell         0.1
-tuple          0.1      np.object\_              cell         0.1
-set            0.1      np.object\_              cell         0.1
-frozenset      0.1      np.object\_              cell         0.1
-cl.deque       0.1      np.object\_              cell         0.1
 =============  =======  =======================  ===========  ========
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
