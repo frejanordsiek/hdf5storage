@@ -13,6 +13,7 @@ Contents:
 
    information
    introduction
+   storage_format
    api
 
 Indices and tables
