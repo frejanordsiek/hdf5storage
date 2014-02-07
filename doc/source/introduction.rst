@@ -1,6 +1,160 @@
+.. currentmodule:: hdf5storage
+
 ============
 Introduction
 ============
+
+Getting Started
+===============
+
+Most of the functionality that one will use is contained in the main
+module ::
+
+    import hdf5storage
+
+Lower level functionality needed mostly for extending this package to
+work with more datatypes are in its submodules.
+
+The main functions in this module are :py:func:`write` and
+:py:func:`read` which write a Python variable to an HDF5 file or read
+the specified contents of an HDF5 file and convert to Python types.
+
+HDF5 files are structured much like a Unix filesystem, so everything can
+be referenced with a POSIX style path, which look like
+``'/pyth/hf'``. Unlike a Windows path, back slashes (``'/'``) are used
+as directory separators instead of forward slashes (``'\'``) and the
+base of the file system is just ``'/'`` instead of something like
+``'C:\'``. In the language of HDF5, what we call directories and files
+in filesystems are called groups and datasets.
+
+:py:func:`write` has many options for controlling how the data is
+stored, and what metadata is stored, but we can ignore that for now. If
+we have a variable named ``foo`` that we want to write to an HDF5 file
+named ``data.h5``, we would write it by ::
+
+    hdf5storage.write(foo, name='/foo', filename='data.h5')
+
+And then we can read it back from the file with the :py:func:`read`
+function, which returns the read data. Here, we will put the data we
+read back into the variable ``bar`` ::
+
+    bar = hdf5storage.read(name='/foo', filename='data.h5')
+
+
+Main Options Controlling Writing/Reading Data
+=============================================
+
+There are many individual options that control how data is written and
+read to/from file. These can be set by passing an :py:class:`Options`
+object to :py:func:`write` and :py:func:`read` by ::
+
+    options = hdf5storage.Options(...)
+    hdf5storage.write(... , options=options)
+    hdf5storage.read(... , options=options)
+
+or passing the individual keyword arguments used by the
+:py:class:`Options` constructor to :py:func:`write` and
+:py:func:`read`. The two methods cannot be mixed (the functions will
+give precedence to the given :py:class:`Options` object).
+
+.. note::
+
+   Functions in the various submodules only support the
+   :py:class:`Options` object method of passing options.
+
+The two main options are :py:attr:`Options.store_type_information` and
+:py:attr:`Options.matlab_compatible`. A more minor option is
+:py:attr:`Options.oned_as`.
+
+
+store_type_information
+----------------------
+
+``bool``
+
+Setting this options causes metadata to be written so that the written
+objects can be read back into Python accurately. As HDF5 does not
+natively support many Python data types (essentially only Numpy types),
+most Python data types have to be converted before being written. If
+metadata isn't also written, the data cannot be read back to its
+original form and will instead be read back as the Python type most
+closely resembling how it is stored, which will be a Numpy type of some
+sort.
+
+.. note
+
+   This option is especially important when we consider that when
+   ``matlab_compatible == True``, many additional conversions and
+   manipulations will be done to the data that cannot be reversed
+   without this metadata.
+
+matlab_compatible
+-----------------
+
+``bool``
+
+Setting this option causes the writing of HDF5 files be done in a way
+compatible with MATLAB v7.3 MAT files. This consists of writing some
+file metadata so that MATLAB recognizes the file, adding specific
+metadata to every stored object so that MATLAB recognizes them, and
+transforming the data to be in the form that MATLAB expects for certain
+types (for example, MATLAB expects everything to be at least a 2D array
+and strings to be stored in UTF-16 but with no doublets).
+
+.. note::
+
+   There are many individual small options in the :py:class:`Options`
+   class that this option sets to specific values. Setting
+   ``matlab_compatible`` automatically sets them, while changing their
+   values to something else automatically turns ``matlab_compatible``
+   off.
+
+oned_as
+-------
+
+{'row', 'column'}
+
+This option is only actually relevant when
+``matlab_compatible == True``. MATLAB only supports 2D and higher
+dimensionality arrays, but Numpy supports 1D arrays. So, 1D arrays have
+to be made 2 dimensional making them either into row vectors or column
+vectors. This option sets which they become when imported into MATLAB.
+
+
+Convenience Functions for MATLAB MAT Files
+==========================================
+
+Two functions are provided for reading and writing to MATLAB MAT files
+in a convenient way. They are :py:func:`savemat` and :py:func:`loadmat`,
+which are modelled after the SciPy functions of the same name
+(:py:func:`scipy.io.savemat` and :py:func:`scipy.io.loadmat`), which
+work with non-HDF5 based MAT files. They take not only the same options,
+but dispatch calls automatically to the SciPy versions when instructed
+to write to a non-HDF5 based MAT file, or read a MAT file that is not
+HDF5 based. SciPy must be installed to take advantage of this
+functionality.
+
+:py:func:`savemat` takes a ``dict`` having data (values) and the names
+to give each piece of data (keys), and writes them to a MATLAB
+compatible MAT file. The `format` keyword sets the MAT file format, with
+``'7.3'`` being the HDF5 based format supported by this package and
+``'5'`` and ``'4'`` being the non HDF5 based formats supported by
+SciPy. If you want the data to be able to be read accurately back into
+Python, you should set ``store_type_information=True``. Writing a couple
+variables to a file looks like ::
+
+    hdf5storage.savemat('data.mat', {'foo': 2.3, 'bar': (1+2j)}, format='7.3', oned_as='column', store_type_information=True)
+
+Then, to read variables back, we can either explicitly name the
+variables we want ::
+
+    out = hdf5storage.loadmat('data.mat', variable_names=['foo', 'bar'])
+
+or grab all variables by either not giving the `variable_names` option
+or setting it to ``None``. ::
+
+    out = hdf5storage.loadmat('data.mat')
+
 
 Example: Write And Readback Including Different Metadata
 ========================================================
