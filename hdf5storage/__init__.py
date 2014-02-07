@@ -764,12 +764,12 @@ class MarshallerCollection(object):
             return None
 
 
-def write(data, name='/', filename='data.h5', truncate_existing=False,
+def write(data, path='/', filename='data.h5', truncate_existing=False,
           truncate_invalid_matlab=False, options=None, **keywords):
     """ Writes data into an HDF5 file (high level).
 
     High level function to store a Python type (`data`) to a specified
-    name (`name`) in an HDF5 file. The name is specified as a POSIX
+    path (`path`) in an HDF5 file. The path is specified as a POSIX
     style path where the directory name is the Group to put it in and
     the basename is the name to write it to.
 
@@ -793,10 +793,10 @@ def write(data, name='/', filename='data.h5', truncate_existing=False,
     ----------
     data : any
         The data to write.
-    name : str, optional
-        The name to write `data` to. Must be a POSIX style path where
-         the directory name is the Group to put it in and the basename
-         is the name to write it to.
+    path : str, optional
+        The path to write `data` to. Must be a POSIX style path where
+        the directory name is the Group to put it in and the basename
+        is the name to write it to.
     filename : str, optional
         The name of the HDF5 file to write `data` to.
     truncate_existing : bool, optional
@@ -833,14 +833,14 @@ def write(data, name='/', filename='data.h5', truncate_existing=False,
 
     # Remove double slashes and a non-root trailing slash.
 
-    name = posixpath.normpath(name)
+    path = posixpath.normpath(path)
 
     # Extract the group name and the target name (will be a dataset if
     # data can be mapped to it, but will end up being made into a group
     # otherwise. As HDF5 files use posix path, conventions, posixpath
     # will do everything.
-    groupname = posixpath.dirname(name)
-    targetname = posixpath.basename(name)
+    groupname = posixpath.dirname(path)
+    targetname = posixpath.basename(path)
 
     # If groupname got turned into blank, then it is just root.
     if groupname == '':
@@ -945,12 +945,12 @@ def write(data, name='/', filename='data.h5', truncate_existing=False,
             fd.close()
 
 
-def read(name='/', filename='data.h5',
+def read(path='/', filename='data.h5',
          options=None, **keywords):
     """ Reads data from an HDF5 file (high level).
 
-    High level function to read data from an HDF5 file located at `name`
-    into Python types. The name is specified as a POSIX style path where
+    High level function to read data from an HDF5 file located at `path`
+    into Python types. The path is specified as a POSIX style path where
     the data to read is located.
 
     There are various options that can be used to influence how the data
@@ -960,10 +960,10 @@ def read(name='/', filename='data.h5',
 
     Parameters
     ----------
-    name : str, optional
-        The name to read data from. Must be a POSIX style path where
-         the directory name is the Group to put it in and the basename
-         is the name to write it to.
+    path : str, optional
+        The path to read data from. Must be a POSIX style path where
+        the directory name is the Group to put it in and the basename
+        is the name to write it to.
     filename : str, optional
         The name of the HDF5 file to read data from.
     options : Options, optional
@@ -993,14 +993,14 @@ def read(name='/', filename='data.h5',
 
     # Remove double slashes and a non-root trailing slash.
 
-    name = posixpath.normpath(name)
+    path = posixpath.normpath(path)
 
     # Extract the group name and the target name (will be a dataset if
     # data can be mapped to it, but will end up being made into a group
     # otherwise. As HDF5 files use posix path, conventions, posixpath
     # will do everything.
-    groupname = posixpath.dirname(name)
-    targetname = posixpath.basename(name)
+    groupname = posixpath.dirname(path)
+    targetname = posixpath.basename(path)
 
     # If groupname got turned into blank, then it is just root.
     if groupname == '':
