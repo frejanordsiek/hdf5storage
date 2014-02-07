@@ -1138,13 +1138,13 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
     added_first_variable = False
     for name in mdict:
         if not added_first_variable:
-            write(mdict[name], name, filename=file_name,
+            write(mdict[name], path=name, filename=file_name,
                   truncate_existing=truncate_existing,
                   truncate_invalid_matlab=truncate_invalid_matlab,
                   options=options)
             added_first_variable = True
         else:
-            write(mdict[name], name, filename=file_name,
+            write(mdict[name], path=name, filename=file_name,
                   truncate_existing=False,
                   truncate_invalid_matlab=False,
                   options=options)
@@ -1232,7 +1232,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
 
         # Read everything if we were instructed.
         if variable_names is None:
-            return read(name='/', filename=filename, options=options)
+            return read(path='/', filename=filename, options=options)
 
         # Read all the variables, stuff them into mdict, and return it.
         if mdict is None:
