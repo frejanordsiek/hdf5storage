@@ -62,13 +62,13 @@ give precedence to the given :py:class:`Options` object).
    Functions in the various submodules only support the
    :py:class:`Options` object method of passing options.
 
-The two main options are :py:attr:`Options.store_type_information` and
+The two main options are :py:attr:`Options.store_python_metadata` and
 :py:attr:`Options.matlab_compatible`. A more minor option is
 :py:attr:`Options.oned_as`.
 
 
-store_type_information
-----------------------
+store_python_metadata
+---------------------
 
 ``bool``
 
@@ -140,10 +140,10 @@ compatible MAT file. The `format` keyword sets the MAT file format, with
 ``'7.3'`` being the HDF5 based format supported by this package and
 ``'5'`` and ``'4'`` being the non HDF5 based formats supported by
 SciPy. If you want the data to be able to be read accurately back into
-Python, you should set ``store_type_information=True``. Writing a couple
+Python, you should set ``store_python_metadata=True``. Writing a couple
 variables to a file looks like ::
 
-    hdf5storage.savemat('data.mat', {'foo': 2.3, 'bar': (1+2j)}, format='7.3', oned_as='column', store_type_information=True)
+    hdf5storage.savemat('data.mat', {'foo': 2.3, 'bar': (1+2j)}, format='7.3', oned_as='column', store_python_metadata=True)
 
 Then, to read variables back, we can either explicitly name the
 variables we want ::
@@ -196,7 +196,7 @@ other types must be converted to these types before being written to the
 HDF5 file, and without metadata, the conversion cannot be reversed.
 
     >>> hdf5storage.write(data=a, name='/', filename='data.h5',
-    ...                   store_type_information=False,
+    ...                   store_python_metadata=False,
     ...                   matlab_compatible=False)
     >>> hdf5storage.read(name='/', filename='data.h5')
     {'a': array(True, dtype=bool),
@@ -235,11 +235,11 @@ Including Python Metadata
 -------------------------
 
 Do the same thing, but now include Python metadata
-(``store_type_information == True``). This time, everything is read back
+(``store_python_metadata == True``). This time, everything is read back
 the same (or at least, it should) as it was written.
 
     >>> hdf5storage.write(data=a, name='/', filename='data_typeinfo.h5',
-    ...                   store_type_information=True,
+    ...                   store_python_metadata=True,
     ...                   matlab_compatible=False)
     >>> hdf5storage.read(name='/', filename='data_typeinfo.h5')
     {'a': True,
@@ -277,7 +277,7 @@ ordering instead of C ordering like Python does, and strings are stored
 in a subset of UTF-16 (no doublets) in the version 7.3 MAT files.
 
     >>> hdf5storage.write(data=a, name='/', filename='data.mat',
-    ...                   store_type_information=False,
+    ...                   store_python_metadata=False,
     ...                   matlab_compatible=True)
     >>> hdf5storage.read(name='/', filename='data.mat')
     {'a': array([[ True]], dtype=bool),
@@ -316,14 +316,14 @@ Including both Python And MATLAB Metadata
 -----------------------------------------
 
 Do the same thing, but now include both Python metadata
-(``store_type_information == True``) and MATLAB metadata
+(``store_python_metadata == True``) and MATLAB metadata
 (``matlab_compatible == True``). This time, everything is read back
 the same (or at least, it should) as it was written. The Python metadata
 allows the transformations done by making the stored data MATLAB
 compatible reversible.
 
     >>> hdf5storage.write(data=a, name='/', filename='data_typeinfo.mat',
-    ...                   store_type_information=True,
+    ...                   store_python_metadata=True,
     ...                   matlab_compatible=True)
     >>> hdf5storage.read(name='/', filename='data_typeinfo.mat')
     {'a': True,

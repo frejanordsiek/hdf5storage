@@ -106,7 +106,7 @@ Attributes
 ==========
 
 Many different HDF5 Attributes are set for each object written if the
-:py:attr:`Options.store_type_information` and/or
+:py:attr:`Options.store_python_metadata` and/or
 :py:attr:`Options.matlab_compatible` options are set. The attributes
 associated with each will be referred to as "Python Attributes" and
 "MATLAB Attributes" respectively. If neither of them are set, then no

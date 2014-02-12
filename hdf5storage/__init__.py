@@ -77,7 +77,7 @@ class Options(object):
 
     Parameters
     ----------
-    store_type_information : bool, optional
+    store_python_metadata : bool, optional
         See Attributes.
     matlab_compatible : bool, optional
         See Attributes.
@@ -106,7 +106,7 @@ class Options(object):
 
     Attributes
     ----------
-    store_type_information : bool
+    store_python_metadata : bool
     matlab_compatible : bool
     delete_unused_variables : bool
     make_atleast_2d : bool
@@ -126,7 +126,7 @@ class Options(object):
         Collection of marshallers to disk.
 
     """
-    def __init__(self, store_type_information=True,
+    def __init__(self, store_python_metadata=True,
                  matlab_compatible=True,
                  delete_unused_variables=False,
                  make_atleast_2d=False,
@@ -141,7 +141,7 @@ class Options(object):
                  marshaller_collection=None):
         # Set the defaults.
 
-        self._store_type_information = True
+        self._store_python_metadata = True
         self._delete_unused_variables = False
         self._make_atleast_2d = False
         self._convert_numpy_bytes_to_utf16 = False
@@ -158,7 +158,7 @@ class Options(object):
         # do matlab_compatible last since it will override most of the
         # other ones.
 
-        self.store_type_information = store_type_information
+        self.store_python_metadata = store_python_metadata
         self.delete_unused_variables = delete_unused_variables
         self.make_atleast_2d = make_atleast_2d
         self.convert_numpy_bytes_to_utf16 = convert_numpy_bytes_to_utf16
@@ -192,8 +192,8 @@ class Options(object):
             self.marshaller_collection = MarshallerCollection()
 
     @property
-    def store_type_information(self):
-        """ Whether or not to store Python type information.
+    def store_python_metadata(self):
+        """ Whether or not to store Python metadata.
 
         bool
 
@@ -202,14 +202,14 @@ class Options(object):
         be read back into Python as the same type.
 
         """
-        return self._store_type_information
+        return self._store_python_metadata
 
-    @store_type_information.setter
-    def store_type_information(self, value):
+    @store_python_metadata.setter
+    def store_python_metadata(self, value):
         # Check that it is a bool, and then set it. This option does not
         # effect MATLAB compatibility
         if isinstance(value, bool):
-            self._store_type_information = value
+            self._store_python_metadata = value
 
     @property
     def matlab_compatible(self):
@@ -778,7 +778,7 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
     into `options` or as additional keywords that will be used to make
     one by ``options = Options(**keywords)``.
 
-    Two very important options are ``store_type_information`` and
+    Two very important options are ``store_python_metadata`` and
     ``matlab_compatible``, which are ``bool``. The first makes it so
     that enough metadata (HDF5 Attributes) are written that `data` can
     be read back accurately without it (or its contents if it is a
@@ -1036,7 +1036,7 @@ def read(path='/', filename='data.h5',
 
 
 def savemat(file_name, mdict, appendmat=True, format='7.3',
-            oned_as='row', store_type_information=True,
+            oned_as='row', store_python_metadata=True,
             marshaller_collection=None, truncate_existing=False,
             truncate_invalid_matlab=False, **keywords):
     """ Save a dictionary of python types to a MATLAB MAT file.
@@ -1069,7 +1069,7 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         SciPy.
     oned_as : {'row', 'column'}, optional
         Whether 1D arrays should be turned into row or column vectors.
-    store_type_information : bool, optional
+    store_python_metadata : bool, optional
         Whether or not to store Python type information. Doing so allows
         most types to be read back perfectly. Only applicable if not
         dispatching to SciPy (`format` >= 7.3).
@@ -1126,7 +1126,7 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         file_name = file_name + '.mat'
 
     # Make the options with matlab compatibility forced.
-    options = Options(store_type_information=store_type_information,
+    options = Options(store_python_metadata=store_python_metadata,
                       matlab_compatible=True, oned_as=oned_as,
                       marshaller_collection=marshaller_collection)
 

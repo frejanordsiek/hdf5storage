@@ -87,7 +87,7 @@ class TypeMarshaller(object):
         #: set of str
         #:
         #: ``set`` of attribute names the marshaller uses when
-        #: an ``Option.store_type_information`` is ``True``.
+        #: an ``Option.store_python_metadata`` is ``True``.
         self.python_attributes = {'Python.Type'}
 
         #: Attributes used for MATLAB compatibility.
@@ -242,16 +242,16 @@ class TypeMarshaller(object):
 
         # The metadata that is written depends on the format.
 
-        if options.store_type_information:
+        if options.store_python_metadata:
             set_attribute_string(grp[name], 'Python.Type', type_string)
 
-        # If we are not storing type information or doing MATLAB
+        # If we are not storing python information or doing MATLAB
         # compatibility, then attributes not in the python and/or
         # MATLAB lists need to be removed.
 
         attributes_used = set()
 
-        if options.store_type_information:
+        if options.store_python_metadata:
             attributes_used |= self.python_attributes
 
         if options.matlab_compatible:
@@ -524,14 +524,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         TypeMarshaller.write_metadata(self, f, grp, name, data,
                                       type_string, options)
 
-        # Write the underlying numpy type if we are storing type
+        # Write the underlying numpy type if we are storing python
         # information.
 
-        # If we are storing type information; the shape, underlying
+        # If we are storing python information; the shape, underlying
         # numpy type, and its type of container ('scalar', 'ndarray', or
         # 'matrix') need to be stored.
 
-        if options.store_type_information:
+        if options.store_python_metadata:
             set_attribute(grp[name], 'Python.Shape',
                           np.uint64(data.shape))
             set_attribute_string(grp[name],
@@ -554,7 +554,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if data.size == 0  or ((data.dtype.type == np.bytes_ \
                 or data.dtype.type == np.str_)
                 and data.nbytes == 0):
-            if options.store_type_information:
+            if options.store_python_metadata:
                 set_attribute(grp[name], 'Python.Empty',
                                           np.uint8(1))
             else:
@@ -944,7 +944,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # existing ones must be deleted.
 
         if options.store_shape_for_empty and len(data) == 0:
-            if options.store_type_information:
+            if options.store_python_metadata:
                 set_attribute(grp[name], 'Python.Empty',
                                           np.uint8(1))
             else:
