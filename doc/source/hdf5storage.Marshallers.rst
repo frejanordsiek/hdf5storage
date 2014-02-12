@@ -47,6 +47,7 @@ NumpyScalarArrayMarshaller
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.types
       :annotation: = [np.ndarray, np.matrix,
+                      np.chararray,
                       np.bool_,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
@@ -56,6 +57,7 @@ NumpyScalarArrayMarshaller
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.python_type_strings
       :annotation: = ['numpy.ndarray', 'numpy.matrix',
+                      'numpy.chararray',
                       'numpy.bool_', 'numpy.uint8', 'numpy.uint16',
                       'numpy.uint32', 'numpy.uint64', 'numpy.int8',
 		      'numpy.int16', 'numpy.int32', 'numpy.int64',

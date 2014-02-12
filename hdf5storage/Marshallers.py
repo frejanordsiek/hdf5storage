@@ -310,6 +310,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
                                    'MATLAB_int_decode'}
         self.types = [np.ndarray, np.matrix,
+                      np.chararray,
                       np.bool_,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
@@ -317,6 +318,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.complex64, np.complex128,
                       np.bytes_, np.str_, np.object_]
         self.python_type_strings = ['numpy.ndarray', 'numpy.matrix',
+                                    'numpy.chararray',
                                     'numpy.bool_',
                                     'numpy.uint8', 'numpy.uint16',
                                     'numpy.uint32', 'numpy.uint64',
@@ -528,8 +530,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # information.
 
         # If we are storing python information; the shape, underlying
-        # numpy type, and its type of container ('scalar', 'ndarray', or
-        # 'matrix') need to be stored.
+        # numpy type, and its type of container ('scalar', 'ndarray',
+        # 'matrix', or 'chararray') need to be stored.
 
         if options.store_python_metadata:
             set_attribute(grp[name], 'Python.Shape',
@@ -539,6 +541,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                  data.dtype.name)
             if isinstance(data, np.matrix):
                 container = 'matrix'
+            elif isinstance(data, np.chararray):
+                container = 'chararray'
             elif isinstance(data, np.ndarray):
                 container = 'ndarray'
             else:
@@ -711,9 +715,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     and np.prod(shape) == np.prod(data.shape):
                 data = data.reshape(tuple(shape))
 
-            # Convert to scalar, matrix, or ndarray depending on the
-            # container type. For an empty scalar string, it needs to be
-            # manually set to '' and b'' or there will be problems.
+            # Convert to scalar, matrix, chararray, or ndarray depending
+            # on the container type. For an empty scalar string, it
+            # needs to be manually set to '' and b'' or there will be
+            # problems.
             if container == 'scalar':
                 if underlying_type.startswith('bytes'):
                     if python_empty == 1:
@@ -729,6 +734,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     data = data.flatten()[0]
             elif container == 'matrix':
                 data = np.asmatrix(data)
+            elif container == 'chararray':
+                data = data.view(np.chararray)
             elif container == 'ndarray':
                 data = np.asarray(data)
 

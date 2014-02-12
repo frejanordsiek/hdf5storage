@@ -69,43 +69,46 @@ will be what it is read back as) the MATLAB class it becomes if
 targetting a MAT file, and the first version of this package to
 support writing it so MATlAB can read it.
 
-=============  =======  =======================  ===========  ========
-Python                                           MATLAB
------------------------------------------------  ---------------------
-Type           Version  Converted to             Class        Version
-=============  =======  =======================  ===========  ========
-bool           0.1      np.bool\_ or np.uint8    logical      0.1 [1]_
-None           0.1      ``np.float64([])``       ``[]``       0.1
-int            0.1      np.int64                 int64        0.1
-float          0.1      np.float64               double       0.1
-complex        0.1      np.complex128            double       0.1
-str            0.1      np.uint32/16             char         0.1 [2]_
-bytes          0.1      np.bytes\_ or np.uint16  char         0.1 [3]_
-bytearray      0.1      np.bytes\_ or np.uint16  char         0.1 [3]_
-list           0.1      np.object\_              cell         0.1
-tuple          0.1      np.object\_              cell         0.1
-set            0.1      np.object\_              cell         0.1
-frozenset      0.1      np.object\_              cell         0.1
-cl.deque       0.1      np.object\_              cell         0.1
-dict           0.1                               struct       0.1 [4]_
-np.bool\_      0.1                               logical      0.1
-np.uint8       0.1                               uint8        0.1
-np.uint16      0.1                               uint16       0.1
-np.uint32      0.1                               uint32       0.1
-np.uint64      0.1                               uint64       0.1
-np.uint8       0.1                               int8         0.1
-np.int16       0.1                               int16        0.1
-np.int32       0.1                               int32        0.1
-np.int64       0.1                               int64        0.1
+=============  =======  ==========================  ===========  ==========
+Python                                              MATLAB
+--------------------------------------------------  -----------------------
+Type           Version  Converted to                Class        Version
+=============  =======  ==========================  ===========  ==========
+bool           0.1      np.bool\_ or np.uint8       logical      0.1 [1]_
+None           0.1      ``np.float64([])``          ``[]``       0.1
+int            0.1      np.int64                    int64        0.1
+float          0.1      np.float64                  double       0.1
+complex        0.1      np.complex128               double       0.1
+str            0.1      np.uint32/16                char         0.1 [2]_
+bytes          0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
+bytearray      0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
+list           0.1      np.object\_                 cell         0.1
+tuple          0.1      np.object\_                 cell         0.1
+set            0.1      np.object\_                 cell         0.1
+frozenset      0.1      np.object\_                 cell         0.1
+cl.deque       0.1      np.object\_                 cell         0.1
+dict           0.1                                  struct       0.1 [4]_
+np.bool\_      0.1                                  logical      0.1
+np.uint8       0.1                                  uint8        0.1
+np.uint16      0.1                                  uint16       0.1
+np.uint32      0.1                                  uint32       0.1
+np.uint64      0.1                                  uint64       0.1
+np.uint8       0.1                                  int8         0.1
+np.int16       0.1                                  int16        0.1
+np.int32       0.1                                  int32        0.1
+np.int64       0.1                                  int64        0.1
 np.float16     0.1
-np.float32     0.1                               single       0.1
-np.float64     0.1                               double       0.1
-np.complex64   0.1                               single       0.1
-np.complex128  0.1                               double       0.1
-np.str\_       0.1      np.uint32/16             char/uint32  0.1 [2]_
-np.bytes\_     0.1      np.bytes\_ or np.uint16  char         0.1 [3]_
-np.object\_    0.1                               cell         0.1
-=============  =======  =======================  ===========  ========
+np.float32     0.1                                  single       0.1
+np.float64     0.1                                  double       0.1
+np.complex64   0.1                                  single       0.1
+np.complex128  0.1                                  double       0.1
+np.str\_       0.1      np.uint32/16                char/uint32  0.1 [2]_
+np.bytes\_     0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
+np.object\_    0.1                                  cell         0.1
+np.ndarray     0.1      [5]_                        [5]_         0.1 [5]_
+np.matrix      0.1      [5]_                        [5]_         0.1 [5]_
+np.chararray   0.1      [5]_                        [5]_         0.1 [5]_
+=============  =======  ==========================  ===========  ==========
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
        MATLAB compatiblity, or if the option is explicitly set.
@@ -122,6 +125,8 @@ np.object\_    0.1                               cell         0.1
        stored as ``np.uint16`` in UTF-16 encoding. Otherwise, it is just
        written as ``np.bytes_``.
 .. [4] All keys must be ``str``.
+.. [5] Container types are only supported if their underlying dtype is
+       supported. Data conversions are done based on its dtype.
 
 This table gives the MATLAB classes that can be read from a MAT file,
 the first version of this package that can read them, and the Python
@@ -131,8 +136,8 @@ type they are read as.
 MATLAB Class  Version  Python Type
 ============  =======  ================================
 logical       0.1      np.bool\_
-single        0.1      np.float32 or np.complex64 [5]_
-double        0.1      np.float64 or np.complex128 [5]_
+single        0.1      np.float32 or np.complex64 [6]_
+double        0.1      np.float64 or np.complex128 [6]_
 uint8         0.1      np.uint8
 uint16        0.1      np.uint16
 uint32        0.1      np.uint32
@@ -141,9 +146,9 @@ int8          0.1      np.int8
 int16         0.1      np.int16
 int32         0.1      np.int32
 int64         0.1      np.int64
-struct        0.1      dict [6]_
+struct        0.1      dict [7]_
 cell          0.1      np.object\_
 ============  =======  ================================
 
-.. [5] Depends on whether there is a complex part or not.
-.. [6] Structure arrays are not supported.
+.. [6] Depends on whether there is a complex part or not.
+.. [7] Structure arrays are not supported.
