@@ -262,9 +262,26 @@ Optional Data Transformations
 
 Many different data conversions beyond turning most non-Numpy types into
 Numpy types, can be done and are controlled by individual settings in
-the :py:class:`Options` class (most are set to fixed values when
-``matlab_compatible == True``). The transfomations are listed below by
-their option name.
+the :py:class:`Options` class. Most are set to fixed values when
+``matlab_compatible == True``, which are shown in the table below. The
+transfomations are listed below by their option name, other than
+`complex_names` and `group_for_references` which were explained in the
+previous section.
+
+============================  ====================
+attribute                     value
+============================  ====================
+delete_unused_variables       ``True``
+make_atleast_2d               ``True``
+convert_numpy_bytes_to_utf16  ``True``
+convert_numpy_str_to_utf16    ``True``
+convert_bools_to_uint8        ``True``
+reverse_dimension_order       ``True``
+store_shape_for_empty         ``True``
+complex_names                 ``('real', 'imag')``
+group_for_references          ``'/#refs#'``
+============================  ====================
+
 
 delete_unused_variables
 -----------------------
@@ -338,3 +355,32 @@ store_shape_for_empty
 Whether, for empty arrays, to store the shape of the array (after
 transformations) as the Dataset for the object. This option is set to
 ``True`` implicitly by ``matlab_compatible``.
+
+
+How Data Is Read from MATLAB MAT Files
+======================================
+
+This table gives the MATLAB classes that can be read from a MAT file,
+the first version of this package that can read them, and the Python
+type they are read as if there is no Python metadata attached to them.
+
+============  =======  ================================
+MATLAB Class  Version  Python Type
+============  =======  ================================
+logical       0.1      np.bool\_
+single        0.1      np.float32 or np.complex64 [7]_
+double        0.1      np.float64 or np.complex128 [7]_
+uint8         0.1      np.uint8
+uint16        0.1      np.uint16
+uint32        0.1      np.uint32
+uint64        0.1      np.uint64
+int8          0.1      np.int8
+int16         0.1      np.int16
+int32         0.1      np.int32
+int64         0.1      np.int64
+struct        0.1      dict [8]_
+cell          0.1      np.object\_
+============  =======  ================================
+
+.. [7] Depends on whether there is a complex part or not.
+.. [8] Structure arrays are not supported.
