@@ -15,6 +15,8 @@ setup(name='hdf5storage',
       url='https://github.com/frejanordsiek/hdf5storage',
       packages=['hdf5storage'],
       requires=['numpy', 'h5py (>= 2.0)'],
+      license='BSD',
+      keywords='hdf5 matlab',
       classifiers=[
           "Programming Language :: Python :: 3",
           "Development Status :: 3 - Alpha",
