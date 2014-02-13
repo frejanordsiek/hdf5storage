@@ -125,7 +125,7 @@ PythonStringMarshaller
 
 
 PythonNoneMarshaller
-----------------------
+--------------------
 
 .. autoclass:: PythonNoneMarshaller
    :members: read, write
@@ -151,7 +151,7 @@ PythonNoneMarshaller
 
 
 PythonDictMarshaller
-----------------------
+--------------------
 
 .. autoclass:: PythonDictMarshaller
    :members: read, write, write_metadata
@@ -174,7 +174,7 @@ PythonDictMarshaller
 
 
 PythonListMarshaller
-----------------------
+--------------------
 
 .. autoclass:: PythonListMarshaller
    :members: read, write
@@ -200,7 +200,7 @@ PythonListMarshaller
 
 
 PythonTupleSetDequeMarshaller
-----------------------
+-----------------------------
 
 .. autoclass:: PythonTupleSetDequeMarshaller
    :members: read, write
