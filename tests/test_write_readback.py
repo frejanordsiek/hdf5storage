@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import os
 import os.path
 import posixpath
@@ -53,9 +52,10 @@ class TestPythonMatlabFormat(object):
         self.filename = 'data.mat'
         self.options = hdf5storage.Options()
 
-        # Need a list of the supported numeric dtypes to test.
+        # Need a list of the supported numeric dtypes to test, excluding
+        # those not supported by MATLAB.
         self.dtypes = ['bool', 'uint8', 'uint16', 'uint32', 'uint64',
-                       'int8', 'int16', 'int32', 'int64', 'float16',
+                       'int8', 'int16', 'int32', 'int64',
                        'float32', 'float64', 'complex64', 'complex128',
                        'bytes', 'str']
 
@@ -192,9 +192,9 @@ class TestPythonMatlabFormat(object):
         if os.path.exists(self.filename):
             os.remove(self.filename)
         try:
-            hdf5storage.write(data, name=name, filename=self.filename,
+            hdf5storage.write(data, path=name, filename=self.filename,
                               options=options)
-            out = hdf5storage.read(name=name, filename=self.filename,
+            out = hdf5storage.read(path=name, filename=self.filename,
                                    options=options)
         except:
             raise
@@ -403,24 +403,25 @@ class TestNoneFormat(TestPythonMatlabFormat):
         # is turning off the storage of type information as well as
         # MATLAB compatibility.
         TestPythonMatlabFormat.__init__(self)
-        self.options = hdf5storage.Options(store_type_information=False,
+        self.options = hdf5storage.Options(store_python_metadata=False,
                                            matlab_compatible=False)
+
+        # Add in float16 to the set of types tested.
+        self.dtypes.append('float16')
 
     def assert_equal(self, a, b):
         assert_equal_none_format(a, b)
 
 
-class TestMatlabFormat(TestNoneFormat):
+class TestMatlabFormat(TestPythonMatlabFormat):
     def __init__(self):
         # The parent does most of the setup. All that has to be changed
-        # is turning on the matlab compatibility, changing the filename,
-        # and removing 'float16' from the dtype list (its not supported
-        # by matlab).
-        TestNoneFormat.__init__(self)
-        self.options = hdf5storage.Options(store_type_information=False,
+        # is turning on the matlab compatibility, and changing the
+        # filename.
+        TestPythonMatlabFormat.__init__(self)
+        self.options = hdf5storage.Options(store_python_metadata=False,
                                            matlab_compatible=True)
         self.filename = 'data.mat'
-        self.dtypes.remove('float16')
 
     def assert_equal(self, a, b):
         assert_equal_matlab_format(a, b)
