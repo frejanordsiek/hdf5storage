@@ -43,7 +43,9 @@ import datetime
 import h5py
 
 from . import lowlevel
-from hdf5storage.lowlevel import Hdf5storageError, CantReadError
+from hdf5storage.lowlevel import Hdf5storageError, CantReadError, \
+    TypeNotMatlabCompatibleError
+
 from . import Marshallers
 
 
@@ -81,6 +83,9 @@ class Options(object):
         See Attributes.
     matlab_compatible : bool, optional
         See Attributes.
+    action_for_matlab_incompatible: str, optional
+        See Attributes. Only valid values are 'ignore', 'discard', and
+        'error'.
     delete_unused_variables:  : bool, optional
         See Attributes.
     make_atleast_2d : bool, optional
@@ -108,6 +113,7 @@ class Options(object):
     ----------
     store_python_metadata : bool
     matlab_compatible : bool
+    action_for_matlab_incompatible: {'ignore', 'discard', 'error'}
     delete_unused_variables : bool
     make_atleast_2d : bool
     convert_numpy_bytes_to_utf16 : bool
@@ -128,6 +134,7 @@ class Options(object):
     """
     def __init__(self, store_python_metadata=True,
                  matlab_compatible=True,
+                 action_for_matlab_incompatible='error',
                  delete_unused_variables=False,
                  make_atleast_2d=False,
                  convert_numpy_bytes_to_utf16=False,
@@ -142,6 +149,7 @@ class Options(object):
         # Set the defaults.
 
         self._store_python_metadata = True
+        self._action_for_matlab_incompatible = 'error'
         self._delete_unused_variables = False
         self._make_atleast_2d = False
         self._convert_numpy_bytes_to_utf16 = False
@@ -159,6 +167,8 @@ class Options(object):
         # other ones.
 
         self.store_python_metadata = store_python_metadata
+        self.action_for_matlab_incompatible = \
+            action_for_matlab_incompatible
         self.delete_unused_variables = delete_unused_variables
         self.make_atleast_2d = make_atleast_2d
         self.convert_numpy_bytes_to_utf16 = convert_numpy_bytes_to_utf16
@@ -259,6 +269,33 @@ class Options(object):
                 self._store_shape_for_empty = True
                 self._complex_names = ('real', 'imag')
                 self._group_for_references = "/#refs#"
+
+    @property
+    def action_for_matlab_incompatible(self):
+        """ The action to do when writing non-MATLAB compatible data.
+
+        {'ignore', 'discard', 'error'}
+
+        The action to perform when doing MATLAB compatibility but a type
+        being written is not MATLAB compatible. The actions are to write
+        the data anyways ('ignore'), don't write the incompatible data
+        ('discard'), or throw a ``TypeNotMatlabCompatibleError``
+        exception. The default is 'error'.
+
+        See Also
+        --------
+        matlab_compatible
+        hdf5storage.lowlevel.TypeNotMatlabCompatibleError
+
+        """
+        return self._action_for_matlab_incompatible
+
+    @action_for_matlab_incompatible.setter
+    def action_for_matlab_incompatible(self, value):
+        # Check that it is one of the allowed values, and then set
+        # it. This option does not effect MATLAB compatibility.
+        if value in ('ignore', 'discard', 'error'):
+            self._action_for_matlab_incompatible = value
 
     @property
     def delete_unused_variables(self):
@@ -818,6 +855,9 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
     ------
     NotImplementedError
         If writing `data` is not supported.
+    TypeNotMatlabCompatibleError
+        If writing a type not compatible with MATLAB and
+        `options.action_for_matlab_incompatible` is set to ``'error'``.
 
     See Also
     --------
@@ -1037,6 +1077,7 @@ def read(path='/', filename='data.h5',
 
 def savemat(file_name, mdict, appendmat=True, format='7.3',
             oned_as='row', store_python_metadata=True,
+            action_for_matlab_incompatible='error',
             marshaller_collection=None, truncate_existing=False,
             truncate_invalid_matlab=False, **keywords):
     """ Save a dictionary of python types to a MATLAB MAT file.
@@ -1073,6 +1114,11 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         Whether or not to store Python type information. Doing so allows
         most types to be read back perfectly. Only applicable if not
         dispatching to SciPy (`format` >= 7.3).
+    action_for_matlab_incompatible: str, optional
+        The action to perform writing data that is not MATLAB
+        compatible. The actions are to write the data anyways
+        ('ignore'), don't write the incompatible data ('discard'), or
+        throw a ``TypeNotMatlabCompatibleError`` exception.
     marshaller_collection : MarshallerCollection, optional
         Collection of marshallers to disk to use. Only applicable if
         not dispatching to SciPy (`format` >= 7.3).
@@ -1093,6 +1139,9 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         If `format` < 7.3 and the ``scipy`` module can't be found.
     NotImplementedError
         If writing a variable in `mdict` is not supported.
+    TypeNotMatlabCompatibleError
+        If writing a type not compatible with MATLAB and
+        `action_for_matlab_incompatible` is set to ``'error'``.
 
     Notes
     -----
@@ -1126,9 +1175,10 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         file_name = file_name + '.mat'
 
     # Make the options with matlab compatibility forced.
-    options = Options(store_python_metadata=store_python_metadata,
-                      matlab_compatible=True, oned_as=oned_as,
-                      marshaller_collection=marshaller_collection)
+    options = Options(store_python_metadata=store_python_metadata, \
+        matlab_compatible=True, oned_as=oned_as, \
+        action_for_matlab_incompatible=action_for_matlab_incompatible, \
+        marshaller_collection=marshaller_collection)
 
     # Write the variables in the dictionary to file one at a time. For
     # the first one, the file needs to be truncated or truncated if not

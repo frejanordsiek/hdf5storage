@@ -35,6 +35,7 @@ import numpy as np
 import h5py
 
 from hdf5storage.utilities import *
+from hdf5storage import lowlevel
 from hdf5storage.lowlevel import write_data, read_data
 
 
@@ -375,6 +376,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_classes = list(self.__MATLAB_classes.values())
 
     def write(self, f, grp, name, data, type_string, options):
+        # If we are doing matlab compatibility and the data type is not
+        # one of those that is supported for matlab, skip writing the
+        # data or throw an error if appropriate.
+        if options.matlab_compatible \
+                and data.dtype.type not in self.__MATLAB_classes:
+            if options.action_for_matlab_incompatible == 'error':
+                raise lowlevel.TypeNotMatlabCompatibleError( \
+                    'Data type ' + data.dtype.name
+                    + ' not supported by MATLAB.')
+            elif options.action_for_matlab_incompatible == 'discard':
+                return
+
         # Need to make a set of data that will be stored. It will start
         # out as a copy of data and then be steadily manipulated.
 
@@ -579,19 +592,19 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # bytes each element takes up (dtype.itemsize). Otherwise,
         # the attributes must be deleted.
 
-        if options.matlab_compatible:
-            tp = data.dtype.type
-            if tp in self.__MATLAB_classes:
-                set_attribute_string(grp[name], 'MATLAB_class',
-                                     self.__MATLAB_classes[tp])
-            else:
-                set_attribute_string(grp[name], 'MATLAB_class', '')
-
+        tp = data.dtype.type
+        if options.matlab_compatible and tp in self.__MATLAB_classes:
+            set_attribute_string(grp[name], 'MATLAB_class',
+                                 self.__MATLAB_classes[tp])
             if tp in (np.bytes_, np.str_, np.bool_):
                 set_attribute(grp[name], 'MATLAB_int_decode', np.int64(
                               grp[name].dtype.itemsize))
             else:
                 del_attribute(grp[name], 'MATLAB_int_decode')
+        else:
+            del_attribute(grp[name], 'MATLAB_class')
+            del_attribute(grp[name], 'MATLAB_empty')
+            del_attribute(grp[name], 'MATLAB_int_decode')
 
     def read(self, f, grp, name, options):
         # If name is not present or is not a Dataset, then we can't read
@@ -933,10 +946,11 @@ class PythonDictMarshaller(TypeMarshaller):
         # be deleted).
         for k, v in data.items():
             write_data(f, grp2, k, v, None, options)
-            if options.matlab_compatible:
-                set_attribute_string(grp2[k], 'H5PATH', grp2.name)
-            else:
-                del_attribute(grp2[k], 'H5PATH')
+            if k in grp2:
+                if options.matlab_compatible:
+                    set_attribute_string(grp2[k], 'H5PATH', grp2.name)
+                else:
+                    del_attribute(grp2[k], 'H5PATH')
 
     def write_metadata(self, f, grp, name, data, type_string, options):
         # First, call the inherited version to do most of the work.

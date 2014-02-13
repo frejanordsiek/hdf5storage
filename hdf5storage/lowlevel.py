@@ -42,6 +42,25 @@ class Hdf5storageError(IOError):
 
 class CantReadError(Hdf5storageError):
     """ Exception for a failure to read the desired data."""
+    pass
+
+
+class TypeNotMatlabCompatibleError(Hdf5storageError):
+    """ Exception for trying to write non-MATLAB compatible data.
+
+    In the event that MATLAB compatibility is being done
+    (``Options.matlab_compatible``) and a Python type is not importable
+    by MATLAB, the data is either not written or this exception is
+    thrown depending on the value of
+    ``Options.action_for_matlab_incompatible``.
+
+    See Also
+    --------
+    hdf5storage.Options.matlab_compatible
+    hdf5storage.Options.action_for_matlab_incompatible
+
+    """
+    pass
 
 
 def write_data(f, grp, name, data, type_string, options):
@@ -70,6 +89,9 @@ def write_data(f, grp, name, data, type_string, options):
     ------
     NotImplementedError
         If writing `data` is not supported.
+    TypeNotMatlabCompatibleError
+        If writing a type not compatible with MATLAB and
+        `options.action_for_matlab_incompatible` is set to ``'error'``.
 
     See Also
     --------
