@@ -89,6 +89,7 @@ frozenset      0.1      np.object\_                 cell         0.1
 cl.deque       0.1      np.object\_                 cell         0.1
 dict           0.1                                  struct       0.1 [4]_
 np.bool\_      0.1                                  logical      0.1
+np.void        0.1
 np.uint8       0.1                                  uint8        0.1
 np.uint16      0.1                                  uint16       0.1
 np.uint32      0.1                                  uint32       0.1

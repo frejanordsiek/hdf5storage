@@ -65,6 +65,7 @@ frozenset      0.1      np.object\_                        Dataset
 cl.deque       0.1      np.object\_                        Dataset
 dict [4]_      0.1                                         Group
 np.bool\_      0.1      not or np.uint8 [1]_               Dataset
+np.void        0.1                                         Dataset
 np.uint8       0.1                                         Dataset
 np.uint16      0.1                                         Dataset
 np.uint32      0.1                                         Dataset
@@ -140,6 +141,7 @@ frozenset      'frozenset'          'object'                     'cell'
 cl.deque       'collections.deque'  'object'                     'cell'
 dict           'dict'                                            'struct'
 np.bool\_      'numpy.bool'         'bool'                       'logical'           1
+np.void        'numpy.void'         'void#' [5]_
 np.uint8       'numpy.uint8'        'uint8'                      'uint8'
 np.uint16      'numpy.uint16'       'uint16'                     'uint16'
 np.uint32      'numpy.uint32'       'uint32'                     'uint32'
