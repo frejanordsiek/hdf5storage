@@ -5,6 +5,23 @@ hdf5storage.utilities
 
 .. automodule:: hdf5storage.utilities
 
+.. autosummary::
+
+   next_unused_name_in_group
+   convert_numpy_str_to_uint16
+   convert_numpy_str_to_uint32
+   decode_to_str
+   decode_to_numpy_str
+   decode_to_numpy_bytes
+   decode_complex
+   encode_complex
+   get_attribute
+   get_attribute_string
+   set_attribute
+   set_attribute_string
+   set_attribute_string_array
+   del_attribute
+
 
 next_unused_name_in_group
 -------------------------

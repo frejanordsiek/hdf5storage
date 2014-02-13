@@ -5,6 +5,15 @@ hdf5storage
 
 .. automodule:: hdf5storage
 
+.. autosummary::
+
+   write
+   read
+   savemat
+   loadmat
+   Options
+   MarshallerCollection
+
 
 write
 -----

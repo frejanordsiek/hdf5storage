@@ -83,10 +83,10 @@ class Options(object):
         See Attributes.
     matlab_compatible : bool, optional
         See Attributes.
-    action_for_matlab_incompatible: str, optional
+    action_for_matlab_incompatible : str, optional
         See Attributes. Only valid values are 'ignore', 'discard', and
         'error'.
-    delete_unused_variables:  : bool, optional
+    delete_unused_variables : bool, optional
         See Attributes.
     make_atleast_2d : bool, optional
         See Attributes.
@@ -113,7 +113,7 @@ class Options(object):
     ----------
     store_python_metadata : bool
     matlab_compatible : bool
-    action_for_matlab_incompatible: {'ignore', 'discard', 'error'}
+    action_for_matlab_incompatible : str
     delete_unused_variables : bool
     make_atleast_2d : bool
     convert_numpy_bytes_to_utf16 : bool
@@ -130,7 +130,7 @@ class Options(object):
         ``h5py.Group.create_dataset`` options for writing scalars.
     marshaller_collection : MarshallerCollection
         Collection of marshallers to disk.
-
+    
     """
     def __init__(self, store_python_metadata=True,
                  matlab_compatible=True,

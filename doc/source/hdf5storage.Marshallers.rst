@@ -5,6 +5,17 @@ hdf5storage.Marshallers
 
 .. automodule:: hdf5storage.Marshallers
 
+.. autosummary::
+
+   TypeMarshaller
+   NumpyScalarArrayMarshaller
+   PythonScalarMarshaller
+   PythonStringMarshaller
+   PythonNoneMarshaller
+   PythonDictMarshaller
+   PythonListMarshaller
+   PythonTupleSetDequeMarshaller
+
 
 TypeMarshaller
 --------------
