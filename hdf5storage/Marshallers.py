@@ -39,6 +39,65 @@ from hdf5storage import lowlevel
 from hdf5storage.lowlevel import write_data, read_data
 
 
+def write_object_array(f, data, options):
+    """ Writes an array of objects recursively.
+
+    Writes the elements of the given object array recursively in the
+    HDF5 Group ``options.group_for_references`` and returns an
+    ``h5py.Reference`` array to all the elements.
+
+    Parameters
+    ----------
+    f : h5py.File
+        The HDF5 file handle that is open.
+    data : numpy.ndarray of objects
+        Numpy object array to write the elements of.
+    options : hdf5storage.core.Options
+        hdf5storage options object.
+
+    See Also
+    --------
+    hdf5storage.Options.group_for_references
+    h5py.Reference
+
+    """
+    # We need to grab the special reference dtype and make an empty
+    # array to store all the references in.
+    ref_dtype = h5py.special_dtype(ref=h5py.Reference)
+    data_refs = np.zeros(shape=data.shape, dtype='object')
+
+    # Go through all the elements of data and write them, gabbing their
+    # references and putting them in data_refs. They will be put in
+    # group_for_references, which is also what the H5PATH needs to be
+    # set to if we are doing MATLAB compatibility (otherwise, the
+    # attribute needs to be deleted).
+
+    if options.group_for_references not in f:
+        f.create_group(options.group_for_references)
+
+    grp2 = f[options.group_for_references]
+
+    if not isinstance(grp2, h5py.Group):
+        del f[options.group_for_references]
+        f.create_group(options.group_for_references)
+        grp2 = f[options.group_for_references]
+
+    for index, x in np.ndenumerate(data):
+        data_refs[index] = None
+        name_for_ref = next_unused_name_in_group(grp2, 16)
+        write_data(f, grp2, name_for_ref, x, None, options)
+        data_refs[index] = grp2[name_for_ref].ref
+        if options.matlab_compatible:
+            set_attribute_string(grp2[name_for_ref],
+                                 'H5PATH', grp2.name)
+        else:
+            del_attribute(grp2[name_for_ref], 'H5PATH')
+
+    # Now, the dtype needs to be changed to the reference type and the
+    # whole thing copied over to data_to_store.
+    return data_refs.astype(dtype=ref_dtype).copy()
+
+
 class TypeMarshaller(object):
     """ Base class for marshallers of Python types.
 
@@ -369,7 +428,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                          'single': np.float32,
                                          'double': np.float64,
                                          'char': np.str_,
-                                         'cell': np.object_}
+                                         'cell': np.object_,
+                                         'canonical empty': np.float64}
 
 
         # Set matlab_classes to the supported classes (the values).
@@ -378,9 +438,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
     def write(self, f, grp, name, data, type_string, options):
         # If we are doing matlab compatibility and the data type is not
         # one of those that is supported for matlab, skip writing the
-        # data or throw an error if appropriate.
+        # data or throw an error if appropriate. Fielded ndarrays and
+        # recarrays are compatible if the
+        # fielded_numpy_ndarray_as_struct option is set.
         if options.matlab_compatible \
-                and data.dtype.type not in self.__MATLAB_classes:
+                and not (data.dtype.type in self.__MATLAB_classes \
+                or (data.dtype.fields is not None \
+                and options.fielded_numpy_ndarray_as_struct)):
             if options.action_for_matlab_incompatible == 'error':
                 raise lowlevel.TypeNotMatlabCompatibleError( \
                     'Data type ' + data.dtype.name
@@ -473,65 +537,103 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # (data_to_store is still an object), then we must recursively
         # write what each element points to and make an array of the
         # references to them.
-
         if data_to_store.dtype.name == 'object':
-            ref_dtype = h5py.special_dtype(ref=h5py.Reference)
-            data_refs = data_to_store.copy()
+            data_to_store = write_object_array(f, data_to_store,
+                                               options)
 
-            # Go through all the elements of data and write them,
-            # gabbing their references and putting them in
-            # data_refs. They will be put in group_for_references, which
-            # is also what the H5PATH needs to be set to if we are doing
-            # MATLAB compatibility (otherwise, the attribute needs to be
-            # deleted).
+        # If it an ndarray with fields and we are writing such things as
+        # a Group/struct, that needs to be handled. Otherwise, it is
+        # simply written as is to a Dataset. As HDF5 Reference types do
+        # look like a fielded object array, those have to be excluded
+        # explicitly. Complex types may have been converted so that they
+        # can have different field names as an HDF5 COMPOUND type, so
+        # those have to be escluded too.
 
-            if options.group_for_references not in f:
-                f.create_group(options.group_for_references)
+        if data_to_store.dtype.fields is not None \
+                and h5py.check_dtype(ref=data_to_store.dtype) \
+                is not h5py.Reference \
+                and not np.iscomplexobj(data) \
+                and options.fielded_numpy_ndarray_as_struct:
+            # If the group doesn't exist, it needs to be created. If it
+            # already exists but is not a group, it needs to be deleted
+            # before being created.
 
-            grp2 = f[options.group_for_references]
+            if name not in grp:
+                grp.create_group(name)
+            elif not isinstance(grp[name], h5py.Group):
+                del grp[name]
+                grp.create_group(name)
 
-            if not isinstance(grp2, h5py.Group):
-                del f[options.group_for_references]
-                grp2 = f[options.group_for_references]
+            grp2 = grp[name]
 
-            for index, x in np.ndenumerate(data_to_store):
-                data_refs[index] = None
-                name_for_ref = next_unused_name_in_group(grp2, 16)
-                write_data(f, grp2, name_for_ref, x, None, options)
-                data_refs[index] = grp2[name_for_ref].ref
-                if options.matlab_compatible:
-                    set_attribute_string(grp2[name_for_ref],
-                                         'H5PATH', grp2.name)
-                else:
-                    del_attribute(grp2[name_for_ref], 'H5PATH')
+            # Write the metadata, and set the MATLAB_class to 'struct'
+            # explicitly.
+            self.write_metadata(f, grp, name, data, type_string,
+                                options)
+            if options.matlab_compatible:
+                set_attribute_string(grp[name], 'MATLAB_class',
+                                     'struct')
 
-            # Now, the dtype needs to be changed to the reference type
-            # and the whole thing copied over to data_to_store.
-            data_to_store = data_refs.astype(dtype=ref_dtype)
+            # Grab the list of fields.
+            field_names = list(data_to_store.dtype.fields.keys())
 
-        # The data must first be written. If name is not present yet,
-        # then it must be created. If it is present, but not a Dataset,
-        # has the wrong dtype, or is the wrong shape; then it must be
-        # deleted and then written. Otherwise, it is just overwritten in
-        # place (note, this will not change any filters or chunking
-        # settings, but will keep the file from growing needlessly).
+            # Delete any Datasets/Groups not corresponding to a field
+            # name in data if that option is set.
 
-        if name not in grp:
-            grp.create_dataset(name, data=data_to_store,
-                               **options.array_options)
-        elif not isinstance(grp[name], h5py.Dataset) \
-                or grp[name].dtype != data_to_store.dtype \
-                or grp[name].shape != data_to_store.shape:
-            del grp[name]
-            grp.create_dataset(name, data=data_to_store,
-                               **options.array_options)
+            if options.delete_unused_variables:
+                for field in {i for i in grp2}.difference( \
+                        set(field_names)):
+                    del grp2[field]
+
+            # Go field by field making an object array (make an empty
+            # object array and assign element wise) and write it inside
+            # the Group. The H5PATH attribute needs to be set
+            # appropriately, while all other attributes need to be
+            # deleted.
+            for field in field_names:
+                new_data = np.zeros(shape=data_to_store.shape,
+                                    dtype='object')
+                for index, x in np.ndenumerate(data_to_store):
+                    new_data[index] = x[field]
+
+                write_data(f, grp2, field, new_data, None, options)
+
+                if field in grp2:
+                    if options.matlab_compatible:
+                        set_attribute_string(grp2[field], 'H5PATH',
+                                             grp2.name)
+                    else:
+                        del_attribute(grp2[field], 'H5PATH')
+
+                    for attribute in (set(grp2[field].attrs.keys()) \
+                            - {'H5PATH'}):
+                        del_attribute(grp2[field], attribute)
         else:
-            grp[name][...] = data_to_store
+            # The data must first be written. If name is not present
+            # yet, then it must be created. If it is present, but not a
+            # Dataset, has the wrong dtype, or is the wrong shape; then
+            # it must be deleted and then written. Otherwise, it is just
+            # overwritten in place (note, this will not change any
+            # filters or chunking settings, but will keep the file from
+            # growing needlessly).
 
-        # Write the metadata using the inherited function (good enough).
+            if name not in grp:
+                grp.create_dataset(name, data=data_to_store,
+                                   **options.array_options)
+            elif not isinstance(grp[name], h5py.Dataset) \
+                    or grp[name].dtype != data_to_store.dtype \
+                    or grp[name].shape != data_to_store.shape:
+                del grp[name]
+                grp.create_dataset(name, data=data_to_store,
+                                   **options.array_options)
+            else:
+                grp[name][...] = data_to_store
 
-        self.write_metadata(f, grp, name, data, type_string, options)
+            # Write the metadata using the inherited function (good
+            # enough).
 
+            self.write_metadata(f, grp, name, data, type_string,
+                                options)
 
     def write_metadata(self, f, grp, name, data, type_string, options):
         # First, call the inherited version to do most of the work.
