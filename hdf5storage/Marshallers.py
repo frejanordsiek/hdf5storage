@@ -459,7 +459,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         TypeMarshaller.__init__(self)
         self.python_attributes |= {'Python.Shape', 'Python.Empty',
                                    'Python.numpy.UnderlyingType',
-                                   'Python.numpy.Container'}
+                                   'Python.numpy.Container',
+                                   'Python.numpy.Fields'}
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
                                    'MATLAB_int_decode'}
         self.types = [np.ndarray, np.matrix,
@@ -659,16 +660,24 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             grp2 = grp[name]
 
+            # Grab the list of fields.
+            field_names = list(data_to_store.dtype.names)
+
             # Write the metadata, and set the MATLAB_class to 'struct'
-            # explicitly.
+            # explicitly. Then, we set the 'Python.numpy.Fields'
+            # Attribute to the field names if we are storing python
+            # metadata.
             self.write_metadata(f, grp, name, data, type_string,
                                 options)
             if options.matlab_compatible:
                 set_attribute_string(grp[name], 'MATLAB_class',
                                      'struct')
-
-            # Grab the list of fields.
-            field_names = list(data_to_store.dtype.fields.keys())
+            if options.store_python_metadata:
+                set_attribute_string_array(grp[name],
+                                           'Python.numpy.Fields',
+                                           field_names)
+            else:
+                del_attribute(grp[name], 'Python.numpy.Fields')
 
             # Delete any Datasets/Groups not corresponding to a field
             # name in data if that option is set.
@@ -688,6 +697,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                     dtype='object')
                 for index, x in np.ndenumerate(data_to_store):
                     new_data[index] = x[field]
+
+                # If we are supposed to reverse dimension order, it has
+                # already been done, but write_data expects that it
+                # hasn't, so it needs to be reversed again before
+                # passing it on.
+                if options.reverse_dimension_order:
+                    new_data = new_data.T
 
                 write_data(f, grp2, field, new_data, None, options)
 
@@ -723,10 +739,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 grp[name][...] = data_to_store
 
             # Write the metadata using the inherited function (good
-            # enough).
+            # enough). The Attribute 'Python.numpy.fields, if present,
+            # needs to be deleted since this isn't a structured ndarray.
 
             self.write_metadata(f, grp, name, data, type_string,
                                 options)
+            del_attribute(grp[name], 'Python.numpy.Fields')
 
     def write_metadata(self, f, grp, name, data, type_string, options):
         # First, call the inherited version to do most of the work.
@@ -802,15 +820,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             del_attribute(grp[name], 'MATLAB_int_decode')
 
     def read(self, f, grp, name, options):
-        # If name is not present or is not a Dataset, then we can't read
-        # it and have to throw an error.
-        if name not in grp or not isinstance(grp[name], h5py.Dataset):
-            raise NotImplementedError('No Dataset ' + name +
-                                      ' is present.')
-
-        # Grab the data's datatype and dtype.
-        datatype = grp[name].id.get_type()
-        h5_dt = datatype.dtype
+        # If name is not present, then we can't read it and have to
+        # throw an error.
+        if name not in grp:
+            raise NotImplementedError(name + ' is not present.')
 
         # Get the different attributes this marshaller uses.
 
@@ -821,20 +834,103 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         container = get_attribute_string(grp[name], \
             'Python.numpy.Container')
         python_empty = get_attribute(grp[name], 'Python.Empty')
+        python_fields = get_attribute_string_array(grp[name], \
+            'Python.numpy.Fields')
 
         matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
         matlab_empty = get_attribute(grp[name], 'MATLAB_empty')
 
-        # Read the data and get its dtype. Figuring it out and doing any
-        # conversions can be done later.
-        data = grp[name][...]
-        dt = data.dtype
+        # If it is a Dataset, it can simply be read and then acted upon
+        # (if it is an HDF5 Reference array, it will need to be read
+        # recursively). If it is a Group, then it is a structured
+        # ndarray like object that needs to be read field wise and
+        # constructed.
+        if isinstance(grp[name], h5py.Dataset):
+            # Read the data.
+            data = grp[name][...]
 
-        # If it is a reference type, then we need to make an object
-        # array that is its replicate, but with the objects they are
-        # pointing to in their elements instead of just the references.
-        if h5py.check_dtype(ref=grp[name].dtype) is not None:
-            data = read_object_array(f, data, options)
+            # If it is a reference type, then we need to make an object
+            # array that is its replicate, but with the objects they are
+            # pointing to in their elements instead of just the
+            # references.
+            if h5py.check_dtype(ref=grp[name].dtype) is not None:
+                data = read_object_array(f, data, options)
+        else:
+            # Starting with an empty dict, all that has to be done is
+            # iterate through all the Datasets and Groups in grp[name]
+            # and add them to a dict with their name as the key. Since
+            # we don't want an exception thrown by reading an element to
+            # stop the whole reading process, the reading is wrapped in
+            # a try block that just catches exceptions and then does
+            # nothing about them (nothing needs to be done).
+            struct_data = dict()
+            for k in grp[name]:
+                # We must exclude group_for_references
+                if grp[name][k].name == options.group_for_references:
+                    continue
+                try:
+                    struct_data[k] = read_data(f, grp[name], k, options)
+                except:
+                    pass
+
+            # The dtype for the structured ndarray needs to be
+            # composed. This is done by going through each field (in the
+            # proper order, if the fields were given, or any order if
+            # not) and determine the dtype and shape of that field to
+            # put in the list.
+
+            if python_fields is None:
+                fields = struct_data.keys()
+            else:
+                fields = python_fields
+
+            dt_whole = []
+            for k in fields:
+                v = struct_data[k]
+
+                # If any of the elements are not Numpy types or if they
+                # don't all have the exact same dtype and shape, then
+                # this field will just be an object field.
+                first = v.flatten()[0]
+                if not isinstance(first, tuple(self.types)):
+                    dt_whole.append((k, 'object'))
+                    continue
+
+                dt = first.dtype
+                sp = first.shape
+                all_same = True
+                for index, x in np.ndenumerate(v):
+                    if not isinstance(x, tuple(self.types)) \
+                            or dt != x.dtype or sp != x.shape:
+                        all_same = False
+                        break
+
+                # If they are all the same, then dt and shape should be
+                # used. Otherwise, it has to be object.
+                if all_same:
+                    dt_whole.append((k, dt, sp))
+                else:
+                    dt_whole.append((k, 'object'))
+
+            # Make the structured ndarray with the constructed
+            # dtype. The shape is simply the shape of the object arrays
+            # of its fields, so we might as well use the shape of
+            # v. Then, all the elements of every field need to be
+            # assigned.
+            data = np.zeros(shape=v.shape, dtype=dt_whole)
+            for k, v in struct_data.items():
+                for index, x in np.ndenumerate(v):
+                    data[k][index] = x
+
+            # If the file was formatted for matlab or we otherwise
+            # reverse dimension order, then the dimensions already got
+            # reversed by using the shape of v, so we need to transpose
+            # again so that later, we get the right shape when
+            # transposed again.
+            if matlab_class is not None or \
+                    options.reverse_dimension_order:
+                #data = data.T
+                pass
 
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not

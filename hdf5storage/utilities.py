@@ -691,6 +691,32 @@ def get_attribute_string(target, name):
         return None
 
 
+def get_attribute_string_array(target, name):
+    """ Gets a string array Attribute from a Dataset or Group.
+
+    Gets the value of an Attribute that is a string array if it is
+    present (get ``None`` if not).
+
+    Parameters
+    ----------
+    target : Dataset or Group
+        Dataset or Group to get the attribute of.
+    name : str
+        Name of the string array Attribute to get.
+
+    Returns
+    -------
+    list of str or None
+        The string array value of the Attribute if it is present, or
+        ``None`` if it isn't.
+
+    """
+    value = get_attribute(target, name)
+    if value is None:
+        return value
+    return [decode_to_str(x) for x in value]
+
+
 def set_attribute(target, name, value):
     """ Sets an attribute on a Dataset or Group.
 
