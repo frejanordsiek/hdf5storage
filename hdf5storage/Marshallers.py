@@ -922,16 +922,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 for index, x in np.ndenumerate(v):
                     data[k][index] = x
 
-            # If the file was formatted for matlab or we otherwise
-            # reverse dimension order, then the dimensions already got
-            # reversed by using the shape of v, so we need to transpose
-            # again so that later, we get the right shape when
-            # transposed again.
-            if matlab_class is not None or \
-                    options.reverse_dimension_order:
-                #data = data.T
-                pass
-
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not
         # enough of it, then no conversions can be done.
