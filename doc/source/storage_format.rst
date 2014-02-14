@@ -105,7 +105,7 @@ np.chararray   0.1      np.bytes\_ or np.uint16/32 [2]_ [3]_  Dataset
        as ``np.bytes_``.
 .. [4] All keys must be ``str``.
 .. [5] If it doesn't have any fields in its dtype or if
-       :py:attr:`Options.fielded_numpy_ndarray_as_struct` is not set, it
+       :py:attr:`Options.structured_numpy_ndarray_as_struct` is not set, it
        is not converted and is written as is as a Dataset. Otherwise, it
        is written as a Group with its the contents of its individual
        fields written as Datasets within the Group having the fields as
@@ -127,7 +127,8 @@ stored. Then, the other attributes are detailed individually.
 .. note
 
    'Python.Type', 'Python.numpy.UnderlyingType', and 'MATLAB_class' are
-   all ``np.str_``. 'MATLAB_int_decode' is a ``np.int64``.
+   all ``np.bytes_``. 'MATLAB_int_decode' is a ``np.int64``.
+   'Python.numpy.Fields' is a ``np.ndarray`` of ``np.bytes_``.
 
 =============  ===================  ===========================  ==================  =================
                Python Attributes                                 MATLAB Attributes
@@ -178,9 +179,9 @@ np.chararray   'numpy.chararray'    [8]_                         'char' [8]_
 .. [7] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
 .. [8] The value that would be put in for a scalar of the same dtype is
        used.
-.. [9] If its dtype has fields and
-       :py:attr:`Options.fielded_numpy_ndarray_as_struct` is set, it is
-       set to 'cell' overriding anything else.
+.. [9] If it is structured (its dtype has fields) and
+       :py:attr:`Options.structured_numpy_ndarray_as_struct` is set, it is
+       set to 'struct' overriding anything else.
 
 
 Python.Shape
@@ -206,6 +207,17 @@ For Numpy types (or types converted to them), whether the type is a
 scalar (its type is something such as ``np.uint16``, ``np.str_``, etc.),
 some form of array (its type is ``np.ndarray``), a matrix (type
 is ``np.matrix``), or is a ``np.chararray`` is stored in this Attribute.
+
+Python.numpy.Fields
+-------------------
+
+Python Attribute
+
+``np.ndarray(dtype='bytes')``
+
+For structured ``np.ndarray`` types (and those converted to them), an
+array of the field names of the array is stored in this Attribute in
+the proper order. In the HDF5 file, they are variable length strings.
 
 Python.Empty and MATLAB_empty
 -----------------------------
@@ -251,6 +263,9 @@ imported, so this package does not set this Attribute at all.
 Storage of Special Types
 ========================
 
+Complex Numbers
+---------------
+
 Complex numbers and ``np.object_`` arrays (and things converted to them)
 have to be stored in a special fashion.
 
@@ -266,6 +281,9 @@ automatically to ``('real', 'imag')`` when
 ``matlab_compatible == True``. When reading data, this package
 automatically checks numeric types for many combinations of reasonably
 expected field names to find complex types.
+
+np.object\_
+-----------
 
 When storing ``np.object_`` arrays, the individual elements are stored
 elsewhere and then an array of HDF5 Object References to their storage
@@ -283,6 +301,20 @@ empty has the same format as in MATLAB and is a Dataset named 'a' of
 'canonical empty' and the Attribute 'MATLAB_empty' set to
 ``np.uint8(1)``.
 
+Structure Like Data
+-------------------
+
+When storing data that is MATLAB struct like (``dict`` or structured
+``np.ndarray`` when
+:py:attr:`Options.structured_numpy_ndarray_as_struct` is set), it is
+stored as an HDF5 Group with its contents of its fields written inside
+of the Group. For single element data (``dict`` or structured
+``np.ndarray`` with only a single element), the fields are written to
+Datasets inside the Group. For multi-element data, the elements for
+each field are written in :py:attr:`Options.group_for_references` and
+an HDF5 Reference array to all of those elements is written as a Dataset
+under the field name in the Groups.
+
 
 Optional Data Transformations
 =============================
@@ -295,20 +327,20 @@ transfomations are listed below by their option name, other than
 `complex_names` and `group_for_references` which were explained in the
 previous section.
 
-===============================  ====================
-attribute                        value
-===============================  ====================
-delete_unused_variables          ``True``
-fielded_numpy_ndarray_as_struct  ``True``
-make_atleast_2d                  ``True``
-convert_numpy_bytes_to_utf16     ``True``
-convert_numpy_str_to_utf16       ``True``
-convert_bools_to_uint8           ``True``
-reverse_dimension_order          ``True``
-store_shape_for_empty            ``True``
-complex_names                    ``('real', 'imag')``
-group_for_references             ``'/#refs#'``
-===============================  ====================
+==================================  ====================
+attribute                           value
+==================================  ====================
+delete_unused_variables             ``True``
+structured_numpy_ndarray_as_struct  ``True``
+make_atleast_2d                     ``True``
+convert_numpy_bytes_to_utf16        ``True``
+convert_numpy_str_to_utf16          ``True``
+convert_bools_to_uint8              ``True``
+reverse_dimension_order             ``True``
+store_shape_for_empty               ``True``
+complex_names                       ``('real', 'imag')``
+group_for_references                ``'/#refs#'``
+==================================  ====================
 
 
 delete_unused_variables
@@ -321,8 +353,8 @@ Group (would end up a struct in MATLAB) that currently exist in the file
 but are not in the object being stored should be deleted on the file or
 not.
 
-fielded_numpy_ndarray_as_struct
--------------------------------
+structured_numpy_ndarray_as_struct
+----------------------------------
 
 ``bool``
 
@@ -386,7 +418,7 @@ needs to be set if one wants an array to end up the same shape when
 imported into MATLAB. This option is necessary because Numpy and MATLAB
 use opposite dimension ordering schemes, which are C and Fortan schemes
 respectively. 2D arrays are stored by row in the C scheme and column in
-the Fortan scheme.
+the Fortran scheme.
 
 store_shape_for_empty
 ---------------------
@@ -405,23 +437,23 @@ This table gives the MATLAB classes that can be read from a MAT file,
 the first version of this package that can read them, and the Python
 type they are read as if there is no Python metadata attached to them.
 
-============  =======  =================================
-MATLAB Class  Version  Python Type
-============  =======  =================================
-logical       0.1      np.bool\_
-single        0.1      np.float32 or np.complex64 [10]_
-double        0.1      np.float64 or np.complex128 [10]_
-uint8         0.1      np.uint8
-uint16        0.1      np.uint16
-uint32        0.1      np.uint32
-uint64        0.1      np.uint64
-int8          0.1      np.int8
-int16         0.1      np.int16
-int32         0.1      np.int32
-int64         0.1      np.int64
-struct        0.1      dict [11]_
-cell          0.1      np.object\_
-============  =======  =================================
+===============  =======  =================================
+MATLAB Class     Version  Python Type
+===============  =======  =================================
+logical          0.1      np.bool\_
+single           0.1      np.float32 or np.complex64 [10]_
+double           0.1      np.float64 or np.complex128 [10]_
+uint8            0.1      np.uint8
+uint16           0.1      np.uint16
+uint32           0.1      np.uint32
+uint64           0.1      np.uint64
+int8             0.1      np.int8
+int16            0.1      np.int16
+int32            0.1      np.int32
+int64            0.1      np.int64
+struct           0.1      structured np.ndarray
+cell             0.1      np.object\_
+canonical empty  0.1      ``np.float64([])``
+===============  =======  =================================
 
 .. [10] Depends on whether there is a complex part or not.
-.. [11] Structure arrays are not supported.

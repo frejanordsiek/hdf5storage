@@ -106,7 +106,7 @@ np.complex128  0.1                                  double       0.1
 np.str\_       0.1      np.uint32/16                char/uint32  0.1 [2]_
 np.bytes\_     0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
 np.object\_    0.1                                  cell         0.1
-np.ndarray     0.1      [5]_                        [5]_         0.1 [5]_
+np.ndarray     0.1      [5]_ [6]_                   [5]_ [6]_    0.1 [5]_
 np.matrix      0.1      [5]_                        [5]_         0.1 [5]_
 np.chararray   0.1      [5]_                        [5]_         0.1 [5]_
 =============  =======  ==========================  ===========  ==========
@@ -128,28 +128,33 @@ np.chararray   0.1      [5]_                        [5]_         0.1 [5]_
 .. [4] All keys must be ``str``.
 .. [5] Container types are only supported if their underlying dtype is
        supported. Data conversions are done based on its dtype.
+.. [6] Structured ``np.ndarray``s (have fields in their dtypes) can be
+       written as an HDF5 COMPOUND type or as an HDF5 Group with Datasets
+       holding its fields (either the values directly, or as an HDF5
+       Reference array to the values for the different elements of the
+       data).
 
 This table gives the MATLAB classes that can be read from a MAT file,
 the first version of this package that can read them, and the Python
 type they are read as.
 
-============  =======  ================================
-MATLAB Class  Version  Python Type
-============  =======  ================================
-logical       0.1      np.bool\_
-single        0.1      np.float32 or np.complex64 [6]_
-double        0.1      np.float64 or np.complex128 [6]_
-uint8         0.1      np.uint8
-uint16        0.1      np.uint16
-uint32        0.1      np.uint32
-uint64        0.1      np.uint64
-int8          0.1      np.int8
-int16         0.1      np.int16
-int32         0.1      np.int32
-int64         0.1      np.int64
-struct        0.1      dict [7]_
-cell          0.1      np.object\_
-============  =======  ================================
+===============  =======  =================================
+MATLAB Class     Version  Python Type
+===============  =======  =================================
+logical          0.1      np.bool\_
+single           0.1      np.float32 or np.complex64 [7]_
+double           0.1      np.float64 or np.complex128 [7]_
+uint8            0.1      np.uint8
+uint16           0.1      np.uint16
+uint32           0.1      np.uint32
+uint64           0.1      np.uint64
+int8             0.1      np.int8
+int16            0.1      np.int16
+int32            0.1      np.int32
+int64            0.1      np.int64
+struct           0.1      structured np.ndarray
+cell             0.1      np.object\_
+canonical empty  0.1      ``np.float64([])``
+===============  =======  =================================
 
-.. [6] Depends on whether there is a complex part or not.
-.. [7] Structure arrays are not supported.
+.. [7] Depends on whether there is a complex part or not.

@@ -17,6 +17,7 @@ hdf5storage.utilities
    encode_complex
    get_attribute
    get_attribute_string
+   get_attribute_string_array
    set_attribute
    set_attribute_string
    set_attribute_string_array
@@ -81,6 +82,12 @@ get_attribute_string
 --------------------
 
 .. autofunction:: get_attribute_string
+
+
+get_attribute_string_array
+--------------------------
+
+.. autofunction:: get_attribute_string_array
 
 
 set_attribute
