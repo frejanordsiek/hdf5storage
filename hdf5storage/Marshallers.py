@@ -70,6 +70,7 @@ def write_object_array(f, data, options):
 
     See Also
     --------
+    read_object_array
     hdf5storage.Options.group_for_references
     h5py.Reference
 
@@ -137,6 +138,53 @@ def write_object_array(f, data, options):
     # Now, the dtype needs to be changed to the reference type and the
     # whole thing copied over to data_to_store.
     return data_refs.astype(dtype=ref_dtype).copy()
+
+
+def read_object_array(f, data, options):
+    """ Reads an array of objects recursively.
+
+    Read the elements of the given HDF5 Reference array recursively
+    in the and constructs a ``numpy.object_`` array from its elements,
+    which is returned.
+
+    Parameters
+    ----------
+    f : h5py.File
+        The HDF5 file handle that is open.
+    data : numpy.ndarray of h5py.Reference
+        The array of HDF5 References to read and make an object array
+        from.
+    options : hdf5storage.core.Options
+        hdf5storage options object.
+
+    Raises
+    ------
+    NotImplementedError
+        If reading the object from file is currently not supported.
+
+    Returns
+    -------
+    numpy.ndarray of numpy.object_
+        The Python object array containing the items pointed to by
+        `data`.
+
+    See Also
+    --------
+    write_object_array
+    hdf5storage.Options.group_for_references
+    h5py.Reference
+
+    """
+    # Go through all the elements of data and read them using their
+    # references, and the putting the output in new object array.
+    data_derefed = np.zeros(shape=data.shape, dtype='object')
+    for index, x in np.ndenumerate(data):
+        try:
+            data_derefed[index] = read_data(f, f[x].parent, \
+                posixpath.basename(f[x].name), options)
+        except:
+            raise
+    return data_derefed
 
 
 class TypeMarshaller(object):
@@ -786,22 +834,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # array that is its replicate, but with the objects they are
         # pointing to in their elements instead of just the references.
         if h5py.check_dtype(ref=grp[name].dtype) is not None:
-            data_derefed = data.copy().astype(np.dtype('object'))
-
-            # Go through all the elements of data and read them using
-            # their references, and the putting the output in
-            # data_derefed. If they can't be read, None is put in.
-
-            for index, x in np.ndenumerate(data):
-                data_derefed[index] = None
-                try:
-                    data_derefed[index] = read_data(f, f[x].parent, \
-                        posixpath.basename(f[x].name), options)
-                except:
-                    raise
-
-            # Now all that needs to be done is copy back to data.
-            data = data_derefed.copy()
+            data = read_object_array(f, data, options)
 
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not

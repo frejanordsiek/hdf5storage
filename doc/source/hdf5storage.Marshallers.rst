@@ -8,6 +8,7 @@ hdf5storage.Marshallers
 .. autosummary::
 
    write_object_array
+   read_object_array
    TypeMarshaller
    NumpyScalarArrayMarshaller
    PythonScalarMarshaller
@@ -22,6 +23,12 @@ write_object_array
 ------------------
 
 .. autofunction:: write_object_array
+
+
+read_object_array
+------------------
+
+.. autofunction:: read_object_array
 
 
 TypeMarshaller
