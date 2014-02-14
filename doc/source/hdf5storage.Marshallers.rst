@@ -7,6 +7,7 @@ hdf5storage.Marshallers
 
 .. autosummary::
 
+   write_object_array
    TypeMarshaller
    NumpyScalarArrayMarshaller
    PythonScalarMarshaller
@@ -15,6 +16,12 @@ hdf5storage.Marshallers
    PythonDictMarshaller
    PythonListMarshaller
    PythonTupleSetDequeMarshaller
+
+
+write_object_array
+------------------
+
+.. autofunction:: write_object_array
 
 
 TypeMarshaller
@@ -80,7 +87,7 @@ NumpyScalarArrayMarshaller
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.matlab_classes
       :annotation: = ['logical', 'char', 'single', 'double', 'uint8',
 	              'uint16', 'uint32', 'uint64', 'int8', 'int16',
-                      'int32', 'int64', 'cell']
+                      'int32', 'int64', 'cell', 'canonical empty']
 
 
 PythonScalarMarshaller

@@ -273,7 +273,15 @@ locations is written as the data object. The elements are all written to
 the Group path set by :py:attr:`Options.group_for_references` with a
 randomized name (this package keeps generating randomized names till an
 available one is found). It must be ``'/#refs#'`` for MATLAB (setting
-``matlab_compatible`` sets this automatically).
+``matlab_compatible`` sets this automatically). Those elements that
+can't be written (doing MATLAB compatibility and we are set to discard
+MATLAB incompatible types
+:py:attr:`Options.action_for_matlab_incompatible`) will instead end up
+being a reference to the canonical empty inside the group. The canonical
+empty has the same format as in MATLAB and is a Dataset named 'a' of
+``np.uint32/64([0, 0])`` with the Attribute 'MATLAB_class' set to
+'canonical empty' and the Attribute 'MATLAB_empty' set to
+``np.uint8(1)``.
 
 
 Optional Data Transformations
