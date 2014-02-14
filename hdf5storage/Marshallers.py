@@ -1208,8 +1208,9 @@ class PythonDictMarshaller(TypeMarshaller):
         self.types = [dict]
         self.python_type_strings = ['dict']
         self.__MATLAB_classes = {dict: 'struct'}
-        # Set matlab_classes to the supported classes (the values).
-        self.matlab_classes = list(self.__MATLAB_classes.values())
+        # Set matlab_classes to empty since NumpyScalarArrayMarshaller
+        # handles Groups by default now.
+        self.matlab_classes = list()
 
     def write(self, f, grp, name, data, type_string, options):
         # If the group doesn't exist, it needs to be created. If it

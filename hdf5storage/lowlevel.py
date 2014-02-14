@@ -162,10 +162,10 @@ def read_data(f, grp, name, options):
 
     # If the type_string is present, get the marshaller for it. If it is
     # not, use the one for the matlab class if it is given. Otherwise,
-    # use the fallback (NumpyScalarArrayMarshaller for Datasets and
-    # PythonDictMarshaller for Groups). If calls to the marshaller
-    # collection to get the right marshaller don't return one (return
-    # None), we also go to the default).
+    # use the fallback (NumpyScalarArrayMarshaller for both Datasets and
+    # Groups). If calls to the marshaller collection to get the right
+    # marshaller don't return one (return None), we also go to the
+    # default).
 
     m = None
     mc = options.marshaller_collection
@@ -175,10 +175,7 @@ def read_data(f, grp, name, options):
         m = mc.get_marshaller_for_matlab_class(matlab_class)
 
     if m is None:
-        if isinstance(grp[name], h5py.Dataset):
-            m = mc.get_marshaller_for_type(np.uint8)
-        else:
-            m = mc.get_marshaller_for_type(dict)
+        m = mc.get_marshaller_for_type(np.uint8)
 
     # If a marshaller was found, use it to write the data. Otherwise,
     # return an error.
