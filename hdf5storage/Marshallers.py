@@ -66,11 +66,8 @@ def write_object_array(f, data, options):
     ref_dtype = h5py.special_dtype(ref=h5py.Reference)
     data_refs = np.zeros(shape=data.shape, dtype='object')
 
-    # Go through all the elements of data and write them, gabbing their
-    # references and putting them in data_refs. They will be put in
-    # group_for_references, which is also what the H5PATH needs to be
-    # set to if we are doing MATLAB compatibility (otherwise, the
-    # attribute needs to be deleted).
+    # We need to make sure that the group to hold references is present,
+    # and create it if it isn't.
 
     if options.group_for_references not in f:
         f.create_group(options.group_for_references)
@@ -82,16 +79,47 @@ def write_object_array(f, data, options):
         f.create_group(options.group_for_references)
         grp2 = f[options.group_for_references]
 
+    # The Dataset 'a' needs to be present as the canonical empty. It is
+    # just and np.uint32/64([0, 0]) with its a MATLAB_class of
+    # 'canonical empty' and the 'MATLAB_empty' attribute set. If it
+    # isn't present or is incorrectly formatted, it is created
+    # truncating anything previously there.
+    if 'a' not in grp2 or grp2['a'].shape != (2,) \
+            or not grp2['a'].dtype.name.startswith('uint') \
+            or np.any(grp2['a'][...] != np.uint64([0, 0])) \
+            or get_attribute_string(grp2['a'], 'MATLAB_class') != \
+            'canonical empty' \
+            or get_attribute(grp2['a'], 'MATLAB_empty') != 1:
+        if 'a' in grp2:
+            del grp2['a']
+        grp2.create_dataset('a', data=np.uint64([0, 0]))
+        set_attribute_string(grp2['a'], 'MATLAB_class',
+                             'canonical empty')
+        set_attribute(grp2['a'], 'MATLAB_empty',
+                      np.uint8(1))
+
+    # Go through all the elements of data and write them, gabbing their
+    # references and putting them in data_refs. They will be put in
+    # group_for_references, which is also what the H5PATH needs to be
+    # set to if we are doing MATLAB compatibility (otherwise, the
+    # attribute needs to be deleted). If an element can't be written
+    # (doing matlab compatibility, but it isn't compatible with matlab
+    # and action_for_matlab_incompatible option is True), the reference
+    # to the canonical empty will be used for the reference array to
+    # point to.
     for index, x in np.ndenumerate(data):
         data_refs[index] = None
         name_for_ref = next_unused_name_in_group(grp2, 16)
         write_data(f, grp2, name_for_ref, x, None, options)
-        data_refs[index] = grp2[name_for_ref].ref
-        if options.matlab_compatible:
-            set_attribute_string(grp2[name_for_ref],
-                                 'H5PATH', grp2.name)
+        if name_for_ref in grp2:
+            data_refs[index] = grp2[name_for_ref].ref
+            if options.matlab_compatible:
+                set_attribute_string(grp2[name_for_ref],
+                                     'H5PATH', grp2.name)
+            else:
+                del_attribute(grp2[name_for_ref], 'H5PATH')
         else:
-            del_attribute(grp2[name_for_ref], 'H5PATH')
+            data_refs[index] = grp2['a'].ref
 
     # Now, the dtype needs to be changed to the reference type and the
     # whole thing copied over to data_to_store.
