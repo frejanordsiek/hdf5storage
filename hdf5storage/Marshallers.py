@@ -55,6 +55,19 @@ def write_object_array(f, data, options):
     options : hdf5storage.core.Options
         hdf5storage options object.
 
+    Returns
+    -------
+    numpy.ndarray of h5py.Reference
+        A reference array pointing to all the elements written to the
+        HDF5 file. For those that couldn't be written, the respective
+        element points to the canonical empty.
+
+    Raises
+    ------
+    TypeNotMatlabCompatibleError
+        If writing a type not compatible with MATLAB and
+        `options.action_for_matlab_incompatible` is set to ``'error'``.
+
     See Also
     --------
     hdf5storage.Options.group_for_references
@@ -273,6 +286,10 @@ class TypeMarshaller(object):
         ------
         NotImplementedError
             If writing 'data' to file is currently not supported.
+        TypeNotMatlabCompatibleError
+            If writing a type not compatible with MATLAB and
+            `options.action_for_matlab_incompatible` is set to
+            ``'error'``.
 
         Notes
         -----
