@@ -689,9 +689,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             # Go field by field making an object array (make an empty
             # object array and assign element wise) and write it inside
-            # the Group. The H5PATH attribute needs to be set
-            # appropriately, while all other attributes need to be
-            # deleted.
+            # the Group. If it only has a single element, write that
+            # single element extracted from it (will be a standard
+            # Dataset as opposed to a HDF5 Reference array). The H5PATH
+            # attribute needs to be set appropriately, while all other
+            # attributes need to be deleted.
             for field in field_names:
                 new_data = np.zeros(shape=data_to_store.shape,
                                     dtype='object')
@@ -705,7 +707,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if options.reverse_dimension_order:
                     new_data = new_data.T
 
-                write_data(f, grp2, field, new_data, None, options)
+                # If there is only a single element, write it extracted
+                # (don't need to use a Reference array in this
+                # case). Otherwise, write the whole thing.
+                if np.prod(new_data.shape) == 1:
+                    write_data(f, grp2, field, new_data.flatten()[0],
+                               None, options)
+                else:
+                    write_data(f, grp2, field, new_data, None, options)
 
                 if field in grp2:
                     if options.matlab_compatible:
@@ -714,9 +723,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     else:
                         del_attribute(grp2[field], 'H5PATH')
 
-                    for attribute in (set(grp2[field].attrs.keys()) \
-                            - {'H5PATH'}):
-                        del_attribute(grp2[field], attribute)
+                    # In the case that we wrote a Reference array (not a
+                    # single element), then all other attributes need to
+                    # be removed.
+                    if np.prod(new_data.shape) != 1:
+                        for attribute in (set( \
+                                grp2[field].attrs.keys()) - {'H5PATH'}):
+                            del_attribute(grp2[field], attribute)
         else:
             # The data must first be written. If name is not present
             # yet, then it must be created. If it is present, but not a
@@ -862,16 +875,40 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # we don't want an exception thrown by reading an element to
             # stop the whole reading process, the reading is wrapped in
             # a try block that just catches exceptions and then does
-            # nothing about them (nothing needs to be done).
+            # nothing about them (nothing needs to be done). We also
+            # need to keep track of whether any of the fields are
+            # Groups, aren't Reference arrays, or have attributes other
+            # than H5PATH since that means that the fields are the
+            # values (single element structured ndarray), as opposed to
+            # Reference arrays to all the values (multi-element structed
+            # ndarray).
             struct_data = dict()
+            is_multi_element = True
             for k in grp[name]:
                 # We must exclude group_for_references
                 if grp[name][k].name == options.group_for_references:
                     continue
+                fld = grp[name][k]
+                if isinstance(fld, h5py.Group) \
+                        or h5py.check_dtype(ref=fld.dtype) is None \
+                        or len(set(fld.attrs.keys()) \
+                        & ((set(self.python_attributes) \
+                        | set(self.matlab_attributes)) - {'H5PATH'})) \
+                        != 0:
+                    is_multi_element = False
                 try:
                     struct_data[k] = read_data(f, grp[name], k, options)
                 except:
                     pass
+
+            # If it isn't multi element, we need to pack all the values
+            # in struct_array inside of numpy.object_'s so that the code
+            # after this that depends on this will work.
+            if not is_multi_element:
+                for k, v in struct_data.items():
+                    obj = np.zeros((1,), dtype='object')
+                    obj[0] = v
+                    struct_data[k] = obj
 
             # The dtype for the structured ndarray needs to be
             # composed. This is done by going through each field (in the
