@@ -66,24 +66,27 @@ def assert_equal(a, b):
 
 def assert_equal_none_format(a, b):
     # Compares a and b for equality. b is always the original. If they
-    # are dictionaries, they must have the same set of keys, after which
-    # they values must all be# compared. If they are a collection type
-    # (list, tuple, set, frozenset, or deque), then the compairison must
-    # be made with b converted to an object array. If the original is
-    # not a numpy type (isn't or doesn't inherit from np.generic or
-    # np.ndarray), then it is a matter of converting it to the
-    # appropriate numpy type. Otherwise, both are supposed to be numpy
-    # types. For object arrays, each element must be iterated over to be
-    # compared. Then, if it isn't a string type, then they must have the
-    # same dtype, shape, and all elements. If it is an empty string,
-    # then it would have been stored as just a null byte (recurse to do
-    # that comparison). If it is a bytes_ type, the dtype, shape, and
+    # are dictionaries, a must be a structured ndarray and they must
+    # have the same set of keys, after which they values must all be
+    # compared. If they are a collection type (list, tuple, set,
+    # frozenset, or deque), then the compairison must be made with b
+    # converted to an object array. If the original is not a numpy type
+    # (isn't or doesn't inherit from np.generic or np.ndarray), then it
+    # is a matter of converting it to the appropriate numpy
+    # type. Otherwise, both are supposed to be numpy types. For object
+    # arrays, each element must be iterated over to be compared. Then,
+    # if it isn't a string type, then they must have the same dtype,
+    # shape, and all elements. If it is an empty string, then it would
+    # have been stored as just a null byte (recurse to do that
+    # comparison). If it is a bytes_ type, the dtype, shape, and
     # elements must all be the same. If it is string_ type, we must
     # convert to uint32 and then everything can be compared.
     if type(b) == dict:
-        assert set(a.keys()) == set(b.keys())
+        assert type(a) == np.ndarray
+        assert a.dtype.names is not None
+        assert set(a.dtype.names) == set(b.keys())
         for k in b:
-            assert_equal_none_format(a[k], b[k])
+            assert_equal_none_format(a[k][0], b[k])
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         assert_equal_none_format(a, np.object_(list(b)))
     elif not isinstance(b, (np.generic, np.ndarray)):
@@ -124,28 +127,30 @@ def assert_equal_none_format(a, b):
 
 def assert_equal_matlab_format(a, b):
     # Compares a and b for equality. b is always the original. If they
-    # are dictionaries, they must have the same set of keys, after which
-    # they values must all be# compared. If they are a collection type
-    # (list, tuple, set, frozenset, or deque), then the compairison must
-    # be made with b converted to an object array. If the original is
-    # not a numpy type (isn't or doesn't inherit from np.generic or
-    # np.ndarray), then it is a matter of converting it to the
-    # appropriate numpy type. Otherwise, both are supposed to be numpy
-    # types. For object arrays, each element must be iterated over to be
-    # compared. Then, if it isn't a string type, then they must have the
-    # same dtype, shape, and all elements. All strings are converted to
-    # numpy.str_ on read. If it is empty, it has shape (1, 0). A
-    # numpy.str_ has all of its strings per row compacted together. A
-    # numpy.bytes_ string has to have the same thing done, but then it
-    # needs to be converted up to UTF-32 and to numpy.str_ through
-    # uint32.
+    # are dictionaries, a must be a structured ndarray and they must
+    # have the same set of keys, after which they values must all be
+    # compared. If they are a collection type (list, tuple, set,
+    # frozenset, or deque), then the compairison must be made with b
+    # converted to an object array. If the original is not a numpy type
+    # (isn't or doesn't inherit from np.generic or np.ndarray), then it
+    # is a matter of converting it to the appropriate numpy
+    # type. Otherwise, both are supposed to be numpy types. For object
+    # arrays, each element must be iterated over to be compared. Then,
+    # if it isn't a string type, then they must have the same dtype,
+    # shape, and all elements. All strings are converted to numpy.str_
+    # on read. If it is empty, it has shape (1, 0). A numpy.str_ has all
+    # of its strings per row compacted together. A numpy.bytes_ string
+    # has to have the same thing done, but then it needs to be converted
+    # up to UTF-32 and to numpy.str_ through uint32.
     #
     # In all cases, we expect things to be at least two dimensional
     # arrays.
     if type(b) == dict:
-        assert set(a.keys()) == set(b.keys())
+        assert type(a) == np.ndarray
+        assert a.dtype.names is not None
+        assert set(a.dtype.names) == set(b.keys())
         for k in b:
-            assert_equal_matlab_format(a[k], b[k])
+            assert_equal_matlab_format(a[k][0], b[k])
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         assert_equal_matlab_format(a, np.object_(list(b)))
     elif not isinstance(b, (np.generic, np.ndarray)):

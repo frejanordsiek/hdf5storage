@@ -174,6 +174,7 @@ class TestPythonMatlabFormat(object):
                 self.dict_value_subarray_dimensions, \
                 self.max_dict_value_subarray_axis_length), \
                 dtype=random.choice(self.dtypes))
+        return data
 
     def random_name(self):
         # Makes a random POSIX path of a random depth.
