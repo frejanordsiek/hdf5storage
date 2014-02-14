@@ -775,13 +775,12 @@ def set_attribute_string_array(target, name, string_list):
         Dataset or Group to set the string array attribute of.
     name : str
         Name of the attribute to set.
-    string_list : list, tuple
-        List of strings to set the attribute to. Can be any string type
-        that will convert to a ``numpy.bytes_``
+    string_list : list of str
+        List of strings to set the attribute to. Strings must be ``str``
 
     """
-    target.attrs.create(name, np.bytes_(string_list),
-                        dtype=h5py.special_dtype(vlen=bytes))
+    target.attrs.create(name, string_list,
+                        dtype=h5py.special_dtype(vlen=str))
 
 
 def del_attribute(target, name):
