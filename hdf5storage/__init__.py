@@ -59,20 +59,20 @@ class Options(object):
     compatible with MATLAB's HDF5 based version 7.3 mat file format. It
     overrides several options to the values in the following table.
 
-    ===============================  ====================
-    attribute                        value
-    ===============================  ====================
-    delete_unused_variables          ``True``
-    fielded_numpy_ndarray_as_struct  ``True``
-    make_atleast_2d                  ``True``
-    convert_numpy_bytes_to_utf16     ``True``
-    convert_numpy_str_to_utf16       ``True``
-    convert_bools_to_uint8           ``True``
-    reverse_dimension_order          ``True``
-    store_shape_for_empty            ``True``
-    complex_names                    ``('real', 'imag')``
-    group_for_references             ``'/#refs#'``
-    ===============================  ====================
+    ==================================  ====================
+    attribute                           value
+    ==================================  ====================
+    delete_unused_variables             ``True``
+    structured_numpy_ndarray_as_struct  ``True``
+    make_atleast_2d                     ``True``
+    convert_numpy_bytes_to_utf16        ``True``
+    convert_numpy_str_to_utf16          ``True``
+    convert_bools_to_uint8              ``True``
+    reverse_dimension_order             ``True``
+    store_shape_for_empty               ``True``
+    complex_names                       ``('real', 'imag')``
+    group_for_references                ``'/#refs#'``
+    ==================================  ====================
 
     In addition to setting these options, a specially formatted block of
     bytes is put at the front of the file so that MATLAB can recognize
@@ -89,7 +89,7 @@ class Options(object):
         'error'.
     delete_unused_variables : bool, optional
         See Attributes.
-    fielded_numpy_ndarray_as_struct : bool, optional
+    structured_numpy_ndarray_as_struct : bool, optional
         See Attributes.
     make_atleast_2d : bool, optional
         See Attributes.
@@ -118,7 +118,7 @@ class Options(object):
     matlab_compatible : bool
     action_for_matlab_incompatible : str
     delete_unused_variables : bool
-    fielded_numpy_ndarray_as_struct : bool
+    structured_numpy_ndarray_as_struct : bool
     make_atleast_2d : bool
     convert_numpy_bytes_to_utf16 : bool
     convert_numpy_str_to_utf16 : bool
@@ -140,7 +140,7 @@ class Options(object):
                  matlab_compatible=True,
                  action_for_matlab_incompatible='error',
                  delete_unused_variables=False,
-                 fielded_numpy_ndarray_as_struct=False,
+                 structured_numpy_ndarray_as_struct=False,
                  make_atleast_2d=False,
                  convert_numpy_bytes_to_utf16=False,
                  convert_numpy_str_to_utf16=False,
@@ -156,7 +156,7 @@ class Options(object):
         self._store_python_metadata = True
         self._action_for_matlab_incompatible = 'error'
         self._delete_unused_variables = False
-        self._fielded_numpy_ndarray_as_struct = False
+        self._structured_numpy_ndarray_as_struct = False
         self._make_atleast_2d = False
         self._convert_numpy_bytes_to_utf16 = False
         self._convert_numpy_str_to_utf16 = False
@@ -176,8 +176,8 @@ class Options(object):
         self.action_for_matlab_incompatible = \
             action_for_matlab_incompatible
         self.delete_unused_variables = delete_unused_variables
-        self.fielded_numpy_ndarray_as_struct = \
-            fielded_numpy_ndarray_as_struct
+        self.structured_numpy_ndarray_as_struct = \
+            structured_numpy_ndarray_as_struct
         self.make_atleast_2d = make_atleast_2d
         self.convert_numpy_bytes_to_utf16 = convert_numpy_bytes_to_utf16
         self.convert_numpy_str_to_utf16 = convert_numpy_str_to_utf16
@@ -240,20 +240,20 @@ class Options(object):
         which is HDF5 based. Setting it to ``True`` forces other options
         to hold the specific values in the table below.
 
-        ===============================  ====================
-        attribute                        value
-        ===============================  ====================
-        delete_unused_variables          ``True``
-        fielded_numpy_ndarray_as_struct  ``True``
-        make_atleast_2d                  ``True``
-        convert_numpy_bytes_to_utf16     ``True``
-        convert_numpy_str_to_utf16       ``True``
-        convert_bools_to_uint8           ``True``
-        reverse_dimension_order          ``True``
-        store_shape_for_empty            ``True``
-        complex_names                    ``('real', 'imag')``
-        group_for_references             ``'/#refs#'``
-        ===============================  ====================
+        ==================================  ====================
+        attribute                           value
+        ==================================  ====================
+        delete_unused_variables             ``True``
+        structured_numpy_ndarray_as_struct  ``True``
+        make_atleast_2d                     ``True``
+        convert_numpy_bytes_to_utf16        ``True``
+        convert_numpy_str_to_utf16          ``True``
+        convert_bools_to_uint8              ``True``
+        reverse_dimension_order             ``True``
+        store_shape_for_empty               ``True``
+        complex_names                       ``('real', 'imag')``
+        group_for_references                ``'/#refs#'``
+        ==================================  ====================
 
         In addition to setting these options, a specially formatted
         block of bytes is put at the front of the file so that MATLAB
@@ -270,7 +270,7 @@ class Options(object):
             self._matlab_compatible = value
             if value:
                 self._delete_unused_variables = True
-                self._fielded_numpy_ndarray_as_struct = True
+                self._structured_numpy_ndarray_as_struct = True
                 self._make_atleast_2d = True
                 self._convert_numpy_bytes_to_utf16 = True
                 self._convert_numpy_str_to_utf16 = True
@@ -332,8 +332,8 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def fielded_numpy_ndarray_as_struct(self):
-        """ Whether or not to convert fielded ndarrays to structs.
+    def structured_numpy_ndarray_as_struct(self):
+        """ Whether or not to convert structured ndarrays to structs.
 
         bool
 
@@ -346,15 +346,15 @@ class Options(object):
         handle the compound types made by writing these types.
 
         """
-        return self._fielded_numpy_ndarray_as_struct
+        return self._structured_numpy_ndarray_as_struct
 
-    @fielded_numpy_ndarray_as_struct.setter
-    def fielded_numpy_ndarray_as_struct(self, value):
+    @structured_numpy_ndarray_as_struct.setter
+    def structured_numpy_ndarray_as_struct(self, value):
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
-            self._fielded_numpy_ndarray_as_struct = value
-        if not self._fielded_numpy_ndarray_as_struct:
+            self._structured_numpy_ndarray_as_struct = value
+        if not self._structured_numpy_ndarray_as_struct:
             self._matlab_compatible = False
 
     @property

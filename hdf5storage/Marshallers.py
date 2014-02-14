@@ -532,13 +532,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
     def write(self, f, grp, name, data, type_string, options):
         # If we are doing matlab compatibility and the data type is not
         # one of those that is supported for matlab, skip writing the
-        # data or throw an error if appropriate. Fielded ndarrays and
+        # data or throw an error if appropriate. structured ndarrays and
         # recarrays are compatible if the
-        # fielded_numpy_ndarray_as_struct option is set.
+        # structured_numpy_ndarray_as_struct option is set.
         if options.matlab_compatible \
                 and not (data.dtype.type in self.__MATLAB_classes \
                 or (data.dtype.fields is not None \
-                and options.fielded_numpy_ndarray_as_struct)):
+                and options.structured_numpy_ndarray_as_struct)):
             if options.action_for_matlab_incompatible == 'error':
                 raise lowlevel.TypeNotMatlabCompatibleError( \
                     'Data type ' + data.dtype.name
@@ -638,7 +638,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # If it an ndarray with fields and we are writing such things as
         # a Group/struct, that needs to be handled. Otherwise, it is
         # simply written as is to a Dataset. As HDF5 Reference types do
-        # look like a fielded object array, those have to be excluded
+        # look like a structured object array, those have to be excluded
         # explicitly. Complex types may have been converted so that they
         # can have different field names as an HDF5 COMPOUND type, so
         # those have to be escluded too.
@@ -647,7 +647,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 and h5py.check_dtype(ref=data_to_store.dtype) \
                 is not h5py.Reference \
                 and not np.iscomplexobj(data) \
-                and options.fielded_numpy_ndarray_as_struct:
+                and options.structured_numpy_ndarray_as_struct:
             # If the group doesn't exist, it needs to be created. If it
             # already exists but is not a group, it needs to be deleted
             # before being created.
