@@ -183,10 +183,10 @@ PythonDictMarshaller
    :show-inheritance:
 
    .. autoinstanceattribute:: PythonDictMarshaller.python_attributes
-      :annotation: = {'Python.Type', 'Python.Empty', 'Python.Fields'}
+      :annotation: = {'Python.Type', 'Python.Fields'}
 
    .. autoinstanceattribute:: PythonDictMarshaller.matlab_attributes
-      :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty'}
+      :annotation: = {'H5PATH', 'MATLAB_class'}
 
    .. autoinstanceattribute:: PythonDictMarshaller.types
       :annotation: = [dict]

@@ -1224,8 +1224,8 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
 class PythonDictMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.python_attributes |= {'Python.Empty', 'Python.Fields'}
-        self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty'}
+        self.python_attributes |= {'Python.Fields'}
+        self.matlab_attributes |= {'MATLAB_class'}
         self.types = [dict]
         self.python_type_strings = ['dict']
         self.__MATLAB_classes = {dict: 'struct'}
@@ -1282,27 +1282,6 @@ class PythonDictMarshaller(TypeMarshaller):
 
         TypeMarshaller.write_metadata(self, f, grp, name, data,
                                       type_string, options)
-
-        # If data is empty and we are supposed to store shape info for
-        # empty data, we need to set the Python.Empty and MATLAB_empty
-        # attributes to 1 if we are storing type info or making it
-        # MATLAB compatible. Otherwise, no empty attribute is set and
-        # existing ones must be deleted.
-
-        if options.store_shape_for_empty and len(data) == 0:
-            if options.store_python_metadata:
-                set_attribute(grp[name], 'Python.Empty',
-                                          np.uint8(1))
-            else:
-                del_attribute(grp[name], 'Python.Empty')
-            if options.matlab_compatible:
-                set_attribute(grp[name], 'MATLAB_empty',
-                                          np.uint8(1))
-            else:
-                del_attribute(grp[name], 'MATLAB_empty')
-        else:
-            del_attribute(grp[name], 'Python.Empty')
-            del_attribute(grp[name], 'MATLAB_empty')
 
         # If we are storing python metadata, we need to set the
         # 'Python.Fields' Attribute to be all the keys. They will be
