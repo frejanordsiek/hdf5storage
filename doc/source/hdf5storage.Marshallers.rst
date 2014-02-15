@@ -72,7 +72,7 @@ NumpyScalarArrayMarshaller
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.types
       :annotation: = [np.ndarray, np.matrix,
-                      np.chararray,
+                      np.chararray, np.core.records.recarray,
                       np.bool_, np.void,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
@@ -82,7 +82,7 @@ NumpyScalarArrayMarshaller
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.python_type_strings
       :annotation: = ['numpy.ndarray', 'numpy.matrix',
-                      'numpy.chararray',
+                      'numpy.chararray', 'numpy.recarray',
                       'numpy.bool_', 'numpy.void',
                       'numpy.uint8', 'numpy.uint16',
                       'numpy.uint32', 'numpy.uint64', 'numpy.int8',

@@ -85,6 +85,7 @@ np.object\_    0.1                                            Dataset
 np.ndarray     0.1      not or Group of contents [5]_         Dataset or Group [5]_
 np.matrix      0.1      np.ndarray                            Dataset
 np.chararray   0.1      np.bytes\_ or np.uint16/32 [2]_ [3]_  Dataset
+np.recarray    0.1      structued np.ndarray [5]_             Dataset or Group [5]_
 =============  =======  ====================================  =====================
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when
@@ -170,6 +171,7 @@ np.object\_    'numpy.object\_'     'object'                     'cell'
 np.ndarray     'numpy.ndarray'      [8]_                         [8]_ [9]_
 np.matrix      'numpy.matrix'       [8]_                         [8]_
 np.chararray   'numpy.chararray'    [8]_                         'char' [8]_
+np.recarray    'numpy.recarray'     [8]_                         [8]_ [9]_
 =============  ===================  ===========================  ==================  =================
 
 .. [6] '#' is replaced by the number of bits taken up by the string, or
@@ -201,12 +203,13 @@ Python.numpy.Container
 
 Python Attribute
 
-{'scalar', 'ndarray', 'matrix', 'chararray'}
+{'scalar', 'ndarray', 'matrix', 'chararray', 'recarray'}
 
 For Numpy types (or types converted to them), whether the type is a
 scalar (its type is something such as ``np.uint16``, ``np.str_``, etc.),
 some form of array (its type is ``np.ndarray``), a matrix (type
-is ``np.matrix``), or is a ``np.chararray`` is stored in this Attribute.
+is ``np.matrix``), is a ``np.chararray``, or is a ``np.recarray`` is
+stored in this Attribute.
 
 Python.Fields
 -------------

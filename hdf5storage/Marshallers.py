@@ -464,7 +464,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
                                    'MATLAB_int_decode'}
         self.types = [np.ndarray, np.matrix,
-                      np.chararray,
+                      np.chararray, np.core.records.recarray,
                       np.bool_, np.void,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
@@ -473,6 +473,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.bytes_, np.str_, np.object_]
         self.python_type_strings = ['numpy.ndarray', 'numpy.matrix',
                                     'numpy.chararray',
+                                    'numpy.recarray',
                                     'numpy.bool_', 'numpy.void',
                                     'numpy.uint8', 'numpy.uint16',
                                     'numpy.uint32', 'numpy.uint64',
@@ -550,6 +551,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # out as a copy of data and then be steadily manipulated.
 
         data_to_store = data.copy()
+
+        # recarrays must be converted to structured ndarrays in order
+        # for h5py to be able to write them.
+        if isinstance(data_to_store, np.core.records.recarray):
+            data_to_store = data_to_store.view(np.ndarray)
 
         # Optionally convert ASCII strings to UTF-16. This is done by
         # simply converting to uint16's. This will require making them
@@ -782,6 +788,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 container = 'matrix'
             elif isinstance(data, np.chararray):
                 container = 'chararray'
+            elif isinstance(data, np.core.records.recarray):
+                container = 'recarray'
             elif isinstance(data, np.ndarray):
                 container = 'ndarray'
             else:
@@ -1038,6 +1046,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             if tuple(shape) != data.shape \
                     and np.prod(shape) == np.prod(data.shape):
                 data = data.reshape(tuple(shape))
+
+            # If data is a structured ndarray and the type string says
+            # it is a recarray, then turn it into one.
+            if type_string == 'numpy.recarray':
+                data = data.view(np.core.records.recarray)
 
             # Convert to scalar, matrix, chararray, or ndarray depending
             # on the container type. For an empty scalar string, it

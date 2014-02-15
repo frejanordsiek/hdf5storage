@@ -109,6 +109,7 @@ np.object\_    0.1                                  cell         0.1
 np.ndarray     0.1      [5]_ [6]_                   [5]_ [6]_    0.1 [5]_
 np.matrix      0.1      [5]_                        [5]_         0.1 [5]_
 np.chararray   0.1      [5]_                        [5]_         0.1 [5]_
+np.recarray    0.1      structured np.ndarray       [5]_ [6]_    0.1 [5]_
 =============  =======  ==========================  ===========  ==========
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
