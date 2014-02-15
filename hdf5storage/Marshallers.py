@@ -460,7 +460,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.python_attributes |= {'Python.Shape', 'Python.Empty',
                                    'Python.numpy.UnderlyingType',
                                    'Python.numpy.Container',
-                                   'Python.numpy.Fields'}
+                                   'Python.Fields'}
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
                                    'MATLAB_int_decode'}
         self.types = [np.ndarray, np.matrix,
@@ -664,7 +664,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             field_names = list(data_to_store.dtype.names)
 
             # Write the metadata, and set the MATLAB_class to 'struct'
-            # explicitly. Then, we set the 'Python.numpy.Fields'
+            # explicitly. Then, we set the 'Python.Fields'
             # Attribute to the field names if we are storing python
             # metadata.
             self.write_metadata(f, grp, name, data, type_string,
@@ -674,10 +674,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                      'struct')
             if options.store_python_metadata:
                 set_attribute_string_array(grp[name],
-                                           'Python.numpy.Fields',
+                                           'Python.Fields',
                                            field_names)
             else:
-                del_attribute(grp[name], 'Python.numpy.Fields')
+                del_attribute(grp[name], 'Python.Fields')
 
             # Delete any Datasets/Groups not corresponding to a field
             # name in data if that option is set.
@@ -757,7 +757,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             self.write_metadata(f, grp, name, data, type_string,
                                 options)
-            del_attribute(grp[name], 'Python.numpy.Fields')
+            del_attribute(grp[name], 'Python.Fields')
 
     def write_metadata(self, f, grp, name, data, type_string, options):
         # First, call the inherited version to do most of the work.
@@ -848,7 +848,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             'Python.numpy.Container')
         python_empty = get_attribute(grp[name], 'Python.Empty')
         python_fields = get_attribute_string_array(grp[name], \
-            'Python.numpy.Fields')
+            'Python.Fields')
 
         matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
         matlab_empty = get_attribute(grp[name], 'MATLAB_empty')
@@ -917,9 +917,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # put in the list.
 
             if python_fields is None:
-                fields = struct_data.keys()
+                fields = list(struct_data.keys())
+                fields.sort()
             else:
                 fields = python_fields
+                # Now, there may be fields available that were not
+                # given, but still should be read. Keys that are not in
+                # python_fields need to be added to the list.
+                extra_fields = list(set(struct_data.keys())
+                                    - set(fields))
+                extra_fields.sort()
+                fields.extend(extra_fields)
 
             dt_whole = []
             for k in fields:
@@ -1203,7 +1211,7 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
 class PythonDictMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.python_attributes |= {'Python.Empty'}
+        self.python_attributes |= {'Python.Empty', 'Python.Fields'}
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty'}
         self.types = [dict]
         self.python_type_strings = ['dict']
@@ -1282,6 +1290,15 @@ class PythonDictMarshaller(TypeMarshaller):
         else:
             del_attribute(grp[name], 'Python.Empty')
             del_attribute(grp[name], 'MATLAB_empty')
+
+        # If we are storing python metadata, we need to set the
+        # 'Python.Fields' Attribute to be all the keys. They will be
+        # sorted for convenience
+        if options.store_python_metadata:
+            fields = list(data.keys())
+            fields.sort()
+            set_attribute_string_array(grp[name], 'Python.Fields',
+                                       fields)
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set for the data type. If the type
