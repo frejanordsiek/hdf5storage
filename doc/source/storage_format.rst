@@ -128,7 +128,7 @@ stored. Then, the other attributes are detailed individually.
 
    'Python.Type', 'Python.numpy.UnderlyingType', and 'MATLAB_class' are
    all ``np.bytes_``. 'MATLAB_int_decode' is a ``np.int64``.
-   'Python.numpy.Fields' is a ``np.ndarray`` of ``np.bytes_``.
+   'Python.Fields' is a ``np.object_`` array of ``str``.
 
 =============  ===================  ===========================  ==================  =================
                Python Attributes                                 MATLAB Attributes
@@ -208,16 +208,17 @@ scalar (its type is something such as ``np.uint16``, ``np.str_``, etc.),
 some form of array (its type is ``np.ndarray``), a matrix (type
 is ``np.matrix``), or is a ``np.chararray`` is stored in this Attribute.
 
-Python.numpy.Fields
--------------------
+Python.Fields
+-------------
 
 Python Attribute
 
-``np.ndarray(dtype='bytes')``
+``np.object_`` array of ``str``
 
-For structured ``np.ndarray`` types (and those converted to them), an
-array of the field names of the array is stored in this Attribute in
-the proper order. In the HDF5 file, they are variable length strings.
+For ``dict`` and structured ``np.ndarray`` types (and those converted to
+them), an array of the field names of the array is stored in this
+Attribute in the proper order. In the HDF5 file, they are variable
+length strings.
 
 Python.Empty and MATLAB_empty
 -----------------------------

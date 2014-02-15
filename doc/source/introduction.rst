@@ -32,13 +32,13 @@ stored, and what metadata is stored, but we can ignore that for now. If
 we have a variable named ``foo`` that we want to write to an HDF5 file
 named ``data.h5``, we would write it by ::
 
-    hdf5storage.write(foo, name='/foo', filename='data.h5')
+    hdf5storage.write(foo, path='/foo', filename='data.h5')
 
 And then we can read it back from the file with the :py:func:`read`
 function, which returns the read data. Here, we will put the data we
 read back into the variable ``bar`` ::
 
-    bar = hdf5storage.read(name='/foo', filename='data.h5')
+    bar = hdf5storage.read(path='/foo', filename='data.h5')
 
 
 Main Options Controlling Writing/Reading Data
@@ -187,7 +187,8 @@ store to disk in an HDF5 file.
     ...      'f': 'hello',
     ...      'g': b'goodbye',
     ...      'h': ['list', 'of', 'stuff', [30, 2.3]],
-    ...      'i':{'aa': np.bool_(False),
+    ...      'i': np.zeros(shape=(2,), dtype=[('bi', 'uint8')]),
+    ...      'j':{'aa': np.bool_(False),
     ...           'bb': np.uint8(4),
     ...           'cc': np.uint32([70, 8]),
     ...           'dd': np.int32([]),
@@ -202,45 +203,60 @@ Using No Metadata
 
 Write it to a file at the root directory, but include no Python or
 MATLAB metadata. Then, read it back and notice that many objects come
-back quite different from what was written. Namely, everything but
-``dict`` types were converted to Numpy types. This happens because all
-other types must be converted to these types before being written to the
-HDF5 file, and without metadata, the conversion cannot be reversed.
+back quite different from what was written. Namely, everything was
+converted to Numpy types. This even included the dictionaries which were
+converted to structured ``np.ndarray``s. This happens because all
+other types (other than ``dict``) must be converted to these types
+before being written to the HDF5 file, and without metadata, the
+conversion cannot be reversed (while ``dict`` isn't converted, it has
+the same form and thus cannot be extracted reversibly).
 
-    >>> hdf5storage.write(data=a, name='/', filename='data.h5',
+    >>> hdf5storage.write(data=a, path='/', filename='data.h5',
     ...                   store_python_metadata=False,
     ...                   matlab_compatible=False)
-    >>> hdf5storage.read(name='/', filename='data.h5')
-    {'a': array(True, dtype=bool),
-     'b': array([], dtype=float64),
-     'c': array(2),
-     'd': array(-3.2),
-     'e': array((1-2.3j)),
-     'f': array(b'hello', 
-          dtype='|S5'),
-     'g': array(b'goodbye', 
-          dtype='|S7'),
-     'h': array([array(b'list', 
-          dtype='|S4'),
-           array(b'of', 
-          dtype='|S2'),
-           array(b'stuff', 
-          dtype='|S5'),
-           array([array(30), array(2.3)], dtype=object)], dtype=object),
-     'i': {'aa': array(False, dtype=bool),
-      'bb': array(4, dtype=uint8),
-      'cc': array([70,  8], dtype=uint32),
-      'dd': array([], dtype=int32),
-      'ee': array([[  3.29999995e+00],
-           [  5.30000000e+03]], dtype=float32),
-      'ff': array([[ 3.4+0.j,  3.0+0.j],
-           [ 9.0+2.j,  0.0+0.j]]),
-      'gg': array([111, 110, 101,   0,   0, 116, 119, 111,   0,   0, 116, 104, 114,
-           101, 101], dtype=uint32),
-      'hh': array(b'how many?', 
-          dtype='|S9'),
-      'ii': array([array(b'text', 
-          dtype='|S4'), array([ 1, -3,  0], dtype=int8)], dtype=object)}}
+    >>> hdf5storage.read(path='/', filename='data.h5')
+    array([ (True,
+             [],
+             2,
+             -3.2,
+             (1-2.3j),
+             b'hello',
+             b'goodbye',
+             [array(b'list', dtype='|S4'),
+              array(b'of', dtype='|S2'),
+              array(b'stuff', dtype='|S5'),
+              array([array(30), array(2.3)], dtype=object)],
+             [(0,), (0,)],
+             [(False,
+               4,
+               array([70,  8], dtype=uint32),
+               array([], dtype=int32),
+               array([[  3.29999995e+00], [  5.30000000e+03]], dtype=float32),
+               array([[ 3.4+0.j,  3.0+0.j], [ 9.0+2.j,  0.0+0.j]]),
+               array([111, 110, 101,   0,   0, 116, 119, 111,   0,   0, 116, 104, 114,
+                      101, 101], dtype=uint32),
+               b'how many?',
+               array([array(b'text', dtype='|S4'),
+                      array([ 1, -3,  0], dtype=int8)],
+                     dtype=object))])], 
+          dtype=[('a', '?'),
+                 ('b', '<f8', (0,)),
+                 ('c', '<i8'),
+                 ('d', '<f8'),
+                 ('e', '<c16'),
+                 ('f', 'S5'),
+                 ('g', 'S7'), ('h', 'O', (4,)),
+                 ('i', [('bi', 'u1')], (2,)),
+                 ('j', [('aa', '?'),
+                        ('bb', 'u1'),
+                        ('cc', '<u4', (2,)),
+                        ('dd', '<i4', (0,)),
+                        ('ee', '<f4', (2, 1)),
+                        ('ff', '<c16', (2, 2)),
+                        ('gg', '<u4', (15,)),
+                        ('hh', 'S9'),
+                        ('ii', 'O', (2,))],
+                  (1,))])
 
 
 Including Python Metadata
@@ -250,10 +266,10 @@ Do the same thing, but now include Python metadata
 (``store_python_metadata == True``). This time, everything is read back
 the same (or at least, it should) as it was written.
 
-    >>> hdf5storage.write(data=a, name='/', filename='data_typeinfo.h5',
+    >>> hdf5storage.write(data=a, path='/', filename='data_typeinfo.h5',
     ...                   store_python_metadata=True,
     ...                   matlab_compatible=False)
-    >>> hdf5storage.read(name='/', filename='data_typeinfo.h5')
+    >>> hdf5storage.read(path='/', filename='data_typeinfo.h5')
     {'a': True,
      'b': None,
      'c': 2,
@@ -262,7 +278,9 @@ the same (or at least, it should) as it was written.
      'f': 'hello',
      'g': b'goodbye',
      'h': ['list', 'of', 'stuff', [30, 2.3]],
-     'i': {'aa': False,
+     'i': array([(0,), (0,)], 
+          dtype=[('bi', 'u1')]),
+     'j': {'aa': False,
       'bb': 4,
       'cc': array([70,  8], dtype=uint32),
       'dd': array([], dtype=int32),
@@ -288,41 +306,53 @@ MATLAB can only work with 2D and higher arrays, uses Fortran array
 ordering instead of C ordering like Python does, and strings are stored
 in a subset of UTF-16 (no doublets) in the version 7.3 MAT files.
 
-    >>> hdf5storage.write(data=a, name='/', filename='data.mat',
+    >>> hdf5storage.write(data=a, path='/', filename='data.mat',
     ...                   store_python_metadata=False,
     ...                   matlab_compatible=True)
-    >>> hdf5storage.read(name='/', filename='data.mat')
-    {'a': array([[ True]], dtype=bool),
-     'b': array([], shape=(1, 0), dtype=float64),
-     'c': array([[2]]),
-     'd': array([[-3.2]]),
-     'e': array([[ 1.-2.3j]]),
-     'f': array([['hello']], 
-          dtype='<U5'),
-     'g': array([['goodbye']], 
-          dtype='<U7'),
-     'h': array([[array([['list']], 
-          dtype='<U4'),
-            array([['of']], 
-          dtype='<U2'),
-            array([['stuff']], 
-          dtype='<U5'),
-            array([[array([[30]]), array([[ 2.3]])]], dtype=object)]], dtype=object),
-     'i': {'aa': array([[False]], dtype=bool),
-      'bb': array([[4]], dtype=uint8),
-      'cc': array([[70,  8]], dtype=uint32),
-      'dd': array([], shape=(1, 0), dtype=int32),
-      'ee': array([[  3.29999995e+00],
-           [  5.30000000e+03]], dtype=float32),
-      'ff': array([[ 3.4+0.j,  3.0+0.j],
-           [ 9.0+2.j,  0.0+0.j]]),
-      'gg': array([['one\x00\x00two\x00\x00three']], 
-          dtype='<U15'),
-      'hh': array([['how many?']], 
-          dtype='<U9'),
-      'ii': array([[array([['text']], 
-          dtype='<U4'),
-            array([[ 1, -3,  0]], dtype=int8)]], dtype=object)}}
+    >>> hdf5storage.read(path='/', filename='data.mat')
+    array([ ([[True]],
+             [[]],
+             [[2]],
+             [[-3.2]],
+             [[(1-2.3j)]],
+             [['hello']],
+             [['goodbye']],
+             [[array([['list']], dtype='<U4'),
+               array([['of']], dtype='<U2'),
+               array([['stuff']], dtype='<U5'),
+               array([[array([[30]]), array([[ 2.3]])]], dtype=object)]],
+             [[(array([[0]], dtype=uint8),)],
+              [(array([[0]], dtype=uint8),)]],
+             [(array([[False]], dtype=bool),
+               array([[4]], dtype=uint8),
+               array([[70,  8]], dtype=uint32),
+               array([], shape=(1, 0), dtype=int32),
+               array([[  3.29999995e+00], [  5.30000000e+03]], dtype=float32),
+               array([[ 3.4+0.j,  3.0+0.j], [ 9.0+2.j,  0.0+0.j]]),
+               array([['one\x00\x00two\x00\x00three']], dtype='<U15'),
+               array([['how many?']], dtype='<U9'),
+               array([[array([['text']], dtype='<U4'),
+                       array([[ 1, -3,  0]], dtype=int8)]], dtype=object))])], 
+          dtype=[('a', '?', (1, 1)),
+                 ('b', '<f8', (1, 0)),
+                 ('c', '<i8', (1, 1)),
+                 ('d', '<f8', (1, 1)),
+                 ('e', '<c16', (1, 1)),
+                 ('f', '<U5', (1, 1)),
+                 ('g', '<U7', (1, 1)),
+                 ('h', 'O', (1, 4)),
+                 ('i', [('bi', 'u1', (1, 1))], (2, 1)),
+                 ('j', [('aa', '?', (1, 1)),
+                        ('bb', 'u1', (1, 1)),
+                        ('cc', '<u4', (1, 2)),
+                        ('dd', '<i4', (1, 0)),
+                        ('ee', '<f4', (2, 1)),
+                        ('ff', '<c16', (2, 2)),
+                        ('gg', '<U15', (1, 1)),
+                        ('hh', '<U9', (1, 1)),
+                        ('ii', 'O', (1, 2))],
+                  (1,))])
+
 
 Including both Python And MATLAB Metadata
 -----------------------------------------
@@ -334,10 +364,10 @@ the same (or at least, it should) as it was written. The Python metadata
 allows the transformations done by making the stored data MATLAB
 compatible reversible.
 
-    >>> hdf5storage.write(data=a, name='/', filename='data_typeinfo.mat',
+    >>> hdf5storage.write(data=a, path='/', filename='data_typeinfo.mat',
     ...                   store_python_metadata=True,
     ...                   matlab_compatible=True)
-    >>> hdf5storage.read(name='/', filename='data_typeinfo.mat')
+    >>> hdf5storage.read(path='/', filename='data_typeinfo.mat')
     {'a': True,
      'b': None,
      'c': 2,
@@ -346,7 +376,9 @@ compatible reversible.
      'f': 'hello',
      'g': b'goodbye',
      'h': ['list', 'of', 'stuff', [30, 2.3]],
-     'i': {'aa': False,
+     'i': array([(0,), (0,)], 
+          dtype=[('bi', 'u1')]),
+     'j': {'aa': False,
       'bb': 4,
       'cc': array([70,  8], dtype=uint32),
       'dd': array([], dtype=int32),
