@@ -16,7 +16,7 @@ http://opensource.org/licenses/BSD-2-Clause).
 Installation
 ============
 
-This package will probably not work on Python < 2.7.
+This package only supports Python >= 2.6.
 
 This package requires the numpy and h5py (>= 2.1) packages. An optional
 dependency is the scipy package.
@@ -25,11 +25,11 @@ To install hdf5storage, download the package and run the command::
 
     python3 setup.py install
 
-Python 2.7
-==========
+Python 2
+========
 
-This package was designed and written for Python 3, with Python 2.7
-support added later. This does mean that a few things are a little
+This package was designed and written for Python 3, with Python 2.7 and
+2.6 support added later. This does mean that a few things are a little
 clunky in Python 2. Examples include supporting ``unicode`` keys for
 dictionaries, not being able to import a structured ``numpy.ndarray`` if
 any of its fields contain characters outside of ASCII, the ``int`` and
