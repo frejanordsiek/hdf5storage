@@ -219,23 +219,23 @@ def convert_to_str(data):
     if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
                   np.bytes_, np.unicode_)):
         if data.dtype.name == 'uint8':
-            return data.flatten().tostring().decode(encoding='ASCII')
+            return data.flatten().tostring().decode('ASCII')
         elif data.dtype.name == 'uint16':
-            return data.tostring().decode(encoding='UTF-16')
+            return data.tostring().decode('UTF-16')
         elif data.dtype.name == 'uint32':
-            return data.flatten.tostring().decode(encoding='UTF-32')
+            return data.flatten.tostring().decode('UTF-32')
         elif data.dtype.char == 'S':
-            return data.decode(encoding='ASCII')
+            return data.decode('ASCII')
         else:
             if isinstance(data, np.ndarray):
-                return data.flatten.tostring().decode(encoding='UTF-32',
+                return data.flatten.tostring().decode('UTF-32',
                                                       errors='replace')
             else:
                 return data.encode(encoding='UTF-32').decode( \
                     encoding='UTF-32', errors='replace')
 
     if isinstance(data, bytes):
-        return data.decode(encoding='ASCII')
+        return data.decode('ASCII')
     else:
         return data
 
