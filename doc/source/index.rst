@@ -14,6 +14,7 @@ Contents:
    information
    introduction
    storage_format
+   development
    api
 
 Indices and tables
