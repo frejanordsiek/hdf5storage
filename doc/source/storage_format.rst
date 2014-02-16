@@ -23,11 +23,11 @@ must have a 512 byte userblock, of which 128 bytes are used. The 128
 bytes consists of a 116 byte string (spaces pad the end) followed by a
 specific 12 byte sequence (magic number). On MATLAB, the 116 byte string, depending on the computer system and the date, looks like ::
 
-    'MATLAB 7.3 MAT-file, Platform: GLNXA64, Created on: Fri Feb 07 02:29:00 2014 HDF5 schema 1.00 .'
+    b'MATLAB 7.3 MAT-file, Platform: GLNXA64, Created on: Fri Feb 07 02:29:00 2014 HDF5 schema 1.00 .'
 
 This package just changes the Platform part to ::
 
-    'CPython A.B.C'
+    b'CPython A.B.C'
 
 Where A, B, and C are the major, minor, and micro version numbers of the Python interpreter (e.g. 3.3.0).
 
@@ -104,7 +104,7 @@ np.recarray    0.1      structued np.ndarray [5]_             Dataset or Group [
        ``matlab_compatible == True``), it will be stored as
        ``np.uint16`` in UTF-16 encoding. Otherwise, it is just written
        as ``np.bytes_``.
-.. [4] All keys must be ``str``.
+.. [4] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
 .. [5] If it doesn't have any fields in its dtype or if
        :py:attr:`Options.structured_numpy_ndarray_as_struct` is not set, it
        is not converted and is written as is as a Dataset. Otherwise, it
@@ -326,6 +326,11 @@ under the field name in the Groups.
    can't be read back from the file accurately. The dtype for all the
    fields will become 'object' instead of what they originally were.
 
+.. note::
+
+   In Python 2, importing structured ``np.ndarray`` s if any of their
+   fields have characters outside of ASCII.
+
 
 Optional Data Transformations
 =============================
@@ -462,6 +467,7 @@ int8             0.1      np.int8
 int16            0.1      np.int16
 int32            0.1      np.int32
 int64            0.1      np.int64
+char             0.1      np.str\_
 struct           0.1      structured np.ndarray
 cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``

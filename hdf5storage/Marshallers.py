@@ -28,6 +28,7 @@
 
 """
 
+import sys
 import posixpath
 import collections
 
@@ -463,6 +464,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                    'Python.Fields'}
         self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
                                    'MATLAB_int_decode'}
+        # As np.str_ is the unicode type string in Python 3 and the bare
+        # bytes string in Python 2, we have to use np.unicode_ which is
+        # or points to the unicode one in both versions.
         self.types = [np.ndarray, np.matrix,
                       np.chararray, np.core.records.recarray,
                       np.bool_, np.void,
@@ -470,7 +474,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.int8, np.int16, np.int32, np.int64,
                       np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
-                      np.bytes_, np.str_, np.object_]
+                      np.bytes_, np.unicode_, np.object_]
+        # Using Python 3 type strings.
         self.python_type_strings = ['numpy.ndarray', 'numpy.matrix',
                                     'numpy.chararray',
                                     'numpy.recarray',
@@ -505,7 +510,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                  np.complex64: 'single',
                                  np.complex128: 'double',
                                  np.bytes_: 'char',
-                                 np.str_: 'char',
+                                 np.unicode_: 'char',
                                  np.object_: 'cell'}
 
         # Make a dict to look up the opposite direction (given a matlab
@@ -522,7 +527,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                          'int64': np.int64,
                                          'single': np.float32,
                                          'double': np.float64,
-                                         'char': np.str_,
+                                         'char': np.unicode_,
                                          'cell': np.object_,
                                          'canonical empty': np.float64}
 
@@ -570,16 +575,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     data_to_store).view(np.uint8))
 
         # As of 2013-12-13, h5py cannot write numpy.str_ (UTF-32
-        # encoding) types. If the option is set to try to convert them
-        # to UTF-16, then an attempt at the conversion is made. If no
-        # conversion is to be done, the conversion throws an exception
-        # (a UTF-32 character had no UTF-16 equivalent), or a UTF-32
-        # character gets turned into a UTF-16 doublet (the increase in
-        # the number of columns will be by a factor more than the length
-        # of the strings); then it will be simply converted to uint32's
-        # byte for byte instead.
+        # encoding) types (its numpy.unicode_ in Python 2, which is an
+        # alias for it in Python 3). If the option is set to try to
+        # convert them to UTF-16, then an attempt at the conversion is
+        # made. If no conversion is to be done, the conversion throws an
+        # exception (a UTF-32 character had no UTF-16 equivalent), or a
+        # UTF-32 character gets turned into a UTF-16 doublet (the
+        # increase in the number of columns will be by a factor more
+        # than the length of the strings); then it will be simply
+        # converted to uint32's byte for byte instead.
 
-        if data.dtype.type == np.str_:
+        if data.dtype.type == np.unicode_:
             new_data = None
             if options.convert_numpy_str_to_utf16:
                 try:
@@ -776,9 +782,16 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if options.store_python_metadata:
             set_attribute(grp[name], 'Python.Shape',
                           np.uint64(data.shape))
-            set_attribute_string(grp[name],
-                                 'Python.numpy.UnderlyingType',
-                                 data.dtype.name)
+
+            # Now, in Python 3, the dtype names for bare bytes and
+            # unicode strings start with 'bytes' and 'str' respectively,
+            # but in Python 2, they start with 'string' and 'unicode'
+            # respectively. The Python 2 ones must be converted to the
+            # Python 3 ones for writing.
+            set_attribute_string(grp[name], \
+                'Python.numpy.UnderlyingType', \
+                data.dtype.name.replace('string', 'bytes').replace( \
+                'unicode', 'str'))
             if isinstance(data, np.matrix):
                 container = 'matrix'
             elif isinstance(data, np.chararray):
@@ -896,7 +909,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # than H5PATH since that means that the fields are the
             # values (single element structured ndarray), as opposed to
             # Reference arrays to all the values (multi-element structed
-            # ndarray).
+            # ndarray). In Python 2, the field names need to be
+            # converted to ASCII from unicode when storing the fields in
+            # struct_data.
             struct_data = dict()
             is_multi_element = True
             for k in grp[name]:
@@ -913,7 +928,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         != 0:
                     is_multi_element = False
                 try:
-                    struct_data[k] = read_data(f, grp[name], k, options)
+                    if sys.hexversion >= 0x03000000:
+                        struct_data[k] = read_data(f, grp[name], k,
+                                                   options)
+                    else:
+                        struct_data[k.encode()] = read_data(f, \
+                            grp[name], k, options)
                 except:
                     pass
 
@@ -1042,7 +1062,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             elif underlying_type.startswith('str') \
                     or matlab_class == 'char':
                 if underlying_type == 'str':
-                    data = np.str_('')
+                    data = np.unicode_('')
                 elif underlying_type.startswith('str'):
                     data = convert_to_numpy_str(data, \
                         length=int(underlying_type[3:])//32)
@@ -1073,7 +1093,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         data = data.flatten()[0]
                 elif underlying_type.startswith('str'):
                     if python_empty == 1:
-                        data = np.bytes_(b'')
+                        data = np.unicode_('')
                     elif isinstance(data, np.ndarray):
                         data = data.flatten()[0]
                 else:
@@ -1124,8 +1144,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
-        self.types = [bool, int, float, complex]
-        self.python_type_strings = ['bool', 'int', 'float', 'complex']
+
+        # In Python 3, there is only a single integer type int, which is
+        # variable width. In Python 2, there is the fixed width int and
+        # the variable width long. Python 2 needs to be able to save
+        # with either, but Python 3 needs to map both to int, which can
+        # be done by just putting the type int for its entry in types.
+        if sys.hexversion >= 0x03000000:
+            self.types = [bool, int, int, float, complex]
+        else:
+            self.types = [bool, int, long, float, complex]
+        self.python_type_strings = ['bool', 'int', 'long', 'float',
+                                    'complex']
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
@@ -1166,7 +1196,14 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
 class PythonStringMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
-        self.types = [str, bytes, bytearray]
+        # In Python 3, the unicode and bare bytes type strings are str
+        # and bytes, but before Python 3, they were unicode and str
+        # respectively. The Python 3 python_type_strings will be used,
+        # though.
+        if sys.hexversion >= 0x03000000:
+            self.types = [str, bytes, bytearray]
+        else:
+            self.types = [unicode, str, bytearray]
         self.python_type_strings = ['str', 'bytes', 'bytearray']
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
@@ -1200,7 +1237,10 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
             else:
                 return data.decode()
         elif type_string == 'bytes':
-            return bytes(data)
+            if sys.hexversion >= 0x03000000:
+                return bytes(data)
+            else:
+                return str(data)
         elif type_string == 'bytearray':
             return bytearray(data)
         else:
@@ -1265,14 +1305,24 @@ class PythonDictMarshaller(TypeMarshaller):
             for field in {i for i in grp2}.difference({i for i in data}):
                 del grp2[field]
 
-        # Check for any field names that are not strings since they
-        # cannot be handled.
+        # Check for any field names that are not unicode since they
+        # cannot be handled. How it is checked (what type it is) and the
+        # error message are different for each Python version.
 
-        for fieldname in data:
-            if not isinstance(fieldname, str):
-                raise NotImplementedError('Dictionaries with non-string'
-                                          + ' keys are not supported: '
-                                          + repr(fieldname))
+        if sys.hexversion >= 0x03000000:
+            for fieldname in data:
+                if not isinstance(fieldname, str):
+                    raise NotImplementedError('Dictionaries with non-'
+                                              + 'str keys are not '
+                                              + 'supported: '
+                                              + repr(fieldname))
+        else:
+            for fieldname in data:
+                if not isinstance(fieldname, unicode):
+                    raise NotImplementedError('Dictionaries with non-'
+                                              + 'unicode keys are not '
+                                              + 'supported: '
+                                              + repr(fieldname))
 
         # Go through all the elements of data and write them. The H5PATH
         # needs to be set as the path of grp2 on all of them if we are

@@ -24,6 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 import collections
 
 import numpy as np
@@ -95,7 +96,10 @@ def assert_equal_none_format(a, b):
             assert type(a) == np.ndarray
             assert a.dtype == np.float64([]).dtype
             assert a.shape == (0, )
-        elif isinstance(b, (bytes, str, bytearray)):
+        elif (sys.hexversion >= 0x03000000 \
+                and isinstance(b, (bytes, str, bytearray))) \
+                or (sys.hexversion < 0x03000000 \
+                and isinstance(b, (bytes, unicode, bytearray))):
             assert a == np.bytes_(b)
         else:
             assert_equal_none_format(a, np.array(b)[()])
@@ -159,13 +163,16 @@ def assert_equal_matlab_format(a, b):
             assert type(a) == np.ndarray
             assert a.dtype == np.dtype('float64')
             assert a.shape == (1, 0)
-        elif isinstance(b, (bytes, str, bytearray)):
+        elif (sys.hexversion >= 0x03000000 \
+                and isinstance(b, (bytes, str, bytearray))) \
+                or (sys.hexversion < 0x03000000 \
+                and isinstance(b, (bytes, unicode, bytearray))):
             if len(b) == 0:
                 assert_equal(a, np.zeros(shape=(1, 0), dtype='U'))
             elif isinstance(b, (bytes, bytearray)):
-                assert_equal(a, np.atleast_2d(np.str_(b.decode())))
+                assert_equal(a, np.atleast_2d(np.unicode_(b.decode())))
             else:
-                assert_equal(a, np.atleast_2d(np.str_(b)))
+                assert_equal(a, np.atleast_2d(np.unicode_(b)))
         else:
             assert_equal(a, np.atleast_2d(np.array(b)))
     else:

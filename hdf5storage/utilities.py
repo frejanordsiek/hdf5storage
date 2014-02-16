@@ -28,6 +28,8 @@
 
 """
 
+import sys
+import copy
 import string
 import random
 
@@ -215,14 +217,14 @@ def convert_to_str(data):
     # assuming it is in ASCII. Otherwise, data has to be returned as is.
 
     if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
-                  np.bytes_, np.str_)):
+                  np.bytes_, np.unicode_)):
         if data.dtype.name == 'uint8':
             return data.flatten().tostring().decode(encoding='ASCII')
         elif data.dtype.name == 'uint16':
             return data.tostring().decode(encoding='UTF-16')
         elif data.dtype.name == 'uint32':
             return data.flatten.tostring().decode(encoding='UTF-32')
-        elif data.dtype.name.startswith('bytes'):
+        elif data.dtype.char == 'S':
             return data.decode(encoding='ASCII')
         else:
             if isinstance(data, np.ndarray):
@@ -285,23 +287,25 @@ def convert_to_numpy_str(data, length=None):
 
     """
     # The method of conversion depends on its type.
-    if isinstance(data, np.str_) or (isinstance(data, np.ndarray) \
+    if isinstance(data, np.unicode_) or (isinstance(data, np.ndarray) \
             and data.dtype.char == 'U'):
         # It is already an np.str_ or array of them, so nothing needs to
         # be done.
         return data
-    elif isinstance(data, str):
+    elif (sys.hexversion >= 0x03000000 and isinstance(data, str)) \
+           or (sys.hexversion < 0x03000000 \
+           and isinstance(data, unicode)):
         # Easily converted through constructor.
-        return np.str_(data)
+        return np.unicode_(data)
     elif isinstance(data, (bytes, bytearray, np.bytes_)):
         # All of them can be decoded and then passed through the
         # constructor.
-        return np.str_(data.decode())
+        return np.unicode_(data.decode())
     elif isinstance(data, (np.uint8, np.uint16)):
         # They are single ASCII or UTF-16 scalars, and are easily
         # converted to a UTF-8 string and then passed through the
         # constructor.
-        return np.str_(convert_to_str(data))
+        return np.unicode_(convert_to_str(data))
     elif isinstance(data, np.uint32):
         # It is just the uint32 version of the character, so it just
         # needs to be have the dtype essentially changed by having its
@@ -313,7 +317,7 @@ def convert_to_numpy_str(data, length=None):
         new_data = np.zeros(shape=data.shape,
                             dtype='U' + str(data.dtype.itemsize))
         for index, x in np.ndenumerate(data):
-            new_data[index] = np.str_(x.decode())
+            new_data[index] = np.unicode_(x.decode())
         return new_data
     elif isinstance(data, np.ndarray) \
             and data.dtype.name in ('uint8', 'uint16', 'uint32'):
@@ -342,7 +346,7 @@ def convert_to_numpy_str(data, length=None):
         else:
             if length is None:
                 length = shape[-1]
-            new_shape = shape.copy()
+            new_shape = copy.deepcopy(shape)
             new_shape[-1] //= length
 
         # The new array can be made as all zeros (nulls) with enough
@@ -364,7 +368,7 @@ def convert_to_numpy_str(data, length=None):
                                          dtype=new_data.dtype,
                                          buffer=chunk.tostring())[()]
             else:
-                new_data[i] = np.str_(convert_to_str(chunk))
+                new_data[i] = np.unicode_(convert_to_str(chunk))
 
         # Only thing is left is to reshape it.
         return new_data.reshape(tuple(new_shape))
@@ -424,9 +428,12 @@ def convert_to_numpy_bytes(data, length=None):
         # It is already an np.bytes_ or array of them, so nothing needs
         # to be done.
         return data
-    elif isinstance(data, (str, bytes, bytearray)):
+    elif (sys.hexversion >= 0x03000000 \
+            and isinstance(data, (str, bytes, bytearray))) \
+            or (sys.hexversion < 0x03000000 \
+            and isinstance(data, (unicode, bytes, bytearray))):
         # Easily converted through constructor.
-        return np.str_(data)
+        return np.bytes_(data)
     elif isinstance(data, (np.uint16, np.uint32)):
         # They are single UTF-16 or UTF-32 scalars, and are easily
         # converted to a UTF-8 string and then passed through the
@@ -473,7 +480,7 @@ def convert_to_numpy_bytes(data, length=None):
         else:
             if length is None:
                 length = shape[-1]
-            new_shape = shape.copy()
+            new_shape = copy.deepcopy(shape)
             new_shape[-1] //= length
 
         # The new array can be made as all zeros (nulls) with enough
@@ -679,11 +686,13 @@ def get_attribute_string(target, name):
     value = get_attribute(target, name)
     if value is None:
         return value
-    elif isinstance(value, str):
+    elif (sys.hexversion >= 0x03000000 and isinstance(value, str)) \
+            or (sys.hexversion < 0x03000000 \
+            and isinstance(value, unicode)):
         return value
     elif isinstance(value, bytes):
         return value.decode()
-    elif isinstance(value, np.str_):
+    elif isinstance(value, np.unicode_):
         return str(value)
     elif isinstance(value, np.bytes_):
         return value.decode()
@@ -779,8 +788,13 @@ def set_attribute_string_array(target, name, string_list):
         List of strings to set the attribute to. Strings must be ``str``
 
     """
-    target.attrs.create(name, string_list,
-                        dtype=h5py.special_dtype(vlen=str))
+    s_list = [convert_to_str(s) for s in string_list]
+    if sys.hexversion >= 0x03000000:
+        target.attrs.create(name, s_list,
+                            dtype=h5py.special_dtype(vlen=str))
+    else:
+        target.attrs.create(name, s_list,
+                            dtype=h5py.special_dtype(vlen=unicode))
 
 
 def del_attribute(target, name):

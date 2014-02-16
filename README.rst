@@ -16,14 +16,30 @@ http://opensource.org/licenses/BSD-2-Clause).
 Installation
 ============
 
-This package will not work on Python < 3.0.
+This package will probably not work on Python < 2.7.
 
-This package requires the numpy and h5py (>= 2.0) packages. An optional
+This package requires the numpy and h5py (>= 2.1) packages. An optional
 dependency is the scipy package.
 
 To install hdf5storage, download the package and run the command::
 
     python3 setup.py install
+
+Python 2.7
+==========
+
+This package was designed and written for Python 3, with Python 2.7
+support added later. This does mean that a few things are a little
+clunky in Python 2. Examples include supporting ``unicode`` keys for
+dictionaries, not being able to import a structured ``numpy.ndarray`` if
+any of its fields contain characters outside of ASCII, the ``int`` and
+``long`` types both being mapped to the Python 3 ``int`` type, etc. The
+storage format's metadata looks more familiar from a Python 3 standpoint
+as well.
+
+All documentation and examples are written in terms of Python 3 syntax
+and types. Important Python 2 information beyond direct translations of
+syntax and types will be pointed out.
 
 Hierarchal Data Format 5 (HDF5)
 ===============================
@@ -129,7 +145,7 @@ np.recarray    0.1      structured np.ndarray       [5]_ [6]_    0.1 [5]_
        (or implicitly through doing MATLAB compatibility), it will be
        stored as ``np.uint16`` in UTF-16 encoding. Otherwise, it is just
        written as ``np.bytes_``.
-.. [4] All keys must be ``str``.
+.. [4] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
 .. [5] Container types are only supported if their underlying dtype is
        supported. Data conversions are done based on its dtype.
 .. [6] Structured ``np.ndarray`` s (have fields in their dtypes) can be
@@ -159,6 +175,7 @@ int8             0.1      np.int8
 int16            0.1      np.int16
 int32            0.1      np.int32
 int64            0.1      np.int64
+char             0.1      np.str\_
 struct           0.1      structured np.ndarray
 cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``

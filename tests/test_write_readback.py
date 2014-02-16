@@ -24,6 +24,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import sys
+import copy
 import os
 import os.path
 import posixpath
@@ -53,11 +55,14 @@ class TestPythonMatlabFormat(object):
         self.options = hdf5storage.Options()
 
         # Need a list of the supported numeric dtypes to test, excluding
-        # those not supported by MATLAB.
+        # those not supported by MATLAB. 'S' and 'U' dtype chars have to
+        # be used for the bare byte and unicode string dtypes since the
+        # dtype strings (but not chars) are not the same in Python 2 and
+        # 3.
         self.dtypes = ['bool', 'uint8', 'uint16', 'uint32', 'uint64',
                        'int8', 'int16', 'int32', 'int64',
                        'float32', 'float64', 'complex64', 'complex128',
-                       'bytes', 'str']
+                       'S', 'U']
 
         # Define the sizes of random datasets to use.
         self.max_string_length = 10
@@ -75,8 +80,14 @@ class TestPythonMatlabFormat(object):
 
     def random_str_ascii(self, length):
         # Makes a random ASCII str of the specified length.
-        ltrs = string.ascii_letters + string.digits
-        return ''.join([random.choice(ltrs) for i in range(0, length)])
+        if sys.hexversion >= 0x03000000:
+            ltrs = string.ascii_letters + string.digits
+            return ''.join([random.choice(ltrs) for i in \
+                range(0, length)])
+        else:
+            ltrs = unicode(string.ascii_letters + string.digits)
+            return u''.join([random.choice(ltrs) for i in \
+                range(0, length)])
 
     def random_bytes(self, length):
         # Makes a random sequence of bytes of the specified length from
@@ -101,17 +112,17 @@ class TestPythonMatlabFormat(object):
         # any other type, then it is just a matter of constructing the
         # right sized ndarray from a random sequence of bytes (all must
         # be forced to 0 and 1 for bool).
-        if dtype in 'bytes':
+        if dtype == 'S':
             length = random.randint(1, self.max_string_length)
             data = np.zeros(shape=shape, dtype='S' + str(length))
             for x in np.nditer(data, op_flags=['readwrite']):
                 x[...] = np.bytes_(self.random_bytes(length))
             return data
-        elif dtype == 'str':
+        elif dtype == 'U':
             length = random.randint(1, self.max_string_length)
             data = np.zeros(shape=shape, dtype='U' + str(length))
             for x in np.nditer(data, op_flags=['readwrite']):
-                x[...] = np.str_(self.random_str_ascii(length))
+                x[...] = np.unicode_(self.random_str_ascii(length))
             return data
         elif dtype == 'object':
             data = np.zeros(shape=shape, dtype='object')
@@ -134,12 +145,13 @@ class TestPythonMatlabFormat(object):
         # How a random scalar is made depends on th type. For must, it
         # is just a single number. But for the string types, it is a
         # string of any length.
-        if dtype == 'bytes':
+        if dtype == 'S':
             return np.bytes_(self.random_bytes(random.randint(1,
                              self.max_string_length)))
-        elif dtype == 'str':
-            return np.str_(self.random_str_ascii(
-                           random.randint(1, self.max_string_length)))
+        elif dtype == 'U':
+            return np.unicode_(self.random_str_ascii(
+                               random.randint(1,
+                               self.max_string_length)))
         else:
             return self.random_numpy(tuple(), dtype)[()]
 
@@ -169,7 +181,8 @@ class TestPythonMatlabFormat(object):
         data = dict()
         for i in range(0, random.randint(self.min_dict_keys, \
                 self.max_dict_keys)):
-            data[self.random_str_ascii(self.max_dict_key_length)] = \
+            name = self.random_str_ascii(self.max_dict_key_length)
+            data[name] = \
                 self.random_numpy(self.random_numpy_shape( \
                 self.dict_value_subarray_dimensions, \
                 self.max_dict_value_subarray_axis_length), \
@@ -356,19 +369,19 @@ class TestPythonMatlabFormat(object):
             yield self.check_numpy_scalar, dt
 
     def test_numpy_array_1d(self):
-        dtypes = self.dtypes.copy()
+        dtypes = copy.deepcopy(self.dtypes)
         dtypes.append('object')
         for dt in dtypes:
             yield self.check_numpy_array, dt, 1
 
     def test_numpy_array_2d(self):
-        dtypes = self.dtypes.copy()
+        dtypes = copy.deepcopy(self.dtypes)
         dtypes.append('object')
         for dt in dtypes:
             yield self.check_numpy_array, dt, 2
 
     def test_numpy_array_3d(self):
-        dtypes = self.dtypes.copy()
+        dtypes = copy.deepcopy(self.dtypes)
         dtypes.append('object')
         for dt in dtypes:
             yield self.check_numpy_array, dt, 3
