@@ -319,6 +319,13 @@ each field are written in :py:attr:`Options.group_for_references` and
 an HDF5 Reference array to all of those elements is written as a Dataset
 under the field name in the Groups.
 
+.. note::
+
+   If it has no elements and
+   :py:attr:`Options.structured_numpy_ndarray_as_struct` is set, it
+   can't be read back from the file accurately. The dtype for all the
+   fields will become 'object' instead of what they originally were.
+
 
 Optional Data Transformations
 =============================

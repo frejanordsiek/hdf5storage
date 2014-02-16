@@ -619,12 +619,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             data_to_store = np.uint8(data_to_store)
 
         # If data is empty, we instead need to store the shape of the
-        # array if the appropriate option is set.
+        # array if the appropriate option is set, unless it is a
+        # structured ndarray and we are storing those as structs.
 
         if options.store_shape_for_empty and (data.size == 0 \
                 or ((data.dtype.type == np.bytes_ \
                 or data.dtype.type == np.str_) \
-                and data.nbytes == 0)):
+                and data.nbytes == 0)) \
+                and (data_to_store.dtype.fields is None \
+                or not options.structured_numpy_ndarray_as_struct):
             data_to_store = np.uint64(data_to_store.shape)
 
         # If it is a complex type, then it needs to be encoded to have
@@ -670,20 +673,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             field_names = list(data_to_store.dtype.names)
 
             # Write the metadata, and set the MATLAB_class to 'struct'
-            # explicitly. Then, we set the 'Python.Fields'
-            # Attribute to the field names if we are storing python
-            # metadata.
+            # explicitly.
             self.write_metadata(f, grp, name, data, type_string,
                                 options)
             if options.matlab_compatible:
                 set_attribute_string(grp[name], 'MATLAB_class',
                                      'struct')
-            if options.store_python_metadata:
-                set_attribute_string_array(grp[name],
-                                           'Python.Fields',
-                                           field_names)
-            else:
-                del_attribute(grp[name], 'Python.Fields')
 
             # Delete any Datasets/Groups not corresponding to a field
             # name in data if that option is set.
@@ -797,6 +792,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             set_attribute_string(grp[name], 'Python.numpy.Container',
                                  container)
 
+        # If its dtype has fields, then we set the 'Python.Fields'
+        # Attribute to the field names if we are storing python metadata
+        # and we are storing structured ndarrays as structures.
+        if options.store_python_metadata \
+                and data.dtype.fields is not None \
+                and options.structured_numpy_ndarray_as_struct:
+            set_attribute_string_array(grp[name],
+                                       'Python.Fields',
+                                        list(data.dtype.names))
+        else:
+            del_attribute(grp[name], 'Python.Fields')
+
         # If data is empty, we need to set the Python.Empty and
         # MATLAB_empty attributes to 1 if we are storing type info or
         # making it MATLAB compatible. Otherwise, no empty attribute is
@@ -901,7 +908,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         or h5py.check_dtype(ref=fld.dtype) is None \
                         or len(set(fld.attrs.keys()) \
                         & ((set(self.python_attributes) \
-                        | set(self.matlab_attributes)) - {'H5PATH'})) \
+                        | set(self.matlab_attributes))
+                        - {'H5PATH', 'MATLAB_empty', 'Python.Empty'})) \
                         != 0:
                     is_multi_element = False
                 try:
@@ -944,11 +952,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # If any of the elements are not Numpy types or if they
                 # don't all have the exact same dtype and shape, then
                 # this field will just be an object field.
-                first = v.flatten()[0]
-                if not isinstance(first, tuple(self.types)):
+                if v.size == 0 or not isinstance(v.flatten()[0], \
+                        tuple(self.types)):
                     dt_whole.append((k, 'object'))
                     continue
 
+                first = v.flatten()[0]
                 dt = first.dtype
                 sp = first.shape
                 all_same = True
