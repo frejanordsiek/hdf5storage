@@ -682,25 +682,46 @@ class MarshallerCollection(object):
         self._marshallers.extend(copy.deepcopy(self._user_marshallers))
 
         # Construct the dictionary to look up the appropriate marshaller
-        # by type.
+        # by type. It would normally be a dict comprehension such as
+        #
+        # self._types = {tp: m for m in self._marshallers
+        #                for tp in m.types}
+        #
+        # but that is not supported in Python 2.6 so it has to be done
+        # with a for loop.
 
-        self._types = {tp: m for m in self._marshallers for tp in m.types}
+        self._types = dict()
+        for m in self._marshallers:
+            for tp in m.types:
+                self._types[tp] = m
 
         # The equivalent one to read data types given type strings needs
         # to be created from it. Basically, we have to make the key be
-        # the python_type_string from it.
+        # the python_type_string from it. Same issue as before with
+        # Python 2.6
+        #
+        # self._type_strings = {type_string: m for key, m in
+        #                       self._types.items() for type_string in
+        #                       m.python_type_strings}
 
-        self._type_strings = {type_string: m for key, m in
-                              self._types.items() for type_string in
-                              m.python_type_strings}
+        self._type_strings = dict()
+        for key, m in self._types.items():
+            for type_string in m.python_type_strings:
+                self._type_strings[type_string] = m
 
         # The equivalent one to read data types given MATLAB class
         # strings needs to be created from it. Basically, we have to
-        # make the key be the matlab_class from it.
+        # make the key be the matlab_class from it. Same issue as before
+        # with Python 2.6
+        #
+        # self._matlab_classes = {matlab_class: m for key, m in
+        #                         self._types.items() for matlab_class in
+        #                         m.matlab_classes}
 
-        self._matlab_classes = {matlab_class: m for key, m in
-                                self._types.items() for matlab_class in
-                                m.matlab_classes}
+        self._matlab_classes = dict()
+        for key, m in self._types.items():
+            for matlab_class in m.matlab_classes:
+                self._matlab_classes[matlab_class] = m
 
     def add_marshaller(self, marshallers):
         """ Add a marshaller/s to the user provided list.
