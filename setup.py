@@ -1,6 +1,6 @@
 import sys
 
-if sys.hexversion < '0x2060000':
+if sys.hexversion < 0x2060000:
     raise NotImplementedError('Python < 2.6 not supported.')
 
 import ez_setup
