@@ -54,15 +54,15 @@ python_v7p3 = dict()
 def setup_module():
     teardown_module()
     matlab_command = "run('" + script_names[0] + "')"
-    subprocess.check_output(['matlab', '-nosplash', '-nodesktop',
-                            '-nojvm', '-r', matlab_command])
+    subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
+                          '-nojvm', '-r', matlab_command])
     scipy.io.loadmat(file_name=mat_files[1], mdict=types_v7)
     hdf5storage.loadmat(file_name=mat_files[0], mdict=types_v7p3)
 
     hdf5storage.savemat(file_name=mat_files[2], mdict=types_v7p3)
     matlab_command = "run('" + script_names[1] + "')"
-    subprocess.check_output(['matlab', '-nosplash', '-nodesktop',
-                            '-nojvm', '-r', matlab_command])
+    subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
+                          '-nojvm', '-r', matlab_command])
     scipy.io.loadmat(file_name=mat_files[3], mdict=python_v7)
     hdf5storage.loadmat(file_name=mat_files[2], mdict=python_v7p3)
 
