@@ -1346,17 +1346,30 @@ def loadmat(file_name, mdict=None, appendmat=True,
             filename = file_name
 
         # Read everything if we were instructed.
+
         if variable_names is None:
-            return read(path='/', filename=filename, options=options)
+            # Read everything from the root node.
+            data = read(path='/', filename=filename, options=options)
+
+            # If we didn't make a dict but instead got a structured
+            # ndarray, extract all the fields and make a dict from them.
+            if not isinstance(data, dict):
+                new_data = dict()
+                for field in data.dtype.names:
+                    new_data[field] = data[field][0]
+                data = new_data
+        else:
+            # Extract the desired fields into a dictionary one by one.
+            data = dict()
+            for name in variable_names:
+                data[name] = read(path=name, filename=filename,
+                                  options=options)
 
         # Read all the variables, stuff them into mdict, and return it.
         if mdict is None:
             mdict = dict()
-
-        for name in variable_names:
-            mdict[name] = read(name=name, filename=filename,
-                               options=options)
-
+        for k, v in data.items():
+            mdict[k] = v
         return mdict
     except OSError:
         import scipy.io
