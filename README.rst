@@ -7,11 +7,14 @@ files. This package also provides support for MATLAB MAT v7.3 formatted
 files, which are just HDF5 files with a different extension and some
 extra meta-data.
 
+The package's documetation is found at
+http://pythonhosted.org/hdf5storage/
+
 The package's source code is found at
 https://github.com/frejanordsiek/hdf5storage
 
-The package is licensed under the 2-clause BSD license (example at
-http://opensource.org/licenses/BSD-2-Clause).
+The package is licensed under a 2-clause BSD license
+(https://github.com/frejanordsiek/hdf5storage/blob/master/COPYING.txt).
 
 Installation
 ============
@@ -21,9 +24,14 @@ This package only supports Python >= 2.6.
 This package requires the numpy and h5py (>= 2.1) packages. An optional
 dependency is the scipy package.
 
-To install hdf5storage, download the package and run the command::
+To install hdf5storage, download the package and run the command on
+Python 3 ::
 
     python3 setup.py install
+
+or the command on Python 2 ::
+
+    python setup.py install
 
 Python 2
 ========
