@@ -1033,9 +1033,11 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
         b = bytearray(s + (128-12-len(s))*' ', encoding='utf-8')
 
         # Add 8 nulls (0) and the magic number (or something) that
-        # MATLAB uses.
+        # MATLAB uses. Lengths must be gone to to make sure the argument
+        # to fromhex is unicode because Python 2.6 requires it.
 
-        b.extend(bytearray.fromhex('00000000 00000000 0002494D'))
+        b.extend(bytearray.fromhex(
+                 b'00000000 00000000 0002494D'.decode()))
 
         # Now, write it to the beginning of the file.
 
