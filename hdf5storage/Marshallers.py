@@ -1037,17 +1037,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if underlying_type == 'bytes':
                     data = np.bytes_(b'')
                 else:
-                    data = decode_to_numpy_bytes(data, \
+                    data = convert_to_numpy_bytes(data, \
                         length=int(underlying_type[5:])//8)
             elif underlying_type.startswith('str') \
                     or matlab_class == 'char':
                 if underlying_type == 'str':
                     data = np.str_('')
                 elif underlying_type.startswith('str'):
-                    data = decode_to_numpy_str(data, \
+                    data = convert_to_numpy_str(data, \
                         length=int(underlying_type[3:])//32)
                 else:
-                    data = decode_to_numpy_str(data)
+                    data = convert_to_numpy_str(data)
 
             # If the shape of data and the shape attribute are
             # different but give the same number of elements, then data
@@ -1115,7 +1115,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # If it is a 'char' type, the proper conversion to
             # numpy.unicode needs to be done.
             if matlab_class == 'char':
-                data = decode_to_numpy_str(data)
+                data = convert_to_numpy_str(data)
 
         # Done adjusting data, so it can be returned.
         return data

@@ -182,7 +182,7 @@ def convert_numpy_str_to_uint32(data):
         shape[-1] *= data.dtype.itemsize//4
         return data.flatten().view(np.uint32).reshape(tuple(shape))
 
-def decode_to_str(data):
+def convert_to_str(data):
     """ Decodes data to the Python str type.
 
     Decodes `data` to a Python str, which is. If it can't be decoded, it
@@ -202,8 +202,8 @@ def decode_to_str(data):
 
     See Also
     --------
-    decode_to_numpy_str
-    decode_to_numpy_bytes
+    convert_to_numpy_str
+    convert_to_numpy_bytes
 
     """
     # How the conversion is done depends on the exact  underlying
@@ -238,7 +238,7 @@ def decode_to_str(data):
         return data
 
 
-def decode_to_numpy_str(data, length=None):
+def convert_to_numpy_str(data, length=None):
     """ Decodes data to Numpy unicode string (str_).
 
     Decodes `data` to Numpy unicode string (UTF-32), which is
@@ -279,8 +279,8 @@ def decode_to_numpy_str(data, length=None):
 
     See Also
     --------
-    decode_to_str
-    decode_to_numpy_bytes
+    convert_to_str
+    convert_to_numpy_bytes
     numpy.str_
 
     """
@@ -301,7 +301,7 @@ def decode_to_numpy_str(data, length=None):
         # They are single ASCII or UTF-16 scalars, and are easily
         # converted to a UTF-8 string and then passed through the
         # constructor.
-        return np.str_(decode_to_str(data))
+        return np.str_(convert_to_str(data))
     elif isinstance(data, np.uint32):
         # It is just the uint32 version of the character, so it just
         # needs to be have the dtype essentially changed by having its
@@ -323,7 +323,7 @@ def decode_to_numpy_str(data, length=None):
         # recursing the scalar value back into this function.
         shape = list(data.shape)
         if len(shape) == 0:
-            return decode_to_numpy_str(data[()])
+            return convert_to_numpy_str(data[()])
 
         # As there are more than one element, it gets a bit more
         # complicated. We need to take the subarrays of the specified
@@ -364,7 +364,7 @@ def decode_to_numpy_str(data, length=None):
                                          dtype=new_data.dtype,
                                          buffer=chunk.tostring())[()]
             else:
-                new_data[i] = np.str_(decode_to_str(chunk))
+                new_data[i] = np.str_(convert_to_str(chunk))
 
         # Only thing is left is to reshape it.
         return new_data.reshape(tuple(new_shape))
@@ -374,7 +374,7 @@ def decode_to_numpy_str(data, length=None):
         return data
 
 
-def decode_to_numpy_bytes(data, length=None):
+def convert_to_numpy_bytes(data, length=None):
     """ Decodes data to Numpy ASCII string (bytes_).
 
     Decodes `data` to a  Numpy ASCII string, which is
@@ -413,8 +413,8 @@ def decode_to_numpy_bytes(data, length=None):
 
     See Also
     --------
-    decode_to_str
-    decode_to_numpy_str
+    convert_to_str
+    convert_to_numpy_str
     numpy.bytes_
 
     """
@@ -431,7 +431,7 @@ def decode_to_numpy_bytes(data, length=None):
         # They are single UTF-16 or UTF-32 scalars, and are easily
         # converted to a UTF-8 string and then passed through the
         # constructor.
-        return np.bytes_(decode_to_str(data))
+        return np.bytes_(convert_to_str(data))
     elif isinstance(data, np.uint8):
         # It is just the uint8 version of the character, so it just
         # needs to be have the dtype essentially changed by having its
@@ -454,7 +454,7 @@ def decode_to_numpy_bytes(data, length=None):
         # recursing the scalar value back into this function.
         shape = list(data.shape)
         if len(shape) == 0:
-            return decode_to_numpy_bytes(data[()])
+            return convert_to_numpy_bytes(data[()])
 
         # As there are more than one element, it gets a bit more
         # complicated. We need to take the subarrays of the specified
@@ -495,7 +495,7 @@ def decode_to_numpy_bytes(data, length=None):
                                          dtype=new_data.dtype,
                                          buffer=chunk.tostring())[()]
             else:
-                new_data[i] = np.bytes_(decode_to_str(chunk))
+                new_data[i] = np.bytes_(convert_to_str(chunk))
 
         # Only thing is left is to reshape it.
         return new_data.reshape(tuple(new_shape))
@@ -714,7 +714,7 @@ def get_attribute_string_array(target, name):
     value = get_attribute(target, name)
     if value is None:
         return value
-    return [decode_to_str(x) for x in value]
+    return [convert_to_str(x) for x in value]
 
 
 def set_attribute(target, name, value):
