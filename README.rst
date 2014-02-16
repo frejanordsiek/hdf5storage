@@ -10,6 +10,9 @@ extra meta-data.
 The package's source code is found at
 https://github.com/frejanordsiek/hdf5storage
 
+The package is licensed under the 2-clause BSD license (example at
+http://opensource.org/licenses/BSD-2-Clause).
+
 Installation
 ============
 
