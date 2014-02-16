@@ -678,8 +678,8 @@ class MarshallerCollection(object):
 
         """
         # Combine both sets of marshallers.
-        self._marshallers = self._builtin_marshallers.copy()
-        self._marshallers.extend(self._user_marshallers)
+        self._marshallers = copy.deepcopy(self._builtin_marshallers)
+        self._marshallers.extend(copy.deepcopy(self._user_marshallers))
 
         # Construct the dictionary to look up the appropriate marshaller
         # by type.
@@ -720,7 +720,7 @@ class MarshallerCollection(object):
             marshallers = [marshallers]
         for m in marshallers:
             if m not in self._user_marshallers:
-                self._user_marshallers.append(m)
+                self._user_marshallers.append(copy.deepcopy(m))
         self._update_marshallers()
 
     def remove_marshaller(self, marshallers):
