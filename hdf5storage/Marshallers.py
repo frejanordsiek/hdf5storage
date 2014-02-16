@@ -238,7 +238,7 @@ class TypeMarshaller(object):
         #:
         #: ``set`` of attribute names the marshaller uses when
         #: an ``Option.store_python_metadata`` is ``True``.
-        self.python_attributes = {'Python.Type'}
+        self.python_attributes = set(['Python.Type'])
 
         #: Attributes used for MATLAB compatibility.
         #:
@@ -247,7 +247,7 @@ class TypeMarshaller(object):
         #: ``set`` of attribute names the marshaller uses when maintaing
         #: Matlab HDF5 based mat file compatibility
         #: (``Option.matlab_compatible`` is ``True``).
-        self.matlab_attributes = {'H5PATH'}
+        self.matlab_attributes = set(['H5PATH'])
 
         #: List of Python types that can be marshalled.
         #:
@@ -458,12 +458,12 @@ class TypeMarshaller(object):
 class NumpyScalarArrayMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.python_attributes |= {'Python.Shape', 'Python.Empty',
+        self.python_attributes |= set(['Python.Shape', 'Python.Empty',
                                    'Python.numpy.UnderlyingType',
                                    'Python.numpy.Container',
-                                   'Python.Fields'}
-        self.matlab_attributes |= {'MATLAB_class', 'MATLAB_empty',
-                                   'MATLAB_int_decode'}
+                                   'Python.Fields'])
+        self.matlab_attributes |= set(['MATLAB_class', 'MATLAB_empty',
+                                   'MATLAB_int_decode'])
         # As np.str_ is the unicode type string in Python 3 and the bare
         # bytes string in Python 2, we have to use np.unicode_ which is
         # or points to the unicode one in both versions.
@@ -690,7 +690,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # name in data if that option is set.
 
             if options.delete_unused_variables:
-                for field in {i for i in grp2}.difference( \
+                for field in set([i for i in grp2]).difference( \
                         set(field_names)):
                     del grp2[field]
 
@@ -735,7 +735,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     # be removed.
                     if np.prod(new_data.shape) != 1:
                         for attribute in (set( \
-                                grp2[field].attrs.keys()) - {'H5PATH'}):
+                                grp2[field].attrs.keys()) \
+                                - set(['H5PATH'])):
                             del_attribute(grp2[field], attribute)
         else:
             # The data must first be written. If name is not present
@@ -924,8 +925,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         or len(set(fld.attrs.keys()) \
                         & ((set(self.python_attributes) \
                         | set(self.matlab_attributes))
-                        - {'H5PATH', 'MATLAB_empty', 'Python.Empty'})) \
-                        != 0:
+                        - set(['H5PATH', 'MATLAB_empty',
+                        'Python.Empty']))) != 0:
                     is_multi_element = False
                 try:
                     if sys.hexversion >= 0x03000000:
@@ -1273,8 +1274,8 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
 class PythonDictMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.python_attributes |= {'Python.Fields'}
-        self.matlab_attributes |= {'MATLAB_class'}
+        self.python_attributes |= set(['Python.Fields'])
+        self.matlab_attributes |= set(['MATLAB_class'])
         self.types = [dict]
         self.python_type_strings = ['dict']
         self.__MATLAB_classes = {dict: 'struct'}
@@ -1302,7 +1303,8 @@ class PythonDictMarshaller(TypeMarshaller):
         # in data if that option is set.
 
         if options.delete_unused_variables:
-            for field in {i for i in grp2}.difference({i for i in data}):
+            for field in set([i for i in grp2]).difference( \
+                    set([i for i in data])):
                 del grp2[field]
 
         # Check for any field names that are not unicode since they

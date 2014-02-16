@@ -192,8 +192,8 @@ class Options(object):
         # Set the h5py options to use for writing scalars and arrays to
         # blank for now.
 
-        self.scalar_options = {}
-        self.array_options = {}
+        self.scalar_options = dict()
+        self.array_options = dict()
 
         # Use the given marshaller collection if it was
         # given. Otherwise, use the default.
