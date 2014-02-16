@@ -221,3 +221,37 @@ def assert_equal_matlab_format(a, b):
             assert a.shape == c.shape
             for index, x in np.ndenumerate(a):
                 assert_equal_matlab_format(a[index], c[index])
+
+
+def assert_equal_from_matlab(a, b):
+    # Compares a and b for equality. They are all going to be numpy
+    # types. hdf5storage and scipy behave differently when importing
+    # arrays as to whether they are 2D or not, so we will make them all
+    # at least 2D regardless. For strings, the two packages produce
+    # transposed results of each other, so one just needs to be
+    # transposed. For object arrays, each element must be iterated over
+    # to be compared. For structured ndarrays, their fields need to be
+    # compared and then they can be compared element and field
+    # wise. Otherwise, they can be directly compared. Note, the type is
+    # often converted by scipy (or on route to the file before scipy
+    # gets it), so comparisons are done by value, which is not perfect.
+    a = np.atleast_2d(a)
+    b = np.atleast_2d(b)
+    if a.dtype.char == 'U':
+        a = a.T
+    if b.dtype.name == 'object':
+        a = a.flatten()
+        b = b.flatten()
+        for index, x in np.ndenumerate(a):
+            assert_equal_from_matlab(a[index], b[index])
+    elif b.dtype.names is not None or a.dtype.names is not None:
+        assert a.dtype.names is not None
+        assert b.dtype.names is not None
+        assert set(a.dtype.names) == set(b.dtype.names)
+        a = a.flatten()
+        b = b.flatten()
+        for k in b.dtype.names:
+            for index, x in np.ndenumerate(a):
+                assert_equal_from_matlab(a[k][index], b[k][index])
+    else:
+        npt.assert_equal(a, b)
