@@ -34,24 +34,37 @@ import hdf5storage
 
 from asserts import *
 
-mat_files = ['types_v7p3.mat', 'types_v7.mat']
+mat_files = ['types_v7p3.mat', 'types_v7.mat',
+             'python_v7p3.mat', 'python_v7.mat']
 for i in range(0, len(mat_files)):
     mat_files[i] = os.path.join(os.path.dirname(__file__), mat_files[i])
 
-script_name = os.path.join(os.path.dirname(__file__),
-                           'make_mat_with_all_types.m')
+script_names = ['make_mat_with_all_types.m', 'read_write_mat.m']
+for i in range(0, len(script_names)):
+    script_names[i] = os.path.join(os.path.dirname(__file__),
+                                   script_names[i])
 
-data_v7 = dict()
-data_v7p3 = dict()
+types_v7 = dict()
+types_v7p3 = dict()
+python_v7 = dict()
+python_v7p3 = dict()
+
 
 
 def setup_module():
     teardown_module()
-    matlab_command = "run('" + script_name + "')"
+    matlab_command = "run('" + script_names[0] + "')"
     subprocess.check_output(['matlab', '-nosplash', '-nodesktop',
                             '-nojvm', '-r', matlab_command])
-    scipy.io.loadmat(file_name=mat_files[1], mdict=data_v7)
-    hdf5storage.loadmat(file_name=mat_files[0], mdict=data_v7p3)
+    scipy.io.loadmat(file_name=mat_files[1], mdict=types_v7)
+    hdf5storage.loadmat(file_name=mat_files[0], mdict=types_v7p3)
+
+    hdf5storage.savemat(file_name=mat_files[2], mdict=types_v7p3)
+    matlab_command = "run('" + script_names[1] + "')"
+    subprocess.check_output(['matlab', '-nosplash', '-nodesktop',
+                            '-nojvm', '-r', matlab_command])
+    scipy.io.loadmat(file_name=mat_files[3], mdict=python_v7)
+    hdf5storage.loadmat(file_name=mat_files[2], mdict=python_v7p3)
 
 
 def teardown_module():
@@ -60,11 +73,20 @@ def teardown_module():
             os.remove(name)
 
 
-def test_read():
-    for k in (set(data_v7.keys()) - set(['__version__', '__header__', \
+def test_read_from_matlab():
+    for k in (set(types_v7.keys()) - set(['__version__', '__header__', \
             '__globals__'])):
-        yield check_variable, k
+        yield check_variable_from_matlab, k
 
 
-def check_variable(name):
-    assert_equal_from_matlab(data_v7p3[name], data_v7[name])
+def test_to_matlab_back():
+    for k in set(types_v7p3.keys()):
+        yield check_variable_to_matlab_back, k
+
+
+def check_variable_from_matlab(name):
+    assert_equal_from_matlab(types_v7p3[name], types_v7[name])
+
+
+def check_variable_to_matlab_back(name):
+    assert_equal_from_matlab(python_v7p3[name], python_v7[name])
