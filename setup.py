@@ -13,7 +13,7 @@ with open('README.rst') as file:
 
 setup(name='hdf5storage',
       version='0.1',
-      description='Utilities to read/write Python types to HDF5 files.',
+      description='Utilities to read/write Python types to/from HDF5 files, including MATLAB v7.3 MAT files.',
       long_description=long_description,
       author='Freja Nordsiek',
       author_email='fnordsie at gmail dt com',
