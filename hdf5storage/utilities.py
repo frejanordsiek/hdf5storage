@@ -231,8 +231,8 @@ def convert_to_str(data):
                 return data.flatten.tostring().decode('UTF-32',
                                                       errors='replace')
             else:
-                return data.encode('UTF-32').decode( \
-                    encoding='UTF-32', errors='replace')
+                return data.encode('UTF-32').decode('UTF-32', \
+                    errors='replace')
 
     if isinstance(data, bytes):
         return data.decode('ASCII')
