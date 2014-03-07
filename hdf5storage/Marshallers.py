@@ -593,7 +593,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         data_to_store)
                 except:
                     pass
-            if new_data is None or (type(data_to_store) == np.str_ \
+            if new_data is None or (type(data_to_store) == np.unicode_ \
                     and len(data_to_store) == len(new_data)) \
                     or (isinstance(data_to_store, np.ndarray) \
                     and new_data.shape[-1] != data_to_store.shape[-1] \
