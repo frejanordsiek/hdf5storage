@@ -54,7 +54,13 @@ def assert_equal(a, b):
             for index in range(0, len(a)):
                 assert_equal(a[index], b[index])
     elif not isinstance(b, (np.generic, np.ndarray)):
-        assert a == b
+        if isinstance(b, complex):
+            assert a.real == b.real \
+                or np.all(np.isnan([a.real, b.real]))
+            assert a.imag == b.imag \
+                or np.all(np.isnan([a.imag, b.imag]))
+        else:
+            assert a == b or np.all(np.isnan([a, b]))
     else:
         assert a.dtype == b.dtype
         assert a.shape == b.shape
