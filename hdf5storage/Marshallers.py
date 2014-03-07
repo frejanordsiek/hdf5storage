@@ -968,6 +968,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             dt_whole = []
             for k in fields:
+                # In Python 2, the field names for a structured ndarray
+                # must be ascii (str) as opposed to unicode, so k needs
+                # to be converted in the Python 2 case.
+                if sys.hexversion >= 0x03000000:
+                    k_name = k
+                else:
+                    k_name = k.encode()
+
+                # Read the value.
                 v = struct_data[k]
 
                 # If any of the elements are not Numpy types or if they
@@ -975,7 +984,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # this field will just be an object field.
                 if v.size == 0 or not isinstance(v.flatten()[0], \
                         tuple(self.types)):
-                    dt_whole.append((k, 'object'))
+                    dt_whole.append((k_name, 'object'))
                     continue
 
                 first = v.flatten()[0]
@@ -991,9 +1000,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # If they are all the same, then dt and shape should be
                 # used. Otherwise, it has to be object.
                 if all_same:
-                    dt_whole.append((k, dt, sp))
+                    dt_whole.append((k_name, dt, sp))
                 else:
-                    dt_whole.append((k, 'object'))
+                    dt_whole.append((k_name, 'object'))
 
             # Make the structured ndarray with the constructed
             # dtype. The shape is simply the shape of the object arrays
