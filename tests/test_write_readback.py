@@ -89,6 +89,18 @@ class TestPythonMatlabFormat(object):
             return u''.join([random.choice(ltrs) for i in \
                 range(0, length)])
 
+    def random_str_some_unicode(self, length):
+        # Makes a random ASCII+limited unicode str of the specified
+        # length.
+        if sys.hexversion >= 0x03000000:
+            ltrs = '\u03c0\u03c9\xe9'
+            return ''.join([random.choice(ltrs) for i in \
+                range(0, length)])
+        else:
+            ltrs = u'\u03c0\u03c9\xe9'
+            return u''.join([random.choice(ltrs) for i in \
+                range(0, length)])
+
     def random_bytes(self, length):
         # Makes a random sequence of bytes of the specified length from
         # the ASCII set.
@@ -325,9 +337,16 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    def test_str(self):
+    def test_str_ascii(self):
         data = self.random_str_ascii(random.randint(1,
                                      self.max_string_length))
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def test_str_unicode(self):
+        data = self.random_str_some_unicode(random.randint(1,
+                                            self.max_string_length))
         out = self.write_readback(data, self.random_name(),
                                   self.options)
         self.assert_equal(out, data)

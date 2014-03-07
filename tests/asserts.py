@@ -97,20 +97,29 @@ def assert_equal_none_format(a, b):
             assert a.dtype == np.float64([]).dtype
             assert a.shape == (0, )
         elif (sys.hexversion >= 0x03000000 \
-                and isinstance(b, (bytes, str, bytearray))) \
+                and isinstance(b, (bytes, bytearray))) \
                 or (sys.hexversion < 0x03000000 \
-                and isinstance(b, (bytes, unicode, bytearray))):
+                and isinstance(b, (bytes, bytearray))):
             assert a == np.bytes_(b)
+        elif (sys.hexversion >= 0x03000000 \
+                and isinstance(b, str)) \
+                or (sys.hexversion < 0x03000000 \
+                and isinstance(b, unicode)):
+            assert_equal_none_format(a, np.unicode_(b))
         else:
             assert_equal_none_format(a, np.array(b)[()])
     else:
         if b.dtype.name != 'object':
             if b.dtype.char in ('U', 'S'):
-                if b.shape == tuple() and len(b) == 0:
+                if b.dtype.char == 'S' and b.shape == tuple() \
+                        and len(b) == 0:
                     assert_equal(a, \
                         np.zeros(shape=tuple(), dtype=b.dtype.char))
                 elif b.dtype.char == 'U':
-                    c = np.atleast_1d(b).view(np.uint32)
+                    if b.shape == tuple() and len(b) == 0:
+                        c = np.uint32(())
+                    else:
+                        c = np.atleast_1d(b).view(np.uint32)
                     assert a.dtype == c.dtype
                     assert a.shape == c.shape
                     npt.assert_equal(a, c)
