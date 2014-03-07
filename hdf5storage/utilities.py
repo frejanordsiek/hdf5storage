@@ -228,11 +228,9 @@ def convert_to_str(data):
             return data.decode('ASCII')
         else:
             if isinstance(data, np.ndarray):
-                return data.flatten.tostring().decode('UTF-32',
-                                                      errors='replace')
+                return data.flatten.tostring().decode('UTF-32')
             else:
-                return data.encode('UTF-32').decode('UTF-32', \
-                    errors='replace')
+                return data.encode('UTF-32').decode('UTF-32')
 
     if isinstance(data, bytes):
         return data.decode('ASCII')
