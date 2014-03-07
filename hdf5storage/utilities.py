@@ -231,7 +231,7 @@ def convert_to_str(data):
                 return data.flatten.tostring().decode('UTF-32',
                                                       errors='replace')
             else:
-                return data.encode(encoding='UTF-32').decode( \
+                return data.encode('UTF-32').decode( \
                     encoding='UTF-32', errors='replace')
 
     if isinstance(data, bytes):
