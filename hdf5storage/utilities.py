@@ -587,10 +587,20 @@ def decode_complex(data, complex_names=(None, None)):
             cnames[1] = s
 
     # If the real and imaginary fields were found, construct the complex
-    # form from the fields. Otherwise, return what we were given because
-    # it isn't in the right form.
+    # form from the fields. Now, in the case that one part is NaN but
+    # the other is not, simply adding the real and complex parts
+    # together will set both to NaN; so the ones where one and only one
+    # component is NaN have to be set manually using the complex
+    # function. Otherwise, return what we were given because it isn't in
+    # the right form.
     if cnames[0] is not None and cnames[1] is not None:
-        return data[cnames[0]] + 1j*data[cnames[1]]
+        cdata = data[cnames[0]] + 1j*data[cnames[1]]
+        for index in np.flatnonzero(np.isnan(data[cnames[0]]) \
+                ^ np.isnan(data[cnames[1]])):
+            cdata.ravel()[index] = complex( \
+                data[cnames[0]].ravel()[index], \
+                data[cnames[1]].ravel()[index])
+        return cdata
     else:
         return data
 
