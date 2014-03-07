@@ -89,4 +89,4 @@ def check_variable_from_matlab(name):
 
 
 def check_variable_to_matlab_back(name):
-    assert_equal_from_matlab(python_v7p3[name], python_v7[name])
+    assert_equal_from_matlab(python_v7p3[name], types_v7[name])
