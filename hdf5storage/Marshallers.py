@@ -1211,8 +1211,14 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         self.matlab_classes = []
 
     def write(self, f, grp, name, data, type_string, options):
-        # data just needs to be converted to a numpy string.
-        cdata = np.bytes_(data)
+        # data just needs to be converted to a numpy string of the
+        # appropriate type (str to np.str_ and the others to np.bytes_).
+        if (sys.hexversion >= 0x03000000 and isinstance(data, str)) \
+                or (sys.hexversion < 0x03000000 \
+                and isinstance(data, unicode)):
+            cdata = np.unicode_(data)
+        else:
+            cdata = np.bytes_(data)
 
         # Now pass it to the parent version of this function to write
         # it. The proper type_string needs to be grabbed now as the
@@ -1233,10 +1239,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # as is.
         type_string = get_attribute_string(grp[name], 'Python.Type')
         if type_string == 'str':
-            if isinstance(data, np.ndarray):
-                return data.tostring().decode()
-            else:
-                return data.decode()
+            return convert_to_str(data)
         elif type_string == 'bytes':
             if sys.hexversion >= 0x03000000:
                 return bytes(data)
