@@ -190,3 +190,25 @@ canonical empty  0.1      ``np.float64([])``
 ===============  =======  =================================
 
 .. [8] Depends on whether there is a complex part or not.
+
+
+Versions
+========
+
+0.1.1. Bugfix release fixing the following bugs.
+       * ``str`` is now written like ``numpy.str_`` instead of
+         ``numpy.bytes_``.
+       * Complex numbers where the real or imaginary part are ``nan``
+         but the other part are not are now read correctly as opposed
+         to setting both parts to ``nan``.
+       * Fixed bugs in string conversions on Python 2 resulting from
+         ``str.decode()`` and ``unicode.encode()`` not taking the same
+         keyword arguments as in Python 3.
+       * MATLAB structure arrays can now be read without producing an
+         error on Python 2.
+       * ``numpy.str_`` now written as ``numpy.uint16`` on Python 2 if
+         the ``convert_numpy_str_to_utf16`` option is set and the
+         conversion can be done without using UTF-16 doublets, instead
+         of always writing them as ``numpy.uint32``.
+
+0.1. Initial version.

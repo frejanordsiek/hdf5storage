@@ -73,9 +73,6 @@ fixed, etc.
 Standing Bugs
 -------------
 
-* Complex numbers where one of the parts (real or imaginary) is ``nan``
-  but the other part is not, are read from file as
-  ``(nan + nanj)``. See :py:func:`utilities.decode_complex`.
 * Structured ``np.ndarray`` with no elements, when
   :py:attr:`Options.structured_numpy_ndarray_as_struct` is set, are not
   written in a way that the dtypes for the fields can be restored when
