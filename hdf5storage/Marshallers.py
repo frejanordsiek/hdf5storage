@@ -709,7 +709,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
                     fs = np.empty(shape=(len(fields),), dtype=dt)
-                    for i, s in enumerate(fields):
+                    for i, s in enumerate(field_names):
                         fs[i] = np.array([c.encode('ascii') for c in s],
                                          dtype='S1')
                 except UnicodeDecodeError:
