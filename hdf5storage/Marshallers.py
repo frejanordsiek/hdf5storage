@@ -971,7 +971,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                             grp[name], k, options)
                 except:
                     pass
-            
+
             # If it isn't multi element, we need to pack all the values
             # in struct_array inside of numpy.object_'s so that the code
             # after this that depends on this will work.
@@ -1161,10 +1161,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # did most of the work except handling empties, array
             # dimension order, and string conversion.
 
-            # If it is empty ('MATLAB_empty' set to 1), then the shape
-            # information is stored in data and we need to set data to
-            # the empty array of the proper type.
-            if matlab_empty == 1:
+            # If it is empty ('MATLAB_empty' set to 1) and
+            # 'MATLAB_fields' is not present, then the shape information
+            # is stored in data and we need to set data to the empty
+            # array of the proper type.
+            if matlab_empty == 1 and matlab_fields is None:
                 data = np.zeros(tuple(np.uint64(data)), \
                     dtype=self.__MATLAB_classes_reverse[matlab_class])
 
