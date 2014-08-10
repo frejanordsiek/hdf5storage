@@ -718,7 +718,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     set_attribute(grp[name], 'MATLAB_fields', fs)
             else:
                 del_attribute(grp[name], 'MATLAB_fields')
-            
+
             # Go field by field making an object array (make an empty
             # object array and assign element wise) and write it inside
             # the Group. If it only has a single element, write that
@@ -909,6 +909,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
         matlab_empty = get_attribute(grp[name], 'MATLAB_empty')
 
+        # If we are using h5py version >= 2.3, we can actually read the
+        # MATLAB_fields Attribute if it is present.
+        matlab_fields = None
+        if distutils.version.LooseVersion(h5py.__version__) \
+                >= distutils.version.LooseVersion('2.3'):
+            matlab_fields = get_attribute(grp[name], 'MATLAB_fields')
+
         # If it is a Dataset, it can simply be read and then acted upon
         # (if it is an HDF5 Reference array, it will need to be read
         # recursively). If it is a Group, then it is a structured
@@ -964,7 +971,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                             grp[name], k, options)
                 except:
                     pass
-
+            
             # If it isn't multi element, we need to pack all the values
             # in struct_array inside of numpy.object_'s so that the code
             # after this that depends on this will work.
@@ -973,6 +980,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     obj = np.zeros((1,), dtype='object')
                     obj[0] = v
                     struct_data[k] = obj
+
+            # If it is empty and MATLAB_fields is not None, pack it with
+            # keys to empty arrays.
+            if len(struct_data) == 0 and matlab_fields is not None:
+                struct_data = {k: np.zeros(shape=tuple(),
+                               dtype='object')
+                               for  k in matlab_fields}
 
             # The dtype for the structured ndarray needs to be
             # composed. This is done by going through each field (in the
