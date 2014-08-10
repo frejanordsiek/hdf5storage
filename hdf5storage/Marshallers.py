@@ -984,10 +984,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # If it is empty and MATLAB_fields is not None, pack it with
             # keys to empty arrays.
             if len(struct_data) == 0 and matlab_fields is not None:
-                struct_data = {k: np.zeros(shape=tuple(),
-                               dtype='object')
-                               for  k in matlab_fields}
-
+                for k in matlab_fields:
+                    struct_data[k] = np.zeros(shape=(0,),
+                                              dtype='object')
+            
             # The dtype for the structured ndarray needs to be
             # composed. This is done by going through each field (in the
             # proper order, if the fields were given, or any order if
