@@ -708,7 +708,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     >= distutils.version.LooseVersion('2.3'):
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
-                    fs = np.empty(shape=(len(fields),), dtype=dt)
+                    fs = np.empty(shape=(len(field_names),), dtype=dt)
                     for i, s in enumerate(field_names):
                         fs[i] = np.array([c.encode('ascii') for c in s],
                                          dtype='S1')
