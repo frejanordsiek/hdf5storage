@@ -531,7 +531,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                          'double': np.float64,
                                          'char': np.unicode_,
                                          'cell': np.object_,
-                                         'canonical empty': np.float64}
+                                         'canonical empty': np.float64,
+                                         'struct': np.object_}
 
 
         # Set matlab_classes to the supported classes (the values).
@@ -980,13 +981,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     obj = np.zeros((1,), dtype='object')
                     obj[0] = v
                     struct_data[k] = obj
-
-            # If it is empty and MATLAB_fields is not None, pack it with
-            # keys to empty arrays.
-            if len(struct_data) == 0 and matlab_fields is not None:
-                for k in matlab_fields:
-                    struct_data[k] = np.zeros(shape=(0,),
-                                              dtype='object')
             
             # The dtype for the structured ndarray needs to be
             # composed. This is done by going through each field (in the
@@ -1006,7 +1000,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                     - set(fields))
                 extra_fields.sort()
                 fields.extend(extra_fields)
-
+            
             dt_whole = []
             for k in fields:
                 # In Python 2, the field names for a structured ndarray
@@ -1058,7 +1052,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not
         # enough of it, then no conversions can be done.
-
         if type_string is not None and underlying_type is not None and \
                 shape is not None:
             # If it is empty ('Python.Empty' set to 1), then the shape
@@ -1161,14 +1154,28 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # did most of the work except handling empties, array
             # dimension order, and string conversion.
 
-            # If it is empty ('MATLAB_empty' set to 1) and
-            # 'MATLAB_fields' is not present, then the shape information
-            # is stored in data and we need to set data to the empty
-            # array of the proper type.
-            if matlab_empty == 1 and matlab_fields is None:
-                data = np.zeros(tuple(np.uint64(data)), \
-                    dtype=self.__MATLAB_classes_reverse[matlab_class])
-
+            # If it is empty ('MATLAB_empty' set to 1), then the shape
+            # information is stored in data and we need to set data to
+            # the empty array of the proper type. If it is a MATLAB
+            # struct, then the proper dtype has to be constructed from
+            # the field names if present (the dtype of each individual
+            # field is set to object).
+            if matlab_empty == 1:
+                if matlab_fields is None:
+                    data = np.zeros(tuple(np.uint64(data)), \
+                        dtype=self.__MATLAB_classes_reverse[ \
+                        matlab_class])
+                else:
+                    dt_whole = list()
+                    for k in matlab_fields:
+                        if sys.hexversion >= 0x03000000:
+                            dt_whole.append((k.tostring().decode(),
+                                            'object'))
+                        else:
+                            dt_whole.append((k.tostring(), 'object'))
+                    data = np.zeros(shape=tuple(np.uint64(data)),
+                                    dtype=dt_whole)
+            
             # The order of the dimensions must be switched from Fortran
             # order which MATLAB uses to C order which Python uses.
             data = data.T
