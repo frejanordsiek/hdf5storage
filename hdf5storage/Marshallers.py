@@ -31,6 +31,7 @@
 import sys
 import posixpath
 import collections
+import distutils.version
 
 import numpy as np
 import h5py
@@ -1287,7 +1288,7 @@ class PythonDictMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
         self.python_attributes |= set(['Python.Fields'])
-        self.matlab_attributes |= set(['MATLAB_class'])
+        self.matlab_attributes |= set(['MATLAB_class', 'MATLAB_fields'])
         self.types = [dict]
         self.python_type_strings = ['dict']
         self.__MATLAB_classes = {dict: 'struct'}
@@ -1356,14 +1357,35 @@ class PythonDictMarshaller(TypeMarshaller):
         TypeMarshaller.write_metadata(self, f, grp, name, data,
                                       type_string, options)
 
+        # Grab all the keys and sort the list.
+        fields = sorted(list(data.keys()))
+
         # If we are storing python metadata, we need to set the
-        # 'Python.Fields' Attribute to be all the keys. They will be
-        # sorted for convenience
+        # 'Python.Fields' Attribute to be all the keys.
         if options.store_python_metadata:
-            fields = list(data.keys())
-            fields.sort()
             set_attribute_string_array(grp[name], 'Python.Fields',
                                        fields)
+
+        # If we are making it MATLAB compatible and have h5py version
+        # >= 2.3, then we can set the MATLAB_fields Attribute as long as
+        # all keys are mappable to ASCII. Otherwise, the attribute
+        # should be deleted. It is written as a vlen='S1' array of
+        # bytes_ arrays of the individual characters.
+        if options.matlab_compatible \
+                and distutils.version.LooseVersion(h5py.__version__) \
+                >= distutils.version.LooseVersion('2.3'):
+            try:
+                dt = h5py.special_dtype(vlen=np.dtype('S1'))
+                fs = np.empty(shape=(len(fields),), dtype=dt)
+                for i, s in enumerate(fields):
+                    fs[i] = np.array([c.encode('ascii') for c in s],
+                                     dtype='S1')
+            except UnicodeDecodeError:
+                del_attribute(grp[name], 'MATLAB_fields')
+            else:
+                set_attribute(grp[name], 'MATLAB_fields', fs)
+        else:
+            del_attribute(grp[name], 'MATLAB_fields')
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set for the data type. If the type
@@ -1377,16 +1399,6 @@ class PythonDictMarshaller(TypeMarshaller):
                 self.__MATLAB_classes[self.types.index(tp)])
         else:
             del_attribute(grp[name], 'MATLAB_class')
-
-        # Write an array of all the fields to the attribute that lists
-        # them.
-        #
-        # NOTE: Can't make it do a variable length set of strings like
-        # MATLAB likes. However, not including them seems to cause no
-        # problem.
-        #
-        # set_attribute_string_array(grp[name], \
-        #     'MATLAB_fields', [k for k in data])
 
     def read(self, f, grp, name, options):
         # If name is not present or is not a Group, then we can't read
