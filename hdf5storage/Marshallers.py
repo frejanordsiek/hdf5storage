@@ -464,7 +464,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                    'Python.numpy.Container',
                                    'Python.Fields'])
         self.matlab_attributes |= set(['MATLAB_class', 'MATLAB_empty',
-                                   'MATLAB_int_decode'])
+                                      'MATLAB_int_decode',
+                                      'MATLAB_fields'])
         # As np.str_ is the unicode type string in Python 3 and the bare
         # bytes string in Python 2, we have to use np.unicode_ which is
         # or points to the unicode one in both versions.
@@ -695,6 +696,29 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         set(field_names)):
                     del grp2[field]
 
+            # If we are making it MATLAB compatible and have h5py
+            # version >= 2.3, then we can set the MATLAB_fields
+            # Attribute as long as all keys are mappable to
+            # ASCII. Otherwise, the attribute should be deleted. It is
+            # written as a vlen='S1' array of bytes_ arrays of the
+            # individual characters.
+            if options.matlab_compatible \
+                    and distutils.version.LooseVersion( \
+                    h5py.__version__) \
+                    >= distutils.version.LooseVersion('2.3'):
+                try:
+                    dt = h5py.special_dtype(vlen=np.dtype('S1'))
+                    fs = np.empty(shape=(len(fields),), dtype=dt)
+                    for i, s in enumerate(fields):
+                        fs[i] = np.array([c.encode('ascii') for c in s],
+                                         dtype='S1')
+                except UnicodeDecodeError:
+                    del_attribute(grp[name], 'MATLAB_fields')
+                else:
+                    set_attribute(grp[name], 'MATLAB_fields', fs)
+            else:
+                del_attribute(grp[name], 'MATLAB_fields')
+            
             # Go field by field making an object array (make an empty
             # object array and assign element wise) and write it inside
             # the Group. If it only has a single element, write that
