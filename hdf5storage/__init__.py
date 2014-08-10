@@ -947,11 +947,10 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
     if targetname == '':
         targetname = '.'
 
-    # Open the hdf5 file and start writing the data (and making the
-    # group groupname at the same time if it doesn't exist). This is all
-    # wrapped in a try block, so that the file can be closed if any
-    # errors happen (the error is re-raised).
-
+    # Open/create the hdf5 file but don't write the data yet since the
+    # userblock still needs to be set. This is all wrapped in a try
+    # block, so that the file can be closed if any errors happen (the
+    # error is re-raised).
     f = None
     try:
 
@@ -977,30 +976,20 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
                     and f.userblock_size < 128:
                 f.close()
                 f = h5py.File(filename, mode='w', userblock_size=512)
-
-        # Need to make sure groupname is a valid group in f and grab its
-        # handle to pass on to the low level function.
-
-        if groupname not in f:
-            grp = f.require_group(groupname)
-        else:
-            grp = f[groupname]
-
-        # Hand off to the low level function.
-        lowlevel.write_data(f, grp, targetname, data,
-                            None, options)
     except:
-        print("Unexpected error:", sys.exc_info()[0])
         raise
     finally:
+        # If the hdf5 file was opened at all, get the userblock size and
+        # close it since we need to set the userblock.
         if isinstance(f, h5py.File):
             userblock_size = f.userblock_size
             f.close()
+        else:
+            raise IOError('Unable to create or open file.')
 
     # If we are doing MATLAB formatting and there is a sufficiently
     # large userblock, write the new userblock. The same sort of error
     # handling is used.
-
     if options.matlab_compatible and userblock_size >= 128:
         # Get the time.
         now = datetime.datetime.now()
@@ -1048,6 +1037,29 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
             raise
         finally:
             fd.close()
+
+    # Open the hdf5 file again and write the data, making the Group if
+    # necessary. This is all wrapped in a try block, so that the file
+    # can be closed if any errors happen (the error is re-raised).
+    f = None
+    try:
+        f = h5py.File(filename)
+        
+        # Need to make sure groupname is a valid group in f and grab its
+        # handle to pass on to the low level function.
+        if groupname not in f:
+            grp = f.require_group(groupname)
+        else:
+            grp = f[groupname]
+
+        # Hand off to the low level function.
+        lowlevel.write_data(f, grp, targetname, data,
+                            None, options)
+    except:
+        raise
+    finally:
+        if isinstance(f, h5py.File):
+            f.close()
 
 
 def read(path='/', filename='data.h5',
