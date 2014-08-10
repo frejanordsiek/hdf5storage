@@ -785,12 +785,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 grp[name][...] = data_to_store
 
             # Write the metadata using the inherited function (good
-            # enough). The Attribute 'Python.numpy.fields, if present,
-            # needs to be deleted since this isn't a structured ndarray.
+            # enough). The Attributes 'Python.numpy.fields' and
+            # 'MATLAB_fields', if present, need to be deleted since this
+            # isn't a structured ndarray.
 
             self.write_metadata(f, grp, name, data, type_string,
                                 options)
             del_attribute(grp[name], 'Python.Fields')
+            del_attribute(grp[name], 'MATLAB_fields')
 
     def write_metadata(self, f, grp, name, data, type_string, options):
         # First, call the inherited version to do most of the work.
