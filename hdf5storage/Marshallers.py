@@ -1385,6 +1385,25 @@ class PythonDictMarshaller(TypeMarshaller):
         self.matlab_classes = list()
 
     def write(self, f, grp, name, data, type_string, options):
+        # Check for any field names that are not unicode since they
+        # cannot be handled. How it is checked (what type it is) and the
+        # error message are different for each Python version.
+
+        if sys.hexversion >= 0x03000000:
+            for fieldname in data:
+                if not isinstance(fieldname, str):
+                    raise NotImplementedError('Dictionaries with non-'
+                                              + 'str keys are not '
+                                              + 'supported: '
+                                              + repr(fieldname))
+        else:
+            for fieldname in data:
+                if not isinstance(fieldname, unicode):
+                    raise NotImplementedError('Dictionaries with non-'
+                                              + 'unicode keys are not '
+                                              + 'supported: '
+                                              + repr(fieldname))
+        
         # If the group doesn't exist, it needs to be created. If it
         # already exists but is not a group, it needs to be deleted
         # before being created.
@@ -1407,25 +1426,6 @@ class PythonDictMarshaller(TypeMarshaller):
             for field in set([i for i in grp2]).difference( \
                     set([i for i in data])):
                 del grp2[field]
-
-        # Check for any field names that are not unicode since they
-        # cannot be handled. How it is checked (what type it is) and the
-        # error message are different for each Python version.
-
-        if sys.hexversion >= 0x03000000:
-            for fieldname in data:
-                if not isinstance(fieldname, str):
-                    raise NotImplementedError('Dictionaries with non-'
-                                              + 'str keys are not '
-                                              + 'supported: '
-                                              + repr(fieldname))
-        else:
-            for fieldname in data:
-                if not isinstance(fieldname, unicode):
-                    raise NotImplementedError('Dictionaries with non-'
-                                              + 'unicode keys are not '
-                                              + 'supported: '
-                                              + repr(fieldname))
 
         # Go through all the elements of data and write them. The H5PATH
         # needs to be set as the path of grp2 on all of them if we are
