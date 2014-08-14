@@ -68,7 +68,7 @@ NumpyScalarArrayMarshaller
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.matlab_attributes
       :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
-		      'MATLAB_int_decode'}
+		      'MATLAB_int_decode', 'MATLAB_fields'}
 
    .. autoinstanceattribute:: NumpyScalarArrayMarshaller.types
       :annotation: = [np.ndarray, np.matrix,
@@ -186,7 +186,7 @@ PythonDictMarshaller
       :annotation: = {'Python.Type', 'Python.Fields'}
 
    .. autoinstanceattribute:: PythonDictMarshaller.matlab_attributes
-      :annotation: = {'H5PATH', 'MATLAB_class'}
+      :annotation: = {'H5PATH', 'MATLAB_class', 'MATLAB_fields'}
 
    .. autoinstanceattribute:: PythonDictMarshaller.types
       :annotation: = [dict]

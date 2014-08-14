@@ -77,12 +77,13 @@ Standing Bugs
   :py:attr:`Options.structured_numpy_ndarray_as_struct` is set, are not
   written in a way that the dtypes for the fields can be restored when
   it is read back from file.
-* The Attribute 'MATLAB_fields' is not currently set when writing
+* The Attribute 'MATLAB_fields' is supported for h5py version ``2.3``
+  and newer. But for older versions, it is not currently set when writing
   data that should be imported into MATLAB as structures, and is ignored
   when reading data from file. This is because the h5py package cannot
-  work with its format. If a structure with fields 'a' and 'cd' are
-  saved, the Attribute looks like the following when using the
-  ``h5dump`` utility::
+  work with its format in older versions. If a structure with fields 'a'
+  and 'cd' are saved, the Attribute looks like the following when using
+  the ``h5dump`` utility::
 
     ATTRIBUTE "MATLAB_fields" {
        DATATYPE  H5T_VLEN { H5T_STRING {
@@ -96,10 +97,28 @@ Standing Bugs
        (0): ("a"), ("c", "d")
        }
     }
-
+  
+  In h5py version ``2.3``, the Attribute is an array of variable length
+  arrays of single character ASCII numpy strings (vlen of ``'S1'``). It
+  is created like so::
+  
+    fields = ['a', 'cd']
+    dt = h5py.special_dtype(vlen=np.dtype('S1'))
+    fs = np.empty(shape=(len(fields),), dtype=dt)
+    for i, s in enumerate(fields):
+        fs[i] = np.array([c.encode('ascii') for c in s],
+                         dtype='S1')
+  
+  Then ``fs`` looks like::
+  
+    array([array([b'a'], dtype='|S1'),
+           array([b'c', b'd'], dtype='|S1']), dtype=object)
+  
   MATLAB doesn't strictly require this field, but supporting it will
-  help with reading/writing empty MATLAB structs. Would probably require
-  writiing a custom Cython or C function to fix this.
+  help with reading/writing empty MATLAB structs and not losing the
+  fields. Adding support for older verions of h5py would probably
+  require writing a custom Cython or C function, or porting some h5py
+  code.
 
 Features to Add
 ---------------

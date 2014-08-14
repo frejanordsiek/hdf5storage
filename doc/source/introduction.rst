@@ -175,7 +175,13 @@ Making The Data
 ---------------
 
 Make a ``dict`` containing many different types in it that we want to
-store to disk in an HDF5 file.
+store to disk in an HDF5 file. The initialization method depends on
+the Python version.
+
+Python 3
+^^^^^^^^
+
+The ``dict`` keys must be ``str`` (the unicode string type).
 
     >>> import numpy as np
     >>> import hdf5storage
@@ -197,6 +203,36 @@ store to disk in an HDF5 file.
     ...           'gg': np.array(['one', 'two', 'three'], dtype='str'),
     ...           'hh': np.bytes_(b'how many?'),
     ...           'ii': np.object_(['text', np.int8([1, -3, 0])])}}
+
+Python 2
+^^^^^^^^
+
+The same thing but in Python 2 where the ``dict`` keys must be
+``unicode``. The other datatypes are translated from the Python 3
+example appropriately. The rest of the examples on this page are run
+identically in Python 2 and 3, but the outputs are listed as is
+returned in Python 3.
+
+    >>> import numpy as np
+    >>> import hdf5storage
+    >>> a = {u'a': True,
+    ...      u'b': None,
+    ...      u'c': 2,
+    ...      u'd': -3.2,
+    ...      u'e': (1-2.3j),
+    ...      u'f': u'hello',
+    ...      u'g': 'goodbye',
+    ...      u'h': [u'list', u'of', u'stuff', [30, 2.3]],
+    ...      u'i': np.zeros(shape=(2,), dtype=[('bi', 'uint8')]),
+    ...      u'j':{u'aa': np.bool_(False),
+    ...            u'bb': np.uint8(4),
+    ...            u'cc': np.uint32([70, 8]),
+    ...            u'dd': np.int32([]),
+    ...            u'ee': np.float32([[3.3], [5.3e3]]),
+    ...            u'ff': np.complex128([[3.4, 3], [9+2j, 0]]),
+    ...            u'gg': np.array([u'one', u'two', u'three'], dtype='unicode'),
+    ...            u'hh': np.str_('how many?'),
+    ...            u'ii': np.object_([u'text', np.int8([1, -3, 0])])}}
 
 Using No Metadata
 -----------------

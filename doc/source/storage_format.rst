@@ -47,46 +47,46 @@ stored (Group or Dataset), what type/s it is converted to (no conversion
 if none are listed), as well as the first version of this package to
 support the datatype.
 
-=============  =======  ====================================  =====================
-Type           Version  Converted to                          Group or Dataset
-=============  =======  ====================================  =====================
-bool           0.1      np.bool\_ or np.uint8 [1]_            Dataset
-None           0.1      ``np.float64([])``                    Dataset
-int            0.1      np.int64                              Dataset
-float          0.1      np.float64                            Dataset
-complex        0.1      np.complex128                         Dataset
-str            0.1      np.uint32/16 [2]_                     Dataset
-bytes          0.1      np.bytes\_ or np.uint16 [3]_          Dataset
-bytearray      0.1      np.bytes\_ or np.uint16 [3]_          Dataset
-list           0.1      np.object\_                           Dataset
-tuple          0.1      np.object\_                           Dataset
-set            0.1      np.object\_                           Dataset
-frozenset      0.1      np.object\_                           Dataset
-cl.deque       0.1      np.object\_                           Dataset
-dict [4]_      0.1                                            Group
-np.bool\_      0.1      not or np.uint8 [1]_                  Dataset
-np.void        0.1                                            Dataset
-np.uint8       0.1                                            Dataset
-np.uint16      0.1                                            Dataset
-np.uint32      0.1                                            Dataset
-np.uint64      0.1                                            Dataset
-np.uint8       0.1                                            Dataset
-np.int16       0.1                                            Dataset
-np.int32       0.1                                            Dataset
-np.int64       0.1                                            Dataset
-np.float16     0.1                                            Dataset
-np.float32     0.1                                            Dataset
-np.float64     0.1                                            Dataset
-np.complex64   0.1                                            Dataset
-np.complex128  0.1                                            Dataset
-np.str\_       0.1      np.uint32/16 [2]_                     Dataset
-np.bytes\_     0.1      np.bytes\_ or np.uint16 [3]_          Dataset
-np.object\_    0.1                                            Dataset
-np.ndarray     0.1      not or Group of contents [5]_         Dataset or Group [5]_
-np.matrix      0.1      np.ndarray                            Dataset
-np.chararray   0.1      np.bytes\_ or np.uint16/32 [2]_ [3]_  Dataset
-np.recarray    0.1      structued np.ndarray [5]_             Dataset or Group [5]_
-=============  =======  ====================================  =====================
+===============  =======  ====================================  =====================
+Type             Version  Converted to                          Group or Dataset
+===============  =======  ====================================  =====================
+bool             0.1      np.bool\_ or np.uint8 [1]_            Dataset
+None             0.1      ``np.float64([])``                    Dataset
+int              0.1      np.int64                              Dataset
+float            0.1      np.float64                            Dataset
+complex          0.1      np.complex128                         Dataset
+str              0.1      np.uint32/16 [2]_                     Dataset
+bytes            0.1      np.bytes\_ or np.uint16 [3]_          Dataset
+bytearray        0.1      np.bytes\_ or np.uint16 [3]_          Dataset
+list             0.1      np.object\_                           Dataset
+tuple            0.1      np.object\_                           Dataset
+set              0.1      np.object\_                           Dataset
+frozenset        0.1      np.object\_                           Dataset
+cl.deque         0.1      np.object\_                           Dataset
+dict [4]_        0.1                                            Group
+np.bool\_        0.1      not or np.uint8 [1]_                  Dataset
+np.void          0.1                                            Dataset
+np.uint8         0.1                                            Dataset
+np.uint16        0.1                                            Dataset
+np.uint32        0.1                                            Dataset
+np.uint64        0.1                                            Dataset
+np.uint8         0.1                                            Dataset
+np.int16         0.1                                            Dataset
+np.int32         0.1                                            Dataset
+np.int64         0.1                                            Dataset
+np.float16 [5]_  0.1                                            Dataset
+np.float32       0.1                                            Dataset
+np.float64       0.1                                            Dataset
+np.complex64     0.1                                            Dataset
+np.complex128    0.1                                            Dataset
+np.str\_         0.1      np.uint32/16 [2]_                     Dataset
+np.bytes\_       0.1      np.bytes\_ or np.uint16 [3]_          Dataset
+np.object\_      0.1                                            Dataset
+np.ndarray       0.1      not or Group of contents [6]_         Dataset or Group [6]_
+np.matrix        0.1      np.ndarray                            Dataset
+np.chararray     0.1      np.bytes\_ or np.uint16/32 [2]_ [3]_  Dataset
+np.recarray      0.1      structured np.ndarray [6]_            Dataset or Group [6]_
+===============  =======  ====================================  =====================
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when
        ``convert_bools_to_uint8 == True`` (set implicitly when
@@ -105,9 +105,12 @@ np.recarray    0.1      structued np.ndarray [5]_             Dataset or Group [
        ``np.uint16`` in UTF-16 encoding. Otherwise, it is just written
        as ``np.bytes_``.
 .. [4] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
-.. [5] If it doesn't have any fields in its dtype or if
-       :py:attr:`Options.structured_numpy_ndarray_as_struct` is not set, it
-       is not converted and is written as is as a Dataset. Otherwise, it
+.. [5] ``np.float16`` are not supported for h5py versions before
+       ``2.2``.
+.. [6] If it doesn't have any fields in its dtype or if
+       :py:attr:`Options.structured_numpy_ndarray_as_struct` is not set
+       and none of its fields are of dtype ``'object'``, it is not
+       converted and is written as is as a Dataset. Otherwise, it
        is written as a Group with its the contents of its individual
        fields written as Datasets within the Group having the fields as
        names.
@@ -125,7 +128,7 @@ Attributes are used. The table below lists the Attributes that have
 definite values depending only on the particular Python datatype being
 stored. Then, the other attributes are detailed individually.
 
-.. note
+.. note::
 
    'Python.Type', 'Python.numpy.UnderlyingType', and 'MATLAB_class' are
    all ``np.bytes_``. 'MATLAB_int_decode' is a ``np.int64``.
@@ -141,9 +144,9 @@ None           'builtins.NoneType'  'float64'                    'double'
 int            'int'                'int64'                      'int64'
 float          'float'              'float64'                    'double'
 complex        'complex'            'complex128'                 'double'
-str            'str'                'str#' [6]_                  'char'              2
-bytes          'bytes'              'bytes#' [6]_                'char'              2
-bytearray      'bytearray'          'bytes#' [6]_                'char'              2
+str            'str'                'str#' [7]_                  'char'              2
+bytes          'bytes'              'bytes#' [7]_                'char'              2
+bytearray      'bytearray'          'bytes#' [7]_                'char'              2
 list           'list'               'object'                     'cell'
 tuple          'tuple'              'object'                     'cell'
 set            'set'                'object'                     'cell'
@@ -151,7 +154,7 @@ frozenset      'frozenset'          'object'                     'cell'
 cl.deque       'collections.deque'  'object'                     'cell'
 dict           'dict'                                            'struct'
 np.bool\_      'numpy.bool'         'bool'                       'logical'           1
-np.void        'numpy.void'         'void#' [6]_
+np.void        'numpy.void'         'void#' [7]_
 np.uint8       'numpy.uint8'        'uint8'                      'uint8'
 np.uint16      'numpy.uint16'       'uint16'                     'uint16'
 np.uint32      'numpy.uint32'       'uint32'                     'uint32'
@@ -165,25 +168,26 @@ np.float32     'numpy.float32'      'float32'                    'single'
 np.float64     'numpy.float64'      'float64'                    'double'
 np.complex64   'numpy.complex64'    'complex64'                  'single'
 np.complex128  'numpy.complex128'   'complex128'                 'double'
-np.str\_       'numpy.str\_'        'str#' [6]_                  'char' or 'uint32'  2 or 4 [6]_
-np.bytes\_     'numpy.bytes\_'      'bytes#' [6]_                'char'              2
+np.str\_       'numpy.str\_'        'str#' [7]_                  'char' or 'uint32'  2 or 4 [8]_
+np.bytes\_     'numpy.bytes\_'      'bytes#' [7]_                'char'              2
 np.object\_    'numpy.object\_'     'object'                     'cell'
-np.ndarray     'numpy.ndarray'      [8]_                         [8]_ [9]_
-np.matrix      'numpy.matrix'       [8]_                         [8]_
-np.chararray   'numpy.chararray'    [8]_                         'char' [8]_
-np.recarray    'numpy.recarray'     [8]_                         [8]_ [9]_
+np.ndarray     'numpy.ndarray'      [9]_                         [9]_ [10]_
+np.matrix      'numpy.matrix'       [9]_                         [9]_
+np.chararray   'numpy.chararray'    [9]_                         'char' [9]_
+np.recarray    'numpy.recarray'     [9]_                         [9]_ [10]_
 =============  ===================  ===========================  ==================  =================
 
-.. [6] '#' is replaced by the number of bits taken up by the string, or
+.. [7] '#' is replaced by the number of bits taken up by the string, or
        each string in the case that it is an array of strings. This is 8
        and 32 bits per character for ``np.bytes_`` and ``np.str_``
        respectively.
-.. [7] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
-.. [8] The value that would be put in for a scalar of the same dtype is
+.. [8] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
+.. [9] The value that would be put in for a scalar of the same dtype is
        used.
-.. [9] If it is structured (its dtype has fields) and
-       :py:attr:`Options.structured_numpy_ndarray_as_struct` is set, it is
-       set to 'struct' overriding anything else.
+.. [10] If it is structured (its dtype has fields),
+        :py:attr:`Options.structured_numpy_ndarray_as_struct` is set,
+        and none of its fields are of dtype ``'object'``; it is set to
+        ``'struct'`` overriding anything else.
 
 
 Python.Shape
@@ -255,13 +259,35 @@ MATLAB_fields
 
 MATLAB Attribute
 
-complicated array of string arrays not supported by h5py
+numpy array of vlen numpy arrays of ``'S1'``
+
+.. versionchanged:: 0.1.2
+   Support for this Attribute added. Was deleted upon writing and
+   ignored when reading before.
 
 For MATLAB structures, MATLAB sets this field to all of the field names
 of the structure. If this Attribute is missing, MATLAB does not seem to
-care. Trying to set it to a differently formatted array of strings that
-the h5py package can handle causes an error in MATLAB when the file is
-imported, so this package does not set this Attribute at all.
+care. Can only be set or read properly for h5py version ``2.3`` and
+newer. Trying to set it to a differently formatted array of strings that
+older versions of h5py can handle causes an error in MATLAB when the file
+is imported, so this package does not set this Attribute at all for h5py
+version before ``2.3``.
+  
+The Attribute is an array of variable length arrays of single character
+ASCII numpy strings (vlen of ``'S1'``). If there are two fields named
+``'a'`` and ``'cd'``, it is created like so::
+  
+  fields = ['a', 'cd']
+  dt = h5py.special_dtype(vlen=np.dtype('S1'))
+  fs = np.empty(shape=(len(fields),), dtype=dt)
+  for i, s in enumerate(fields):
+      fs[i] = np.array([c.encode('ascii') for c in s],
+                       dtype='S1')
+
+Then ``fs`` looks like::
+  
+  array([array([b'a'], dtype='|S1'),
+         array([b'c', b'd'], dtype='|S1']), dtype=object)
 
 
 Storage of Special Types
@@ -310,26 +336,29 @@ Structure Like Data
 
 When storing data that is MATLAB struct like (``dict`` or structured
 ``np.ndarray`` when
-:py:attr:`Options.structured_numpy_ndarray_as_struct` is set), it is
-stored as an HDF5 Group with its contents of its fields written inside
-of the Group. For single element data (``dict`` or structured
-``np.ndarray`` with only a single element), the fields are written to
-Datasets inside the Group. For multi-element data, the elements for
-each field are written in :py:attr:`Options.group_for_references` and
-an HDF5 Reference array to all of those elements is written as a Dataset
-under the field name in the Groups.
+:py:attr:`Options.structured_numpy_ndarray_as_struct` is set and none of
+its fields are of dtype ``'object'``), it is stored as an HDF5 Group
+with its contents of its fields written inside of the Group. For single
+element data (``dict`` or structured ``np.ndarray`` with only a single
+element), the fields are written to Datasets inside the Group. For
+multi-element data, the elements for each field are written in
+:py:attr:`Options.group_for_references` and an HDF5 Reference array to
+all of those elements is written as a Dataset under the field name in
+the Groups. Othewise, it is written as is as a Dataset that is an
+HDF5 COMPOUND type.
 
-.. note::
+
+.. warning::
 
    If it has no elements and
    :py:attr:`Options.structured_numpy_ndarray_as_struct` is set, it
    can't be read back from the file accurately. The dtype for all the
    fields will become 'object' instead of what they originally were.
 
-.. note::
+.. warning::
 
-   In Python 2, importing structured ``np.ndarray`` s if any of their
-   fields have characters outside of ASCII.
+   In Python 2, importing structured ``np.ndarray`` s will produce an
+   error if any of their fields have characters outside of ASCII.
 
 
 Optional Data Transformations
@@ -375,12 +404,14 @@ structured_numpy_ndarray_as_struct
 ``bool``
 
 Whether ``np.ndarray`` types (or things converted to them) should be
-written as structures/Groups if their dtype has fields. A dtype with
-fields looks like ``np.dtype([('a', np.uint16), ('b': np.float32)])``.
-If an array satisfies this criterion and the option is set, rather than
-writing the data as a single Dataset, it is written as a Group with the
-contents of the individual fields written as Datasets within it. This
-option is set to ``True`` implicitly by ``matlab_compatible``.
+written as structures/Groups if their dtype has fields as long as none
+of the fields' dtypes are ``'object'`` in which case this option is
+treated as if it were ``True``. A dtype with fields looks like
+``np.dtype([('a', np.uint16), ('b': np.float32)])``. If an array
+satisfies this criterion and the option is set, rather than writing the
+data as a single Dataset, it is written as a Group with the contents of
+the individual fields written as Datasets within it. This option is set
+to ``True`` implicitly by ``matlab_compatible``.
 
 make_at_least_2d
 ----------------
@@ -457,8 +488,8 @@ type they are read as if there is no Python metadata attached to them.
 MATLAB Class     Version  Python Type
 ===============  =======  =================================
 logical          0.1      np.bool\_
-single           0.1      np.float32 or np.complex64 [10]_
-double           0.1      np.float64 or np.complex128 [10]_
+single           0.1      np.float32 or np.complex64 [11]_
+double           0.1      np.float64 or np.complex128 [11]_
 uint8            0.1      np.uint8
 uint16           0.1      np.uint16
 uint32           0.1      np.uint32
@@ -473,4 +504,4 @@ cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``
 ===============  =======  =================================
 
-.. [10] Depends on whether there is a complex part or not.
+.. [11] Depends on whether there is a complex part or not.

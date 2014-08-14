@@ -96,48 +96,48 @@ will be what it is read back as) the MATLAB class it becomes if
 targetting a MAT file, and the first version of this package to
 support writing it so MATlAB can read it.
 
-=============  =======  ==========================  ===========  =============
-Python                                              MATLAB
---------------------------------------------------  --------------------------
-Type           Version  Converted to                Class        Version
-=============  =======  ==========================  ===========  =============
-bool           0.1      np.bool\_ or np.uint8       logical      0.1 [1]_
-None           0.1      ``np.float64([])``          ``[]``       0.1
-int            0.1      np.int64                    int64        0.1
-float          0.1      np.float64                  double       0.1
-complex        0.1      np.complex128               double       0.1
-str            0.1      np.uint32/16                char         0.1 [2]_
-bytes          0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
-bytearray      0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
-list           0.1      np.object\_                 cell         0.1
-tuple          0.1      np.object\_                 cell         0.1
-set            0.1      np.object\_                 cell         0.1
-frozenset      0.1      np.object\_                 cell         0.1
-cl.deque       0.1      np.object\_                 cell         0.1
-dict           0.1                                  struct       0.1 [4]_
-np.bool\_      0.1                                  logical      0.1
-np.void        0.1
-np.uint8       0.1                                  uint8        0.1
-np.uint16      0.1                                  uint16       0.1
-np.uint32      0.1                                  uint32       0.1
-np.uint64      0.1                                  uint64       0.1
-np.uint8       0.1                                  int8         0.1
-np.int16       0.1                                  int16        0.1
-np.int32       0.1                                  int32        0.1
-np.int64       0.1                                  int64        0.1
-np.float16     0.1
-np.float32     0.1                                  single       0.1
-np.float64     0.1                                  double       0.1
-np.complex64   0.1                                  single       0.1
-np.complex128  0.1                                  double       0.1
-np.str\_       0.1      np.uint32/16                char/uint32  0.1 [2]_
-np.bytes\_     0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
-np.object\_    0.1                                  cell         0.1
-np.ndarray     0.1      [5]_ [6]_                   [5]_ [6]_    0.1 [5]_ [7]_
-np.matrix      0.1      [5]_                        [5]_         0.1 [5]_
-np.chararray   0.1      [5]_                        [5]_         0.1 [5]_
-np.recarray    0.1      structured np.ndarray       [5]_ [6]_    0.1 [5]_
-=============  =======  ==========================  ===========  =============
+===============  =======  ==========================  ===========  =============
+Python                                                MATLAB
+----------------------------------------------------  --------------------------
+Type             Version  Converted to                Class        Version
+===============  =======  ==========================  ===========  =============
+bool             0.1      np.bool\_ or np.uint8       logical      0.1 [1]_
+None             0.1      ``np.float64([])``          ``[]``       0.1
+int              0.1      np.int64                    int64        0.1
+float            0.1      np.float64                  double       0.1
+complex          0.1      np.complex128               double       0.1
+str              0.1      np.uint32/16                char         0.1 [2]_
+bytes            0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
+bytearray        0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
+list             0.1      np.object\_                 cell         0.1
+tuple            0.1      np.object\_                 cell         0.1
+set              0.1      np.object\_                 cell         0.1
+frozenset        0.1      np.object\_                 cell         0.1
+cl.deque         0.1      np.object\_                 cell         0.1
+dict             0.1                                  struct       0.1 [4]_
+np.bool\_        0.1                                  logical      0.1
+np.void          0.1
+np.uint8         0.1                                  uint8        0.1
+np.uint16        0.1                                  uint16       0.1
+np.uint32        0.1                                  uint32       0.1
+np.uint64        0.1                                  uint64       0.1
+np.uint8         0.1                                  int8         0.1
+np.int16         0.1                                  int16        0.1
+np.int32         0.1                                  int32        0.1
+np.int64         0.1                                  int64        0.1
+np.float16 [5]_  0.1
+np.float32       0.1                                  single       0.1
+np.float64       0.1                                  double       0.1
+np.complex64     0.1                                  single       0.1
+np.complex128    0.1                                  double       0.1
+np.str\_         0.1      np.uint32/16                char/uint32  0.1 [2]_
+np.bytes\_       0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
+np.object\_      0.1                                  cell         0.1
+np.ndarray       0.1      [6]_ [7]_                   [6]_ [7]_    0.1 [6]_ [8]_
+np.matrix        0.1      [6]_                        [6]_         0.1 [6]_
+np.chararray     0.1      [5]_                        [6]_         0.1 [6]_
+np.recarray      0.1      structured np.ndarray       [6]_ [7]_    0.1 [6]_
+===============  =======  ==========================  ===========  =============
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
        MATLAB compatiblity, or if the option is explicitly set.
@@ -154,14 +154,17 @@ np.recarray    0.1      structured np.ndarray       [5]_ [6]_    0.1 [5]_
        stored as ``np.uint16`` in UTF-16 encoding. Otherwise, it is just
        written as ``np.bytes_``.
 .. [4] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
-.. [5] Container types are only supported if their underlying dtype is
+.. [5] ``np.float16`` are not supported for h5py versions before
+       ``2.2``.
+.. [6] Container types are only supported if their underlying dtype is
        supported. Data conversions are done based on its dtype.
-.. [6] Structured ``np.ndarray`` s (have fields in their dtypes) can be
+.. [7] Structured ``np.ndarray`` s (have fields in their dtypes) can be
        written as an HDF5 COMPOUND type or as an HDF5 Group with Datasets
        holding its fields (either the values directly, or as an HDF5
        Reference array to the values for the different elements of the
-       data).
-.. [7] Structured ``np.ndarray`` s with no elements, when written like a
+       data). Can only be written as an HDF5 COMPOUND type if none of
+       its field are of dtype ``'object'``.
+.. [8] Structured ``np.ndarray`` s with no elements, when written like a
        structure, will not be read back with the right dtypes for their
        fields (will all become 'object').
 
@@ -173,8 +176,8 @@ type they are read as.
 MATLAB Class     Version  Python Type
 ===============  =======  =================================
 logical          0.1      np.bool\_
-single           0.1      np.float32 or np.complex64 [8]_
-double           0.1      np.float64 or np.complex128 [8]_
+single           0.1      np.float32 or np.complex64 [9]_
+double           0.1      np.float64 or np.complex128 [9]_
 uint8            0.1      np.uint8
 uint16           0.1      np.uint16
 uint32           0.1      np.uint32
@@ -189,11 +192,34 @@ cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``
 ===============  =======  =================================
 
-.. [8] Depends on whether there is a complex part or not.
+.. [9] Depends on whether there is a complex part or not.
 
 
 Versions
 ========
+
+0.1.2. Bugfix release fixing the following bugs.
+       * Removed mistaken support for ``np.float16`` for h5py versions
+         before ``2.2`` since that was when support for it was
+         introduced.
+       * Structured ``np.ndarray`` where one or more fields is of the
+         ``'object'`` dtype can now be written without an error when
+         the ``structured_numpy_ndarray_as_struct`` option is not set.
+         They are written as an HDF5 Group, as if the option was set.
+       * Support for the ``'MATLAB_fields'`` Attribute for data types
+         that are structures in MATLAB has been added for when the
+         version of the h5py package being used is ``2.3`` or greater.
+         Support is still missing for earlier versions (this package
+         requires a minimum version of ``2.1``).
+       * The check for non-unicode string keys (``str`` in Python 3 and
+         ``unicode`` in Python 2) in the type ``dict`` is done right
+         before any changes are made to the HDF5 file instead of in the
+         middle so that no changes are applied if an invalid key is
+         present.
+       * HDF5 userblock set with the proper metadata for MATLAB support
+         right at the beginning of when data is being written to an HDF5
+         file instead of at the end, meaning the writing can crash and
+         the file will still be a valid MATLAB file.
 
 0.1.1. Bugfix release fixing the following bugs.
        * ``str`` is now written like ``numpy.str_`` instead of
