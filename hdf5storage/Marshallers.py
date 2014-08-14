@@ -998,18 +998,20 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # not) and determine the dtype and shape of that field to
             # put in the list.
 
-            if python_fields is None:
-                fields = list(struct_data.keys())
-                fields.sort()
-            else:
-                fields = python_fields
+            if python_fields is not None or matlab_fields is not None:
+                if python_fields is not None:
+                    fields = python_fields
+                else:
+                    fields = [k.tostring().decode()
+                              for k in matlab_fields]
                 # Now, there may be fields available that were not
                 # given, but still should be read. Keys that are not in
                 # python_fields need to be added to the list.
                 extra_fields = list(set(struct_data.keys())
                                     - set(fields))
-                extra_fields.sort()
-                fields.extend(extra_fields)
+                fields.extend(sorted(extra_fields))
+            else:
+                fields = sorted(list(struct_data.keys()))
 
             dt_whole = []
             for k in fields:
