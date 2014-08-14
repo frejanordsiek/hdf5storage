@@ -628,15 +628,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             data_to_store = np.uint8(data_to_store)
 
         # If data is empty, we instead need to store the shape of the
-        # array if the appropriate option is set, unless it is a
-        # structured ndarray and we are storing those as structs.
+        # array if the appropriate option is set.
 
         if options.store_shape_for_empty and (data.size == 0 \
                 or ((data.dtype.type == np.bytes_ \
                 or data.dtype.type == np.str_) \
-                and data.nbytes == 0)) \
-                and (data_to_store.dtype.fields is None \
-                or not options.structured_numpy_ndarray_as_struct):
+                and data.nbytes == 0)):
             data_to_store = np.uint64(data_to_store.shape)
 
         # If it is a complex type, then it needs to be encoded to have
@@ -683,8 +680,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             # Write the metadata, and set the MATLAB_class to 'struct'
             # explicitly.
-            self.write_metadata(f, grp, name, data, type_string,
-                                options)
             if options.matlab_compatible:
                 set_attribute_string(grp[name], 'MATLAB_class',
                                      'struct')
@@ -696,29 +691,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 for field in set([i for i in grp2]).difference( \
                         set(field_names)):
                     del grp2[field]
-
-            # If we are making it MATLAB compatible and have h5py
-            # version >= 2.3, then we can set the MATLAB_fields
-            # Attribute as long as all keys are mappable to
-            # ASCII. Otherwise, the attribute should be deleted. It is
-            # written as a vlen='S1' array of bytes_ arrays of the
-            # individual characters.
-            if options.matlab_compatible \
-                    and distutils.version.LooseVersion( \
-                    h5py.__version__) \
-                    >= distutils.version.LooseVersion('2.3'):
-                try:
-                    dt = h5py.special_dtype(vlen=np.dtype('S1'))
-                    fs = np.empty(shape=(len(field_names),), dtype=dt)
-                    for i, s in enumerate(field_names):
-                        fs[i] = np.array([c.encode('ascii') for c in s],
-                                         dtype='S1')
-                except UnicodeDecodeError:
-                    del_attribute(grp[name], 'MATLAB_fields')
-                else:
-                    set_attribute(grp[name], 'MATLAB_fields', fs)
-            else:
-                del_attribute(grp[name], 'MATLAB_fields')
 
             # Go field by field making an object array (make an empty
             # object array and assign element wise) and write it inside
@@ -785,15 +757,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             else:
                 grp[name][...] = data_to_store
 
-            # Write the metadata using the inherited function (good
-            # enough). The Attributes 'Python.numpy.fields' and
-            # 'MATLAB_fields', if present, need to be deleted since this
-            # isn't a structured ndarray.
-
-            self.write_metadata(f, grp, name, data, type_string,
-                                options)
-            del_attribute(grp[name], 'Python.Fields')
-            del_attribute(grp[name], 'MATLAB_fields')
+        # Write the metadata using the inherited function (good enough).
+        self.write_metadata(f, grp, name, data, type_string,
+                            options)
 
     def write_metadata(self, f, grp, name, data, type_string, options):
         # First, call the inherited version to do most of the work.
@@ -834,17 +800,50 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             set_attribute_string(grp[name], 'Python.numpy.Container',
                                  container)
 
-        # If its dtype has fields, then we set the 'Python.Fields'
-        # Attribute to the field names if we are storing python metadata
-        # and we are storing structured ndarrays as structures.
-        if options.store_python_metadata \
-                and data.dtype.fields is not None \
+        # If its dtype has fields, then we set the 'Python.Fields' and
+        # 'MATLAB_fields' Attributes to the field names if we are
+        # storing python metadata or doing matlab compatibility and we
+        # are storing a structured ndarray as a structure.
+        if data.dtype.fields is not None \
                 and options.structured_numpy_ndarray_as_struct:
-            set_attribute_string_array(grp[name],
-                                       'Python.Fields',
-                                        list(data.dtype.names))
+            # Grab the list of fields.
+            field_names = list(data.dtype.names)
+
+            # Write or delete 'Python.Fields' as appropriate.
+            if options.store_python_metadata \
+                    and data.dtype.fields is not None \
+                    and options.structured_numpy_ndarray_as_struct:
+                set_attribute_string_array(grp[name],
+                                           'Python.Fields',
+                                           field_names)
+            else:
+                del_attribute(grp[name], 'Python.Fields')
+
+            # If we are making it MATLAB compatible and have h5py
+            # version >= 2.3, then we can set the MATLAB_fields
+            # Attribute as long as all keys are mappable to
+            # ASCII. Otherwise, the attribute should be deleted. It is
+            # written as a vlen='S1' array of bytes_ arrays of the
+            # individual characters.
+            if options.matlab_compatible \
+                    and distutils.version.LooseVersion( \
+                    h5py.__version__) \
+                    >= distutils.version.LooseVersion('2.3'):
+                try:
+                    dt = h5py.special_dtype(vlen=np.dtype('S1'))
+                    fs = np.empty(shape=(len(field_names),), dtype=dt)
+                    for i, s in enumerate(field_names):
+                        fs[i] = np.array([c.encode('ascii') for c in s],
+                                         dtype='S1')
+                except UnicodeDecodeError:
+                    del_attribute(grp[name], 'MATLAB_fields')
+                else:
+                    set_attribute(grp[name], 'MATLAB_fields', fs)
+            else:
+                del_attribute(grp[name], 'MATLAB_fields')
         else:
             del_attribute(grp[name], 'Python.Fields')
+            del_attribute(grp[name], 'MATLAB_fields')
 
         # If data is empty, we need to set the Python.Empty and
         # MATLAB_empty attributes to 1 if we are storing type info or
@@ -872,17 +871,28 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # attribute needs to be set looking up the data type (gotten
         # using np.dtype.type). If it is a string or bool type, then
         # the MATLAB_int_decode attribute must be set to the number of
-        # bytes each element takes up (dtype.itemsize). Otherwise,
-        # the attributes must be deleted.
+        # bytes each element takes up (dtype.itemsize). If the dtype has
+        # fields and we are writing it as a structure, the class needs
+        # to be overriddent to 'struct'. Otherwise, the attributes must
+        # be deleted.
 
         tp = data.dtype.type
-        if options.matlab_compatible and tp in self.__MATLAB_classes:
-            set_attribute_string(grp[name], 'MATLAB_class',
-                                 self.__MATLAB_classes[tp])
-            if tp in (np.bytes_, np.str_, np.bool_):
-                set_attribute(grp[name], 'MATLAB_int_decode', np.int64(
-                              grp[name].dtype.itemsize))
+        if options.matlab_compatible:
+            if data.dtype.fields is not None \
+                    and options.structured_numpy_ndarray_as_struct:
+                set_attribute_string(grp[name], 'MATLAB_class',
+                                     'struct')
+            elif tp in self.__MATLAB_classes:
+                set_attribute_string(grp[name], 'MATLAB_class',
+                                     self.__MATLAB_classes[tp])
+                if tp in (np.bytes_, np.str_, np.bool_):
+                    set_attribute(grp[name], 'MATLAB_int_decode',
+                                  np.int64(grp[name].dtype.itemsize))
+                else:
+                    del_attribute(grp[name], 'MATLAB_int_decode')
             else:
+                del_attribute(grp[name], 'MATLAB_class')
+                del_attribute(grp[name], 'MATLAB_empty')
                 del_attribute(grp[name], 'MATLAB_int_decode')
         else:
             del_attribute(grp[name], 'MATLAB_class')
@@ -981,7 +991,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     obj = np.zeros((1,), dtype='object')
                     obj[0] = v
                     struct_data[k] = obj
-            
+
             # The dtype for the structured ndarray needs to be
             # composed. This is done by going through each field (in the
             # proper order, if the fields were given, or any order if
@@ -1000,7 +1010,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                     - set(fields))
                 extra_fields.sort()
                 fields.extend(extra_fields)
-            
+
             dt_whole = []
             for k in fields:
                 # In Python 2, the field names for a structured ndarray
@@ -1054,17 +1064,40 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # enough of it, then no conversions can be done.
         if type_string is not None and underlying_type is not None and \
                 shape is not None:
+            # If the Attributes 'Python.Fields' and/or 'MATLAB_fields'
+            # are present, the underlying type needs to be changed to
+            # the proper dtype for the structure.
+            if python_fields is not None or matlab_fields is not None:
+                if python_fields is not None:
+                    fields = python_fields
+                else:
+                    fields = [k.tostring().decode()
+                              for k in matlab_fields]
+                struct_dtype = list()
+                for k in fields:
+                    if sys.hexversion >= 0x03000000:
+                        struct_dtype.append((k, 'object'))
+                    else:
+                        struct_dtype.append((k.encode('ascii'),
+                                               'object'))
+            else:
+                struct_dtype = None
+
             # If it is empty ('Python.Empty' set to 1), then the shape
             # information is stored in data and we need to set data to
             # the empty array of the proper type (in underlying_type)
             # and the given shape. If we are going to transpose it
             # later, we need to transpose it now so that it still keeps
-            # the right shape.
+            # the right shape. Also, if it is a structure that we just
+            # figured out the dtype for, that needs to be used.
             if python_empty == 1:
                 if underlying_type.startswith('bytes'):
                     data = np.zeros(tuple(shape), dtype='S1')
                 elif underlying_type.startswith('str'):
                     data = np.zeros(tuple(shape), dtype='U1')
+                elif struct_dtype is not None:
+                    data = np.zeros(tuple(shape),
+                                    dtype=struct_dtype)
                 else:
                     data = np.zeros(tuple(shape),
                                     dtype=underlying_type)
@@ -1175,7 +1208,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                             dt_whole.append((k.tostring(), 'object'))
                     data = np.zeros(shape=tuple(np.uint64(data)),
                                     dtype=dt_whole)
-            
+
             # The order of the dimensions must be switched from Fortran
             # order which MATLAB uses to C order which Python uses.
             data = data.T
