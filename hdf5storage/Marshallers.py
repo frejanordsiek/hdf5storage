@@ -656,13 +656,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # look like a structured object array, those have to be excluded
         # explicitly. Complex types may have been converted so that they
         # can have different field names as an HDF5 COMPOUND type, so
-        # those have to be escluded too.
+        # those have to be excluded too. Also, if any of its fields are
+        # an object time (no matter how nested), then rather than
+        # converting that field to a HDF5 Reference types, it will just
+        # be written as a Group instead (just have to see if "'O'" is in
+        # str(data_to_store.dtype).
 
         if data_to_store.dtype.fields is not None \
                 and h5py.check_dtype(ref=data_to_store.dtype) \
                 is not h5py.Reference \
                 and not np.iscomplexobj(data) \
-                and options.structured_numpy_ndarray_as_struct:
+                and (options.structured_numpy_ndarray_as_struct
+                or "'O'" in str(data_to_store.dtype)):
             # If the group doesn't exist, it needs to be created. If it
             # already exists but is not a group, it needs to be deleted
             # before being created.
