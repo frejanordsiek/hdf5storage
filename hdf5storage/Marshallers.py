@@ -474,7 +474,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.bool_, np.void,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
-                      np.float16, np.float32, np.float64,
+                      np.float32, np.float64,
                       np.complex64, np.complex128,
                       np.bytes_, np.unicode_, np.object_]
         # Using Python 3 type strings.
@@ -486,8 +486,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                     'numpy.uint32', 'numpy.uint64',
                                     'numpy.int8', 'numpy.int16',
                                     'numpy.int32', 'numpy.int64',
-                                    'numpy.float16', 'numpy.float32',
-                                    'numpy.float64',
+                                    'numpy.float32', 'numpy.float64',
                                     'numpy.complex64',
                                     'numpy.complex128',
                                     'numpy.bytes_', 'numpy.str_',
@@ -537,6 +536,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Set matlab_classes to the supported classes (the values).
         self.matlab_classes = list(self.__MATLAB_classes.values())
+
+        # For h5py >= 2.2, half precisions (np.float16) are supported.
+        if distutils.version.LooseVersion(h5py.__version__) \
+                >= distutils.version.LooseVersion('2.2'):
+            self.types.append(np.float16)
+            self.python_type_strings.append('numpy.float16')
 
     def write(self, f, grp, name, data, type_string, options):
         # If we are doing matlab compatibility and the data type is not
@@ -1403,7 +1408,7 @@ class PythonDictMarshaller(TypeMarshaller):
                                               + 'unicode keys are not '
                                               + 'supported: '
                                               + repr(fieldname))
-        
+
         # If the group doesn't exist, it needs to be created. If it
         # already exists but is not a group, it needs to be deleted
         # before being created.
