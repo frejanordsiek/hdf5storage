@@ -77,6 +77,12 @@ class TestPythonMatlabFormat(object):
         self.max_dict_key_length = 10
         self.dict_value_subarray_dimensions = 2
         self.max_dict_value_subarray_axis_length = 5
+        self.min_structured_ndarray_fields = 2
+        self.max_structured_ndarray_fields = 5
+        self.max_structured_ndarray_field_lengths = 10
+        self.structured_ndarray_subarray_dimensions = 2
+        self.max_structured_ndarray_subarray_axis_length = 4
+        
 
     def random_str_ascii(self, length):
         # Makes a random ASCII str of the specified length.
@@ -200,6 +206,46 @@ class TestPythonMatlabFormat(object):
                 self.max_dict_value_subarray_axis_length), \
                 dtype=random.choice(self.dtypes))
         return data
+    
+    def random_structured_numpy_array(self, shape, field_shapes=None):
+        # Make a random field names, dtypes, and sizes. Though, if
+        # field_shapes is explicitly given, the sizes should be
+        # random. The field names must all be of type str, not unicode
+        # in Python 2. String types will not be used due to the
+        # difficulty in assigning the length.
+        names = [self.random_str_ascii(
+                 self.max_structured_ndarray_field_lengths)
+                 for i in range(0, random.randint(
+                 self.min_structured_ndarray_fields,
+                 self.max_structured_ndarray_fields))]
+        if sys.hexversion < 0x03000000:
+            for i, name in enumerate(names):
+                names[i] = name.encode()
+        dtypes = [random.choice(list(set(self.dtypes) - {'S', 'U'}))
+                  for i in range(len(names))]
+        if field_shapes is None:
+            shapes = [self.random_numpy_shape(
+                      self.structured_ndarray_subarray_dimensions,
+                      self.max_structured_ndarray_subarray_axis_length)
+                      for i in range(len(names))]
+        else:
+            shapes = [field_shapes] * len(names)
+        # Construct the type of the whole thing.
+        dt = np.dtype([(names[i], dtypes[i], shapes[i])
+                      for i in range(len(names))])
+        # Make the array. If dt.itemsize is 0, then we need to make an
+        # array of int8's the size in shape and convert it to work
+        # around a numpy bug. Otherwise, we will just create an empty
+        # array and then proceed by assigning each field.
+        if dt.itemsize == 0:
+            return np.zeros(shape=shape, dtype='int8').astype(dt)
+        else:
+            data = np.empty(shape=shape, dtype=dt)
+            for index, x in np.ndenumerate(data):
+                for i, name in enumerate(names):
+                    data[name][index] = self.random_numpy(shapes[i],
+                                                          dtypes[i])
+            return data
 
     def random_name(self):
         # Makes a random POSIX path of a random depth.
@@ -257,7 +303,27 @@ class TestPythonMatlabFormat(object):
         out = self.write_readback(data, self.random_name(),
                                   self.options)
         self.assert_equal(out, data)
-
+    
+    def check_numpy_structured_array(self, dimensions):
+        # Makes a random structured ndarray of the given type, writes it
+        # and reads it back, and then compares it.
+        shape = self.random_numpy_shape(dimensions,
+                                        self.max_array_axis_length)
+        data = self.random_structured_numpy_array(shape)
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+    
+    def check_numpy_structured_array_empty(self, dimensions):
+        # Makes a random structured ndarray of the given type, writes it
+        # and reads it back, and then compares it.
+        shape = self.random_numpy_shape(dimensions,
+                                        self.max_array_axis_length)
+        data = self.random_structured_numpy_array(shape, (1, 0))
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+    
     def check_python_collection(self, tp):
         # Makes a random collection of the specified type, writes it and
         # reads it back, and then compares it.
@@ -408,6 +474,14 @@ class TestPythonMatlabFormat(object):
     def test_numpy_empty(self):
         for dt in self.dtypes:
             yield self.check_numpy_empty, dt
+    
+    def test_numpy_structured_array(self):
+        for i in range(1, 4):
+            yield self.check_numpy_structured_array, i
+    
+    def test_numpy_structured_array_empty(self):
+        for i in range(1, 4):
+            yield self.check_numpy_structured_array_empty, i
 
     def test_python_collection(self):
         for tp in (list, tuple, set, frozenset, collections.deque):
