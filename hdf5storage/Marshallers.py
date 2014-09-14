@@ -1065,8 +1065,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # dtype. The shape is simply the shape of the object arrays
             # of its fields, so we might as well use the shape of
             # v. Then, all the elements of every field need to be
-            # assigned.
-            data = np.zeros(shape=v.shape, dtype=dt_whole)
+            # assigned. Now, if dtype's itemsize is 0, a TypeError will
+            # be thrown by numpy due to a bug in numpy. np.zeros (as
+            # well as ones and empty) does not like to make arrays with
+            # no bytes. A workaround is to make an empty array of some
+            # other type and convert its dtype. The smallest one we can
+            # make is an np.int8([]). Yes, one byte will be wasted, but
+            # at least no errors will happen.
+            dtwhole = np.dtype(dt_whole)
+            if dtwhole.itemsize == 0:
+                data = np.int8([]).astype(dtwhole)
+            else:
+                data = np.zeros(shape=v.shape, dtype=dtwhole)
             for k, v in struct_data.items():
                 for index, x in np.ndenumerate(v):
                     data[k][index] = x
