@@ -229,7 +229,8 @@ class TestPythonMatlabFormat(object):
         if sys.hexversion < 0x03000000:
             for i, name in enumerate(names):
                 names[i] = name.encode()
-        dtypes = [random.choice(list(set(self.dtypes) - {'S', 'U'}))
+        dtypes = [random.choice(list(set(self.dtypes)
+                  - set(('S', 'U'))))
                   for i in range(len(names))]
         if field_shapes is None:
             shapes = [self.random_numpy_shape(
