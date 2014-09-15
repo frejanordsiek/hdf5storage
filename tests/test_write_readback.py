@@ -80,6 +80,7 @@ class TestPythonMatlabFormat(object):
         self.min_structured_ndarray_fields = 2
         self.max_structured_ndarray_fields = 5
         self.max_structured_ndarray_field_lengths = 10
+        self.max_structured_ndarray_axis_length = 2
         self.structured_ndarray_subarray_dimensions = 2
         self.max_structured_ndarray_subarray_axis_length = 4
         
@@ -120,7 +121,7 @@ class TestPythonMatlabFormat(object):
         return random.uniform(-1.0, 1.0) \
             * 10.0**random.randint(-300, 300)
 
-    def random_numpy(self, shape, dtype):
+    def random_numpy(self, shape, dtype, allow_nan=True):
         # Makes a random numpy array of the specified shape and dtype
         # string. The method is slightly different depending on the
         # type. For 'bytes', 'str', and 'object'; an array of the
@@ -157,7 +158,14 @@ class TestPythonMatlabFormat(object):
             if dtype == 'bool':
                 bts = b''.join([{True: b'\x01', False: b'\x00'}[ \
                     ch > 127] for ch in bts])
-            return np.ndarray(shape=shape, dtype=dtype, buffer=bts)
+            data = np.ndarray(shape=shape, dtype=dtype, buffer=bts)
+            # If it is a floating point type and we are supposed to
+            # remove NaN's, then turn them to zeros.
+            if not allow_nan and data.dtype.kind in ('f', 'c') \
+                and np.any(np.isnan(data)):
+                data = data.copy()
+                data[np.isnan(data)] = 0.0
+            return data
 
     def random_numpy_scalar(self, dtype):
         # How a random scalar is made depends on th type. For must, it
@@ -243,8 +251,8 @@ class TestPythonMatlabFormat(object):
             data = np.empty(shape=shape, dtype=dt)
             for index, x in np.ndenumerate(data):
                 for i, name in enumerate(names):
-                    data[name][index] = self.random_numpy(shapes[i],
-                                                          dtypes[i])
+                    data[name][index] = self.random_numpy(shapes[i], \
+                        dtypes[i], allow_nan=False)
             return data
 
     def random_name(self):
@@ -307,8 +315,8 @@ class TestPythonMatlabFormat(object):
     def check_numpy_structured_array(self, dimensions):
         # Makes a random structured ndarray of the given type, writes it
         # and reads it back, and then compares it.
-        shape = self.random_numpy_shape(dimensions,
-                                        self.max_array_axis_length)
+        shape = self.random_numpy_shape(dimensions, \
+            self.max_structured_ndarray_axis_length)
         data = self.random_structured_numpy_array(shape)
         out = self.write_readback(data, self.random_name(),
                                   self.options)
@@ -317,8 +325,8 @@ class TestPythonMatlabFormat(object):
     def check_numpy_structured_array_empty(self, dimensions):
         # Makes a random structured ndarray of the given type, writes it
         # and reads it back, and then compares it.
-        shape = self.random_numpy_shape(dimensions,
-                                        self.max_array_axis_length)
+        shape = self.random_numpy_shape(dimensions, \
+            self.max_structured_ndarray_axis_length)
         data = self.random_structured_numpy_array(shape, (1, 0))
         out = self.write_readback(data, self.random_name(),
                                   self.options)

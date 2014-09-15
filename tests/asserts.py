@@ -227,9 +227,25 @@ def assert_equal_matlab_format(a, b):
                 if np.prod(c.shape) == 0 \
                         and b.dtype.name.startswith('complex'):
                     c = np.real(c)
-                assert a.dtype == c.dtype
-                assert a.shape == c.shape
-                npt.assert_equal(a, c)
+                # If it is structured, check that the field names are
+                # the same, in the same order, and then go through them
+                # one by one. Otherwise, make sure the dtypes and shapes
+                # are the same before comparing all values.
+                if b.dtype.names is None and a.dtype.names is None:
+                    assert a.dtype == c.dtype
+                    assert a.shape == c.shape
+                    npt.assert_equal(a, c)
+                else:
+                    assert a.dtype.names is not None
+                    assert b.dtype.names is not None
+                    assert set(a.dtype.names) == set(b.dtype.names)
+                    assert a.dtype.names == b.dtype.names
+                    a = a.flatten()
+                    b = b.flatten()
+                    for k in b.dtype.names:
+                        for index, x in np.ndenumerate(a):
+                            assert_equal_from_matlab(a[k][index],
+                                                     b[k][index])
         else:
             c = np.atleast_2d(b)
             assert a.dtype == c.dtype
