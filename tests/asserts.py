@@ -135,7 +135,16 @@ def assert_equal_none_format(a, b):
                     npt.assert_equal(a, b)
             else:
                 assert a.dtype == b.dtype
-                assert a.shape == b.shape
+                # Now, if b.shape is just all ones, then a.shape will
+                # just be (1,). Otherwise, we need to compare the shapes
+                # directly. Also, dimensions need to be squeezed before
+                # comparison in this case.
+                assert np.prod(a.shape) == np.prod(b.shape)
+                assert a.shape == b.shape \
+                    or (np.prod(b.shape) == 1 and a.shape == (1,))
+                if np.prod(a.shape) == 1:
+                    a = np.squeeze(a)
+                    b = np.squeeze(b)
                 npt.assert_equal(a, b)
         else:
             assert a.dtype == b.dtype
