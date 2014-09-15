@@ -656,7 +656,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                                options)
 
         # If it an ndarray with fields and we are writing such things as
-        # a Group/struct, that needs to be handled. Otherwise, it is
+        # a Group/struct or if its shape is zero (h5py can't write it
+        # Dataset then), that needs to be handled. Otherwise, it is
         # simply written as is to a Dataset. As HDF5 Reference types do
         # look like a structured object array, those have to be excluded
         # explicitly. Complex types may have been converted so that they
@@ -666,13 +667,16 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # converting that field to a HDF5 Reference types, it will just
         # be written as a Group instead (just have to see if "'O'" is in
         # str(data_to_store.dtype).
-
+        
         if data_to_store.dtype.fields is not None \
                 and h5py.check_dtype(ref=data_to_store.dtype) \
                 is not h5py.Reference \
                 and not np.iscomplexobj(data) \
-                and (options.structured_numpy_ndarray_as_struct
-                or "'O'" in str(data_to_store.dtype)):
+                and (options.structured_numpy_ndarray_as_struct \
+                or "'O'" in str(data_to_store.dtype) \
+                or not all(data_to_store.shape) \
+                or not all([all(data_to_store[n].shape) \
+                for n in data_to_store.dtype.names])):
             # If the group doesn't exist, it needs to be created. If it
             # already exists but is not a group, it needs to be deleted
             # before being created.
@@ -810,12 +814,19 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             set_attribute_string(grp[name], 'Python.numpy.Container',
                                  container)
 
-        # If its dtype has fields, then we set the 'Python.Fields' and
-        # 'MATLAB_fields' Attributes to the field names if we are
-        # storing python metadata or doing matlab compatibility and we
-        # are storing a structured ndarray as a structure.
+        # If its dtype has fields and we would have written it as a
+        # Group (option is set, one of the field dtypes is object, or if
+        # data or one of its fields are empty), then we set the
+        # 'Python.Fields' and 'MATLAB_fields' Attributes to the field
+        # names if we are storing python metadata or doing matlab
+        # compatibility and we are storing a structured ndarray as a
+        # structure.
         if data.dtype.fields is not None \
-                and options.structured_numpy_ndarray_as_struct:
+                and (options.structured_numpy_ndarray_as_struct \
+                or "'O'" in str(data.dtype) \
+                or not all(data.shape) \
+                or not all([all(data[n].shape) \
+                for n in data.dtype.names])):
             # Grab the list of fields.
             field_names = list(data.dtype.names)
 
@@ -1074,12 +1085,16 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # at least no errors will happen.
             dtwhole = np.dtype(dt_whole)
             if dtwhole.itemsize == 0:
-                data = np.int8([]).astype(dtwhole)
+                data = np.zeros(shape=v.shape,
+                                dtype='int8').astype(dtwhole)
             else:
                 data = np.zeros(shape=v.shape, dtype=dtwhole)
             for k, v in struct_data.items():
-                for index, x in np.ndenumerate(v):
-                    data[k][index] = x
+                # There is no sense iterating through the elements if
+                # the shape is an empty shape.
+                if all(data.shape) and all(v.shape):
+                    for index, x in np.ndenumerate(v):
+                        data[k][index] = x
 
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not
