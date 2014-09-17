@@ -203,6 +203,10 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.3. Bugfix release fixing the following bug.
+       * Fixed broken ability to correctly read and write empty
+         structured ``np.ndarray`` (has fields).
+
 0.1.2. Bugfix release fixing the following bugs.
        * Removed mistaken support for ``np.float16`` for h5py versions
          before ``2.2`` since that was when support for it was
