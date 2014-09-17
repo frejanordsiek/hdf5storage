@@ -13,6 +13,12 @@ Package Overview
 The package is currently a pure Python package; using no Cython, C/C++,
 or other languages.
 
+Also, pickling is not used at all and should not be added. It is a
+security risk since pickled data is read through the interpreter
+allowing arbitrary code (which could be malicious) to be executed in the
+interpreter. One wants to be able to read possibly HDF5 and MAT files
+from untrusted sources, so pickling is avoided in this package.
+
 The :py:mod:`hdf5storage` module contains the high level reading and
 writing functions, as well as the :py:class:`Options` class for
 encapsulating all the various options governing how data is read and

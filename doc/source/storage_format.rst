@@ -13,6 +13,13 @@ as ::
     import collections as cl
     import numpy as np
 
+Also, pickling is not used at all in this format and should not be
+added. It is a security risk since pickled data is read through the
+interpreter allowing arbitrary code (which could be malicious) to be
+executed in the interpreter. One wants to be able to read possibly HDF5
+and MAT files from untrusted sources, so pickling is avoided in this
+package.
+
 
 MATLAB File Header
 ==================

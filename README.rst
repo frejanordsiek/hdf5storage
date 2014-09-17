@@ -7,6 +7,11 @@ files. This package also provides support for MATLAB MAT v7.3 formatted
 files, which are just HDF5 files with a different extension and some
 extra meta-data.
 
+All of this is done without pickling data. Pickling is bad for security
+because it allows arbitrary code to be executed in the interpreter. One
+wants to be able to read possibly HDF5 and MAT files from untrusted
+sources, so pickling is avoided in this package.
+
 The package's documetation is found at
 http://pythonhosted.org/hdf5storage/
 
