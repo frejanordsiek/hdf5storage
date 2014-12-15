@@ -139,7 +139,7 @@ def write_object_array(f, data, options):
 
     # Now, the dtype needs to be changed to the reference type and the
     # whole thing copied over to data_to_store.
-    return data_refs.astype(dtype=ref_dtype).copy()
+    return data_refs.astype(ref_dtype).copy()
 
 
 def read_object_array(f, data, options):
