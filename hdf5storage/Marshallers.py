@@ -41,6 +41,11 @@ from hdf5storage import lowlevel
 from hdf5storage.lowlevel import write_data, read_data
 
 
+try:
+    H5PY_VERSION = h5py.__version__
+except:
+    H5PY_VERSION = '2.0'
+
 def write_object_array(f, data, options):
     """ Writes an array of objects recursively.
 
@@ -139,7 +144,7 @@ def write_object_array(f, data, options):
 
     # Now, the dtype needs to be changed to the reference type and the
     # whole thing copied over to data_to_store.
-    return data_refs.astype(dtype=ref_dtype).copy()
+    return data_refs.astype(ref_dtype).copy()
 
 
 def read_object_array(f, data, options):
@@ -538,7 +543,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_classes = list(self.__MATLAB_classes.values())
 
         # For h5py >= 2.2, half precisions (np.float16) are supported.
-        if distutils.version.LooseVersion(h5py.__version__) \
+        if distutils.version.LooseVersion(H5PY_VERSION) \
                 >= distutils.version.LooseVersion('2.2'):
             self.types.append(np.float16)
             self.python_type_strings.append('numpy.float16')
@@ -848,7 +853,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # individual characters.
             if options.matlab_compatible \
                     and distutils.version.LooseVersion( \
-                    h5py.__version__) \
+                    H5PY_VERSION) \
                     >= distutils.version.LooseVersion('2.3'):
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
@@ -944,7 +949,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # If we are using h5py version >= 2.3, we can actually read the
         # MATLAB_fields Attribute if it is present.
         matlab_fields = None
-        if distutils.version.LooseVersion(h5py.__version__) \
+        if distutils.version.LooseVersion(H5PY_VERSION) \
                 >= distutils.version.LooseVersion('2.3'):
             matlab_fields = get_attribute(grp[name], 'MATLAB_fields')
 
@@ -1490,7 +1495,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # should be deleted. It is written as a vlen='S1' array of
         # bytes_ arrays of the individual characters.
         if options.matlab_compatible \
-                and distutils.version.LooseVersion(h5py.__version__) \
+                and distutils.version.LooseVersion(H5PY_VERSION) \
                 >= distutils.version.LooseVersion('2.3'):
             try:
                 dt = h5py.special_dtype(vlen=np.dtype('S1'))
