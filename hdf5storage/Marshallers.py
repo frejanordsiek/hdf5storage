@@ -41,10 +41,13 @@ from hdf5storage import lowlevel
 from hdf5storage.lowlevel import write_data, read_data
 
 
+# Ubuntu 12.04's h5py doesn't have __version__ set so we need to try to
+# grab the version and if it isn't available, just assume it is 2.0.
 try:
     H5PY_VERSION = h5py.__version__
 except:
     H5PY_VERSION = '2.0'
+
 
 def write_object_array(f, data, options):
     """ Writes an array of objects recursively.
