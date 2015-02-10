@@ -203,9 +203,7 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
-0.1.4. Bugfix release fixing the following bugs. Thanks goes to
-       `mrdomino <https://github.com/mrdomino>` for writing the bug
-       fixes.
+0.1.4. Bugfix release fixing the following bugs. Thanks goes to `mrdomino <https://github.com/mrdomino>`_ for writing the bug fixes.
        * Fixed bug where ``dtype`` is used as a keyword parameter of
          ``np.ndarray.astype`` when it is a positional argument.
        * Fixed error caused by ``h5py.__version__`` being absent on
