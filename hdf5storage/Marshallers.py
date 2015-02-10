@@ -44,9 +44,9 @@ from hdf5storage.lowlevel import write_data, read_data
 # Ubuntu 12.04's h5py doesn't have __version__ set so we need to try to
 # grab the version and if it isn't available, just assume it is 2.0.
 try:
-    H5PY_VERSION = h5py.__version__
+    _H5PY_VERSION = h5py.__version__
 except:
-    H5PY_VERSION = '2.0'
+    _H5PY_VERSION = '2.0'
 
 
 def write_object_array(f, data, options):
@@ -546,7 +546,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_classes = list(self.__MATLAB_classes.values())
 
         # For h5py >= 2.2, half precisions (np.float16) are supported.
-        if distutils.version.LooseVersion(H5PY_VERSION) \
+        if distutils.version.LooseVersion(_H5PY_VERSION) \
                 >= distutils.version.LooseVersion('2.2'):
             self.types.append(np.float16)
             self.python_type_strings.append('numpy.float16')
@@ -856,7 +856,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # individual characters.
             if options.matlab_compatible \
                     and distutils.version.LooseVersion( \
-                    H5PY_VERSION) \
+                    _H5PY_VERSION) \
                     >= distutils.version.LooseVersion('2.3'):
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
@@ -952,7 +952,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # If we are using h5py version >= 2.3, we can actually read the
         # MATLAB_fields Attribute if it is present.
         matlab_fields = None
-        if distutils.version.LooseVersion(H5PY_VERSION) \
+        if distutils.version.LooseVersion(_H5PY_VERSION) \
                 >= distutils.version.LooseVersion('2.3'):
             matlab_fields = get_attribute(grp[name], 'MATLAB_fields')
 
@@ -1498,7 +1498,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # should be deleted. It is written as a vlen='S1' array of
         # bytes_ arrays of the individual characters.
         if options.matlab_compatible \
-                and distutils.version.LooseVersion(H5PY_VERSION) \
+                and distutils.version.LooseVersion(_H5PY_VERSION) \
                 >= distutils.version.LooseVersion('2.3'):
             try:
                 dt = h5py.special_dtype(vlen=np.dtype('S1'))
