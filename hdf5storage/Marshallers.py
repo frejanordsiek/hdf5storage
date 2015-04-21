@@ -1298,15 +1298,26 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         self.matlab_classes = []
 
     def write(self, f, grp, name, data, type_string, options):
-        # data just needs to be converted to the appropriate numpy type
-        # (pass it through np.array and then access [()] to get the
-        # scalar back as a scalar numpy type) and then pass it to the
-        # parent version of this function. The proper type_string needs
-        # to be grabbed now as the parent function will have a modified
-        # form of data to guess from if not given the right one
-        # explicitly.
-        NumpyScalarArrayMarshaller.write(self, f, grp, name,
-                                         np.array(data)[()],
+        # data just needs to be converted to the appropriate numpy
+        # type. If it is a Python 3.x int or Python 2.x long that is too
+        # big to fit in a numpy.int64, it is converted to the string
+        # representation of the integer and then converted to a
+        # numpy.bytes_. Otherwise, data is passed through np.array and
+        # then access [()] to get the scalar back as a scalar numpy
+        # type. After all conversions, it is then passed to the parent
+        # version of this function. The proper type_string needs to be
+        # grabbed now as the parent function will have a modified form
+        # of data to guess from if not given the right one explicitly.
+        if sys.hexversion >= 0x03000000:
+            tp = int
+        else:
+            tp = long
+        if isinstance(data, tp) \
+                and (data > 2**63 or data < -(2**63) + 1):
+            out = np.bytes_(data)
+        else:
+            out = np.array(data)[()]
+        NumpyScalarArrayMarshaller.write(self, f, grp, name, out,
                                          self.get_type_string(data,
                                          type_string), options)
 
