@@ -101,25 +101,26 @@ will be what it is read back as) the MATLAB class it becomes if
 targetting a MAT file, and the first version of this package to
 support writing it so MATlAB can read it.
 
-===============  =======  ==========================  ===========  =============
+===============  =======  ==========================  ===========  ==============
 Python                                                MATLAB
-----------------------------------------------------  --------------------------
+----------------------------------------------------  ---------------------------
 Type             Version  Converted to                Class        Version
-===============  =======  ==========================  ===========  =============
+===============  =======  ==========================  ===========  ==============
 bool             0.1      np.bool\_ or np.uint8       logical      0.1 [1]_
 None             0.1      ``np.float64([])``          ``[]``       0.1
-int              0.1      np.int64                    int64        0.1
+int [2]_         0.1      np.int64 [2]_               int64        0.1
+long [3]_        0.1      np.int64                    int64        0.1
 float            0.1      np.float64                  double       0.1
 complex          0.1      np.complex128               double       0.1
-str              0.1      np.uint32/16                char         0.1 [2]_
-bytes            0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
-bytearray        0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
+str              0.1      np.uint32/16                char         0.1 [4]_
+bytes            0.1      np.bytes\_ or np.uint16     char         0.1 [5]_
+bytearray        0.1      np.bytes\_ or np.uint16     char         0.1 [5]_
 list             0.1      np.object\_                 cell         0.1
 tuple            0.1      np.object\_                 cell         0.1
 set              0.1      np.object\_                 cell         0.1
 frozenset        0.1      np.object\_                 cell         0.1
 cl.deque         0.1      np.object\_                 cell         0.1
-dict             0.1                                  struct       0.1 [4]_
+dict             0.1                                  struct       0.1 [6]_
 np.bool\_        0.1                                  logical      0.1
 np.void          0.1
 np.uint8         0.1                                  uint8        0.1
@@ -130,23 +131,28 @@ np.uint8         0.1                                  int8         0.1
 np.int16         0.1                                  int16        0.1
 np.int32         0.1                                  int32        0.1
 np.int64         0.1                                  int64        0.1
-np.float16 [5]_  0.1
+np.float16 [7]_  0.1
 np.float32       0.1                                  single       0.1
 np.float64       0.1                                  double       0.1
 np.complex64     0.1                                  single       0.1
 np.complex128    0.1                                  double       0.1
-np.str\_         0.1      np.uint32/16                char/uint32  0.1 [2]_
-np.bytes\_       0.1      np.bytes\_ or np.uint16     char         0.1 [3]_
+np.str\_         0.1      np.uint32/16                char/uint32  0.1 [4]_
+np.bytes\_       0.1      np.bytes\_ or np.uint16     char         0.1 [5]_
 np.object\_      0.1                                  cell         0.1
-np.ndarray       0.1      [6]_ [7]_                   [6]_ [7]_    0.1 [6]_ [8]_
-np.matrix        0.1      [6]_                        [6]_         0.1 [6]_
-np.chararray     0.1      [5]_                        [6]_         0.1 [6]_
-np.recarray      0.1      structured np.ndarray       [6]_ [7]_    0.1 [6]_
-===============  =======  ==========================  ===========  =============
+np.ndarray       0.1      [8]_ [9]_                   [8]_ [9]_    0.1 [8]_ [10]_
+np.matrix        0.1      [8]_                        [8]_         0.1 [8]_
+np.chararray     0.1      [8]_                        [8]_         0.1 [8]_
+np.recarray      0.1      structured np.ndarray       [8]_ [9]_    0.1 [8]_
+===============  =======  ==========================  ===========  ==============
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
        MATLAB compatiblity, or if the option is explicitly set.
-.. [2] Depends on the selected options and whether it can be converted
+.. [2] In Python 2.x, it may be read back as a ``long`` if it can't fit
+       in the size of an ``int``.
+.. [3] Type only found in Python 2.x. Python 2.x's ``long`` and ``int``
+       are unified into a single ``int`` type in Python 3.x. Read as an
+       ``int`` in Python 3.x.
+.. [4] Depends on the selected options and whether it can be converted
        to UTF-16 without using doublets. If the option is explicity set
        (or implicitly through doing MATLAB compatibility) and it can be
        converted to UTF-16 without losing any characters that can't be
@@ -154,24 +160,24 @@ np.recarray      0.1      structured np.ndarray       [6]_ [7]_    0.1 [6]_
        support them), then it is written as ``np.uint16`` in UTF-16
        encoding. Otherwise, it is stored at ``np.uint32`` in UTF-32
        encoding.
-.. [3] Depends on the selected options. If the option is explicitly set
+.. [5] Depends on the selected options. If the option is explicitly set
        (or implicitly through doing MATLAB compatibility), it will be
        stored as ``np.uint16`` in UTF-16 encoding. Otherwise, it is just
        written as ``np.bytes_``.
-.. [4] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
-.. [5] ``np.float16`` are not supported for h5py versions before
+.. [6] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
+.. [7] ``np.float16`` are not supported for h5py versions before
        ``2.2``.
-.. [6] Container types are only supported if their underlying dtype is
+.. [8] Container types are only supported if their underlying dtype is
        supported. Data conversions are done based on its dtype.
-.. [7] Structured ``np.ndarray`` s (have fields in their dtypes) can be
+.. [9] Structured ``np.ndarray`` s (have fields in their dtypes) can be
        written as an HDF5 COMPOUND type or as an HDF5 Group with Datasets
        holding its fields (either the values directly, or as an HDF5
        Reference array to the values for the different elements of the
        data). Can only be written as an HDF5 COMPOUND type if none of
        its field are of dtype ``'object'``.
-.. [8] Structured ``np.ndarray`` s with no elements, when written like a
-       structure, will not be read back with the right dtypes for their
-       fields (will all become 'object').
+.. [10] Structured ``np.ndarray`` s with no elements, when written like a
+        structure, will not be read back with the right dtypes for their
+        fields (will all become 'object').
 
 This table gives the MATLAB classes that can be read from a MAT file,
 the first version of this package that can read them, and the Python
@@ -181,8 +187,8 @@ type they are read as.
 MATLAB Class     Version  Python Type
 ===============  =======  =================================
 logical          0.1      np.bool\_
-single           0.1      np.float32 or np.complex64 [9]_
-double           0.1      np.float64 or np.complex128 [9]_
+single           0.1      np.float32 or np.complex64 [11]_
+double           0.1      np.float64 or np.complex128 [11]_
 uint8            0.1      np.uint8
 uint16           0.1      np.uint16
 uint32           0.1      np.uint32
@@ -197,11 +203,13 @@ cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``
 ===============  =======  =================================
 
-.. [9] Depends on whether there is a complex part or not.
+.. [11] Depends on whether there is a complex part or not.
 
 
 Versions
 ========
+
+0.1.5. Bugfix release fixing a bug where an ``int`` could be stored that is too big to fit into an ``int`` when read back in Python 2.x. When it is too big, it is converted to a ``long``.
 
 0.1.4. Bugfix release fixing the following bugs. Thanks goes to `mrdomino <https://github.com/mrdomino>`_ for writing the bug fixes.
        * Fixed bug where ``dtype`` is used as a keyword parameter of

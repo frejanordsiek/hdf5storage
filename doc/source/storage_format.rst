@@ -59,18 +59,19 @@ Type             Version  Converted to                          Group or Dataset
 ===============  =======  ====================================  =====================
 bool             0.1      np.bool\_ or np.uint8 [1]_            Dataset
 None             0.1      ``np.float64([])``                    Dataset
-int              0.1      np.int64                              Dataset
+int [2]_         0.1      np.int64 [2]_                         Dataset
+long [3]_        0.1      np.int64                              Dataset
 float            0.1      np.float64                            Dataset
 complex          0.1      np.complex128                         Dataset
-str              0.1      np.uint32/16 [2]_                     Dataset
-bytes            0.1      np.bytes\_ or np.uint16 [3]_          Dataset
-bytearray        0.1      np.bytes\_ or np.uint16 [3]_          Dataset
+str              0.1      np.uint32/16 [4]_                     Dataset
+bytes            0.1      np.bytes\_ or np.uint16 [5]_          Dataset
+bytearray        0.1      np.bytes\_ or np.uint16 [5]_          Dataset
 list             0.1      np.object\_                           Dataset
 tuple            0.1      np.object\_                           Dataset
 set              0.1      np.object\_                           Dataset
 frozenset        0.1      np.object\_                           Dataset
 cl.deque         0.1      np.object\_                           Dataset
-dict [4]_        0.1                                            Group
+dict [6]_        0.1                                            Group
 np.bool\_        0.1      not or np.uint8 [1]_                  Dataset
 np.void          0.1                                            Dataset
 np.uint8         0.1                                            Dataset
@@ -81,24 +82,29 @@ np.uint8         0.1                                            Dataset
 np.int16         0.1                                            Dataset
 np.int32         0.1                                            Dataset
 np.int64         0.1                                            Dataset
-np.float16 [5]_  0.1                                            Dataset
+np.float16 [7]_  0.1                                            Dataset
 np.float32       0.1                                            Dataset
 np.float64       0.1                                            Dataset
 np.complex64     0.1                                            Dataset
 np.complex128    0.1                                            Dataset
-np.str\_         0.1      np.uint32/16 [2]_                     Dataset
-np.bytes\_       0.1      np.bytes\_ or np.uint16 [3]_          Dataset
+np.str\_         0.1      np.uint32/16 [4]_                     Dataset
+np.bytes\_       0.1      np.bytes\_ or np.uint16 [5]_          Dataset
 np.object\_      0.1                                            Dataset
-np.ndarray       0.1      not or Group of contents [6]_         Dataset or Group [6]_
+np.ndarray       0.1      not or Group of contents [8]_         Dataset or Group [8]_
 np.matrix        0.1      np.ndarray                            Dataset
-np.chararray     0.1      np.bytes\_ or np.uint16/32 [2]_ [3]_  Dataset
-np.recarray      0.1      structured np.ndarray [6]_            Dataset or Group [6]_
+np.chararray     0.1      np.bytes\_ or np.uint16/32 [4]_ [5]_  Dataset
+np.recarray      0.1      structured np.ndarray [8]_            Dataset or Group [8]_
 ===============  =======  ====================================  =====================
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when
        ``convert_bools_to_uint8 == True`` (set implicitly when
        ``matlab_compatible == True``).
-.. [2] Depends on the selected options and whether it can be converted
+.. [2] In Python 2.x, it may be read back as a ``long`` if it can't fit
+       in the size of an ``int``.
+.. [3] Type only found in Python 2.x. Python 2.x's ``long`` and ``int``
+       are unified into a single ``int`` type in Python 3.x. Read as an
+       ``int`` in Python 3.x.
+.. [4] Depends on the selected options and whether it can be converted
        to UTF-16 without using doublets. If
        ``convert_numpy_str_to_utf16 == True`` (set implicitly when
        ``matlab_compatible == True``) and it can be converted to UTF-16
@@ -106,15 +112,15 @@ np.recarray      0.1      structured np.ndarray [6]_            Dataset or Group
        or using UTF-16 doublets (MATLAB doesn't support them), then it
        is written as ``np.uint16`` in UTF-16 encoding. Otherwise, it is
        stored at ``np.uint32`` in UTF-32 encoding.
-.. [3] Depends on the selected options. If
+.. [5] Depends on the selected options. If
        ``convert_numpy_bytes_to_utf16 == True`` (set implicitly when
        ``matlab_compatible == True``), it will be stored as
        ``np.uint16`` in UTF-16 encoding. Otherwise, it is just written
        as ``np.bytes_``.
-.. [4] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
-.. [5] ``np.float16`` are not supported for h5py versions before
+.. [6] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
+.. [7] ``np.float16`` are not supported for h5py versions before
        ``2.2``.
-.. [6] If it doesn't have any fields in its dtype or if
+.. [8] If it doesn't have any fields in its dtype or if
        :py:attr:`Options.structured_numpy_ndarray_as_struct` is not set
        and none of its fields are of dtype ``'object'``, it is not
        converted and is written as is as a Dataset. Otherwise, it
@@ -149,11 +155,12 @@ Type           Python.Type          Python.numpy.UnderlyingType  MATLAB_class   
 bool           'bool'               'bool'                       'logical'           1
 None           'builtins.NoneType'  'float64'                    'double'
 int            'int'                'int64'                      'int64'
+long           'long'               'int64'                      'int64'
 float          'float'              'float64'                    'double'
 complex        'complex'            'complex128'                 'double'
-str            'str'                'str#' [7]_                  'char'              2
-bytes          'bytes'              'bytes#' [7]_                'char'              2
-bytearray      'bytearray'          'bytes#' [7]_                'char'              2
+str            'str'                'str#' [9]_                  'char'              2
+bytes          'bytes'              'bytes#' [9]_                'char'              2
+bytearray      'bytearray'          'bytes#' [9]_                'char'              2
 list           'list'               'object'                     'cell'
 tuple          'tuple'              'object'                     'cell'
 set            'set'                'object'                     'cell'
@@ -161,7 +168,7 @@ frozenset      'frozenset'          'object'                     'cell'
 cl.deque       'collections.deque'  'object'                     'cell'
 dict           'dict'                                            'struct'
 np.bool\_      'numpy.bool'         'bool'                       'logical'           1
-np.void        'numpy.void'         'void#' [7]_
+np.void        'numpy.void'         'void#' [9]_
 np.uint8       'numpy.uint8'        'uint8'                      'uint8'
 np.uint16      'numpy.uint16'       'uint16'                     'uint16'
 np.uint32      'numpy.uint32'       'uint32'                     'uint32'
@@ -175,23 +182,23 @@ np.float32     'numpy.float32'      'float32'                    'single'
 np.float64     'numpy.float64'      'float64'                    'double'
 np.complex64   'numpy.complex64'    'complex64'                  'single'
 np.complex128  'numpy.complex128'   'complex128'                 'double'
-np.str\_       'numpy.str\_'        'str#' [7]_                  'char' or 'uint32'  2 or 4 [8]_
-np.bytes\_     'numpy.bytes\_'      'bytes#' [7]_                'char'              2
+np.str\_       'numpy.str\_'        'str#' [9]_                  'char' or 'uint32'  2 or 4 [10]_
+np.bytes\_     'numpy.bytes\_'      'bytes#' [9]_                'char'              2
 np.object\_    'numpy.object\_'     'object'                     'cell'
-np.ndarray     'numpy.ndarray'      [9]_                         [9]_ [10]_
-np.matrix      'numpy.matrix'       [9]_                         [9]_
-np.chararray   'numpy.chararray'    [9]_                         'char' [9]_
-np.recarray    'numpy.recarray'     [9]_                         [9]_ [10]_
+np.ndarray     'numpy.ndarray'      [11]_                        [11]_ [12]_
+np.matrix      'numpy.matrix'       [11]_                        [11]_
+np.chararray   'numpy.chararray'    [11]_                        'char' [11]_
+np.recarray    'numpy.recarray'     [11]_                        [11]_ [12]_
 =============  ===================  ===========================  ==================  =================
 
-.. [7] '#' is replaced by the number of bits taken up by the string, or
+.. [9] '#' is replaced by the number of bits taken up by the string, or
        each string in the case that it is an array of strings. This is 8
        and 32 bits per character for ``np.bytes_`` and ``np.str_``
        respectively.
-.. [8] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
-.. [9] The value that would be put in for a scalar of the same dtype is
+.. [10] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
+.. [11] The value that would be put in for a scalar of the same dtype is
        used.
-.. [10] If it is structured (its dtype has fields),
+.. [12] If it is structured (its dtype has fields),
         :py:attr:`Options.structured_numpy_ndarray_as_struct` is set,
         and none of its fields are of dtype ``'object'``; it is set to
         ``'struct'`` overriding anything else.
@@ -299,6 +306,22 @@ Then ``fs`` looks like::
 
 Storage of Special Types
 ========================
+
+int and long
+------------
+
+Python 2.x has two integer types: a fixed-width ``int`` corresponding
+to a C int type, and a variable-width ``long`` for holding arbitrarily
+large values. An ``int`` is thus 32 or 64 bits depending on whether the
+python interpreter was is a 32 or 64 bit executable. In Python 3.x,
+both types are both unified into a single ``int`` type.
+
+Both an ``int`` and a ``long`` written in Python 2.x will be read as a
+``int`` in Python 3.x. Python 3.x always writes as ``int``. Due to this
+and the fact that the interpreter in Python 2.x could be using 32-bits
+``int``, it is possible that a value could be read that is too large
+to fit into ``int``. When that happens, it read as a ``long`` instead.
+
 
 Complex Numbers
 ---------------
@@ -495,8 +518,8 @@ type they are read as if there is no Python metadata attached to them.
 MATLAB Class     Version  Python Type
 ===============  =======  =================================
 logical          0.1      np.bool\_
-single           0.1      np.float32 or np.complex64 [11]_
-double           0.1      np.float64 or np.complex128 [11]_
+single           0.1      np.float32 or np.complex64 [13]_
+double           0.1      np.float64 or np.complex128 [13]_
 uint8            0.1      np.uint8
 uint16           0.1      np.uint16
 uint32           0.1      np.uint32
@@ -511,4 +534,4 @@ cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``
 ===============  =======  =================================
 
-.. [11] Depends on whether there is a complex part or not.
+.. [13] Depends on whether there is a complex part or not.
