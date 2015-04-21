@@ -1319,12 +1319,25 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). As it might be
         # returned as an ndarray, it needs to be run through
-        # np.asscalar.
+        # np.asscalar. Now, since int and long are unified in Python 3.x
+        # and the size of int in Python 2.x is not always the same, if
+        # the type_string is 'int', then we need to check to see if it
+        # can fit into an int if we are in Python 2.x. If it will fit,
+        # it is returned as an int. If it would not fit, it is returned
+        # as a long.
         type_string = get_attribute_string(grp[name], 'Python.Type')
         if type_string in self.python_type_strings:
             tp = self.types[self.python_type_strings.index(
                             type_string)]
-            return tp(np.asscalar(data))
+            sdata = np.asscalar(data)
+            if sys.hexversion >= 0x03000000 or tp != int:
+                return tp(sdata)
+            else:
+                num = long(sdata)
+                if num > sys.maxint or num < (-sys.maxint + 1):
+                    return num
+                else:
+                    return int(num)
         else:
             # Must be some other type, so return it as is.
             return data
