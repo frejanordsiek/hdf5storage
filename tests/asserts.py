@@ -194,7 +194,8 @@ def assert_equal_matlab_format(a, b):
             if len(b) == 0:
                 assert_equal(a, np.zeros(shape=(1, 0), dtype='U'))
             elif isinstance(b, (bytes, bytearray)):
-                assert_equal(a, np.atleast_2d(np.unicode_(b.decode())))
+                assert_equal(a, np.atleast_2d(np.unicode_( \
+                    b.decode('UTF-8'))))
             else:
                 assert_equal(a, np.atleast_2d(np.unicode_(b)))
         else:
