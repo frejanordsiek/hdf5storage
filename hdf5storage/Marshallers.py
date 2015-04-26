@@ -985,7 +985,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # values (single element structured ndarray), as opposed to
             # Reference arrays to all the values (multi-element structed
             # ndarray). In Python 2, the field names need to be
-            # converted to ASCII from unicode when storing the fields in
+            # converted to str from unicode when storing the fields in
             # struct_data.
             struct_data = dict()
             is_multi_element = True
@@ -1003,12 +1003,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         'Python.Empty']))) != 0:
                     is_multi_element = False
                 try:
-                    if sys.hexversion >= 0x03000000:
-                        struct_data[k] = read_data(f, grp[name], k,
-                                                   options)
-                    else:
-                        struct_data[k] = \
-                            read_data(f, grp[name], k, options)
+                    struct_data[k] = read_data(f, grp[name], k,
+                                               options)
                 except:
                     pass
 
@@ -1045,8 +1041,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             dt_whole = []
             for k in fields:
                 # In Python 2, the field names for a structured ndarray
-                # must be ascii (str) as opposed to unicode, so k needs
-                # to be converted in the Python 2 case.
+                # must be str as opposed to unicode, so k needs to be
+                # converted in the Python 2 case.
                 if sys.hexversion >= 0x03000000:
                     k_name = k
                 else:
