@@ -1302,7 +1302,11 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # type. If it is a Python 3.x int or Python 2.x long that is too
         # big to fit in a numpy.int64, it is converted to the string
         # representation of the integer and then converted to a
-        # numpy.bytes_. Otherwise, data is passed through np.array and
+        # numpy.bytes_. If it isn't too big and is a long, it needs to be
+        # converted to an int or else when it is converted to a
+        # numpy.int64, its dtype.type won't be equal to numpy.int64 for
+        # some reason (if it is a Python 3.x int, packing it into int
+        # does nothing). Otherwise, data is passed through np.array and
         # then access [()] to get the scalar back as a scalar numpy
         # type. After all conversions, it is then passed to the parent
         # version of this function. The proper type_string needs to be
@@ -1312,9 +1316,11 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
             tp = int
         else:
             tp = long
-        if isinstance(data, tp) \
-                and (data > 2**63 or data < -(2**63) + 1):
-            out = np.bytes_(data)
+        if isinstance(data, tp):
+            if data > 2**63 or data < -(2**63) + 1:
+                out = np.bytes_(data)
+            else:
+                out = np.array(int(data))[()]
         else:
             out = np.array(data)[()]
         NumpyScalarArrayMarshaller.write(self, f, grp, name, out,
