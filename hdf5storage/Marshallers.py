@@ -1007,8 +1007,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         struct_data[k] = read_data(f, grp[name], k,
                                                    options)
                     else:
-                        struct_data[k.encode()] = read_data(f, \
-                            grp[name], k, options)
+                        struct_data[k] = \
+                            read_data(f, grp[name], k, options)
                 except:
                     pass
 
@@ -1050,7 +1050,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if sys.hexversion >= 0x03000000:
                     k_name = k
                 else:
-                    k_name = k.encode()
+                    k_name = k.encode('UTF-8')
 
                 # Read the value.
                 v = struct_data[k]
@@ -1102,7 +1102,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # the shape is an empty shape.
                 if all(data.shape) and all(v.shape):
                     for index, x in np.ndenumerate(v):
-                        data[k][index] = x
+                        if sys.hexversion >= 0x03000000:
+                            data[k][index] = x
+                        else:
+                            data[k.encode('UTF-8')][index] = x
 
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not
@@ -1123,8 +1126,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     if sys.hexversion >= 0x03000000:
                         struct_dtype.append((k, 'object'))
                     else:
-                        struct_dtype.append((k.encode('ascii'),
-                                               'object'))
+                        struct_dtype.append((k.encode('UTF-8'),
+                                            'object'))
             else:
                 struct_dtype = None
 
