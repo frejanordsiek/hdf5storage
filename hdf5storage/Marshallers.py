@@ -864,7 +864,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     for i, s in enumerate(field_names):
                         fs[i] = np.array([c.encode('ascii') for c in s],
                                          dtype='S1')
-                except UnicodeDecodeError:
+                except UnicodeEncodeError:
                     del_attribute(grp[name], 'MATLAB_fields')
                 else:
                     set_attribute(grp[name], 'MATLAB_fields', fs)
