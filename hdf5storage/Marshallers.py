@@ -1300,23 +1300,31 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to the appropriate numpy
         # type. If it is a Python 3.x int or Python 2.x long that is too
-        # big to fit in a numpy.int64, we need to throw an overflow
-        # exception so it doesn't get packaged as an object. Otherwise,
-        # data is passed through np.array and then access [()] to get
-        # the scalar back as a scalar numpy type. The proper type_string
-        # needs to be grabbed now as the parent function will have a
-        # modified form of data to guess from if not given the right one
-        # explicitly.
+        # big to fit in a numpy.int64, we need to throw an not
+        # implemented exception so it doesn't get packaged as an
+        # object. If it isn't too big and is a long, it needs to be
+        # converted to an int or else when it is converted to a
+        # numpy.int64, its dtype.type won't be equal to numpy.int64 for
+        # some reason (if it is a Python 3.x int, packing it into int
+        # does nothing). Otherwise, data is passed through np.array and
+        # then access [()] to get the scalar back as a scalar numpy
+        # type. The proper type_string needs to be grabbed now as the
+        # parent function will have a modified form of data to guess
+        # from if not given the right one explicitly.
         if sys.hexversion >= 0x03000000:
             tp = int
         else:
             tp = long
-        if isinstance(data, tp) \
-                and (data > 2**63 or data < -(2**63) + 1):
-            raise OverflowError('Int/long too big to fit into '
-                                + 'numpy.int64.')
+        if isinstance(data, tp):
+            if data > 2**63 or data < -(2**63) + 1:
+                raise NotImplementedError('Int/long too big to fit ' \
+                    + 'into numpy.int64.')
+            else:
+                out = int(data)
+        else:
+            out = data
         NumpyScalarArrayMarshaller.write(self, f, grp, name,
-                                         np.array(data)[()],
+                                         np.array(out)[()],
                                          self.get_type_string(data,
                                          type_string), options)
 
