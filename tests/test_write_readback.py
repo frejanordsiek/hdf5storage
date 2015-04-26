@@ -40,6 +40,8 @@ import numpy.random
 
 import hdf5storage
 
+from nose.tools import raises
+
 from asserts import *
 
 
@@ -366,6 +368,24 @@ class TestPythonMatlabFormat(object):
 
     def test_int(self):
         data = self.random_int()
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    # Only relevant in Python 2.x.
+    def test_long(self):
+        if sys.hexversion < 0x03000000:
+            data = long(self.random_int())
+            out = self.write_readback(data, self.random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
+
+    @raises(NotImplementedError)
+    def test_int_or_long_too_big(self):
+        if sys.hexversion >= 0x03000000:
+            data = 2**64 * self.random_int()
+        else:
+            data = long(2)**64 * long(self.random_int())
         out = self.write_readback(data, self.random_name(),
                                   self.options)
         self.assert_equal(out, data)
