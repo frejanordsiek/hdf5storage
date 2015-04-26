@@ -835,8 +835,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or not all(data.shape) \
                 or not all([all(data[n].shape) \
                 for n in data.dtype.names])):
-            # Grab the list of fields.
-            field_names = list(data.dtype.names)
+            # Grab the list of fields. They need to be converted to
+            # unicode in Python 2.x.
+            if sys.hexversion >= 0x03000000:
+                field_names = list(data.dtype.names)
+            else:
+                field_names = [c.decode('UTF-8')
+                               for c in list(data.dtype.names)]
 
             # Write or delete 'Python.Fields' as appropriate.
             if options.store_python_metadata \
