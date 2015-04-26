@@ -1315,7 +1315,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
             tp = int
         else:
             tp = long
-        if isinstance(data, tp):
+        if type(data) == tp:
             if data > 2**63 or data < -(2**63) + 1:
                 raise NotImplementedError('Int/long too big to fit ' \
                     + 'into numpy.int64.')
