@@ -444,6 +444,7 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    @raises(NotImplementedError)
     def test_str_ascii_encoded_utf8(self):
         data = self.random_str_some_unicode(random.randint(1,
             self.max_string_length)).encode('UTF-8')
@@ -556,6 +557,15 @@ class TestPythonFormat(TestPythonMatlabFormat):
         self.options = hdf5storage.Options(matlab_compatible=False)
         self.filename = 'data.h5'
 
+    # Won't throw an exception unlike the parent.
+    def test_str_ascii_encoded_utf8(self):
+        data = self.random_str_some_unicode(random.randint(1,
+            self.max_string_length)).encode('UTF-8')
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+
 
 class TestNoneFormat(TestPythonMatlabFormat):
     def __init__(self):
@@ -568,6 +578,14 @@ class TestNoneFormat(TestPythonMatlabFormat):
 
         # Add in float16 to the set of types tested.
         self.dtypes.append('float16')
+
+    # Won't throw an exception unlike the parent.
+    def test_str_ascii_encoded_utf8(self):
+        data = self.random_str_some_unicode(random.randint(1,
+            self.max_string_length)).encode('UTF-8')
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
 
     def assert_equal(self, a, b):
         assert_equal_none_format(a, b)

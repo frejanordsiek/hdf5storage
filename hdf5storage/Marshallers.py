@@ -578,10 +578,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if isinstance(data_to_store, np.core.records.recarray):
             data_to_store = data_to_store.view(np.ndarray)
 
-        # Optionally convert ASCII strings to UTF-16. This is done by
-        # simply converting to uint16's. This will require making them
-        # at least 1 dimensinal.
-
+        # Optionally convert bytes_ strings to UTF-16, if possible (all
+        # are in the ASCII character set). This is done by simply
+        # converting to uint16's and checking that each one's value is
+        # less than 128 (in the ASCII character set). This will require
+        # making them at least 1 dimensional. If it fails, throw an
+        # exception.
         if data.dtype.type == np.bytes_ \
                 and options.convert_numpy_bytes_to_utf16:
             if data_to_store.nbytes == 0:
@@ -589,6 +591,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             else:
                 data_to_store = np.uint16(np.atleast_1d( \
                     data_to_store).view(np.uint8))
+                if np.any(data_to_store >= 128):
+                    raise NotImplementedError( \
+                        'Can''t write non-ASCII numpy.bytes_.')
 
         # As of 2013-12-13, h5py cannot write numpy.str_ (UTF-32
         # encoding) types (its numpy.unicode_ in Python 2, which is an
