@@ -249,7 +249,18 @@ def assert_equal_matlab_format(a, b):
                     assert a.dtype.names is not None
                     assert b.dtype.names is not None
                     assert set(a.dtype.names) == set(b.dtype.names)
-                    assert a.dtype.names == b.dtype.names
+                    # The ordering of fields must be preserved if the
+                    # MATLAB_fields attribute could be used, which can
+                    # only be done if there are no non-ascii characters
+                    # in any of the field names.
+                    if sys.hexversion >= 0x03000000:
+                        allfields = ''.join(b.dtype.names)
+                    else:
+                        allfields = u''.join([nm.decode('UTF-8')
+                                             for nm in b.dtype.names])
+                    if np.all(np.array([ord(ch) < 128 \
+                            for ch in allfields])):
+                        assert a.dtype.names == b.dtype.names
                     a = a.flatten()
                     b = b.flatten()
                     for k in b.dtype.names:
