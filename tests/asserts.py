@@ -87,7 +87,8 @@ def assert_equal_none_format(a, b):
     # have been stored as just a null byte (recurse to do that
     # comparison). If it is a bytes_ type, the dtype, shape, and
     # elements must all be the same. If it is string_ type, we must
-    # convert to uint32 and then everything can be compared.
+    # convert to uint32 and then everything can be compared. Big longs
+    # and ints get written as numpy.bytes_.
     if type(b) == dict:
         assert type(a) == np.ndarray
         assert a.dtype.names is not None
@@ -112,6 +113,14 @@ def assert_equal_none_format(a, b):
                 or (sys.hexversion < 0x03000000 \
                 and isinstance(b, unicode)):
             assert_equal_none_format(a, np.unicode_(b))
+        elif (sys.hexversion >= 0x03000000 \
+                and type(b) == int) \
+                or (sys.hexversion < 0x03000000 \
+                and type(b) == long):
+            if b > 2**63 or b < -(2**63 - 1):
+                assert_equal_none_format(a, np.bytes_(b))
+            else:
+                assert_equal_none_format(a, np.array(int(b))[()])
         else:
             assert_equal_none_format(a, np.array(b)[()])
     else:
@@ -166,10 +175,13 @@ def assert_equal_matlab_format(a, b):
     # arrays, each element must be iterated over to be compared. Then,
     # if it isn't a string type, then they must have the same dtype,
     # shape, and all elements. All strings are converted to numpy.str_
-    # on read. If it is empty, it has shape (1, 0). A numpy.str_ has all
-    # of its strings per row compacted together. A numpy.bytes_ string
-    # has to have the same thing done, but then it needs to be converted
-    # up to UTF-32 and to numpy.str_ through uint32.
+    # on read unless they were stored as a numpy.bytes_ due to having
+    # non-ASCII characters. If it is empty, it has shape (1, 0). A
+    # numpy.str_ has all of its strings per row compacted together. A
+    # numpy.bytes_ string has to have the same thing done, but then it
+    # needs to be converted up to UTF-32 and to numpy.str_ through
+    # uint32. Big longs and ints end up getting converted to UTF-16
+    # uint16's when written and read back as UTF-32 numpy.unicode_.
     #
     # In all cases, we expect things to be at least two dimensional
     # arrays.
@@ -194,10 +206,21 @@ def assert_equal_matlab_format(a, b):
             if len(b) == 0:
                 assert_equal(a, np.zeros(shape=(1, 0), dtype='U'))
             elif isinstance(b, (bytes, bytearray)):
-                assert_equal(a, np.atleast_2d(np.unicode_( \
-                    b.decode('UTF-8'))))
+                try:
+                    c = np.unicode_(b.decode('ASCII'))
+                except:
+                    c = np.bytes_(b)
+                assert_equal(a, np.atleast_2d(c))
             else:
                 assert_equal(a, np.atleast_2d(np.unicode_(b)))
+        elif (sys.hexversion >= 0x03000000 \
+                and type(b) == int) \
+                or (sys.hexversion < 0x03000000 \
+                and type(b) == long):
+            if b > 2**63 or b < -(2**63 - 1):
+                assert_equal(a, np.atleast_2d(np.unicode_(b)))
+            else:
+                assert_equal(a, np.atleast_2d(np.array(int(b))))
         else:
             assert_equal(a, np.atleast_2d(np.array(b)))
     else:
@@ -216,10 +239,12 @@ def assert_equal_matlab_format(a, b):
                     npt.assert_equal(a, c)
                 elif b.dtype.char == 'S':
                     c = np.atleast_1d(b)
-                    c = c.view(np.dtype('S' \
-                        + str(c.shape[-1]*c.dtype.itemsize)))
-                    c = np.uint32(c.view(np.dtype('uint8')))
-                    c = c.view(np.dtype('U' + str(c.shape[-1])))
+                    if np.all(c.view(np.uint8) < 128):
+                        c = c.view(np.dtype('S' \
+                            + str(c.shape[-1]*c.dtype.itemsize)))
+                        c = c.view(np.dtype('uint8'))
+                        c = np.uint32(c.view(np.dtype('uint8')))
+                        c = c.view(np.dtype('U' + str(c.shape[-1])))
                     c = np.atleast_2d(c)
                     assert a.dtype == c.dtype
                     assert a.shape == c.shape

@@ -114,6 +114,12 @@ class TestPythonMatlabFormat(object):
         ltrs = bytes(range(1, 127))
         return bytes([random.choice(ltrs) for i in range(0, length)])
 
+    def random_bytes_fullrange(self, length):
+        # Makes a random sequence of bytes of the specified length from
+        # the ASCII set.
+        ltrs = bytes(range(1, 255))
+        return bytes([random.choice(ltrs) for i in range(0, length)])
+
     def random_int(self):
         return random.randint(-(2**63 - 1), 2**63)
 
@@ -121,7 +127,8 @@ class TestPythonMatlabFormat(object):
         return random.uniform(-1.0, 1.0) \
             * 10.0**random.randint(-300, 300)
 
-    def random_numpy(self, shape, dtype, allow_nan=True):
+    def random_numpy(self, shape, dtype, allow_nan=True,
+                     allow_unicode=False):
         # Makes a random numpy array of the specified shape and dtype
         # string. The method is slightly different depending on the
         # type. For 'bytes', 'str', and 'object'; an array of the
@@ -130,18 +137,27 @@ class TestPythonMatlabFormat(object):
         # (here, it is a randomly typed random numpy array). If it is
         # any other type, then it is just a matter of constructing the
         # right sized ndarray from a random sequence of bytes (all must
-        # be forced to 0 and 1 for bool).
+        # be forced to 0 and 1 for bool). Optionally include unicode
+        # characters.
         if dtype == 'S':
             length = random.randint(1, self.max_string_length)
             data = np.zeros(shape=shape, dtype='S' + str(length))
             for x in np.nditer(data, op_flags=['readwrite']):
-                x[...] = np.bytes_(self.random_bytes(length))
+                if allow_unicode:
+                    chars = self.random_bytes_fullrange(length)
+                else:
+                    chars = self.random_bytes(length)
+                x[...] = np.bytes_(chars)
             return data
         elif dtype == 'U':
             length = random.randint(1, self.max_string_length)
             data = np.zeros(shape=shape, dtype='U' + str(length))
             for x in np.nditer(data, op_flags=['readwrite']):
-                x[...] = np.unicode_(self.random_str_ascii(length))
+                if allow_unicode:
+                    chars = self.random_str_some_unicode(length)
+                else:
+                    chars = self.random_str_ascii(length)
+                x[...] = np.unicode_(chars)
             return data
         elif dtype == 'object':
             data = np.zeros(shape=shape, dtype='object')
@@ -385,7 +401,6 @@ class TestPythonMatlabFormat(object):
                                       self.options)
             self.assert_equal(out, data)
 
-    @raises(NotImplementedError)
     def test_int_or_long_too_big(self):
         if sys.hexversion >= 0x03000000:
             data = 2**64 * self.random_int()
@@ -444,9 +459,8 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    @raises(NotImplementedError)
     def test_str_ascii_encoded_utf8(self):
-        data = self.random_str_some_unicode(random.randint(1,
+        data = self.random_str_some_unicode(random.randint(1, \
             self.max_string_length)).encode('UTF-8')
         out = self.write_readback(data, self.random_name(),
                                   self.options)
@@ -557,15 +571,6 @@ class TestPythonFormat(TestPythonMatlabFormat):
         self.options = hdf5storage.Options(matlab_compatible=False)
         self.filename = 'data.h5'
 
-    # Won't throw an exception unlike the parent.
-    def test_str_ascii_encoded_utf8(self):
-        data = self.random_str_some_unicode(random.randint(1,
-            self.max_string_length)).encode('UTF-8')
-        out = self.write_readback(data, self.random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
-
-
 
 class TestNoneFormat(TestPythonMatlabFormat):
     def __init__(self):
@@ -578,14 +583,6 @@ class TestNoneFormat(TestPythonMatlabFormat):
 
         # Add in float16 to the set of types tested.
         self.dtypes.append('float16')
-
-    # Won't throw an exception unlike the parent.
-    def test_str_ascii_encoded_utf8(self):
-        data = self.random_str_some_unicode(random.randint(1,
-            self.max_string_length)).encode('UTF-8')
-        out = self.write_readback(data, self.random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
 
     def assert_equal(self, a, b):
         assert_equal_none_format(a, b)
