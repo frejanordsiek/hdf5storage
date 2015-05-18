@@ -582,18 +582,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # are in the ASCII character set). This is done by simply
         # converting to uint16's and checking that each one's value is
         # less than 128 (in the ASCII character set). This will require
-        # making them at least 1 dimensional. If it fails, throw an
-        # exception.
+        # making them at least 1 dimensional. If it fails, they must be
+        # stored as is.
         if data.dtype.type == np.bytes_ \
                 and options.convert_numpy_bytes_to_utf16:
             if data_to_store.nbytes == 0:
                 data_to_store = np.uint16([])
             else:
-                data_to_store = np.uint16(np.atleast_1d( \
+                new_data = np.uint16(np.atleast_1d( \
                     data_to_store).view(np.uint8))
-                if np.any(data_to_store >= 128):
-                    raise NotImplementedError( \
-                        'Can''t write non-ASCII numpy.bytes_.')
+                if np.all(new_data < 128):
+                    data_to_store = new_data
 
         # As of 2013-12-13, h5py cannot write numpy.str_ (UTF-32
         # encoding) types (its numpy.unicode_ in Python 2, which is an
@@ -910,10 +909,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # attribute needs to be set looking up the data type (gotten
         # using np.dtype.type). If it is a string or bool type, then
         # the MATLAB_int_decode attribute must be set to the number of
-        # bytes each element takes up (dtype.itemsize). If the dtype has
-        # fields and we are writing it as a structure, the class needs
-        # to be overriddent to 'struct'. Otherwise, the attributes must
-        # be deleted.
+        # bytes each element takes up (dtype.itemsize unless it is a
+        # np.bytes_ in which case it is one). If the dtype has fields
+        # and we are writing it as a structure, the class needs to be
+        # overriddent to 'struct'. Otherwise, the attributes must be
+        # deleted.
 
         tp = data.dtype.type
         if options.matlab_compatible:
@@ -925,8 +925,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 set_attribute_string(grp[name], 'MATLAB_class',
                                      self.__MATLAB_classes[tp])
                 if tp in (np.bytes_, np.str_, np.bool_):
-                    set_attribute(grp[name], 'MATLAB_int_decode',
-                                  np.int64(grp[name].dtype.itemsize))
+                    if grp[name].dtype.type == np.bytes_:
+                        set_attribute(grp[name], 'MATLAB_int_decode', 1)
+                    else:
+                        set_attribute(grp[name], 'MATLAB_int_decode', \
+                            np.int64(grp[name].dtype.itemsize))
                 else:
                     del_attribute(grp[name], 'MATLAB_int_decode')
             else:
@@ -1279,9 +1282,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 data = np.bool_(data)
 
             # If it is a 'char' type, the proper conversion to
-            # numpy.unicode needs to be done.
+            # numpy.unicode needs to be done unless it is currently a
+            # numpy.bytes_ in which case it will be preserved.
             if matlab_class == 'char':
-                data = convert_to_numpy_str(data)
+                if data.dtype.type != np.bytes_:
+                    data = convert_to_numpy_str(data)
 
         # Done adjusting data, so it can be returned.
         return data
