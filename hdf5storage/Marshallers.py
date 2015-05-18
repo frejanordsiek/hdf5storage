@@ -578,10 +578,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if isinstance(data_to_store, np.core.records.recarray):
             data_to_store = data_to_store.view(np.ndarray)
 
-        # Optionally convert ASCII strings to UTF-16. This is done by
-        # simply converting to uint16's. This will require making them
-        # at least 1 dimensinal.
-
+        # Optionally convert bytes_ strings to UTF-16, if possible (all
+        # are in the ASCII character set). This is done by simply
+        # converting to uint16's and checking that each one's value is
+        # less than 128 (in the ASCII character set). This will require
+        # making them at least 1 dimensional. If it fails, throw an
+        # exception.
         if data.dtype.type == np.bytes_ \
                 and options.convert_numpy_bytes_to_utf16:
             if data_to_store.nbytes == 0:
@@ -589,6 +591,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             else:
                 data_to_store = np.uint16(np.atleast_1d( \
                     data_to_store).view(np.uint8))
+                if np.any(data_to_store >= 128):
+                    raise NotImplementedError( \
+                        'Can''t write non-ASCII numpy.bytes_.')
 
         # As of 2013-12-13, h5py cannot write numpy.str_ (UTF-32
         # encoding) types (its numpy.unicode_ in Python 2, which is an
@@ -835,8 +840,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or not all(data.shape) \
                 or not all([all(data[n].shape) \
                 for n in data.dtype.names])):
-            # Grab the list of fields.
-            field_names = list(data.dtype.names)
+            # Grab the list of fields. They need to be converted to
+            # unicode in Python 2.x.
+            if sys.hexversion >= 0x03000000:
+                field_names = list(data.dtype.names)
+            else:
+                field_names = [c.decode('UTF-8')
+                               for c in list(data.dtype.names)]
 
             # Write or delete 'Python.Fields' as appropriate.
             if options.store_python_metadata \
@@ -864,7 +874,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     for i, s in enumerate(field_names):
                         fs[i] = np.array([c.encode('ascii') for c in s],
                                          dtype='S1')
-                except UnicodeDecodeError:
+                except UnicodeEncodeError:
                     del_attribute(grp[name], 'MATLAB_fields')
                 else:
                     set_attribute(grp[name], 'MATLAB_fields', fs)
@@ -985,7 +995,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # values (single element structured ndarray), as opposed to
             # Reference arrays to all the values (multi-element structed
             # ndarray). In Python 2, the field names need to be
-            # converted to ASCII from unicode when storing the fields in
+            # converted to str from unicode when storing the fields in
             # struct_data.
             struct_data = dict()
             is_multi_element = True
@@ -1003,12 +1013,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         'Python.Empty']))) != 0:
                     is_multi_element = False
                 try:
-                    if sys.hexversion >= 0x03000000:
-                        struct_data[k] = read_data(f, grp[name], k,
-                                                   options)
-                    else:
-                        struct_data[k.encode()] = read_data(f, \
-                            grp[name], k, options)
+                    struct_data[k] = read_data(f, grp[name], k,
+                                               options)
                 except:
                     pass
 
@@ -1045,12 +1051,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             dt_whole = []
             for k in fields:
                 # In Python 2, the field names for a structured ndarray
-                # must be ascii (str) as opposed to unicode, so k needs
-                # to be converted in the Python 2 case.
+                # must be str as opposed to unicode, so k needs to be
+                # converted in the Python 2 case.
                 if sys.hexversion >= 0x03000000:
                     k_name = k
                 else:
-                    k_name = k.encode()
+                    k_name = k.encode('UTF-8')
 
                 # Read the value.
                 v = struct_data[k]
@@ -1102,7 +1108,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # the shape is an empty shape.
                 if all(data.shape) and all(v.shape):
                     for index, x in np.ndenumerate(v):
-                        data[k][index] = x
+                        if sys.hexversion >= 0x03000000:
+                            data[k][index] = x
+                        else:
+                            data[k.encode('UTF-8')][index] = x
 
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not
@@ -1123,8 +1132,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     if sys.hexversion >= 0x03000000:
                         struct_dtype.append((k, 'object'))
                     else:
-                        struct_dtype.append((k.encode('ascii'),
-                                               'object'))
+                        struct_dtype.append((k.encode('UTF-8'),
+                                            'object'))
             else:
                 struct_dtype = None
 
@@ -1316,7 +1325,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
             tp = int
         else:
             tp = long
-        if isinstance(data, tp):
+        if type(data) == tp:
             if data > 2**63 or data < -(2**63) + 1:
                 out = np.bytes_(data)
             else:

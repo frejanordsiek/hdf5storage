@@ -40,6 +40,8 @@ import numpy.random
 
 import hdf5storage
 
+from nose.tools import raises
+
 from asserts import *
 
 
@@ -99,14 +101,12 @@ class TestPythonMatlabFormat(object):
     def random_str_some_unicode(self, length):
         # Makes a random ASCII+limited unicode str of the specified
         # length.
+        ltrs = self.random_str_ascii(10)
         if sys.hexversion >= 0x03000000:
-            ltrs = '\u03c0\u03c9\xe9'
-            return ''.join([random.choice(ltrs) for i in \
-                range(0, length)])
+            ltrs += ''.join([chr(500 + i) for i in range(100)])
         else:
-            ltrs = u'\u03c0\u03c9\xe9'
-            return u''.join([random.choice(ltrs) for i in \
-                range(0, length)])
+            ltrs += u''.join([unichr(500 + i) for i in range(100)])
+        return ''.join([random.choice(ltrs) for i in range(0, length)])
 
     def random_bytes(self, length):
         # Makes a random sequence of bytes of the specified length from
@@ -215,20 +215,27 @@ class TestPythonMatlabFormat(object):
                 dtype=random.choice(self.dtypes))
         return data
     
-    def random_structured_numpy_array(self, shape, field_shapes=None):
-        # Make a random field names, dtypes, and sizes. Though, if
+    def random_structured_numpy_array(self, shape, field_shapes=None,
+                                      nonascii_fields=False):
+        # Make random field names, dtypes, and sizes. Though, if
         # field_shapes is explicitly given, the sizes should be
         # random. The field names must all be of type str, not unicode
-        # in Python 2. String types will not be used due to the
-        # difficulty in assigning the length.
-        names = [self.random_str_ascii(
+        # in Python 2. Optionally include non-ascii characters in the
+        # field names (will have to be encoded in Python 2.x). String
+        # types will not be used due to the difficulty in assigning the
+        # length.
+        if nonascii_fields:
+            name_func = self.random_str_some_unicode
+        else:
+            name_func = self.random_str_ascii
+        names = [name_func(
                  self.max_structured_ndarray_field_lengths)
                  for i in range(0, random.randint(
                  self.min_structured_ndarray_fields,
                  self.max_structured_ndarray_fields))]
         if sys.hexversion < 0x03000000:
             for i, name in enumerate(names):
-                names[i] = name.encode()
+                names[i] = name.encode('UTF-8')
         dtypes = [random.choice(list(set(self.dtypes)
                   - set(('S', 'U'))))
                   for i in range(len(names))]
@@ -370,6 +377,24 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    # Only relevant in Python 2.x.
+    def test_long(self):
+        if sys.hexversion < 0x03000000:
+            data = long(self.random_int())
+            out = self.write_readback(data, self.random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
+
+    @raises(NotImplementedError)
+    def test_int_or_long_too_big(self):
+        if sys.hexversion >= 0x03000000:
+            data = 2**64 * self.random_int()
+        else:
+            data = long(2)**64 * long(self.random_int())
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
     def test_float(self):
         data = self.random_float()
         out = self.write_readback(data, self.random_name(),
@@ -415,6 +440,14 @@ class TestPythonMatlabFormat(object):
     def test_str_ascii(self):
         data = self.random_str_ascii(random.randint(1,
                                      self.max_string_length))
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    @raises(NotImplementedError)
+    def test_str_ascii_encoded_utf8(self):
+        data = self.random_str_some_unicode(random.randint(1,
+            self.max_string_length)).encode('UTF-8')
         out = self.write_readback(data, self.random_name(),
                                   self.options)
         self.assert_equal(out, data)
@@ -492,6 +525,18 @@ class TestPythonMatlabFormat(object):
         for i in range(1, 4):
             yield self.check_numpy_structured_array_empty, i
 
+    def test_numpy_structured_array_unicode_fields(self):
+        # Makes a random 1d structured ndarray with non-ascii characters
+        # in its fields, writes it and reads it back, and then compares
+        # it.
+        shape = self.random_numpy_shape(1, \
+            self.max_structured_ndarray_axis_length)
+        data = self.random_structured_numpy_array(shape,
+                                                  nonascii_fields=True)
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
     def test_python_collection(self):
         for tp in (list, tuple, set, frozenset, collections.deque):
             yield self.check_python_collection, tp
@@ -512,6 +557,15 @@ class TestPythonFormat(TestPythonMatlabFormat):
         self.options = hdf5storage.Options(matlab_compatible=False)
         self.filename = 'data.h5'
 
+    # Won't throw an exception unlike the parent.
+    def test_str_ascii_encoded_utf8(self):
+        data = self.random_str_some_unicode(random.randint(1,
+            self.max_string_length)).encode('UTF-8')
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+
 
 class TestNoneFormat(TestPythonMatlabFormat):
     def __init__(self):
@@ -524,6 +578,14 @@ class TestNoneFormat(TestPythonMatlabFormat):
 
         # Add in float16 to the set of types tested.
         self.dtypes.append('float16')
+
+    # Won't throw an exception unlike the parent.
+    def test_str_ascii_encoded_utf8(self):
+        data = self.random_str_some_unicode(random.randint(1,
+            self.max_string_length)).encode('UTF-8')
+        out = self.write_readback(data, self.random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
 
     def assert_equal(self, a, b):
         assert_equal_none_format(a, b)
