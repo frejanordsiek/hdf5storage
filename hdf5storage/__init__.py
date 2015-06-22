@@ -150,7 +150,9 @@ class Options(object):
                  complex_names=('r', 'i'),
                  group_for_references="/#refs#",
                  oned_as='row',
-                 marshaller_collection=None):
+                 marshaller_collection=None,
+                 scalar_options=dict(),
+                 array_options=dict()):
         # Set the defaults.
 
         self._store_python_metadata = True
@@ -190,10 +192,10 @@ class Options(object):
         self.matlab_compatible = matlab_compatible
 
         # Set the h5py options to use for writing scalars and arrays to
-        # blank for now.
+        # input arguments.
 
-        self.scalar_options = dict()
-        self.array_options = dict()
+        self.scalar_options = scalar_options
+        self.array_options = array_options
 
         # Use the given marshaller collection if it was
         # given. Otherwise, use the default.
@@ -1156,7 +1158,8 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
             oned_as='row', store_python_metadata=True,
             action_for_matlab_incompatible='error',
             marshaller_collection=None, truncate_existing=False,
-            truncate_invalid_matlab=False, **keywords):
+            truncate_invalid_matlab=False, do_compression=False,
+            **keywords):
     """ Save a dictionary of python types to a MATLAB MAT file.
 
     Saves the data provided in the dictionary `mdict` to a MATLAB MAT
@@ -1206,6 +1209,8 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         Whether to truncate a file if the file doesn't have the proper
         header (userblock in HDF5 terms) setup for MATLAB metadata to be
         placed.
+    do_compression : bool, optional
+        Whether or not to compress matrices on write.  Default is False.
     **keywords :
         Additional keywords arguments to be passed onto
         ``scipy.io.savemat`` if dispatching to SciPy (`format` < 7.3).
@@ -1251,11 +1256,19 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
     if appendmat and not file_name.endswith('.mat'):
         file_name = file_name + '.mat'
 
+    # Process compression option
     # Make the options with matlab compatibility forced.
-    options = Options(store_python_metadata=store_python_metadata, \
-        matlab_compatible=True, oned_as=oned_as, \
-        action_for_matlab_incompatible=action_for_matlab_incompatible, \
-        marshaller_collection=marshaller_collection)
+    if do_compression:
+        options = Options(store_python_metadata=store_python_metadata, \
+            matlab_compatible=True, oned_as=oned_as, \
+            action_for_matlab_incompatible=action_for_matlab_incompatible, \
+            marshaller_collection=marshaller_collection, \
+            array_options={'compression':'gzip'})
+    else:
+        options = Options(store_python_metadata=store_python_metadata, \
+            matlab_compatible=True, oned_as=oned_as, \
+            action_for_matlab_incompatible=action_for_matlab_incompatible, \
+            marshaller_collection=marshaller_collection)
 
     # Write the variables in the dictionary to file one at a time. For
     # the first one, the file needs to be truncated or truncated if not
