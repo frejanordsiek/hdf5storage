@@ -466,6 +466,18 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    def test_str_with_null(self):
+        strs = [self.random_str_ascii(
+                random.randint(1, self.max_string_length))
+                for i in range(2)]
+        if sys.hexversion < 0x03000000:
+            data = u'\x00'.join(strs)
+        else:
+            data = '\x00'.join(strs)
+        out = self.write_readback(data, self.random_name(),
+                              self.options)
+        self.assert_equal(out, data)
+
     def test_str_unicode(self):
         data = self.random_str_some_unicode(random.randint(1,
                                             self.max_string_length))
@@ -490,6 +502,18 @@ class TestPythonMatlabFormat(object):
         data = b''
         out = self.write_readback(data, self.random_name(),
                                   self.options)
+        self.assert_equal(out, data)
+
+    def test_bytes_with_null(self):
+        strs = [self.random_bytes(
+                random.randint(1, self.max_string_length))
+                for i in range(2)]
+        if sys.hexversion < 0x03000000:
+            data = '\x00'.join(strs)
+        else:
+            data = b'\x00'.join(strs)
+        out = self.write_readback(data, self.random_name(),
+                              self.options)
         self.assert_equal(out, data)
 
     def test_bytearray(self):
