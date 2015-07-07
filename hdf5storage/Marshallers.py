@@ -1328,10 +1328,12 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # of data to guess from if not given the right one explicitly.
         if sys.hexversion >= 0x03000000:
             tp = int
+            maxint = 2**63
         else:
             tp = long
+            maxint = sys.maxint
         if type(data) == tp:
-            if data > 2**63 or data < -(2**63) + 1:
+            if data > maxint or data < -(maxint - 1):
                 out = np.bytes_(data)
             else:
                 out = np.array(int(data))[()]
@@ -1365,7 +1367,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
                 return tp(sdata)
             else:
                 num = long(sdata)
-                if num > sys.maxint or num < (-sys.maxint + 1):
+                if num > sys.maxint or num < -(sys.maxint - 1):
                     return num
                 else:
                     return int(num)
