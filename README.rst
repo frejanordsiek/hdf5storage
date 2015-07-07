@@ -209,6 +209,8 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.6. Bugfix release fixing a bug with determining the maximum size of a Python 2.x ``int`` on a 32-bit system.
+
 0.1.5. Bugfix release fixing the following bug.
        * Fixed bug where an ``int`` could be stored that is too big to
          fit into an ``int`` when read back in Python 2.x. When it is
