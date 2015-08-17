@@ -1,0 +1,5 @@
+======
+THANKS
+======
+
+.. include:: ../../THANKS.rst

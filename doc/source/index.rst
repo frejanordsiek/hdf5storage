@@ -15,6 +15,7 @@ Contents:
    introduction
    storage_format
    development
+   thanks
    api
 
 Indices and tables
