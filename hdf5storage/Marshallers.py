@@ -763,23 +763,65 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                 - set(['H5PATH'])):
                             del_attribute(grp2[field], attribute)
         else:
+            # Set the storage options such as compression, chunking,
+            # filters, etc. If the data is being compressed (compression
+            # is enabled and the data is bigger than the threshold),
+            # turn on compression, set the algorithm, set the
+            # compression level, and enable the shuffle and fletcher32
+            # filters appropriately. If the data is not being
+            # compressed, turn on the fletcher32 filter if
+            # indicated. Compression should not be done for scalars.
+            filters = dict()
+            is_scalar = (data_to_store.shape != tuple())
+            if is_scalar and options.compress \
+                    and data_to_store.nbytes \
+                    >= options.compress_size_threshold:
+                filters['compression'] = \
+                    options.compression_algorithm
+                if filters['compression'] == 'gzip':
+                    filters['compression_opts'] = \
+                        options.gzip_compression_level
+                filters['shuffle'] = options.shuffle_filter
+                filters['fletcher32'] = \
+                    options.compressed_fletcher32_filter
+            else:
+                filters['compression'] = None
+                filters['shuffle'] = False
+                filters['compression_opts'] = None
+                if is_scalar:
+                    filters['fletcher32'] = \
+                        options.uncompressed_fletcher32_filter
+                else:
+                    filters['fletcher32'] = False
+
+            # Set the chunking to auto if it is being chuncked
+            # (compressed or using the fletcher32 filter).
+            if filters['compression'] is not None \
+                    or filters['fletcher32']:
+                filters['chunks'] = True
+            else:
+                filters['chunks'] = None
+
             # The data must first be written. If name is not present
             # yet, then it must be created. If it is present, but not a
-            # Dataset, has the wrong dtype, or is the wrong shape; then
-            # it must be deleted and then written. Otherwise, it is just
-            # overwritten in place (note, this will not change any
-            # filters or chunking settings, but will keep the file from
-            # growing needlessly).
-
+            # Dataset, has the wrong dtype, is the wrong shape, doesn't
+            # use the same compression, or doesn't use the same filters;
+            # then it must be deleted and then written. Otherwise, it is
+            # just overwritten in place.
             if name not in grp:
                 grp.create_dataset(name, data=data_to_store,
-                                   **options.array_options)
+                                   **filters)
             elif not isinstance(grp[name], h5py.Dataset) \
                     or grp[name].dtype != data_to_store.dtype \
-                    or grp[name].shape != data_to_store.shape:
+                    or grp[name].shape != data_to_store.shape \
+                    or grp[name].compression != filters['compression'] \
+                    or grp[name].shuffle != filters['shuffle'] \
+                    or grp[name].fletcher32 != filters['fletcher32'] \
+                    or grp[name].compression_opts != \
+                    filters['compression_opts']:
                 del grp[name]
                 grp.create_dataset(name, data=data_to_store,
-                                   **options.array_options)
+                                   **filters)
             else:
                 grp[name][...] = data_to_store
 
