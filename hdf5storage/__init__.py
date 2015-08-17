@@ -72,6 +72,7 @@ class Options(object):
     store_shape_for_empty               ``True``
     complex_names                       ``('real', 'imag')``
     group_for_references                ``'/#refs#'``
+    compression_algorithm               ``'gzip'``
     ==================================  ====================
 
     In addition to setting these options, a specially formatted block of
@@ -109,6 +110,20 @@ class Options(object):
         See Attributes.
     oned_as : str, optional
         See Attributes.
+    compress : bool, optional
+        See Attributes.
+    compress_size_threshold : int, optional
+        See Attributes.
+    compression_algorithm : str, optional
+        See Attributes.
+    gzip_compression_level : int, optional
+        See Attributes.
+    shuffle_filter : bool, optional
+        See Attributes.
+    compressed_fletcher32_filter : bool, optional
+        See Attributes.
+    uncompressed_fletcher32_filter : bool, optional
+        See Attributes.
     marshaller_collection : MarshallerCollection, optional
         See Attributes.
     **keywords :
@@ -132,6 +147,13 @@ class Options(object):
     complex_names : tuple of two str
     group_for_references : str
     oned_as : {'row', 'column'}
+    compress : bool
+    compress_size_threshold : int
+    compression_algorithm : {'gzip', 'lzf', 'szip'}
+    gzip_compression_level : int
+    shuffle_filter : bool
+    compressed_fletcher32_filter : bool
+    uncompressed_fletcher32_filter : bool
     scalar_options : dict
         ``h5py.Group.create_dataset`` options for writing scalars.
     array_options : dict
@@ -154,8 +176,19 @@ class Options(object):
                  complex_names=('r', 'i'),
                  group_for_references="/#refs#",
                  oned_as='row',
+<<<<<<< HEAD
                  marshaller_collection=None,
                  **keywords):
+=======
+                 compress=True,
+                 compress_size_threshold=16*1024,
+                 compression_algorithm='gzip',
+                 gzip_compression_level=7,
+                 shuffle_filter=True,
+                 compressed_fletcher32_filter=True,
+                 uncompressed_fletcher32_filter=False,
+                 marshaller_collection=None):
+>>>>>>> b63e610... Added compression to Options and the Numpy marshaller.
         # Set the defaults.
 
         self._store_python_metadata = True
@@ -171,6 +204,13 @@ class Options(object):
         self._complex_names = ('r', 'i')
         self._group_for_references = "/#refs#"
         self._oned_as = 'row'
+        self._compress = True
+        self._compress_size_threshold = 16*1024
+        self._compression_algorithm = 'gzip'
+        self._gzip_compression_level = 7
+        self._shuffle_filter = True
+        self._compressed_fletcher32_filter = True
+        self._uncompressed_fletcher32_filter = False
         self._matlab_compatible = True
 
         # Apply all the given options using the setters, making sure to
@@ -192,6 +232,14 @@ class Options(object):
         self.complex_names = complex_names
         self.group_for_references = group_for_references
         self.oned_as = oned_as
+        self.compress = compress
+        self.compress_size_threshold = compress_size_threshold
+        self.compression_algorithm = compression_algorithm
+        self.gzip_compression_level = gzip_compression_level
+        self.shuffle_filter = shuffle_filter
+        self.compressed_fletcher32_filter = compressed_fletcher32_filter
+        self.uncompressed_fletcher32_filter = \
+            uncompressed_fletcher32_filter
         self.matlab_compatible = matlab_compatible
 
         # Set the h5py options to use for writing scalars and arrays to
@@ -258,6 +306,7 @@ class Options(object):
         store_shape_for_empty               ``True``
         complex_names                       ``('real', 'imag')``
         group_for_references                ``'/#refs#'``
+        compression_algorithm               ``'gzip'``
         ==================================  ====================
 
         In addition to setting these options, a specially formatted
@@ -284,6 +333,7 @@ class Options(object):
                 self._store_shape_for_empty = True
                 self._complex_names = ('real', 'imag')
                 self._group_for_references = "/#refs#"
+                self._compression_algorithm = 'gzip'
 
     @property
     def action_for_matlab_incompatible(self):
@@ -620,6 +670,203 @@ class Options(object):
         # Check that it is one of the valid values before setting it.
         if value in ('row', 'column'):
             self._oned_as = value
+
+    @property
+    def compress(self):
+        """ Whether to compress large python objects (datasets).
+
+        bool
+
+        If ``True``, python objects (datasets) larger than
+        ``compress_size_threshold`` will be compressed.
+
+        See Also
+        --------
+        compress_size_threshold
+        compression_algorithm
+        shuffle_filter
+        compressed_fletcher32_filter
+
+        """
+        return self._compress
+
+    @compress.setter
+    def compress(self, value):
+        # Check that it is a bool, and then set it.
+        if isinstance(value, bool):
+            self._compress = value
+
+    @property
+    def compress_size_threshold(self):
+        """ Minimum size of a python object before it is compressed.
+
+        int
+
+        Minimum size in bytes a python object must be for it to be
+        compressed if ``compress`` is set. Must be non-negative.
+
+        See Also
+        --------
+        compress
+
+        """
+        return self._compress_size_threshold
+
+    @compress_size_threshold.setter
+    def compress_size_threshold(self, value):
+        # Check that it is a non-negative integer, and then set it.
+        if isinstance(value, int) and value >= 0:
+            self._compress_size_threshold = value
+
+    @property
+    def compression_algorithm(self):
+        """ Algorithm to use for compression.
+
+        {'gzip', 'lzf', 'szip'}
+
+        Compression algorithm to use When the ``compress`` option is set
+        and a python object is larger than ``compress_size_threshold``.
+        ``'gzip'`` is the only MATLAB compatible option.
+
+        ``'gzip'`` is also known as the Deflate algorithm, which is the
+        default compression algorithm of ZIP files and is a common
+        compression algorithm used on tarballs. It is the most
+        compatible option. It has good compression and is reasonably
+        fast. Its compression level is set with the
+        ``gzip_compression_level`` option, which is an integer between 0
+        and 9 inclusive.
+
+        ``'lzf'`` is a very fast but low to moderate compression
+        algorithm. It is less commonly used than gzip/Deflate, but
+        doesn't have any patent or license issues.
+
+        ``'szip'`` is a compression algorithm that has some patents and
+        license restrictions. It is not always available.
+
+        See Also
+        --------
+        compress
+        compress_size_threshold
+        h5py.Group.create_dataset
+        http://www.hdfgroup.org/doc_resource/SZIP/Commercial_szip.html
+
+        """
+        return self._compression_algorithm
+
+    @compression_algorithm.setter
+    def compression_algorithm(self, value):
+        # Check that it is one of the valid values before setting it. If
+        # it is something other than 'gzip', then we are not doing
+        # MATLAB compatible formatting.
+        if value in ('gzip', 'lzf', 'szip'):
+            self._compression_algorithm = value
+        if self._compression_algorithm != 'gzip':
+            self._matlab_compatible = False
+
+    @property
+    def gzip_compression_level(self):
+        """ The compression level to use when doing the gzip algorithm.
+
+        int
+
+        Compression level to use when data is being compressed with the
+        ``'gzip'`` algorithm. Must be an integer between 0 and 9
+        inclusive. Lower values are faster while higher values give
+        better compression.
+
+        See Also
+        --------
+        compress
+        compression_algorithm
+
+        """
+        return self._gzip_compression_level
+
+    @gzip_compression_level.setter
+    def gzip_compression_level(self, value):
+        # Check that it is an integer between 0 and 9.
+        if isinstance(value, int) and value >= 0 and value <= 9:
+            self._gzip_compression_level = value
+
+    @property
+    def shuffle_filter(self):
+        """ Whether to use the shuffle filter on compressed python objects.
+
+        bool
+
+        If ``True``, python objects (datasets) that are compressed are
+        run through the shuffle filter, which reversibly rearranges the
+        data to improve compression.
+
+        See Also
+        --------
+        compress
+        h5py.Group.create_dataset
+
+        """
+        return self._shuffle_filter
+
+    @shuffle_filter.setter
+    def shuffle_filter(self, value):
+        # Check that it is a bool, and then set it.
+        if isinstance(value, bool):
+            self._shuffle_filter = value
+
+    @property
+    def compressed_fletcher32_filter(self):
+        """ Whether to use the fletcher32 filter on compressed python objects.
+
+        bool
+
+        If ``True``, python objects (datasets) that are compressed are
+        run through the fletcher32 filter, which stores a checksum with
+        each chunk so that data corruption can be more easily detected.
+
+        See Also
+        --------
+        compress
+        shuffle_filter
+        uncompressed_flether32_filter
+        h5py.Group.create_dataset
+
+        """
+        return self._compressed_fletcher32_filter
+
+    @compressed_fletcher32_filter.setter
+    def compressed_fletcher32_filter(self, value):
+        # Check that it is a bool, and then set it.
+        if isinstance(value, bool):
+            self._compressed_fletcher32_filter = value
+
+    @property
+    def uncompressed_fletcher32_filter(self):
+        """ Whether to use the fletcher32 filter on uncompressed non-scalar python objects.
+
+        bool
+
+        If ``True``, python objects (datasets) that are **NOT**
+        compressed and are not scalars (when converted to a Numpy type,
+        their shape is not an empty ``tuple``) are run through the
+        fletcher32 filter, which stores a checksum with each chunk so
+        that data corruption can be more easily detected. This forces
+        all uncompressed data to be chuncked regardless of how small and
+        can increase file sizes.
+
+        See Also
+        --------
+        compress
+        shuffle_filter
+        compressed_flether32_filter
+        h5py.Group.create_dataset
+
+        """
+        return self._uncompressed_fletcher32_filter
+
+    @uncompressed_fletcher32_filter.setter
+    def uncompressed_fletcher32_filter(self, value):
+        # Check that it is a bool, and then set it.
+        if isinstance(value, bool):
+            self._uncompressed_fletcher32_filter = value
 
 
 class MarshallerCollection(object):
