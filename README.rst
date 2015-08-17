@@ -99,55 +99,57 @@ will be what it is read back as) the MATLAB class it becomes if
 targetting a MAT file, and the first version of this package to
 support writing it so MATlAB can read it.
 
-===============  =======  ==========================  ===========  ==============
-Python                                                MATLAB
-----------------------------------------------------  ---------------------------
-Type             Version  Converted to                Class        Version
-===============  =======  ==========================  ===========  ==============
-bool             0.1      np.bool\_ or np.uint8       logical      0.1 [1]_
-None             0.1      ``np.float64([])``          ``[]``       0.1
-int [2]_ [3]_    0.1      np.int64 [2]_               int64        0.1
-long [3]_ [4]_   0.1      np.int64                    int64        0.1
-float            0.1      np.float64                  double       0.1
-complex          0.1      np.complex128               double       0.1
-str              0.1      np.uint32/16                char         0.1 [5]_
-bytes            0.1      np.bytes\_ or np.uint16     char         0.1 [6]_
-bytearray        0.1      np.bytes\_ or np.uint16     char         0.1 [6]_
-list             0.1      np.object\_                 cell         0.1
-tuple            0.1      np.object\_                 cell         0.1
-set              0.1      np.object\_                 cell         0.1
-frozenset        0.1      np.object\_                 cell         0.1
-cl.deque         0.1      np.object\_                 cell         0.1
-dict             0.1                                  struct       0.1 [7]_
-np.bool\_        0.1                                  logical      0.1
+===============  =======  ================================  ===========  ==============  ================
+Python                                                      MATLAB                       Notes
+----------------------------------------------------------  ---------------------------  ----------------
+Type             Version  Converted to                      Class        Version
+===============  =======  ================================  ===========  ==============  ================
+bool             0.1      np.bool\_ or np.uint8             logical      0.1             [1]_
+None             0.1      ``np.float64([])``                ``[]``       0.1
+int              0.1      np.int64 or np.bytes\_            int64        0.1             [2]_ [3]_
+long             0.1      np.int64 or np.bytes\_            int64        0.1             [3]_ [4]_
+float            0.1      np.float64                        double       0.1
+complex          0.1      np.complex128                     double       0.1
+str              0.1      np.uint32/16                      char         0.1             [5]_
+bytes            0.1      np.bytes\_ or np.uint16           char         0.1             [6]_
+bytearray        0.1      np.bytes\_ or np.uint16           char         0.1             [6]_
+list             0.1      np.object\_                       cell         0.1
+tuple            0.1      np.object\_                       cell         0.1
+set              0.1      np.object\_                       cell         0.1
+frozenset        0.1      np.object\_                       cell         0.1
+cl.deque         0.1      np.object\_                       cell         0.1
+dict             0.1                                        struct       0.1             [7]_
+np.bool\_        0.1                                        logical      0.1
 np.void          0.1
-np.uint8         0.1                                  uint8        0.1
-np.uint16        0.1                                  uint16       0.1
-np.uint32        0.1                                  uint32       0.1
-np.uint64        0.1                                  uint64       0.1
-np.uint8         0.1                                  int8         0.1
-np.int16         0.1                                  int16        0.1
-np.int32         0.1                                  int32        0.1
-np.int64         0.1                                  int64        0.1
-np.float16 [8]_  0.1
-np.float32       0.1                                  single       0.1
-np.float64       0.1                                  double       0.1
-np.complex64     0.1                                  single       0.1
-np.complex128    0.1                                  double       0.1
-np.str\_         0.1      np.uint32/16                char/uint32  0.1 [5]_
-np.bytes\_       0.1      np.bytes\_ or np.uint16     char         0.1 [6]_
-np.object\_      0.1                                  cell         0.1
-np.ndarray       0.1      [9]_ [10]_                  [9]_ [10]_   0.1 [9]_ [11]_
-np.matrix        0.1      [9]_                        [9]_         0.1 [9]_
-np.chararray     0.1      [9]_                        [9]_         0.1 [9]_
-np.recarray      0.1      structured np.ndarray       [9]_ [10]_   0.1 [9]_
-===============  =======  ==========================  ===========  ==============
+np.uint8         0.1                                        uint8        0.1
+np.uint16        0.1                                        uint16       0.1
+np.uint32        0.1                                        uint32       0.1
+np.uint64        0.1                                        uint64       0.1
+np.uint8         0.1                                        int8         0.1
+np.int16         0.1                                        int16        0.1
+np.int32         0.1                                        int32        0.1
+np.int64         0.1                                        int64        0.1
+np.float16       0.1                                                                     [8]_
+np.float32       0.1                                        single       0.1
+np.float64       0.1                                        double       0.1
+np.complex64     0.1                                        single       0.1
+np.complex128    0.1                                        double       0.1
+np.str\_         0.1      np.uint32/16                      char/uint32  0.1             [5]_
+np.bytes\_       0.1      np.bytes\_ or np.uint16           char         0.1             [6]_
+np.object\_      0.1                                        cell         0.1
+np.ndarray       0.1      *see notes*                       *see notes*  0.1             [9]_ [10]_ [11]_
+np.matrix        0.1      *see notes*                       *see notes*  0.1             [9]_
+np.chararray     0.1      *see notes*                       *see notes*  0.1             [9]_
+np.recarray      0.1      structured np.ndarray             *see notes*  0.1             [9]_ [10]_
+===============  =======  ================================  ===========  ==============  ================
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
        MATLAB compatiblity, or if the option is explicitly set.
 .. [2] In Python 2.x, it may be read back as a ``long`` if it can't fit
        in the size of an ``int``.
-.. [3] Must be small enough to fit into an ``np.int64``.
+.. [3] Stored as a ``np.int64`` if it is small enough to fit. Otherwise
+       its decimal string representation is stored as an ``np.bytes_``
+       for hdf5storage >= 0.2 (error in earlier versions).
 .. [4] Type found only in Python 2.x. Python 2.x's ``long`` and ``int``
        are unified into a single ``int`` type in Python 3.x. Read as an
        ``int`` in Python 3.x.
@@ -208,6 +210,15 @@ canonical empty  0.1      ``np.float64([])``
 
 Versions
 ========
+
+0.2. Feature release adding the following.
+     * Optional data compression and the storage of data checksums.
+       Controlled by several new options.
+     * Ability to write Python 3.x ``int`` and Python 2.x ``long`` that
+       are too large to fit into ``np.int64``. Doing so no longer
+       raises an exception.
+     * Ability to write ``np.bytes_`` with non-ASCII characters in them.
+       Doing so no longer raises an exception.
 
 0.1.6. Bugfix release fixing a bug with determining the maximum size of a Python 2.x ``int`` on a 32-bit system.
 
