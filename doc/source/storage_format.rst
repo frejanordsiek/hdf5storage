@@ -59,8 +59,8 @@ Type             Version  Converted to                          Group or Dataset
 ===============  =======  ====================================  =====================
 bool             0.1      np.bool\_ or np.uint8 [1]_            Dataset
 None             0.1      ``np.float64([])``                    Dataset
-int [2]_ [3]_    0.1      np.int64 [2]_                         Dataset
-long [3]_ [4]_   0.1      np.int64                              Dataset
+int [2]_ [3]_    0.1      np.int64 or np.bytes\_ [2]_ [3]_      Dataset
+long [3]_ [4]_   0.1      np.int64 or np.bytes\_ [3]_ [4]_      Dataset
 float            0.1      np.float64                            Dataset
 complex          0.1      np.complex128                         Dataset
 str              0.1      np.uint32/16 [5]_                     Dataset
@@ -101,7 +101,9 @@ np.recarray      0.1      structured np.ndarray [9]_            Dataset or Group
        ``matlab_compatible == True``).
 .. [2] In Python 2.x, it may be read back as a ``long`` if it can't fit
        in the size of an ``int``.
-.. [3] Must be small enough to fit into an ``np.int64``.
+.. [3] Stored as a ``np.int64`` if it is small enough to fit. Otherwise
+       its decimal string representation is stored as an ``np.bytes_``
+       for hdf5storage >= 0.2 (error in earlier versions).
 .. [4] Type only found in Python 2.x. Python 2.x's ``long`` and ``int``
        are unified into a single ``int`` type in Python 3.x. Read as an
        ``int`` in Python 3.x.
@@ -149,58 +151,60 @@ stored. Then, the other attributes are detailed individually.
    all ``np.bytes_``. 'MATLAB_int_decode' is a ``np.int64``.
    'Python.Fields' is a ``np.object_`` array of ``str``.
 
-=============  ===================  ===========================  ==================  =================
-               Python Attributes                                 MATLAB Attributes
-               ------------------------------------------------  -------------------------------------
-Type           Python.Type          Python.numpy.UnderlyingType  MATLAB_class        MATLAB_int_decode
-=============  ===================  ===========================  ==================  =================
-bool           'bool'               'bool'                       'logical'           1
-None           'builtins.NoneType'  'float64'                    'double'
-int            'int'                'int64'                      'int64'
-long           'long'               'int64'                      'int64'
-float          'float'              'float64'                    'double'
-complex        'complex'            'complex128'                 'double'
-str            'str'                'str#' [10]_                 'char'              2
-bytes          'bytes'              'bytes#' [10]_               'char'              2
-bytearray      'bytearray'          'bytes#' [10]_               'char'              2
-list           'list'               'object'                     'cell'
-tuple          'tuple'              'object'                     'cell'
-set            'set'                'object'                     'cell'
-frozenset      'frozenset'          'object'                     'cell'
-cl.deque       'collections.deque'  'object'                     'cell'
-dict           'dict'                                            'struct'
-np.bool\_      'numpy.bool'         'bool'                       'logical'           1
-np.void        'numpy.void'         'void#' [10]_
-np.uint8       'numpy.uint8'        'uint8'                      'uint8'
-np.uint16      'numpy.uint16'       'uint16'                     'uint16'
-np.uint32      'numpy.uint32'       'uint32'                     'uint32'
-np.uint64      'numpy.uint64'       'uint64'                     'uint64'
-np.uint8       'numpy.int8'         'int8'                       'int8'
-np.int16       'numpy.int16'        'int16'                      'int16'
-np.int32       'numpy.int32'        'int32'                      'int32'
-np.int64       'numpy.int64'        'int64'                      'int64'
+=============  ===================  ===============================  ==================  =====================
+               Python Attributes                                     MATLAB Attributes
+               ----------------------------------------------------  -----------------------------------------
+Type           Python.Type          Python.numpy.UnderlyingType      MATLAB_class        MATLAB_int_decode
+=============  ===================  ===============================  ==================  =====================
+bool           'bool'               'bool'                           'logical'           1
+None           'builtins.NoneType'  'float64'                        'double'
+int            'int'                'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
+long           'long'               'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
+float          'float'              'float64'                        'double'
+complex        'complex'            'complex128'                     'double'
+str            'str'                'str#' [11]_                     'char'              2
+bytes          'bytes'              'bytes#' [11]_                   'char'              2
+bytearray      'bytearray'          'bytes#' [11]_                   'char'              2
+list           'list'               'object'                         'cell'
+tuple          'tuple'              'object'                         'cell'
+set            'set'                'object'                         'cell'
+frozenset      'frozenset'          'object'                         'cell'
+cl.deque       'collections.deque'  'object'                         'cell'
+dict           'dict'                                                'struct'
+np.bool\_      'numpy.bool'         'bool'                           'logical'           1
+np.void        'numpy.void'         'void#' [11]_    
+np.uint8       'numpy.uint8'        'uint8'                          'uint8'
+np.uint16      'numpy.uint16'       'uint16'                         'uint16'
+np.uint32      'numpy.uint32'       'uint32'                         'uint32'
+np.uint64      'numpy.uint64'       'uint64'                         'uint64'
+np.uint8       'numpy.int8'         'int8'                           'int8'
+np.int16       'numpy.int16'        'int16'                          'int16'
+np.int32       'numpy.int32'        'int32'                          'int32'
+np.int64       'numpy.int64'        'int64'                          'int64'
 np.float16     'numpy.float16'      'float16'
-np.float32     'numpy.float32'      'float32'                    'single'
-np.float64     'numpy.float64'      'float64'                    'double'
-np.complex64   'numpy.complex64'    'complex64'                  'single'
-np.complex128  'numpy.complex128'   'complex128'                 'double'
-np.str\_       'numpy.str\_'        'str#' [10]_                 'char' or 'uint32'  2 or 4 [11]_
-np.bytes\_     'numpy.bytes\_'      'bytes#' [10]_               'char'              2
-np.object\_    'numpy.object\_'     'object'                     'cell'
-np.ndarray     'numpy.ndarray'      [12]_                        [12]_ [13]_
-np.matrix      'numpy.matrix'       [12]_                        [12]_
-np.chararray   'numpy.chararray'    [12]_                        'char' [12]_
-np.recarray    'numpy.recarray'     [12]_                        [12]_ [13]_
-=============  ===================  ===========================  ==================  =================
+np.float32     'numpy.float32'      'float32'                        'single'
+np.float64     'numpy.float64'      'float64'                        'double'
+np.complex64   'numpy.complex64'    'complex64'                      'single'
+np.complex128  'numpy.complex128'   'complex128'                     'double'
+np.str\_       'numpy.str\_'        'str#' [11]_                     'char' or 'uint32'  2 or 4 [12]_
+np.bytes\_     'numpy.bytes\_'      'bytes#' [11]_                   'char'              2
+np.object\_    'numpy.object\_'     'object'                         'cell'
+np.ndarray     'numpy.ndarray'      [13]_                            [13]_ [14]_
+np.matrix      'numpy.matrix'       [13]_                            [13]_
+np.chararray   'numpy.chararray'    [13]_                            'char' [13]_
+np.recarray    'numpy.recarray'     [13]_                            [13]_ [14]_
+=============  ===================  ===============================  ==================  =====================
 
-.. [10] '#' is replaced by the number of bits taken up by the string, or
+.. [10] The former if it can fit in a ``np.int64`` and the latter if
+	not.
+.. [11] '#' is replaced by the number of bits taken up by the string, or
         each string in the case that it is an array of strings. This is 8
         and 32 bits per character for ``np.bytes_`` and ``np.str_``
         respectively.
-.. [11] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
-.. [12] The value that would be put in for a scalar of the same dtype is
+.. [12] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
+.. [13] The value that would be put in for a scalar of the same dtype is
        used.
-.. [13] If it is structured (its dtype has fields),
+.. [14] If it is structured (its dtype has fields),
         :py:attr:`Options.structured_numpy_ndarray_as_struct` is set,
         and none of its fields are of dtype ``'object'``; it is set to
         ``'struct'`` overriding anything else.
@@ -527,8 +531,8 @@ type they are read as if there is no Python metadata attached to them.
 MATLAB Class     Version  Python Type
 ===============  =======  =================================
 logical          0.1      np.bool\_
-single           0.1      np.float32 or np.complex64 [14]_
-double           0.1      np.float64 or np.complex128 [14]_
+single           0.1      np.float32 or np.complex64 [15]_
+double           0.1      np.float64 or np.complex128 [15]_
 uint8            0.1      np.uint8
 uint16           0.1      np.uint16
 uint32           0.1      np.uint32
@@ -543,4 +547,4 @@ cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``
 ===============  =======  =================================
 
-.. [14] Depends on whether there is a complex part or not.
+.. [15] Depends on whether there is a complex part or not.
