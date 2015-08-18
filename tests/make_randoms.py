@@ -1,0 +1,277 @@
+# Copyright (c) 2013-2015, Freja Nordsiek
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import sys
+import posixpath
+import string
+import random
+
+import numpy as np
+import numpy.random
+
+
+random.seed()
+
+
+# The dtypes that can be made
+dtypes = ['bool', 'uint8', 'uint16', 'uint32', 'uint64',
+          'int8', 'int16', 'int32', 'int64',
+          'float32', 'float64', 'complex64', 'complex128',
+          'S', 'U']
+
+# Define the sizes of random datasets to use.
+max_string_length = 10
+max_array_axis_length = 8
+max_list_length = 6
+max_posix_path_depth = 5
+max_posix_path_lengths = 17
+object_subarray_dimensions = 2
+max_object_subarray_axis_length = 5
+min_dict_keys = 4
+max_dict_keys = 12
+max_dict_key_length = 10
+dict_value_subarray_dimensions = 2
+max_dict_value_subarray_axis_length = 5
+min_structured_ndarray_fields = 2
+max_structured_ndarray_fields = 5
+max_structured_ndarray_field_lengths = 10
+max_structured_ndarray_axis_length = 2
+structured_ndarray_subarray_dimensions = 2
+max_structured_ndarray_subarray_axis_length = 4
+
+
+def random_str_ascii(length):
+    # Makes a random ASCII str of the specified length.
+    if sys.hexversion >= 0x03000000:
+        ltrs = string.ascii_letters + string.digits
+        return ''.join([random.choice(ltrs) for i in
+                       range(0, length)])
+    else:
+        ltrs = unicode(string.ascii_letters + string.digits)
+        return u''.join([random.choice(ltrs) for i in
+                        range(0, length)])
+
+
+def random_str_some_unicode(length):
+    # Makes a random ASCII+limited unicode str of the specified
+    # length.
+    ltrs = random_str_ascii(10)
+    if sys.hexversion >= 0x03000000:
+        ltrs += ''.join([chr(500 + i) for i in range(100)])
+    else:
+        ltrs += u''.join([unichr(500 + i) for i in range(100)])
+    return ''.join([random.choice(ltrs) for i in range(0, length)])
+
+
+def random_bytes(length):
+    # Makes a random sequence of bytes of the specified length from
+    # the ASCII set.
+    ltrs = bytes(range(1, 127))
+    return bytes([random.choice(ltrs) for i in range(0, length)])
+
+
+def random_bytes_fullrange(length):
+    # Makes a random sequence of bytes of the specified length from
+    # the ASCII set.
+    ltrs = bytes(range(1, 255))
+    return bytes([random.choice(ltrs) for i in range(0, length)])
+
+def random_int():
+    return random.randint(-(2**63 - 1), 2**63)
+
+
+def random_float():
+    return random.uniform(-1.0, 1.0) \
+        * 10.0**random.randint(-300, 300)
+
+
+def random_numpy(shape, dtype, allow_nan=True,
+                 allow_unicode=False):
+    # Makes a random numpy array of the specified shape and dtype
+    # string. The method is slightly different depending on the
+    # type. For 'bytes', 'str', and 'object'; an array of the
+    # specified size is made and then each element is set to either
+    # a numpy.bytes_, numpy.str_, or some other object of any type
+    # (here, it is a randomly typed random numpy array). If it is
+    # any other type, then it is just a matter of constructing the
+    # right sized ndarray from a random sequence of bytes (all must
+    # be forced to 0 and 1 for bool). Optionally include unicode
+    # characters.
+    if dtype == 'S':
+        length = random.randint(1, max_string_length)
+        data = np.zeros(shape=shape, dtype='S' + str(length))
+        for x in np.nditer(data, op_flags=['readwrite']):
+            if allow_unicode:
+                chars = random_bytes_fullrange(length)
+            else:
+                chars = random_bytes(length)
+            x[...] = np.bytes_(chars)
+        return data
+    elif dtype == 'U':
+        length = random.randint(1, max_string_length)
+        data = np.zeros(shape=shape, dtype='U' + str(length))
+        for x in np.nditer(data, op_flags=['readwrite']):
+            if allow_unicode:
+                chars = _random_str_some_unicode(length)
+            else:
+                chars = random_str_ascii(length)
+            x[...] = np.unicode_(chars)
+        return data
+    elif dtype == 'object':
+        data = np.zeros(shape=shape, dtype='object')
+        for index, x in np.ndenumerate(data):
+            data[index] = random_numpy( \
+                shape=random_numpy_shape( \
+                object_subarray_dimensions, \
+                max_object_subarray_axis_length), \
+                dtype=random.choice(dtypes))
+        return data
+    else:
+        nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
+        bts = np.random.bytes(nbytes * np.prod(shape))
+        if dtype == 'bool':
+            bts = b''.join([{True: b'\x01', False: b'\x00'}[ \
+                ch > 127] for ch in bts])
+        data = np.ndarray(shape=shape, dtype=dtype, buffer=bts)
+        # If it is a floating point type and we are supposed to
+        # remove NaN's, then turn them to zeros.
+        if not allow_nan and data.dtype.kind in ('f', 'c') \
+            and np.any(np.isnan(data)):
+            data = data.copy()
+            data[np.isnan(data)] = 0.0
+        return data
+
+
+def random_numpy_scalar(dtype):
+    # How a random scalar is made depends on th type. For must, it
+    # is just a single number. But for the string types, it is a
+    # string of any length.
+    if dtype == 'S':
+        return np.bytes_(random_bytes(random.randint(1,
+                         max_string_length)))
+    elif dtype == 'U':
+        return np.unicode_(random_str_ascii(
+                           random.randint(1,
+                           max_string_length)))
+    else:
+        return random_numpy(tuple(), dtype)[()]
+
+
+def random_numpy_shape(dimensions, max_length):
+    # Makes a random shape tuple having the specified number of
+    # dimensions. The maximum size along each axis is max_length.
+    return tuple([random.randint(1, max_length) for x in range(0,
+                 dimensions)])
+
+
+def random_list(N, python_or_numpy='numpy'):
+    # Makes a random list of the specified type. If instructed, it
+    # will be composed entirely from random numpy arrays (make a
+    # random object array and then convert that to a
+    # list). Otherwise, it will be a list of random bytes.
+    if python_or_numpy == 'numpy':
+        return random_numpy((N,), dtype='object').tolist()
+    else:
+        data = []
+        for i in range(0, N):
+            data.append(random_bytes(random.randint(1,
+                        max_string_length)))
+        return data
+
+
+def random_dict():
+    # Makes a random dict (random number of randomized keys with
+    # random numpy arrays as values).
+    data = dict()
+    for i in range(0, random.randint(min_dict_keys, \
+            max_dict_keys)):
+        name = random_str_ascii(max_dict_key_length)
+        data[name] = \
+            random_numpy(random_numpy_shape( \
+            dict_value_subarray_dimensions, \
+            max_dict_value_subarray_axis_length), \
+            dtype=random.choice(dtypes))
+    return data
+
+
+def random_structured_numpy_array(shape, field_shapes=None,
+                                  nonascii_fields=False):
+    # Make random field names, dtypes, and sizes. Though, if
+    # field_shapes is explicitly given, the sizes should be
+    # random. The field names must all be of type str, not unicode
+    # in Python 2. Optionally include non-ascii characters in the
+    # field names (will have to be encoded in Python 2.x). String
+    # types will not be used due to the difficulty in assigning the
+    # length.
+    if nonascii_fields:
+        name_func = random_str_some_unicode
+    else:
+        name_func = random_str_ascii
+    names = [name_func(
+             max_structured_ndarray_field_lengths)
+             for i in range(0, random.randint(
+             min_structured_ndarray_fields,
+             max_structured_ndarray_fields))]
+    if sys.hexversion < 0x03000000:
+        for i, name in enumerate(names):
+            names[i] = name.encode('UTF-8')
+    dts = [random.choice(list(set(dtypes)
+           - set(('S', 'U'))))
+           for i in range(len(names))]
+    if field_shapes is None:
+        shapes = [random_numpy_shape(
+                  structured_ndarray_subarray_dimensions,
+                  max_structured_ndarray_subarray_axis_length)
+                  for i in range(len(names))]
+    else:
+        shapes = [field_shapes] * len(names)
+    # Construct the type of the whole thing.
+    dt = np.dtype([(names[i], dts[i], shapes[i])
+                  for i in range(len(names))])
+    # Make the array. If dt.itemsize is 0, then we need to make an
+    # array of int8's the size in shape and convert it to work
+    # around a numpy bug. Otherwise, we will just create an empty
+    # array and then proceed by assigning each field.
+    if dt.itemsize == 0:
+        return np.zeros(shape=shape, dtype='int8').astype(dt)
+    else:
+        data = np.empty(shape=shape, dtype=dt)
+        for index, x in np.ndenumerate(data):
+            for i, name in enumerate(names):
+                data[name][index] = random_numpy(shapes[i], \
+                    dts[i], allow_nan=False)
+        return data
+
+
+def random_name():
+    # Makes a random POSIX path of a random depth.
+    depth = random.randint(1, max_posix_path_depth)
+    path = '/'
+    for i in range(0, depth):
+        path = posixpath.join(path, random_str_ascii(
+                              random.randint(1,
+                              max_posix_path_lengths)))
+    return path
