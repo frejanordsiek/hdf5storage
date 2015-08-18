@@ -309,21 +309,21 @@ class TestPythonMatlabFormat(object):
             yield self.check_numpy_scalar, dt
 
     def test_numpy_array_1d(self):
-        dtypes = copy.deepcopy(self.dtypes)
-        dtypes.append('object')
-        for dt in dtypes:
+        dts = copy.deepcopy(self.dtypes)
+        dts.append('object')
+        for dt in dts:
             yield self.check_numpy_array, dt, 1
 
     def test_numpy_array_2d(self):
-        dtypes = copy.deepcopy(self.dtypes)
-        dtypes.append('object')
-        for dt in dtypes:
+        dts = copy.deepcopy(self.dtypes)
+        dts.append('object')
+        for dt in dts:
             yield self.check_numpy_array, dt, 2
 
     def test_numpy_array_3d(self):
-        dtypes = copy.deepcopy(self.dtypes)
-        dtypes.append('object')
-        for dt in dtypes:
+        dts = copy.deepcopy(self.dtypes)
+        dts.append('object')
+        for dt in dts:
             yield self.check_numpy_array, dt, 3
 
     def test_numpy_empty(self):
