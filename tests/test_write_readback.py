@@ -28,14 +28,11 @@ import sys
 import copy
 import os
 import os.path
-import posixpath
-import string
 import math
 import random
 import collections
 
 import numpy as np
-import numpy.testing as npt
 import numpy.random
 
 import hdf5storage
