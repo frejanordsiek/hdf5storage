@@ -126,6 +126,10 @@ class Options(object):
         See Attributes.
     marshaller_collection : MarshallerCollection, optional
         See Attributes.
+    **keywords :
+        Additional keyword arguments. They are ignored. They are allowed
+        to be given to be more compatible with future versions of this
+        package where more options will be added.
 
     Attributes
     ----------
@@ -179,7 +183,8 @@ class Options(object):
                  shuffle_filter=True,
                  compressed_fletcher32_filter=True,
                  uncompressed_fletcher32_filter=False,
-                 marshaller_collection=None):
+                 marshaller_collection=None,
+                 **keywords):
         # Set the defaults.
 
         self._store_python_metadata = True
