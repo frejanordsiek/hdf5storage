@@ -111,6 +111,10 @@ class Options(object):
         See Attributes.
     marshaller_collection : MarshallerCollection, optional
         See Attributes.
+    **keywords :
+        Additional keyword arguments. They are ignored. They are allowed
+        to be given to be more compatible with future versions of this
+        package where more options will be added.
 
     Attributes
     ----------
@@ -150,7 +154,8 @@ class Options(object):
                  complex_names=('r', 'i'),
                  group_for_references="/#refs#",
                  oned_as='row',
-                 marshaller_collection=None):
+                 marshaller_collection=None,
+                 **keywords):
         # Set the defaults.
 
         self._store_python_metadata = True
