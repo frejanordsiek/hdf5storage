@@ -270,6 +270,18 @@ Versions
      * Ability to write ``np.bytes_`` with non-ASCII characters in them.
        Doing so no longer raises an exception.
 
+0.1.7. Bugfix release with an added compatibility option and some added test code. Did the following.
+       * Fixed an issue reading variables larger than 2 GB in MATLAB
+         MAT v7.3 files when no explicit variable names to read are
+         given to ``hdf5storage.loadmat``. Fix also reduces memory
+         consumption and processing time a little bit by removing an
+         unneeded memory copy.
+       * ``Options`` now will accept any additional keyword arguments it
+         doesn't support, ignoring them, to be API compatible with future
+         package versions with added options.
+       * Added tests for reading data that has been compressed or had
+         other HDF5 filters applied.
+
 0.1.6. Bugfix release fixing a bug with determining the maximum size of a Python 2.x ``int`` on a 32-bit system.
 
 0.1.5. Bugfix release fixing the following bug.
