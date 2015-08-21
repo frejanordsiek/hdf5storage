@@ -1360,16 +1360,21 @@ def loadmat(file_name, mdict=None, appendmat=True,
         # Read everything if we were instructed.
 
         if variable_names is None:
-            # Read everything from the root node.
-            data = read(path='/', filename=filename, options=options)
+            data = dict()
+            with h5py.File(filename) as f:
+                for k in f:
+                    # Read if not group_for_references. Data that
+                    # produces errors when read is dicarded (the OSError
+                    # that would happen if this is not an HDF5 file
+                    # would already have happened when opening the
+                    # file).
+                    if f[k].name != options.group_for_references:
+                        try:
+                            data[k] = lowlevel.read_data(f, f, k,
+                                                         options)
+                        except:
+                            pass
 
-            # If we didn't make a dict but instead got a structured
-            # ndarray, extract all the fields and make a dict from them.
-            if not isinstance(data, dict):
-                new_data = dict()
-                for field in data.dtype.names:
-                    new_data[field] = data[field][0]
-                data = new_data
         else:
             # Extract the desired fields into a dictionary one by one.
             data = dict()
