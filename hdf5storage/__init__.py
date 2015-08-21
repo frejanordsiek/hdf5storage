@@ -176,10 +176,6 @@ class Options(object):
                  complex_names=('r', 'i'),
                  group_for_references="/#refs#",
                  oned_as='row',
-<<<<<<< HEAD
-                 marshaller_collection=None,
-                 **keywords):
-=======
                  compress=True,
                  compress_size_threshold=16*1024,
                  compression_algorithm='gzip',
@@ -187,8 +183,9 @@ class Options(object):
                  shuffle_filter=True,
                  compressed_fletcher32_filter=True,
                  uncompressed_fletcher32_filter=False,
-                 marshaller_collection=None):
->>>>>>> b63e610... Added compression to Options and the Numpy marshaller.
+                 marshaller_collection=None,
+                 **keywords):
+
         # Set the defaults.
 
         self._store_python_metadata = True
