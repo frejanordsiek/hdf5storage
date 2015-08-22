@@ -122,6 +122,8 @@ np.recarray      0.1      structured np.ndarray [9]_            Dataset or Group
        characters in which case a ``NotImplementedError`` is raised.
        Otherwise, it is just written as ``np.bytes_``.
 .. [7] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
+       They cannot have null characters (``'\x00'``) or forward slashes
+       (``'/'``) in them.
 .. [8] ``np.float16`` are not supported for h5py versions before
        ``2.2``.
 .. [9] If it doesn't have any fields in its dtype or if
@@ -130,7 +132,8 @@ np.recarray      0.1      structured np.ndarray [9]_            Dataset or Group
        converted and is written as is as a Dataset. Otherwise, it
        is written as a Group with its the contents of its individual
        fields written as Datasets within the Group having the fields as
-       names.
+       names. Field names cannot have null characters (``'\x00'``) and,
+       when writing as an GROUP, forward slashes (``'/'``) in them.
 
 
 Attributes
@@ -388,6 +391,11 @@ multi-element data, the elements for each field are written in
 all of those elements is written as a Dataset under the field name in
 the Groups. Othewise, it is written as is as a Dataset that is an
 HDF5 COMPOUND type.
+
+.. warning::
+
+   Field names cannot have null characters (``'\x00'``) and, when
+   writing as an HDF5 GROUP, forward slashes (``'/'``) in them.
 
 
 .. warning::

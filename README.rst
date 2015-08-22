@@ -203,6 +203,8 @@ support writing it so MATlAB can read it.
        non-ASCII characters in which case a ``NotImplementedError`` is
        thrown). Otherwise, it is just written as ``np.bytes_``.
 .. [7] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
+       They cannot have null characters (``'\x00'``) or forward slashes
+       (``'/'``) in them.
 .. [8] ``np.float16`` are not supported for h5py versions before
        ``2.2``.
 .. [9] Container types are only supported if their underlying dtype is
@@ -212,7 +214,9 @@ support writing it so MATlAB can read it.
         Datasets holding its fields (either the values directly, or as
         an HDF5 Reference array to the values for the different elements
         of the data). Can only be written as an HDF5 COMPOUND type if
-        none of its field are of dtype ``'object'``.
+        none of its field are of dtype ``'object'``. Field names cannot
+        have null characters (``'\x00'``) and, when writing as an HDF5
+        GROUP, forward slashes (``'/'``) in them.
 .. [11] Structured ``np.ndarray`` s with no elements, when written like a
         structure, will not be read back with the right dtypes for their
         fields (will all become 'object').
@@ -269,6 +273,19 @@ Versions
        raises an exception.
      * Ability to write ``np.bytes_`` with non-ASCII characters in them.
        Doing so no longer raises an exception.
+
+0.1.8. Bugfix release fixing the following two bugs.
+       * Issue #21. Fixed bug where the ``'MATLAB_class'`` Attribute is
+         not set when writing ``dict`` types when writing MATLAB
+         metadata.
+       * Issue #22. Fixed bug where null characters (``'\x00'``) and
+         forward slashes (``'/'``) were allowed in ``dict`` keys and the
+         field names of structured ``np.ndarray`` (except that forward
+         slashes are allowed when the
+         ``structured_numpy_ndarray_as_struct`` is not set as is the
+         case when the ``matlab_compatible`` option is set). These
+         cause problems for the ``h5py`` package and the HDF5 library.
+         ``NotImplementedError`` is now thrown in these cases.
 
 0.1.7. Bugfix release with an added compatibility option and some added test code. Did the following.
        * Fixed an issue reading variables larger than 2 GB in MATLAB
