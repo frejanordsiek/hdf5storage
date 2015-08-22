@@ -1607,10 +1607,9 @@ class PythonDictMarshaller(TypeMarshaller):
         # the attributes need to be deleted.
 
         tp = type(data)
-        if options.matlab_compatible and tp in self.types \
-                and self.types.index(tp) in self.__MATLAB_classes:
-            set_attribute_string(grp[name], 'MATLAB_class', \
-                self.__MATLAB_classes[self.types.index(tp)])
+        if options.matlab_compatible and tp in self.__MATLAB_classes:
+            set_attribute_string(grp[name], 'MATLAB_class',
+                                 self.__MATLAB_classes[tp])
         else:
             del_attribute(grp[name], 'MATLAB_class')
 
