@@ -338,6 +338,43 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    @raises(NotImplementedError)
+    def test_dict_bytes_key(self):
+        data = random_dict()
+        key = random_bytes(max_dict_key_length)
+        data[key] = random_int()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    @raises(NotImplementedError)
+    def test_dict_key_null_character(self):
+        data = random_dict()
+        if sys.hexversion >= 0x03000000:
+            ch = '\x00'
+        else:
+            ch = u'\x00'
+        key = ch.join([random_str_ascii(max_dict_key_length)
+                      for i in range(2)])
+        data[key] = random_int()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    @raises(NotImplementedError)
+    def test_dict_key_forward_slash(self):
+        data = random_dict()
+        if sys.hexversion >= 0x03000000:
+            ch = '/'
+        else:
+            ch = u'/'
+        key = ch.join([random_str_ascii(max_dict_key_length)
+                      for i in range(2)])
+        data[key] = random_int()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
 
 class TestPythonFormat(TestPythonMatlabFormat):
     def __init__(self):

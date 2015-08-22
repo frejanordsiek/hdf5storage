@@ -1466,8 +1466,10 @@ class PythonDictMarshaller(TypeMarshaller):
 
     def write(self, f, grp, name, data, type_string, options):
         # Check for any field names that are not unicode since they
-        # cannot be handled. How it is checked (what type it is) and the
-        # error message are different for each Python version.
+        # cannot be handled. Also check for null characters and /
+        # characters since they can't be handled either. How it is
+        # checked (what type it is) and the error message are different
+        # for each Python version.
 
         if sys.hexversion >= 0x03000000:
             for fieldname in data:
@@ -1476,6 +1478,10 @@ class PythonDictMarshaller(TypeMarshaller):
                                               + 'str keys are not '
                                               + 'supported: '
                                               + repr(fieldname))
+                if '\x00' in fieldname or '/' in fieldname:
+                    raise NotImplementedError('Dictionary keys with ' \
+                        + "null characters ('\x00') and '/' are not " \
+                        + 'supported.')
         else:
             for fieldname in data:
                 if not isinstance(fieldname, unicode):
@@ -1483,6 +1489,10 @@ class PythonDictMarshaller(TypeMarshaller):
                                               + 'unicode keys are not '
                                               + 'supported: '
                                               + repr(fieldname))
+                if u'\x00' in fieldname or u'/' in fieldname:
+                    raise NotImplementedError('Dictionary keys with ' \
+                        + "null characters ('\x00') and '/' are not " \
+                        + 'supported.')
 
         # If the group doesn't exist, it needs to be created. If it
         # already exists but is not a group, it needs to be deleted
