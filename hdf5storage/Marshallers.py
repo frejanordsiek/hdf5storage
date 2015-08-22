@@ -690,6 +690,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or not all(data_to_store.shape) \
                 or not all([all(data_to_store[n].shape) \
                 for n in data_to_store.dtype.names])):
+            # Grab the list of fields that don't have a null character
+            # or a / in them since those can't be written.
+            field_names = [n for n in data_to_store.dtype.names
+                           if '/' not in n and '\x00' not in n]
+
+            # Throw and exception if we had to exclude any field names.
+            if len(field_names) != len(data_to_store.dtype.names):
+                raise NotImplementedError("Null characters ('\x00') " \
+                    + "and '/' in the field names of this type of " \
+                    + 'numpy.ndarray are not supported.')
+
             # If the group doesn't exist, it needs to be created. If it
             # already exists but is not a group, it needs to be deleted
             # before being created.
@@ -701,9 +712,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 grp.create_group(name)
 
             grp2 = grp[name]
-
-            # Grab the list of fields.
-            field_names = list(data_to_store.dtype.names)
 
             # Write the metadata, and set the MATLAB_class to 'struct'
             # explicitly.
@@ -764,6 +772,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                 - set(['H5PATH'])):
                             del_attribute(grp2[field], attribute)
         else:
+            # If it has fields and it isn't a Reference type, none of
+            # them can contain a / character.
+            if data_to_store.dtype.fields is not None \
+                    and h5py.check_dtype(ref=data_to_store.dtype) \
+                    is not h5py.Reference:
+                for n in data_to_store.dtype.fields:
+                    if '\x00' in n:
+                        raise NotImplementedError( \
+                            "Null characters ('\x00') " \
+                            + 'in the field names of this type of ' \
+                            + 'numpy.ndarray are not supported.')
+
             # The data must first be written. If name is not present
             # yet, then it must be created. If it is present, but not a
             # Dataset, has the wrong dtype, or is the wrong shape; then
