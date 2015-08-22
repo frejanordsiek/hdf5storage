@@ -130,6 +130,23 @@ class TestPythonMatlabFormat(object):
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
+
+    def check_numpy_structured_array_field_special_char(self, ch):
+        # Makes a random 1d structured ndarray with the character
+        # in one field, writes it and reads it back, and then compares
+        # it.
+        field_names = [random_str_ascii(max_dict_key_length)
+                       for i in range(2)]
+        field_names[1] = field_names[1][0] + ch + field_names[1][1:]
+        if sys.hexversion < 0x03000000:
+            for i in range(len(field_names)):
+                field_names[i] = field_names[i].encode('UTF-8')
+        shape = random_numpy_shape(1, \
+            max_structured_ndarray_axis_length)
+        data = random_structured_numpy_array(shape, names=field_names)
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
     
     def check_python_collection(self, tp):
         # Makes a random collection of the specified type, writes it and
@@ -350,6 +367,14 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    @raises(NotImplementedError)
+    def test_numpy_structured_array_field_null_character(self):
+        self.check_numpy_structured_array_field_special_char('\x00')
+
+    @raises(NotImplementedError)
+    def test_numpy_structured_array_field_forward_slash(self):
+        self.check_numpy_structured_array_field_special_char('/')
+
     def test_python_collection(self):
         for tp in (list, tuple, set, frozenset, collections.deque):
             yield self.check_python_collection, tp
@@ -407,6 +432,10 @@ class TestPythonFormat(TestPythonMatlabFormat):
         self.options = hdf5storage.Options(matlab_compatible=False)
         self.filename = 'data.h5'
 
+    # Won't throw an exception unlike the parent.
+    def test_numpy_structured_array_field_forward_slash(self):
+        self.check_numpy_structured_array_field_special_char('/')
+
 
 class TestNoneFormat(TestPythonMatlabFormat):
     def __init__(self):
@@ -419,6 +448,10 @@ class TestNoneFormat(TestPythonMatlabFormat):
 
         # Add in float16 to the set of types tested.
         self.dtypes.append('float16')
+
+    # Won't throw an exception unlike the parent.
+    def test_numpy_structured_array_field_forward_slash(self):
+        self.check_numpy_structured_array_field_special_char('/')
 
     def assert_equal(self, a, b):
         assert_equal_none_format(a, b)

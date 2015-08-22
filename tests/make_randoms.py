@@ -218,26 +218,28 @@ def random_dict():
 
 
 def random_structured_numpy_array(shape, field_shapes=None,
-                                  nonascii_fields=False):
-    # Make random field names, dtypes, and sizes. Though, if
-    # field_shapes is explicitly given, the sizes should be
-    # random. The field names must all be of type str, not unicode
-    # in Python 2. Optionally include non-ascii characters in the
-    # field names (will have to be encoded in Python 2.x). String
-    # types will not be used due to the difficulty in assigning the
-    # length.
-    if nonascii_fields:
-        name_func = random_str_some_unicode
-    else:
-        name_func = random_str_ascii
-    names = [name_func(
-             max_structured_ndarray_field_lengths)
-             for i in range(0, random.randint(
-             min_structured_ndarray_fields,
-             max_structured_ndarray_fields))]
-    if sys.hexversion < 0x03000000:
-        for i, name in enumerate(names):
-            names[i] = name.encode('UTF-8')
+                                  nonascii_fields=False,
+                                  names=None):
+    # Make random field names (if not provided with field names),
+    # dtypes, and sizes. Though, if field_shapes is explicitly given,
+    # the sizes should be random. The field names must all be of type
+    # str, not unicode in Python 2. Optionally include non-ascii
+    # characters in the field names (will have to be encoded in Python
+    # 2.x). String types will not be used due to the difficulty in
+    # assigning the length.
+    if names is None:
+        if nonascii_fields:
+            name_func = random_str_some_unicode
+        else:
+            name_func = random_str_ascii
+        names = [name_func(
+                 max_structured_ndarray_field_lengths)
+                 for i in range(0, random.randint(
+                 min_structured_ndarray_fields,
+                 max_structured_ndarray_fields))]
+        if sys.hexversion < 0x03000000:
+            for i, name in enumerate(names):
+                names[i] = name.encode('UTF-8')
     dts = [random.choice(list(set(dtypes)
            - set(('S', 'U'))))
            for i in range(len(names))]
