@@ -213,6 +213,8 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.9. Minor feature release adding optional data compression and the storage of data checksums. Controlled by several new options.
+
 0.1.8. Bugfix release fixing the following two bugs.
        * Issue #21. Fixed bug where the ``'MATLAB_class'`` Attribute is
          not set when writing ``dict`` types when writing MATLAB
