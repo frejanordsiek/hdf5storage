@@ -6,9 +6,24 @@
 Compression
 ===========
 
+The HDF5 libraries and the :py:mod:`h5py` module support transparent
+compression of data in HDF5 files.
+
+The use of compression can sometimes drastically reduce file size, often
+makes it faster to read the data from the file, and sometimes makes it
+faster to write the data. Though, not all data compresses very well and
+can occassionally end up larger after compression than it was
+uncompressed. Compression does cost CPU time both when compressing the
+data and when decompressing it. The reason this can sometimes lead to
+faster read and write times is because disks are very slow and the space
+savings can save enough disk access time to make up for the CPU time.
+
+All versions of this package can read compressed data, but not all
+versions can write compressed data.
+
 .. versionadded:: 0.1.9
    
-   HDF5 compression features added along with several options to
+   HDF5 write compression features added along with several options to
    control it in :py:class:`Options`.
 
 
@@ -22,19 +37,6 @@ Compression
 
    Passing the compression options for versions earlier than ``0.1.7``
    will result in an error.
-
-
-The HDF5 libraries and the :py:mod:`h5py` module support transparent
-compression of data in HDF5 files.
-
-The use of compression can sometimes drastically reduce file size, often
-makes it faster to read the data from the file, and sometimes makes it
-faster to write the data. Though, not all data compresses very well and
-can occassionally end up larger after compression than it was
-uncompressed. Compression does cost CPU time both when compressing the
-data and when decompressing it. The reason this can sometimes lead to
-faster read and write times is because disks are very slow and the space
-savings can save enough disk access time to make up for the CPU time.
 
 
 Enabling Compression
@@ -138,8 +140,9 @@ stored data in an HDF5 file. These are then checked when the data is
 read to catch file corruption, which will cause an error when reading
 the data informing the user that there is data corruption. The filter
 can be enabled or disabled separately for data that is compressed and
-data that is not compressed (e.g. compression is disabled or the python
-object's data size is smaller than the compression threshold).
+data that is not compressed (e.g. compression is disabled, the python
+object can't be compressed, or the python object's data size is smaller
+than the compression threshold).
 
 For compressed data, it is controlled by setting
 :py:attr:`Options.compressed_fletcher32_filter` or passing
@@ -160,6 +163,18 @@ For uncompressed data, it is controlled by setting
    as a :py:mod:`numpy` scalar.
 
 
+Chunking
+========
+
+When no filters are used (compression and Fletcher32), this package
+stores data in HDF5 files in a contiguous manner. The use of any filter
+requires that the data use chunked storage. Chunk sizes are determined
+automatically using the autochunk feature of :py:mod:`h5py`. The HDF5
+libraries make reading contiguous and chunked data transparent, though
+access speeds can differ and the chunk size affects the compression
+ratio.
+
+
 Further Reading
 ===============
 
@@ -170,6 +185,9 @@ Further Reading
    
    `Using Compression in HDF5 <http://www.hdfgroup.org/HDF5/faq/compression.html>`_
       FAQ on compression from the HDF Group.
+   
+   `HDF5 Tutorial: Learning The Basics: Dataset Storage Layout <https://www.hdfgroup.org/HDF5/Tutor/layout.html>`_
+      Information on Dataset storage format from the HDF Group
    
    `SZIP License <https://www.hdfgroup.org/doc_resource/SZIP/Commercial_szip.html>`_
       The license for using the SZIP compression algorithm.
