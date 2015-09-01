@@ -266,13 +266,13 @@ Versions
 ========
 
 0.2. Feature release adding the following.
-     * Optional data compression and the storage of data checksums.
-       Controlled by several new options.
      * Ability to write Python 3.x ``int`` and Python 2.x ``long`` that
        are too large to fit into ``np.int64``. Doing so no longer
        raises an exception.
      * Ability to write ``np.bytes_`` with non-ASCII characters in them.
        Doing so no longer raises an exception.
+
+0.1.9. Minor feature release adding optional data compression and the storage of data checksums. Controlled by several new options.
 
 0.1.8. Bugfix release fixing the following two bugs.
        * Issue #21. Fixed bug where the ``'MATLAB_class'`` Attribute is
