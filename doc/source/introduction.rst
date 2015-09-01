@@ -254,7 +254,7 @@ returned in Python 3.
 Using No Metadata
 -----------------
 
-Write it to a file at the root directory, but include no Python or
+Write it to a file at the ``'/a'`` directory, but include no Python or
 MATLAB metadata. Then, read it back and notice that many objects come
 back quite different from what was written. Namely, everything was
 converted to Numpy types. This even included the dictionaries which were
@@ -264,10 +264,10 @@ before being written to the HDF5 file, and without metadata, the
 conversion cannot be reversed (while ``dict`` isn't converted, it has
 the same form and thus cannot be extracted reversibly).
 
-    >>> hdf5storage.write(data=a, path='/', filename='data.h5',
+    >>> hdf5storage.write(data=a, path='/a', filename='data.h5',
     ...                   store_python_metadata=False,
     ...                   matlab_compatible=False)
-    >>> hdf5storage.read(path='/', filename='data.h5')
+    >>> hdf5storage.read(path='/a', filename='data.h5')
     array([ (True,
              [],
              2,
@@ -319,10 +319,10 @@ Do the same thing, but now include Python metadata
 (``store_python_metadata == True``). This time, everything is read back
 the same (or at least, it should) as it was written.
 
-    >>> hdf5storage.write(data=a, path='/', filename='data_typeinfo.h5',
+    >>> hdf5storage.write(data=a, path='/a', filename='data_typeinfo.h5',
     ...                   store_python_metadata=True,
     ...                   matlab_compatible=False)
-    >>> hdf5storage.read(path='/', filename='data_typeinfo.h5')
+    >>> hdf5storage.read(path='/a', filename='data_typeinfo.h5')
     {'a': True,
      'b': None,
      'c': 2,
@@ -359,10 +359,10 @@ MATLAB can only work with 2D and higher arrays, uses Fortran array
 ordering instead of C ordering like Python does, and strings are stored
 in a subset of UTF-16 (no doublets) in the version 7.3 MAT files.
 
-    >>> hdf5storage.write(data=a, path='/', filename='data.mat',
+    >>> hdf5storage.write(data=a, path='/a', filename='data.mat',
     ...                   store_python_metadata=False,
     ...                   matlab_compatible=True)
-    >>> hdf5storage.read(path='/', filename='data.mat')
+    >>> hdf5storage.read(path='/a', filename='data.mat')
     array([ ([[True]],
              [[]],
              [[2]],
@@ -417,10 +417,10 @@ the same (or at least, it should) as it was written. The Python metadata
 allows the transformations done by making the stored data MATLAB
 compatible reversible.
 
-    >>> hdf5storage.write(data=a, path='/', filename='data_typeinfo.mat',
+    >>> hdf5storage.write(data=a, path='/a', filename='data_typeinfo.mat',
     ...                   store_python_metadata=True,
     ...                   matlab_compatible=True)
-    >>> hdf5storage.read(path='/', filename='data_typeinfo.mat')
+    >>> hdf5storage.read(path='/a', filename='data_typeinfo.mat')
     {'a': True,
      'b': None,
      'c': 2,
