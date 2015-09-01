@@ -13,6 +13,7 @@ Contents:
 
    information
    introduction
+   compression
    storage_format
    development
    api
