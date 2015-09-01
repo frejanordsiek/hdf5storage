@@ -67,7 +67,7 @@ The two main options are :py:attr:`Options.store_python_metadata` and
 :py:attr:`Options.oned_as`.
 
 
-.. versionadded:: 0.2
+.. versionadded:: 0.1.9
 
    Support for the transparent compression of data has been added. It
    is enabled by default, compressing all python objects resulting in
@@ -143,7 +143,7 @@ vectors. This option sets which they become when imported into MATLAB.
 compress
 --------
 
-.. versionadded:: 0.2
+.. versionadded:: 0.1.9
 
 ``bool``
 
