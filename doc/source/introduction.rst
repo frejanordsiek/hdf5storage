@@ -67,6 +67,13 @@ The two main options are :py:attr:`Options.store_python_metadata` and
 :py:attr:`Options.oned_as`.
 
 
+.. versionadded:: 0.2
+
+   Support for the transparent compression of data has been added. It
+   is enabled by default, compressing all python objects resulting in
+   HDF5 Datasets larger than 16 KB with the GZIP/Deflate algorithm.
+
+
 store_python_metadata
 ---------------------
 
@@ -131,6 +138,16 @@ This option is only actually relevant when
 dimensionality arrays, but Numpy supports 1D arrays. So, 1D arrays have
 to be made 2 dimensional making them either into row vectors or column
 vectors. This option sets which they become when imported into MATLAB.
+
+
+compress
+--------
+
+.. versionadded:: 0.2
+
+``bool``
+
+Whether to use compression when writing data. Enabled (``True``) by default. See :ref:`Compression` for more information.
 
 
 Convenience Functions for MATLAB MAT Files

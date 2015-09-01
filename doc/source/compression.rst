@@ -1,5 +1,7 @@
 .. currentmodule:: hdf5storage
 
+.. _Compression:
+
 ===========
 Compression
 ===========
