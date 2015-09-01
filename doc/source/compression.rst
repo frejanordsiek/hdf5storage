@@ -6,7 +6,7 @@
 Compression
 ===========
 
-.. versionadded:: 0.2
+.. versionadded:: 0.1.9
    
    HDF5 compression features added along with several options to
    control it in :py:class:`Options`.
