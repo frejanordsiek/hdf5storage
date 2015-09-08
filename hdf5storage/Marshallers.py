@@ -677,15 +677,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # those have to be excluded too. Also, if any of its fields are
         # an object time (no matter how nested), then rather than
         # converting that field to a HDF5 Reference types, it will just
-        # be written as a Group instead (just have to see if "'O'" is in
-        # str(data_to_store.dtype).
+        # be written as a Group instead (just have to see if ", 'O'" is
+        # in str(data_to_store.dtype).
         
         if data_to_store.dtype.fields is not None \
                 and h5py.check_dtype(ref=data_to_store.dtype) \
                 is not h5py.Reference \
                 and not np.iscomplexobj(data) \
                 and (options.structured_numpy_ndarray_as_struct \
-                or "'O'" in str(data_to_store.dtype) \
+                or ", 'O'" in str(data_to_store.dtype) \
                 or not all(data_to_store.shape) \
                 or not all([all(data_to_store[n].shape) \
                 for n in data_to_store.dtype.names])):

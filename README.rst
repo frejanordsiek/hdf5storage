@@ -272,7 +272,13 @@ Versions
      * Ability to write ``np.bytes_`` with non-ASCII characters in them.
        Doing so no longer raises an exception.
 
-0.1.9. Minor feature release adding optional data compression and the storage of data checksums. Controlled by several new options.
+0.1.9. Bugfix and minor feature release doing the following.
+       * Issue #23. Fixed bug where a structured ``np.ndarray`` with
+         a field name of ``'O'`` could never be written as an
+         HDF5 COMPOUND Dataset (falsely thought a field's dtype was
+         object).
+       * Issue #6. Added optional data compression and the storage of
+         data checksums. Controlled by several new options.
 
 0.1.8. Bugfix release fixing the following two bugs.
        * Issue #21. Fixed bug where the ``'MATLAB_class'`` Attribute is
