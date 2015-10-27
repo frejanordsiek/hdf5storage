@@ -173,8 +173,15 @@ def read_data(f, grp, name, options):
         m = mc.get_marshaller_for_type_string(type_string)
     elif matlab_class is not None:
         m = mc.get_marshaller_for_matlab_class(matlab_class)
+    elif hasattr(grp[name], 'dtype'):
+        # Numpy dataset
+        m = mc.get_marshaller_for_type(grp[name].dtype)
+    elif isinstance(grp[name], (h5py.Group, h5py.File)):
+        # Groups and files are like Matlab struct
+        m = mc.get_marshaller_for_matlab_class('struct')
 
     if m is None:
+        # use Numpy as a fallback
         m = mc.get_marshaller_for_type(np.uint8)
 
     # If a marshaller was found, use it to write the data. Otherwise,
