@@ -213,6 +213,14 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.10. Minor feature/performance fix release doing the following.
+        * Issue #29. Added ``writes`` and ``reads`` functions to write
+          and read more than one piece of data at a time and made
+          ``savemat`` and ``loadmat`` use them to increase performance.
+          Previously, the HDF5 file was being opened and closed for
+          each piece of data, which impacted performance, especially
+	  for large files.
+
 0.1.9. Bugfix and minor feature release doing the following.
        * Issue #23. Fixed bug where a structured ``np.ndarray`` with
          a field name of ``'O'`` could never be written as an

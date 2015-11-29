@@ -6,9 +6,11 @@ hdf5storage
 .. automodule:: hdf5storage
 
 .. autosummary::
-
+   
    write
+   writes
    read
+   reads
    savemat
    loadmat
    Options
@@ -21,10 +23,22 @@ write
 .. autofunction:: write
 
 
+writes
+------
+
+.. autofunction:: writes
+
+
 read
 -----
 
 .. autofunction:: read
+
+
+reads
+-----
+
+.. autofunction:: reads
 
 
 savemat

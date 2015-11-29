@@ -16,8 +16,9 @@ Lower level functionality needed mostly for extending this package to
 work with more datatypes are in its submodules.
 
 The main functions in this module are :py:func:`write` and
-:py:func:`read` which write a Python variable to an HDF5 file or read
-the specified contents of an HDF5 file and convert to Python types.
+:py:func:`read` which write a single Python variable to an HDF5 file or
+read the specified contents at one location in an HDF5 file and convert
+to Python types.
 
 HDF5 files are structured much like a Unix filesystem, so everything can
 be referenced with a POSIX style path, which look like
@@ -40,6 +41,28 @@ read back into the variable ``bar`` ::
 
     bar = hdf5storage.read(path='/foo', filename='data.h5')
 
+Writing And Reading Several Python Variables at Once
+====================================================
+
+To write and read more than one Python variable, one could use
+:py:func:`write` and :py:func:`read` for each variable individually.
+This can incur a major performance penalty, especially for large HDF5
+files, since each call opens and closes the HDF5 file (sometimes more
+than once).
+
+Version ``0.1.10`` added a way to do this without incuring this
+performance penalty by adding two new functions: :py:func:`writes` and
+:py:func:`reads`.
+
+They can write and read more than one Python variable at once, though
+they can still work with a single variable. In fact, :py:func:`write`
+and :py:func:`read` are now wrappers around them. :py:func:`savemat`
+and :py:func:`loadmat` currently use them for the improved performance.
+
+.. versionadded:: 0.1.10
+   
+   Ability to write and read more than one Python variable at a time
+   without opening and closing the HDF5 file each time.
 
 Main Options Controlling Writing/Reading Data
 =============================================
