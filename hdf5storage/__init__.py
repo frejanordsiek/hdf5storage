@@ -1645,7 +1645,7 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
     scipy.io.savemat : SciPy function this one models after and
         dispatches to.
     Options
-    write : Function used to do the actual writing.
+    writes : Function used to do the actual writing.
 
     """
     # If format is a number less than 7.3, the call needs to be
@@ -1668,24 +1668,11 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         action_for_matlab_incompatible=action_for_matlab_incompatible, \
         marshaller_collection=marshaller_collection)
 
-    # Write the variables in the dictionary to file one at a time. For
-    # the first one, the file needs to be truncated or truncated if not
-    # valid in a matlab sense if the option/s are given, while not for
-    # the other ones (using a flag for when the first variable has been
-    # added to do this).
-    added_first_variable = False
-    for name in mdict:
-        if not added_first_variable:
-            write(mdict[name], path=name, filename=file_name,
-                  truncate_existing=truncate_existing,
-                  truncate_invalid_matlab=truncate_invalid_matlab,
-                  options=options)
-            added_first_variable = True
-        else:
-            write(mdict[name], path=name, filename=file_name,
-                  truncate_existing=False,
-                  truncate_invalid_matlab=False,
-                  options=options)
+    # Write the variables in the dictionary to file.
+    writes(mdict=mdict, filename=file_name,
+           truncate_existing=truncate_existing,
+           truncate_invalid_matlab=truncate_invalid_matlab,
+           options=options)
 
 
 def loadmat(file_name, mdict=None, appendmat=True,
@@ -1751,7 +1738,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
     scipy.io.loadmat : SciPy function this one models after and
         dispatches to.
     Options
-    read : Function used to do the actual reading.
+    reads : Function used to do the actual reading.
 
     """
     # Will first assume that it is the HDF5 based 7.3 format. If an
@@ -1787,11 +1774,13 @@ def loadmat(file_name, mdict=None, appendmat=True,
                             pass
 
         else:
-            # Extract the desired fields into a dictionary one by one.
+            # Extract the desired fields all together and then pack them
+            # into a dictionary one by one.
+            values = reads(paths=variable_names, filename=filename,
+                           options=options)
             data = dict()
-            for name in variable_names:
-                data[name] = read(path=name, filename=filename,
-                                  options=options)
+            for i, name in enumerate(variable_names):
+                data[name] = values[i]
 
         # Read all the variables, stuff them into mdict, and return it.
         if mdict is None:
