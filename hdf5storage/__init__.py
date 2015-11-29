@@ -1107,13 +1107,13 @@ class MarshallerCollection(object):
             return None
 
 
-def write(data, path='/', filename='data.h5', truncate_existing=False,
-          truncate_invalid_matlab=False, options=None, **keywords):
+def writes(mdict, filename='data.h5', truncate_existing=False,
+           truncate_invalid_matlab=False, options=None, **keywords):
     """ Writes data into an HDF5 file (high level).
 
-    High level function to store a Python type (`data`) to a specified
-    path (`path`) in an HDF5 file. The path is specified as a POSIX
-    style path where the directory name is the Group to put it in and
+    High level function to store one or more Python types (data) to
+    specified pathes in an HDF5 file. The paths are specified as POSIX
+    style paths where the directory name is the Group to put it in and
     the basename is the name to write it to.
 
     There are various options that can be used to influence how the data
@@ -1134,12 +1134,12 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
 
     Parameters
     ----------
-    data : any
-        The data to write.
-    path : str, optional
-        The path to write `data` to. Must be a POSIX style path where
-        the directory name is the Group to put it in and the basename
-        is the name to write it to.
+    mdict : dict, dict like
+        The ``dict`` or other dictionary type object of paths
+        and data to write to the file. The paths, the keys, must be
+        POSIX style paths where the directory name is the Group to put
+        it in and the basename is the name to write it to. The values
+        are the data to write.
     filename : str, optional
         The name of the HDF5 file to write `data` to.
     truncate_existing : bool, optional
@@ -1167,6 +1167,8 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
 
     See Also
     --------
+    write : Writes just a single piece of data
+    reads
     read
     Options
     lowlevel.write_data : Low level version
@@ -1177,24 +1179,33 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
     if not isinstance(options, Options):
         options = Options(**keywords)
 
-    # Remove double slashes and a non-root trailing slash.
+    # Go through mdict, extract the paths and data, and process the
+    # paths. A list of tulpes for each piece of data to write will be
+    # constructed where he first element is the group name, the second
+    # the target name (name of the Dataset/Group holding the data), and
+    # the third element the data to write.
+    towrite = []
+    for p, v in mdict.items():
+        # Remove double slashes and a non-root trailing slash.
+        path = posixpath.normpath(p)
 
-    path = posixpath.normpath(path)
+        # Extract the group name and the target name (will be a dataset if
+        # data can be mapped to it, but will end up being made into a group
+        # otherwise. As HDF5 files use posix path, conventions, posixpath
+        # will do everything.
+        groupname = posixpath.dirname(path)
+        targetname = posixpath.basename(path)
 
-    # Extract the group name and the target name (will be a dataset if
-    # data can be mapped to it, but will end up being made into a group
-    # otherwise. As HDF5 files use posix path, conventions, posixpath
-    # will do everything.
-    groupname = posixpath.dirname(path)
-    targetname = posixpath.basename(path)
+        # If groupname got turned into blank, then it is just root.
+        if groupname == '':
+            groupname = '/'
 
-    # If groupname got turned into blank, then it is just root.
-    if groupname == '':
-        groupname = '/'
+        # If targetname got turned blank, then it is the current directory.
+        if targetname == '':
+            targetname = '.'
 
-    # If targetname got turned blank, then it is the current directory.
-    if targetname == '':
-        targetname = '.'
+        # Pack into towrite.
+        towrite.append((groupname, targetname, v))
 
     # Open/create the hdf5 file but don't write the data yet since the
     # userblock still needs to be set. This is all wrapped in a try
@@ -1293,17 +1304,19 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
     f = None
     try:
         f = h5py.File(filename)
-        
-        # Need to make sure groupname is a valid group in f and grab its
-        # handle to pass on to the low level function.
-        if groupname not in f:
-            grp = f.require_group(groupname)
-        else:
-            grp = f[groupname]
 
-        # Hand off to the low level function.
-        lowlevel.write_data(f, grp, targetname, data,
-                            None, options)
+        # Go through each element of towrite and write them.
+        for groupname, targetname, data in towrite:
+            # Need to make sure groupname is a valid group in f and grab its
+            # handle to pass on to the low level function.
+            if groupname not in f:
+                grp = f.require_group(groupname)
+            else:
+                grp = f[groupname]
+
+            # Hand off to the low level function.
+            lowlevel.write_data(f, grp, targetname, data,
+                                None, options)
     except:
         raise
     finally:
@@ -1311,9 +1324,197 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
             f.close()
 
 
+def write(data, path='/', filename='data.h5', truncate_existing=False,
+          truncate_invalid_matlab=False, options=None, **keywords):
+    """ Writes one piece of data into an HDF5 file (high level).
+
+    A wrapper around ``writes`` to write a single piece of data,
+    `data`, to a single location, `path`.
+
+    High level function to store a Python type (`data`) to a specified
+    path (`path`) in an HDF5 file. The path is specified as a POSIX
+    style path where the directory name is the Group to put it in and
+    the basename is the name to write it to.
+
+    There are various options that can be used to influence how the data
+    is written. They can be passed as an already constructed ``Options``
+    into `options` or as additional keywords that will be used to make
+    one by ``options = Options(**keywords)``.
+
+    Two very important options are ``store_python_metadata`` and
+    ``matlab_compatible``, which are ``bool``. The first makes it so
+    that enough metadata (HDF5 Attributes) are written that `data` can
+    be read back accurately without it (or its contents if it is a
+    container type) ending up different types, transposed in the case of
+    numpy arrays, etc. The latter makes it so that the appropriate
+    metadata is written, string and bool and complex types are converted
+    properly, and numpy arrays are transposed; which is needed to make
+    sure that MATLAB can import `data` correctly (the HDF5 header is
+    also set so MATLAB will recognize it).
+
+    Parameters
+    ----------
+    data : any
+        The data to write.
+    path : str, optional
+        The path to write `data` to. Must be a POSIX style path where
+        the directory name is the Group to put it in and the basename
+        is the name to write it to.
+    filename : str, optional
+        The name of the HDF5 file to write `data` to.
+    truncate_existing : bool, optional
+        Whether to truncate the file if it already exists before writing
+        to it.
+    truncate_invalid_matlab : bool, optional
+        Whether to truncate a file if matlab_compatibility is being
+        done and the file doesn't have the proper header (userblock in
+        HDF5 terms) setup for MATLAB metadata to be placed.
+    options : Options, optional
+        The options to use when writing. Is mutually exclusive with any
+        additional keyword arguments given (set to ``None`` or don't
+        provide to use them).
+    **keywords :
+        If `options` was not provided or was ``None``, these are used as
+        arguments to make a ``Options``.
+
+    Raises
+    ------
+    NotImplementedError
+        If writing `data` is not supported.
+    TypeNotMatlabCompatibleError
+        If writing a type not compatible with MATLAB and
+        `options.action_for_matlab_incompatible` is set to ``'error'``.
+
+    See Also
+    --------
+    writes : Writes more than one piece of data at once
+    reads
+    read
+    Options
+    lowlevel.write_data : Low level version
+
+    """
+    writes(mdict={path: data},  filename=filename,
+           truncate_existing=truncate_existing,
+           truncate_invalid_matlab=truncate_invalid_matlab,
+           options=options, **keywords)
+
+
+def reads(paths, filename='data.h5', options=None, **keywords):
+    """ Reads data from an HDF5 file (high level).
+
+    High level function to read one or more pieces of data from an HDF5
+    file located at the paths specified in `paths` into Python
+    types. Each path is specified as a POSIX style path where the data
+    to read is located.
+
+    There are various options that can be used to influence how the data
+    is read. They can be passed as an already constructed ``Options``
+    into `options` or as additional keywords that will be used to make
+    one by ``options = Options(**keywords)``.
+
+    Parameters
+    ----------
+    paths : iterable of str
+        An iterable of paths to read data from. Each must be a POSIX
+        style path where the directory name is the Group to put it in
+        and the basename is the name to write it to.
+    filename : str, optional
+        The name of the HDF5 file to read data from.
+    options : Options, optional
+        The options to use when reading. Is mutually exclusive with any
+        additional keyword arguments given (set to ``None`` or don't
+        provide to use them).
+    **keywords :
+        If `options` was not provided or was ``None``, these are used as
+        arguments to make a ``Options``.
+
+    Returns
+    -------
+    datas : iterable
+        An iterable holding the piece of data for each path in `paths`
+        in the same order.
+
+    Raises
+    ------
+    CantReadError
+        If reading the data can't be done.
+
+    See Also
+    --------
+    read : Reads just a single piece of data
+    writes
+    write
+    Options
+    lowlevel.read_data : Low level version.
+
+    """
+    # Pack the different options into an Options class if an Options was
+    # not given.
+    if not isinstance(options, Options):
+        options = Options(**keywords)
+
+    # Process the paths and stuff the group names and target names as
+    # tuples into toread.
+    toread = []
+    for p in paths:    
+        # Remove double slashes and a non-root trailing slash.
+
+        path = posixpath.normpath(p)
+
+        # Extract the group name and the target name (will be a dataset if
+        # data can be mapped to it, but will end up being made into a group
+        # otherwise. As HDF5 files use posix path, conventions, posixpath
+        # will do everything.
+        groupname = posixpath.dirname(path)
+        targetname = posixpath.basename(path)
+
+        # If groupname got turned into blank, then it is just root.
+        if groupname == '':
+            groupname = '/'
+
+        # If targetname got turned blank, then it is the current directory.
+        if targetname == '':
+            targetname = '.'
+
+        # Pack them into toread
+        toread.append((groupname, targetname))
+
+    # Open the hdf5 file and start reading the data. This is all wrapped
+    # in a try block, so that the file can be closed if any errors
+    # happen (the error is re-raised).
+    try:
+        f = None
+        f = h5py.File(filename, mode='r')
+
+        # Read the data item by item
+        datas = []
+        for groupname, targetname in toread:
+            # Check that the containing group is in f and is indeed a
+            # group. If it isn't an error needs to be thrown.
+            if groupname not in f \
+                    or not isinstance(f[groupname], h5py.Group):
+                raise CantReadError('Could not find containing Group '
+                                    + groupname + '.')
+
+            # Hand off everything to the low level reader.
+            datas.append(lowlevel.read_data(f, f[groupname],
+                                            targetname, options))
+    except:
+        raise
+    finally:
+        if f is not None:
+            f.close()
+
+    return datas
+
+
 def read(path='/', filename='data.h5',
          options=None, **keywords):
-    """ Reads data from an HDF5 file (high level).
+    """ Reads one piece of data from an HDF5 file (high level).
+
+    A wrapper around ``reads`` to read a single piece of data at the
+    single location `path`.
 
     High level function to read data from an HDF5 file located at `path`
     into Python types. The path is specified as a POSIX style path where
@@ -1340,6 +1541,11 @@ def read(path='/', filename='data.h5',
         If `options` was not provided or was ``None``, these are used as
         arguments to make a ``Options``.
 
+    Returns
+    -------
+    data :
+        The piece of data at `path`.
+
     Raises
     ------
     CantReadError
@@ -1347,58 +1553,15 @@ def read(path='/', filename='data.h5',
 
     See Also
     --------
+    reads : Reads more than one piece of data at once
+    writes
     write
     Options
     lowlevel.read_data : Low level version.
 
     """
-    # Pack the different options into an Options class if an Options was
-    # not given.
-    if not isinstance(options, Options):
-        options = Options(**keywords)
-
-    # Remove double slashes and a non-root trailing slash.
-
-    path = posixpath.normpath(path)
-
-    # Extract the group name and the target name (will be a dataset if
-    # data can be mapped to it, but will end up being made into a group
-    # otherwise. As HDF5 files use posix path, conventions, posixpath
-    # will do everything.
-    groupname = posixpath.dirname(path)
-    targetname = posixpath.basename(path)
-
-    # If groupname got turned into blank, then it is just root.
-    if groupname == '':
-        groupname = '/'
-
-    # If targetname got turned blank, then it is the current directory.
-    if targetname == '':
-        targetname = '.'
-
-    # Open the hdf5 file and start reading the data. This is all wrapped
-    # in a try block, so that the file can be closed if any errors
-    # happen (the error is re-raised).
-    try:
-        f = None
-        f = h5py.File(filename, mode='r')
-
-        # Check that the containing group is in f and is indeed a
-        # group. If it isn't an error needs to be thrown.
-        if groupname not in f \
-                or not isinstance(f[groupname], h5py.Group):
-            raise CantReadError('Could not find containing Group '
-                                + groupname + '.')
-
-        # Hand off everything to the low level reader.
-        data = lowlevel.read_data(f, f[groupname], targetname, options)
-    except:
-        raise
-    finally:
-        if f is not None:
-            f.close()
-
-    return data
+    return reads(paths=(path,), filename=filename, options=options,
+                 **keywords)[0]
 
 
 def savemat(file_name, mdict, appendmat=True, format='7.3',
