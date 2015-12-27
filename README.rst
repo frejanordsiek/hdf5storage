@@ -265,13 +265,15 @@ type they are read as.
 Versions
 ========
 
-
 0.2. Feature release adding the following.
      * Ability to write Python 3.x ``int`` and Python 2.x ``long`` that
        are too large to fit into ``np.int64``. Doing so no longer
        raises an exception.
      * Ability to write ``np.bytes_`` with non-ASCII characters in them.
        Doing so no longer raises an exception.
+
+0.1.11. Bugfix release fixing the following.
+        * Issue #30. Fixed ``loadmat`` not opening files in read mode.
 
 0.1.10. Minor feature/performance fix release doing the following.
         * Issue #29. Added ``writes`` and ``reads`` functions to write
