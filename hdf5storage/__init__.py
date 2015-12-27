@@ -1760,7 +1760,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
 
         if variable_names is None:
             data = dict()
-            with h5py.File(filename) as f:
+            with h5py.File(filename, mode='r') as f:
                 for k in f:
                     # Read if not group_for_references. Data that
                     # produces errors when read is dicarded (the OSError
