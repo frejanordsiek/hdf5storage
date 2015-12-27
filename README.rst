@@ -213,6 +213,9 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.11. Bugfix release fixing the following.
+        * Issue #30. Fixed ``loadmat`` not opening files in read mode.
+
 0.1.10. Minor feature/performance fix release doing the following.
         * Issue #29. Added ``writes`` and ``reads`` functions to write
           and read more than one piece of data at a time and made
