@@ -213,6 +213,15 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.12. Bugfix release fixing the following bugs. In addition, copyright years were also updated and notices put in the Matlab files used for testing.
+        * Issue #32. Fixed transposing before reshaping ``np.ndarray``
+          when reading from HDF5 files where python metadata was stored
+          but not Matlab metadata.
+        * Issue #33. Fixed the loss of the number of characters when
+          reading empty numpy string arrays.
+        * Issue #34. Fixed a conversion error when ``np.chararray`` are
+          written with Matlab metadata.
+
 0.1.11. Bugfix release fixing the following.
         * Issue #30. Fixed ``loadmat`` not opening files in read mode.
 
