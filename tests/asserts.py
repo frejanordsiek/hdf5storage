@@ -218,7 +218,7 @@ def assert_equal_matlab_format(a, b):
                     c = np.atleast_1d(b)
                     c = c.view(np.dtype('S' \
                         + str(c.shape[-1]*c.dtype.itemsize)))
-                    c = np.uint32(c.view(np.dtype('uint8')))
+                    c = np.uint32(c.view(np.ndarray).view(np.dtype('uint8')))
                     c = c.view(np.dtype('U' + str(c.shape[-1])))
                     c = np.atleast_2d(c)
                     assert a.dtype == c.dtype
