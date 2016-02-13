@@ -111,6 +111,14 @@ class TestPythonMatlabFormat(object):
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
+
+    def check_numpy_stringlike_empty(self, dtype, num_chars):
+        # Makes an empty stringlike numpy array of the given type and
+        # size, writes it and reads it back, and then compares it.
+        data = np.array([], dtype + str(num_chars))
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
     
     def check_numpy_structured_array(self, dimensions):
         # Makes a random structured ndarray of the given type, writes it
@@ -208,8 +216,9 @@ class TestPythonMatlabFormat(object):
         self.assert_equal(out, data)
 
     def check_numpy_chararray_empty(self, num_chars):
-        # Makes an empty numpy array of the given type, writes it and
-        # reads it back, and then compares it.
+        # Makes an empty numpy array of bytes of the given number of
+        # characters, converts it to a chararray, writes it and reads it
+        # back, and then compares it.
         data = np.array([], 'S' + str(num_chars)).view(np.chararray).copy()
         out = self.write_readback(data, random_name(),
                                   self.options)
@@ -419,6 +428,12 @@ class TestPythonMatlabFormat(object):
     def test_numpy_empty(self):
         for dt in self.dtypes:
             yield self.check_numpy_empty, dt
+
+    def test_numpy_stringlike_empty(self):
+        dts = ['S', 'U']
+        for dt in dts:
+            for n in range(1,10):
+                yield self.check_numpy_stringlike_empty, dt, n
     
     def test_numpy_structured_array(self):
         for i in range(1, 4):
