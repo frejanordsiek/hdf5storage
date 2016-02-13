@@ -1450,9 +1450,14 @@ def reads(paths, filename='data.h5', options=None, **keywords):
 
     """
     # Pack the different options into an Options class if an Options was
-    # not given.
+    # not given. By default, the matlab_compatible option is set to
+    # False. So, if it wasn't passed in the keywords, this needs to be
+    # added to override the default value (True) for a new Options.
     if not isinstance(options, Options):
-        options = Options(**keywords)
+        kw = copy.deepcopy(keywords)
+        if 'matlab_compatible' not in kw:
+            kw['matlab_compatible'] = False
+        options = Options(**kw)
 
     # Process the paths and stuff the group names and target names as
     # tuples into toread.
