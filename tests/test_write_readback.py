@@ -148,7 +148,16 @@ class TestPythonMatlabFormat(object):
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
-    
+
+    def check_numpy_matrix(self, dtype):
+        # Makes a random numpy array of the given type, converts it to
+        # a matrix, writes it and reads it back, and then compares it.
+        shape = random_numpy_shape(2, max_array_axis_length)
+        data = np.matrix(random_numpy(shape, dtype))
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
     def check_python_collection(self, tp):
         # Makes a random collection of the specified type, writes it and
         # reads it back, and then compares it.
@@ -321,6 +330,12 @@ class TestPythonMatlabFormat(object):
         dts.append('object')
         for dt in dts:
             yield self.check_numpy_array, dt, 3
+
+    def test_numpy_matrix(self):
+        dts = copy.deepcopy(self.dtypes)
+        dts.append('object')
+        for dt in dts:
+            yield self.check_numpy_matrix, dt
 
     def test_numpy_empty(self):
         for dt in self.dtypes:
