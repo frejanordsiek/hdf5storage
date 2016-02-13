@@ -590,7 +590,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 data_to_store = np.uint16([])
             else:
                 new_data = np.uint16(np.atleast_1d( \
-                    data_to_store).view(np.uint8))
+                    data_to_store).view(np.ndarray).view(np.uint8))
                 if np.all(new_data < 128):
                     data_to_store = new_data
 
