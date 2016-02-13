@@ -1208,9 +1208,23 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # figured out the dtype for, that needs to be used.
             if python_empty == 1:
                 if underlying_type.startswith('bytes'):
-                    data = np.zeros(tuple(shape), dtype='S1')
+                    if underlying_type == 'bytes':
+                        nchars = 1
+                    else:
+                        nchars = int(int(
+                                     underlying_type[len('bytes'):])
+                                     / 8)
+                    data = np.zeros(tuple(shape),
+                                    dtype='S' + str(nchars))
                 elif underlying_type.startswith('str'):
-                    data = np.zeros(tuple(shape), dtype='U1')
+                    if underlying_type == 'str':
+                        nchars = 1
+                    else:
+                        nchars = int(int(
+                                     underlying_type[len('str'):])
+                                     / 32)
+                    data = np.zeros(tuple(shape),
+                                    dtype='U' + str(nchars))
                 elif struct_dtype is not None:
                     data = np.zeros(tuple(shape),
                                     dtype=struct_dtype)
