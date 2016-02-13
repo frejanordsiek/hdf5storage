@@ -590,7 +590,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 data_to_store = np.uint16([])
             else:
                 data_to_store = np.uint16(np.atleast_1d( \
-                    data_to_store).view(np.uint8))
+                    data_to_store).view(np.ndarray).view(np.uint8))
                 if np.any(data_to_store >= 128):
                     raise NotImplementedError( \
                         'Can''t write non-ASCII numpy.bytes_.')
