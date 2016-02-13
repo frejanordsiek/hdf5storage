@@ -64,17 +64,18 @@ class TestPythonMatlabFormat(object):
                        'float32', 'float64', 'complex64', 'complex128',
                        'S', 'U']
 
-    def write_readback(self, data, name, options):
+    def write_readback(self, data, name, options, read_options=None):
         # Write the data to the proper file with the given name, read it
         # back, and return the result. The file needs to be deleted
-        # before and after to keep junk from building up.
+        # before and after to keep junk from building up. Different
+        # options can be used for reading the data back.
         if os.path.exists(self.filename):
             os.remove(self.filename)
         try:
             hdf5storage.write(data, path=name, filename=self.filename,
                               options=options)
             out = hdf5storage.read(path=name, filename=self.filename,
-                                   options=options)
+                                   options=read_options)
         except:
             raise
         finally:
