@@ -238,7 +238,7 @@ def assert_equal_matlab_format(a, b):
                     assert a.shape == c.shape
                     npt.assert_equal(a, c)
                 elif b.dtype.char == 'S':
-                    c = np.atleast_1d(b)
+                    c = np.atleast_1d(b).view(np.ndarray)
                     if np.all(c.view(np.uint8) < 128):
                         c = c.view(np.dtype('S' \
                             + str(c.shape[-1]*c.dtype.itemsize)))

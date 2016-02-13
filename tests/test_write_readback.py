@@ -197,6 +197,24 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    def check_numpy_chararray(self, dimensions):
+        # Makes a random numpy array of bytes, converts it to a
+        # chararray, writes it and reads it back, and then compares it.
+        shape = random_numpy_shape(dimensions,
+                                   max_array_axis_length)
+        data = random_numpy(shape, 'S').view(np.chararray).copy()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def check_numpy_chararray_empty(self, num_chars):
+        # Makes an empty numpy array of the given type, writes it and
+        # reads it back, and then compares it.
+        data = np.array([], 'S' + str(num_chars)).view(np.chararray).copy()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
     def check_python_collection(self, tp):
         # Makes a random collection of the specified type, writes it and
         # reads it back, and then compares it.
@@ -457,6 +475,15 @@ class TestPythonMatlabFormat(object):
     @raises(NotImplementedError)
     def test_numpy_recarray_field_forward_slash(self):
         self.check_numpy_recarray_field_special_char('/')
+
+    def test_numpy_chararray(self):
+        dims = range(1, 4)
+        for dim in dims:
+            yield self.check_numpy_chararray, dim
+
+    def test_numpy_chararray_empty(self):
+        for n in range(1, 10):
+            yield self.check_numpy_chararray_empty, n
 
     def test_python_collection(self):
         for tp in (list, tuple, set, frozenset, collections.deque):
