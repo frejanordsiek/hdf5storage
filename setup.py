@@ -19,7 +19,7 @@ setup(name='hdf5storage',
       author_email='fnordsie at gmail dt com',
       url='https://github.com/frejanordsiek/hdf5storage',
       packages=['hdf5storage'],
-      requires=['numpy', 'h5py (>= 2.1)'],
+      install_requires=['numpy', 'h5py (>= 2.1)'],
       license='BSD',
       keywords='hdf5 matlab',
       classifiers=[
