@@ -1393,7 +1393,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # big to fit in a numpy.int64, it is converted to the string
         # representation of the integer and then converted to a
         # numpy.bytes_. If it isn't too big and is a long, it needs to be
-        # converted to an int or else when it is converted to a
+        # converted to an int64 or else when it is converted to a
         # numpy.int64, its dtype.type won't be equal to numpy.int64 for
         # some reason (if it is a Python 3.x int, packing it into int
         # does nothing). Otherwise, data is passed through np.array and
@@ -1404,15 +1404,13 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # of data to guess from if not given the right one explicitly.
         if sys.hexversion >= 0x03000000:
             tp = int
-            maxint = 2**63
         else:
             tp = long
-            maxint = sys.maxint
         if type(data) == tp:
-            if data > maxint or data < -(maxint - 1):
+            try:
+                out = np.int64(data)
+            except OverflowError:
                 out = np.bytes_(data)
-            else:
-                out = np.array(int(data))[()]
         else:
             out = np.array(data)[()]
         NumpyScalarArrayMarshaller.write(self, f, grp, name, out,
