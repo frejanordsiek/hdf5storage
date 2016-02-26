@@ -255,16 +255,30 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    def test_int(self):
+    def test_int_needs_32_bits(self):
         data = random_int()
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
 
+    def test_int_needs_64_bits(self):
+        data = (2**32) * random_int()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
     # Only relevant in Python 2.x.
-    def test_long(self):
+    def test_long_needs_32_bits(self):
         if sys.hexversion < 0x03000000:
             data = long(random_int())
+            out = self.write_readback(data, random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
+
+    # Only relevant in Python 2.x.
+    def test_long_needs_64_bits(self):
+        if sys.hexversion < 0x03000000:
+            data = long(2)**32 * long(random_int())
             out = self.write_readback(data, random_name(),
                                       self.options)
             self.assert_equal(out, data)
