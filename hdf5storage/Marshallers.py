@@ -1387,27 +1387,23 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # type. If it is a Python 3.x int or Python 2.x long that is too
         # big to fit in a numpy.int64, we need to throw an not
         # implemented exception so it doesn't get packaged as an
-        # object. If it isn't too big and is a long, it needs to be
-        # converted to an int or else when it is converted to a
-        # numpy.int64, its dtype.type won't be equal to numpy.int64 for
-        # some reason (if it is a Python 3.x int, packing it into int
-        # does nothing). Otherwise, data is passed through np.array and
-        # then access [()] to get the scalar back as a scalar numpy
-        # type. The proper type_string needs to be grabbed now as the
-        # parent function will have a modified form of data to guess
-        # from if not given the right one explicitly.
+        # object. It is converted explicitly to a numpy.int64. If it is
+        # too big, there will be an OverflowError. Otherwise, data is
+        # passed through np.array and then access [()] to get the scalar
+        # back as a scalar numpy type. The proper type_string needs to
+        # be grabbed now as the parent function will have a modified
+        # form of data to guess from if not given the right one
+        # explicitly.
         if sys.hexversion >= 0x03000000:
             tp = int
-            maxint = 2**63
         else:
             tp = long
-            maxint = sys.maxint
         if type(data) == tp:
-            if data > maxint or data < -(maxint - 1):
-                raise NotImplementedError('Int/long too big to fit ' \
-                    + 'into numpy.int64.')
-            else:
-                out = int(data)
+            try:
+                out = np.int64(data)
+            except OverflowError:
+                raise NotImplementedError('Int/long too big to fit '
+                                          + 'into numpy.int64.')
         else:
             out = data
         NumpyScalarArrayMarshaller.write(self, f, grp, name,
