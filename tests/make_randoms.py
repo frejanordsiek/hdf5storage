@@ -100,7 +100,7 @@ def random_bytes_fullrange(length):
     return bytes([random.choice(ltrs) for i in range(0, length)])
 
 def random_int():
-    return random.randint(-(2**63 - 1), 2**63)
+    return random.randint(-(2**31 - 1), 2**31)
 
 
 def random_float():
