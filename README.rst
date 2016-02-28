@@ -213,6 +213,10 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.13. Bugfix release fixing the following bug.
+        * Issue #36. Fixed bugs in writing ``int`` and ``long`` to HDF5
+          and their tests on 32 bit systems.
+
 0.1.12. Bugfix release fixing the following bugs. In addition, copyright years were also updated and notices put in the Matlab files used for testing.
         * Issue #32. Fixed transposing before reshaping ``np.ndarray``
           when reading from HDF5 files where python metadata was stored
