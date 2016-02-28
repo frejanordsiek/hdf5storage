@@ -120,7 +120,7 @@ def assert_equal_none_format(a, b):
             if b > 2**63 or b < -(2**63 - 1):
                 assert_equal_none_format(a, np.bytes_(b))
             else:
-                assert_equal_none_format(a, np.array(int(b))[()])
+                assert_equal_none_format(a, np.int64(b))
         else:
             assert_equal_none_format(a, np.array(b)[()])
     else:
@@ -220,7 +220,7 @@ def assert_equal_matlab_format(a, b):
             if b > 2**63 or b < -(2**63 - 1):
                 assert_equal(a, np.atleast_2d(np.unicode_(b)))
             else:
-                assert_equal(a, np.atleast_2d(np.array(int(b))))
+                assert_equal(a, np.atleast_2d(np.int64(b)))
         else:
             assert_equal(a, np.atleast_2d(np.array(b)))
     else:
