@@ -265,13 +265,16 @@ type they are read as.
 Versions
 ========
 
-
 0.2. Feature release adding the following.
      * Ability to write Python 3.x ``int`` and Python 2.x ``long`` that
        are too large to fit into ``np.int64``. Doing so no longer
        raises an exception.
      * Ability to write ``np.bytes_`` with non-ASCII characters in them.
        Doing so no longer raises an exception.
+
+0.1.13. Bugfix release fixing the following bug.
+        * Issue #36. Fixed bugs in writing ``int`` and ``long`` to HDF5
+          and their tests on 32 bit systems.
 
 0.1.12. Bugfix release fixing the following bugs. In addition, copyright years were also updated and notices put in the Matlab files used for testing.
         * Issue #32. Fixed transposing before reshaping ``np.ndarray``
