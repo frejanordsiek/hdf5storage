@@ -112,6 +112,11 @@ def assert_equal_none_format(a, b):
                 or (sys.hexversion < 0x03000000 \
                 and isinstance(b, unicode)):
             assert_equal_none_format(a, np.unicode_(b))
+        elif (sys.hexversion >= 0x03000000 \
+                and type(b) == int) \
+                or (sys.hexversion < 0x03000000 \
+                and type(b) == long):
+            assert_equal_none_format(a, np.int64(b))
         else:
             assert_equal_none_format(a, np.array(b)[()])
     else:
@@ -198,6 +203,11 @@ def assert_equal_matlab_format(a, b):
                     b.decode('UTF-8'))))
             else:
                 assert_equal(a, np.atleast_2d(np.unicode_(b)))
+        elif (sys.hexversion >= 0x03000000 \
+                and type(b) == int) \
+                or (sys.hexversion < 0x03000000 \
+                and type(b) == long):
+            assert_equal(a, np.atleast_2d(np.int64(b)))
         else:
             assert_equal(a, np.atleast_2d(np.array(b)))
     else:
