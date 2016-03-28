@@ -333,13 +333,15 @@ Both an ``int`` and a ``long`` written in Python 2.x will be read as a
 ``int`` in Python 3.x. Python 3.x always writes as ``int``. Due to this
 and the fact that the interpreter in Python 2.x could be using 32-bits
 ``int``, it is possible that a value could be read that is too large
-to fit into ``int``. When that happens, it read as a ``long`` instead.
+to fit into ``int``. When that happens, it read as a ``long``
+instead.
 
-.. warning::
-
-   Writing Python 2.x ``long`` and Python 3.x ``int`` too big to fit
-   into an ``np.int64`` is not supported. A ``NotImplementedError`` is
-   raised if attempted.
+.. versionchanged:: 0.2
+   
+   Added support for writing Python 2.x ``long`` and Python 3.x ``int``
+   too big to fit into an ``np.int64``. They are written as their
+   string base 10 representation (as a ``np.bytes_``) in such a case.
+   In earlier versions, ``NotImplementedError`` is raised if attempted.
 
 
 Complex Numbers
