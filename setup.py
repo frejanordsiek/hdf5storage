@@ -24,6 +24,7 @@ setup(name='hdf5storage',
       test_suite='nose.collector',
       license='BSD',
       keywords='hdf5 matlab',
+      zip_safe=True,
       classifiers=[
           "Programming Language :: Python :: 2.6",
           "Programming Language :: Python :: 2.7",
