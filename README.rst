@@ -26,8 +26,10 @@ Installation
 
 This package only supports Python >= 2.6.
 
-This package requires the numpy and h5py (>= 2.1) packages. An optional
-dependency is the scipy package.
+This package requires the numpy and h5py (>= 2.1) packages to run. Note
+that full functionality requires h5py >= 2.3. An optional dependency is
+the scipy package. nose (>= 1.0) is used for testing and sphinx (>= 1.3)
+is used for building the documentation.
 
 To install hdf5storage, download the package and run the command on
 Python 3 ::
