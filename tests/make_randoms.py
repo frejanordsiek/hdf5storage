@@ -28,6 +28,7 @@ import sys
 import posixpath
 import string
 import random
+import collections
 
 import numpy as np
 import numpy.random
@@ -202,9 +203,10 @@ def random_list(N, python_or_numpy='numpy'):
         return data
 
 
-def random_dict():
-    # Makes a random dict (random number of randomized keys with
-    # random numpy arrays as values).
+def random_dict(tp='dict'):
+    # Makes a random dict or dict-like object tp (random number of
+    # randomized keys with random numpy arrays as values). The only
+    # supported values of tp are 'dict' and 'OrderedDict'.
     data = dict()
     for i in range(0, random.randint(min_dict_keys, \
             max_dict_keys)):
@@ -214,7 +216,20 @@ def random_dict():
             dict_value_subarray_dimensions, \
             max_dict_value_subarray_axis_length), \
             dtype=random.choice(dtypes))
-    return data
+
+    # If tp is 'dict', or tp is 'OrderedDict' and Python == 2.6 (wasn't
+    # introduced till 2.7), return as is. Otherwise, handle the
+    # different tp.
+    if tp == 'dict' or (tp == 'OrderedDict' and sys.hexversion <
+                        0x2070000):
+        return data
+    elif tp == 'OrderedDict':
+        # An ordered dict is made by randomizing the field order.
+        itms = list(data.items())
+        random.shuffle(itms)
+        return collections.OrderedDict(itms)
+    else:
+        return data
 
 
 def random_structured_numpy_array(shape, field_shapes=None,

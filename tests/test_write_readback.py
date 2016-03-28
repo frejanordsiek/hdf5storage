@@ -64,6 +64,13 @@ class TestPythonMatlabFormat(object):
                        'float32', 'float64', 'complex64', 'complex128',
                        'S', 'U']
 
+        # Need a list of dict-like types, which will depend on Python
+        # version. dict is in all of them, but OrderedDict is only in
+        # Python >= 2.7.
+        self.dict_like = ['dict']
+        if sys.hexversion >= 0x2070000:
+            self.dict_like += ['OrderedDict']
+
     def write_readback(self, data, name, options, read_options=None):
         # Write the data to the proper file with the given name, read it
         # back, and return the result. The file needs to be deleted
@@ -233,6 +240,49 @@ class TestPythonMatlabFormat(object):
         else:
             data = tp(random_list(max_list_length,
                       python_or_numpy='numpy'))
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def check_dict_like(self, tp):
+        data = random_dict(tp)
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    @raises(NotImplementedError)
+    def check_dict_like_bytes_key(self, tp):
+        data = random_dict(tp)
+        key = random_bytes(max_dict_key_length)
+        data[key] = random_int()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    @raises(NotImplementedError)
+    def check_dict_like_key_null_character(self, tp):
+        data = random_dict(tp)
+        if sys.hexversion >= 0x03000000:
+            ch = '\x00'
+        else:
+            ch = u'\x00'
+        key = ch.join([random_str_ascii(max_dict_key_length)
+                      for i in range(2)])
+        data[key] = random_int()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    @raises(NotImplementedError)
+    def check_dict_like_key_forward_slash(self, tp):
+        data = random_dict(tp)
+        if sys.hexversion >= 0x03000000:
+            ch = '/'
+        else:
+            ch = u'/'
+        key = ch.join([random_str_ascii(max_dict_key_length)
+                      for i in range(2)])
+        data[key] = random_int()
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
@@ -518,48 +568,21 @@ class TestPythonMatlabFormat(object):
         for tp in (list, tuple, set, frozenset, collections.deque):
             yield self.check_python_collection, tp
 
-    def test_dict(self):
-        data = random_dict()
-        out = self.write_readback(data, random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
+    def test_dict_like(self):
+        for tp in self.dict_like:
+            yield self.check_dict_like, tp
 
-    @raises(NotImplementedError)
-    def test_dict_bytes_key(self):
-        data = random_dict()
-        key = random_bytes(max_dict_key_length)
-        data[key] = random_int()
-        out = self.write_readback(data, random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
+    def test_dict_like_bytes_key(self):
+        for tp in self.dict_like:
+            yield self.check_dict_like_bytes_key, tp
 
-    @raises(NotImplementedError)
-    def test_dict_key_null_character(self):
-        data = random_dict()
-        if sys.hexversion >= 0x03000000:
-            ch = '\x00'
-        else:
-            ch = u'\x00'
-        key = ch.join([random_str_ascii(max_dict_key_length)
-                      for i in range(2)])
-        data[key] = random_int()
-        out = self.write_readback(data, random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
+    def test_dict_like_key_null_character(self):
+        for tp in self.dict_like:
+            yield self.check_dict_like_key_null_character, tp
 
-    @raises(NotImplementedError)
-    def test_dict_key_forward_slash(self):
-        data = random_dict()
-        if sys.hexversion >= 0x03000000:
-            ch = '/'
-        else:
-            ch = u'/'
-        key = ch.join([random_str_ascii(max_dict_key_length)
-                      for i in range(2)])
-        data[key] = random_int()
-        out = self.write_readback(data, random_name(),
-                                  self.options)
-        self.assert_equal(out, data)
+    def test_dict_like_key_forward_slash(self):
+        for tp in self.dict_like:
+            yield self.check_dict_like_key_forward_slash, tp
 
 
 class TestPythonFormat(TestPythonMatlabFormat):

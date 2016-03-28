@@ -46,6 +46,11 @@ def assert_equal(a, b):
         assert set(a.keys()) == set(b.keys())
         for k in b:
             assert_equal(a[k], b[k])
+    elif (sys.hexversion >= 0x2070000
+          and type(b) == collections.OrderedDict):
+        assert list(a.keys()) == list(b.keys())
+        for k in b:
+            assert_equal(a[k], b[k])
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         assert len(a) == len(b)
         if type(b) in (set, frozenset):
@@ -95,6 +100,10 @@ def assert_equal_none_format(a, b):
         assert set(a.dtype.names) == set(b.keys())
         for k in b:
             assert_equal_none_format(a[k][0], b[k])
+    elif (sys.hexversion >= 0x2070000
+          and type(b) == collections.OrderedDict):
+        # Field order is lost so might as well convert to dict.
+        assert_equal_none_format(a, dict(b))
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         assert_equal_none_format(a, np.object_(list(b)))
     elif not isinstance(b, (np.generic, np.ndarray)):
@@ -189,6 +198,13 @@ def assert_equal_matlab_format(a, b):
         assert type(a) == np.ndarray
         assert a.dtype.names is not None
         assert set(a.dtype.names) == set(b.keys())
+        for k in b:
+            assert_equal_matlab_format(a[k][0], b[k])
+    elif (sys.hexversion >= 0x2070000
+          and type(b) == collections.OrderedDict):
+        assert type(a) == np.ndarray
+        assert a.dtype.names is not None
+        assert list(a.dtype.names) == list(b.keys())
         for k in b:
             assert_equal_matlab_format(a[k][0], b[k])
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
