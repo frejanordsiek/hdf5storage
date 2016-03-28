@@ -1536,8 +1536,17 @@ class PythonDictMarshaller(TypeMarshaller):
         self.python_attributes |= set(['Python.Fields'])
         self.matlab_attributes |= set(['MATLAB_class', 'MATLAB_fields'])
         self.types = [dict]
-        self.python_type_strings = ['dict']
-        self.__MATLAB_classes = {dict: 'struct'}
+
+        # OrderedDict is only available for Python >= 2.7. For Python
+        # 2.6, it will be mapped to dict.
+        if sys.hexversion < 0x2070000:
+            self.types += [dict]
+        else:
+            self.types += [collections.OrderedDict]
+
+        self.python_type_strings = ['dict', 'collections.OrderedDict']
+        self.__MATLAB_classes = {dict: 'struct',
+                                 self.types[1]: 'struct'}
         # Set matlab_classes to empty since NumpyScalarArrayMarshaller
         # handles Groups by default now.
         self.matlab_classes = list()
@@ -1613,8 +1622,9 @@ class PythonDictMarshaller(TypeMarshaller):
         TypeMarshaller.write_metadata(self, f, grp, name, data,
                                       type_string, options)
 
-        # Grab all the keys and sort the list.
-        fields = sorted(list(data.keys()))
+        # Grab all the keys in whatever order is given (OrderedDict will
+        # be in the order they were entered and dict will be sorted).
+        fields = list(data.keys())
 
         # If we are storing python metadata, we need to set the
         # 'Python.Fields' Attribute to be all the keys.
@@ -1662,19 +1672,52 @@ class PythonDictMarshaller(TypeMarshaller):
             raise NotImplementedError('No Group ' + name +
                                       ' is present.')
 
-        # Starting with an empty dict, all that has to be done is
-        # iterate through all the Datasets and Groups in grp[name] and
-        # add them to the dict with their name as the key. Since we
-        # don't want an exception thrown by reading an element to stop
-        # the whole reading process, the reading is wrapped in a try
-        # block that just catches exceptions and then does nothing about
-        # them (nothing needs to be done).
-        data = dict()
+        # Get the different attributes this marshaller uses.
+
+        type_string = get_attribute_string(grp[name], 'Python.Type')
+        python_fields = get_attribute_string_array(grp[name],
+                                                   'Python.Fields')
+
+        # If we are using h5py version >= 2.3, we can actually read the
+        # MATLAB_fields Attribute if it is present.
+        matlab_fields = None
+        if distutils.version.LooseVersion(_H5PY_VERSION) \
+                >= distutils.version.LooseVersion('2.3'):
+            matlab_fields = get_attribute(grp[name], 'MATLAB_fields')
+
+        # Construct the fields the grab and their proper order
+        # (important for OrderedDict) from python_fields, matlab_fields,
+        # and then any other Groups in the Group, and in that order with
+        # duplicates removed. All field names must be turned into str.
+        fields = []
+        if python_fields is not None:
+            fields.extend(python_fields)
+        if matlab_fields is not None:
+            for s in [k.tostring().decode() for k in matlab_fields]:
+                if s not in fields:
+                    fields.append(s)
         for k in grp[name]:
-            # We must exclude group_for_references
-            if grp[name][k].name == options.group_for_references:
-                continue
+            if k not in fields:
+                fields.append(k)
+
+        # Starting with an empty dict-like, all that has to be done is
+        # iterate through all the fields and add them to the dict-like
+        # with their name as the key. Since we don't want an exception
+        # thrown by reading an element to stop the whole reading
+        # process, the reading is wrapped in a try block that just
+        # catches exceptions and then does nothing about them (nothing
+        # needs to be done).
+        if type_string in self.python_type_strings:
+            tp = self.types[self.python_type_strings.index(
+                            type_string)]
+        else:
+            tp = dict
+        data = tp()
+        for k in fields:
             try:
+                # We must exclude group_for_references
+                if grp[name][k].name == options.group_for_references:
+                    continue
                 data[k] = read_data(f, grp[name], k, options)
             except:
                 pass
