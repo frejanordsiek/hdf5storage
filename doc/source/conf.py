@@ -22,21 +22,15 @@ import sys, os
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.doctest',
 	      'sphinx.ext.intersphinx',
-	      'sphinx.ext.todo',
-	      'sphinx.ext.coverage',
-	      'sphinx.ext.pngmath',
-	      'sphinx.ext.mathjax',
-	      'sphinx.ext.ifconfig',
 	      'sphinx.ext.viewcode',
 	      'sphinx.ext.autosummary',
-	      'numpydoc']
+	      'sphinx.ext.napoleon']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -264,7 +258,8 @@ intersphinx_mapping = {'python': ('http://docs.python.org/3.3', None),
 
 autosummary_generate = True
 
-# -- Options for Numpydoc ------------------------------------------------------
+# -- Options for Napoleon ------------------------------------------------------
 
-numpydoc_show_class_members = True
-
+napoleon_use_ivar = True
+napoleon_use_param = False
+napoleon_use_rtype = False
