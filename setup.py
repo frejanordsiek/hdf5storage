@@ -19,7 +19,9 @@ setup(name='hdf5storage',
       author_email='fnordsie at gmail dt com',
       url='https://github.com/frejanordsiek/hdf5storage',
       packages=['hdf5storage'],
-      install_requires=['numpy', 'h5py (>= 2.1)'],
+      install_requires=['numpy', 'h5py>=2.1'],
+      tests_require=['nose>=1.0'],
+      test_suite='nose.collector',
       license='BSD',
       keywords='hdf5 matlab',
       classifiers=[
@@ -35,7 +37,5 @@ setup(name='hdf5storage',
           "Topic :: Scientific/Engineering",
           "Topic :: Database",
           "Topic :: Software Development :: Libraries :: Python Modules"
-          ],
-      test_suite='nose.collector',
-      tests_require='nose>=1.0'
+          ]
       )
