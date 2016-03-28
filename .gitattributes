@@ -5,3 +5,4 @@
 # to native line endings on checkout.
 *.py text
 *.txt text eol=crlf
+*.cfg text
