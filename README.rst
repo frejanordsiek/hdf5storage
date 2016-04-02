@@ -296,6 +296,8 @@ Versions
           reading empty numpy string arrays.
         * Issue #34. Fixed a conversion error when ``np.chararray`` are
           written with Matlab metadata.
+        * Issue #40. Made it so that tests use tempfiles instead of
+	  using hardcoded filenames in the local directory.
 
 0.1.11. Bugfix release fixing the following.
         * Issue #30. Fixed ``loadmat`` not opening files in read mode.
