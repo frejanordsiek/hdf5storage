@@ -1533,7 +1533,9 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
 class PythonDictMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.python_attributes |= set(['Python.Fields'])
+        self.python_attributes |= set(['Python.Fields',
+                                       'Python.dict.StoredAs',
+                                       'Python.dict.keys_values_names'])
         self.matlab_attributes |= set(['MATLAB_class', 'MATLAB_fields'])
         self.types = [dict]
 
@@ -1552,34 +1554,27 @@ class PythonDictMarshaller(TypeMarshaller):
         self.matlab_classes = list()
 
     def write(self, f, grp, name, data, type_string, options):
-        # Check for any field names that are not unicode since they
-        # cannot be handled. Also check for null characters and /
-        # characters since they can't be handled either. How it is
-        # checked (what type it is) and the error message are different
-        # for each Python version.
-
+        # Check for any field names that are not unicode (or unicode
+        # with characters that can't be handled such as null and
+        # /). How it is checked (what type it is) are different for each
+        # Python version.
+        any_non_valid_str_keys = False
         if sys.hexversion >= 0x03000000:
             for fieldname in data:
                 if not isinstance(fieldname, str):
-                    raise NotImplementedError('Dictionaries with non-'
-                                              + 'str keys are not '
-                                              + 'supported: '
-                                              + repr(fieldname))
+                    any_non_valid_str_keys = True
+                    break
                 if '\x00' in fieldname or '/' in fieldname:
-                    raise NotImplementedError('Dictionary keys with ' \
-                        + "null characters ('\x00') and '/' are not " \
-                        + 'supported.')
+                    any_non_valid_str_keys = True
+                    break
         else:
             for fieldname in data:
                 if not isinstance(fieldname, unicode):
-                    raise NotImplementedError('Dictionaries with non-'
-                                              + 'unicode keys are not '
-                                              + 'supported: '
-                                              + repr(fieldname))
+                    any_non_valid_str_keys = True
+                    break
                 if u'\x00' in fieldname or u'/' in fieldname:
-                    raise NotImplementedError('Dictionary keys with ' \
-                        + "null characters ('\x00') and '/' are not " \
-                        + 'supported.')
+                    any_non_valid_str_keys = True
+                    break
 
         # If the group doesn't exist, it needs to be created. If it
         # already exists but is not a group, it needs to be deleted
@@ -1596,20 +1591,31 @@ class PythonDictMarshaller(TypeMarshaller):
         # Write the metadata.
         self.write_metadata(f, grp, name, data, type_string, options)
 
-        # Delete any Datasets/Groups not corresponding to a field name
-        # in data if that option is set.
+        # Set the names (Datasets) and values (Datasets) to store the
+        # data in. These will be the individual fields and their names
+        # if storing individually. If storing as values and keys, this
+        # will be done as the keys and values in bulk as tuples.
+        if any_non_valid_str_keys:
+            names = (options.dict_like_keys_name,
+                     options.dict_like_values_name)
+            values = (tuple(data.keys()), tuple(data.values()))
+        else:
+            names = tuple(data.keys())
+            values = tuple(data.values())
 
-        if options.delete_unused_variables:
-            for field in set([i for i in grp2]).difference( \
-                    set([i for i in data])):
+        # Delete any Datasets/Groups not in names if that option is set
+        # or if we are not storing the keys and values individually
+
+        if any_non_valid_str_keys or options.delete_unused_variables:
+            for field in set([i for i in grp2]).difference(set(names)):
                 del grp2[field]
 
-        # Go through all the elements of data and write them. The H5PATH
+        # Go through all the names and values and write them. The H5PATH
         # needs to be set as the path of grp2 on all of them if we are
         # doing MATLAB compatibility (otherwise, the attribute needs to
         # be deleted).
-        for k, v in data.items():
-            write_data(f, grp2, k, v, None, options)
+        for i, k in enumerate(names):
+            write_data(f, grp2, k, values[i], None, options)
             if k in grp2:
                 if options.matlab_compatible:
                     set_attribute_string(grp2[k], 'H5PATH', grp2.name)
@@ -1624,20 +1630,57 @@ class PythonDictMarshaller(TypeMarshaller):
 
         # Grab all the keys in whatever order is given (OrderedDict will
         # be in the order they were entered and dict will be sorted).
-        fields = list(data.keys())
+        fields = tuple(data.keys())
+
+        # Check for any field names that are not unicode (or unicode
+        # with characters that can't be handled such as null and
+        # /). How it is checked (what type it is) are different for each
+        # Python version.
+        any_non_valid_str_keys = False
+        if sys.hexversion >= 0x03000000:
+            for fieldname in fields:
+                if not isinstance(fieldname, str):
+                    any_non_valid_str_keys = True
+                    break
+                if '\x00' in fieldname or '/' in fieldname:
+                    any_non_valid_str_keys = True
+                    break
+        else:
+            for fieldname in fields:
+                if not isinstance(fieldname, unicode):
+                    any_non_valid_str_keys = True
+                    break
+                if u'\x00' in fieldname or u'/' in fieldname:
+                    any_non_valid_str_keys = True
+                    break
 
         # If we are storing python metadata, we need to set the
-        # 'Python.Fields' Attribute to be all the keys.
+        # 'Python.dict.StoredAs' and 'Python.Fields' Attributes
+        # appropriately. 'Python.Fields' is only used if the fields are
+        # being stored individually.
         if options.store_python_metadata:
-            set_attribute_string_array(grp[name], 'Python.Fields',
-                                       fields)
+            if any_non_valid_str_keys:
+                set_attribute_string(grp[name], 'Python.dict.StoredAs',
+                              'keys_values')
+                set_attribute_string_array(grp[name], \
+                    'Python.dict.keys_values_names', \
+                    [options.dict_like_keys_name, \
+                    options.dict_like_values_name])
+                del_attribute(grp[name], 'Python.Fields')
+            else:
+                set_attribute_string(grp[name], 'Python.dict.StoredAs',
+                              'individually')
+                del_attribute(grp[name],
+                              'Python.dict.keys_values_names')
+                set_attribute_string_array(grp[name], 'Python.Fields',
+                                           fields)
 
         # If we are making it MATLAB compatible and have h5py version
         # >= 2.3, then we can set the MATLAB_fields Attribute as long as
         # all keys are mappable to ASCII. Otherwise, the attribute
         # should be deleted. It is written as a vlen='S1' array of
         # bytes_ arrays of the individual characters.
-        if options.matlab_compatible \
+        if options.matlab_compatible and not any_non_valid_str_keys \
                 and distutils.version.LooseVersion(_H5PY_VERSION) \
                 >= distutils.version.LooseVersion('2.3'):
             try:
@@ -1677,6 +1720,13 @@ class PythonDictMarshaller(TypeMarshaller):
         type_string = get_attribute_string(grp[name], 'Python.Type')
         python_fields = get_attribute_string_array(grp[name],
                                                    'Python.Fields')
+        stored_as = get_attribute_string(grp[name],
+                                         'Python.dict.StoredAs')
+        keys_values_names = get_attribute_string_array(grp[name], \
+            'Python.dict.keys_values_names')
+        if keys_values_names is None:
+            keys_values_names = (options.dict_like_keys_name,
+                                 options.dict_like_values_name)
 
         # If we are using h5py version >= 2.3, we can actually read the
         # MATLAB_fields Attribute if it is present.
@@ -1685,43 +1735,57 @@ class PythonDictMarshaller(TypeMarshaller):
                 >= distutils.version.LooseVersion('2.3'):
             matlab_fields = get_attribute(grp[name], 'MATLAB_fields')
 
-        # Construct the fields the grab and their proper order
-        # (important for OrderedDict) from python_fields, matlab_fields,
-        # and then any other Groups in the Group, and in that order with
-        # duplicates removed. All field names must be turned into str.
-        fields = []
-        if python_fields is not None:
-            fields.extend(python_fields)
-        if matlab_fields is not None:
-            for s in [k.tostring().decode() for k in matlab_fields]:
-                if s not in fields:
-                    fields.append(s)
-        for k in grp[name]:
-            if k not in fields:
-                fields.append(k)
+        # How the dict like is read depends on how it is stored as. The
+        # dict like's items will be constructed. If it is stored as
+        # keys_values, then it is just a matter of reading them and
+        # generating the items directly from them. Otherwise, each field
+        # needs to be read individually.
+        if stored_as == 'keys_values' \
+                and keys_values_names[0] in grp[name] \
+                and keys_values_names[1] in grp[name]:
+            d = tuple([read_data(f, grp[name], k, options)
+                       for k in keys_values_names])
+            items = zip(*d)
+        else:
+            # Construct the fields the grab and their proper order
+            # (important for OrderedDict) from python_fields,
+            # matlab_fields, and then any other Groups in the Group, and
+            # in that order with duplicates removed. All field names
+            # must be turned into str. 
+            fields = []
+            if python_fields is not None:
+                fields.extend(python_fields)
+            if matlab_fields is not None:
+                for s in [k.tostring().decode() for k in matlab_fields]:
+                    if s not in fields:
+                        fields.append(s)
+            for k in grp[name]:
+                if k not in fields:
+                    fields.append(k)
 
-        # Starting with an empty dict-like, all that has to be done is
-        # iterate through all the fields and add them to the dict-like
-        # with their name as the key. Since we don't want an exception
-        # thrown by reading an element to stop the whole reading
-        # process, the reading is wrapped in a try block that just
-        # catches exceptions and then does nothing about them (nothing
-        # needs to be done).
+            # Read the keys and values one by one putting them into
+            # items. Since we don't want an exception thrown by reading
+            # an element to stop the whole reading process, the reading
+            # is wrapped in a try block that just catches exceptions and
+            # then does nothing about them (nothing needs to be done).
+            items = []
+            for k in fields:
+                try:
+                    # We must exclude group_for_references
+                    if grp[name][k].name == options.group_for_references:
+                        continue
+                    v = read_data(f, grp[name], k, options)
+                    items.append((k, v))
+                except:
+                    pass
+
+        # Construct the dict like from the items.
         if type_string in self.python_type_strings:
             tp = self.types[self.python_type_strings.index(
                             type_string)]
         else:
             tp = dict
-        data = tp()
-        for k in fields:
-            try:
-                # We must exclude group_for_references
-                if grp[name][k].name == options.group_for_references:
-                    continue
-                data[k] = read_data(f, grp[name], k, options)
-            except:
-                pass
-        return data
+        return tp(items)
 
 
 class PythonListMarshaller(NumpyScalarArrayMarshaller):

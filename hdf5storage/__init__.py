@@ -110,6 +110,10 @@ class Options(object):
         See Attributes.
     oned_as : str, optional
         See Attributes.
+    dict_like_keys_name : str, optional
+        See Attributes.
+    dict_like_values_name : str, optional
+        See Attributes.
     compress : bool, optional
         See Attributes.
     compress_size_threshold : int, optional
@@ -147,6 +151,8 @@ class Options(object):
     complex_names : tuple of two str
     group_for_references : str
     oned_as : {'row', 'column'}
+    dict_like_keys_name : str
+    dict_like_values_name : str
     compress : bool
     compress_size_threshold : int
     compression_algorithm : {'gzip', 'lzf', 'szip'}
@@ -176,6 +182,8 @@ class Options(object):
                  complex_names=('r', 'i'),
                  group_for_references="/#refs#",
                  oned_as='row',
+                 dict_like_keys_name='keys',
+                 dict_like_values_name='values',
                  compress=True,
                  compress_size_threshold=16*1024,
                  compression_algorithm='gzip',
@@ -200,6 +208,8 @@ class Options(object):
         self._complex_names = ('r', 'i')
         self._group_for_references = "/#refs#"
         self._oned_as = 'row'
+        self._dict_like_keys_name = 'keys'
+        self._dict_like_values_name = 'values'
         self._compress = True
         self._compress_size_threshold = 16*1024
         self._compression_algorithm = 'gzip'
@@ -228,6 +238,8 @@ class Options(object):
         self.complex_names = complex_names
         self.group_for_references = group_for_references
         self.oned_as = oned_as
+        self.dict_like_keys_name = dict_like_keys_name
+        self.dict_like_values_name = dict_like_values_name
         self.compress = compress
         self.compress_size_threshold = compress_size_threshold
         self.compression_algorithm = compression_algorithm
@@ -666,6 +678,58 @@ class Options(object):
         # Check that it is one of the valid values before setting it.
         if value in ('row', 'column'):
             self._oned_as = value
+
+    @property
+    def dict_like_keys_name(self):
+        """ The Dataset name for the keys of dict like objects.
+
+        str
+
+        When a ``dict`` like object has at least one key that isn't an
+        ``str`` or is an ``str`` with invalid characters, the object's
+        is stored as an array of keys and an array of values. This
+        option sets the name of the Dataset for the keys.
+
+        .. versionadded:: 0.2
+
+        See Also
+        --------
+        dict_like_values_name
+
+        """
+        return self._dict_like_keys_name
+
+    @dict_like_keys_name.setter
+    def dict_like_keys_name(self, value):
+        # Check that it is an str before setting it.
+        if isinstance(value, str):
+            self._dict_like_keys_name = value
+
+    @property
+    def dict_like_values_name(self):
+        """ The Dataset name for the values of dict like objects.
+
+        str
+
+        When a ``dict`` like object has at least one key that isn't an
+        ``str`` or is an ``str`` with invalid characters, the object's
+        is stored as an array of keys and an array of values. This
+        option sets the name of the Dataset for the values.
+
+        .. versionadded:: 0.2
+
+        See Also
+        --------
+        dict_like_keys_name
+
+        """
+        return self._dict_like_values_name
+
+    @dict_like_values_name.setter
+    def dict_like_values_name(self, value):
+        # Check that it is an str before setting it.
+        if isinstance(value, str):
+            self._dict_like_values_name = value
 
     @property
     def compress(self):
