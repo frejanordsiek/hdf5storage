@@ -28,6 +28,7 @@
 import os
 import os.path
 import random
+import tempfile
 
 import hdf5storage
 
@@ -36,9 +37,6 @@ from make_randoms import *
 
 
 random.seed()
-
-
-filename = 'data.mat'
 
 
 # A series of tests to make sure that more than one data item can be
@@ -58,9 +56,11 @@ def test_multi_write():
             dtype=random.choice(dtypes))
 
     # Write it and then read it back item by item.
-    if os.path.exists(filename):
-        os.remove(filename)
+    fld = None
     try:
+        fld = tempfile.mkstemp()
+        os.close(fld[0])
+        filename = fld[1]
         hdf5storage.writes(mdict=data, filename=filename)
         out = dict()
         for p in data:
@@ -68,8 +68,8 @@ def test_multi_write():
     except:
         raise
     finally:
-        if os.path.exists(filename):
-            os.remove(filename)
+        if fld is not None:
+            os.remove(fld[1])
 
     # Compare data and out.
     assert_equal(out, data)
@@ -90,9 +90,11 @@ def test_multi_read():
 
     paths = data.keys()
     # Write it item by item  and then read it back in one unit.
-    if os.path.exists(filename):
-        os.remove(filename)
+    fld = None
     try:
+        fld = tempfile.mkstemp()
+        os.close(fld[0])
+        filename = fld[1]
         for p in paths:
             hdf5storage.write(data=data[p], path=p, filename=filename)
         out = hdf5storage.reads(paths=list(data.keys()),
@@ -100,8 +102,8 @@ def test_multi_read():
     except:
         raise
     finally:
-        if os.path.exists(filename):
-            os.remove(filename)
+        if fld is not None:
+            os.remove(fld[1])
 
     # Compare data and out.
     for i, p in enumerate(paths):

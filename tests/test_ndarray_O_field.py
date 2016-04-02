@@ -26,14 +26,12 @@
 
 import os
 import os.path
+import tempfile
 
 import numpy as np
 import h5py
 
 import hdf5storage
-
-
-filename = 'data.mat'
 
 
 # A series of tests to make sure that structured ndarrays with a field
@@ -45,9 +43,11 @@ filename = 'data.mat'
 def test_O_field_compound():
     name = '/a'
     data = np.empty(shape=(1, ), dtype=[('O', 'int8'), ('a', 'uint16')])
-    if os.path.exists(filename):
-        os.remove(filename)
+    fld = None
     try:
+        fld = tempfile.mkstemp()
+        os.close(fld[0])
+        filename = fld[1]
         hdf5storage.write(data, path=name, filename=filename,
                           matlab_compatible=False,
                           structured_numpy_ndarray_as_struct=False)
@@ -56,17 +56,19 @@ def test_O_field_compound():
     except:
         raise
     finally:
-        if os.path.exists(filename):
-            os.remove(filename)
+        if fld is not None:
+            os.remove(fld[1])
 
 
 def test_object_field_group():
     name = '/a'
     data = np.empty(shape=(1, ), dtype=[('a', 'O'), ('b', 'uint16')])
     data['a'][0] = [1, 2]
-    if os.path.exists(filename):
-        os.remove(filename)
+    fld = None
     try:
+        fld = tempfile.mkstemp()
+        os.close(fld[0])
+        filename = fld[1]
         hdf5storage.write(data, path=name, filename=filename,
                           matlab_compatible=False,
                           structured_numpy_ndarray_as_struct=False)
@@ -75,17 +77,19 @@ def test_object_field_group():
     except:
         raise
     finally:
-        if os.path.exists(filename):
-            os.remove(filename)
+        if fld is not None:
+            os.remove(fld[1])
 
 
 def test_O_and_object_field_group():
     name = '/a'
     data = np.empty(shape=(1, ), dtype=[('a', 'O'), ('O', 'uint16')])
     data['a'][0] = [1, 2]
-    if os.path.exists(filename):
-        os.remove(filename)
+    fld = None
     try:
+        fld = tempfile.mkstemp()
+        os.close(fld[0])
+        filename = fld[1]
         hdf5storage.write(data, path=name, filename=filename,
                           matlab_compatible=False,
                           structured_numpy_ndarray_as_struct=False)
@@ -94,5 +98,5 @@ def test_O_and_object_field_group():
     except:
         raise
     finally:
-        if os.path.exists(filename):
-            os.remove(filename)
+        if fld is not None:
+            os.remove(fld[1])

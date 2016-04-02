@@ -31,6 +31,7 @@ import os.path
 import math
 import random
 import collections
+import tempfile
 
 import numpy as np
 import numpy.random
@@ -51,7 +52,6 @@ class TestPythonMatlabFormat(object):
     # type information and matlab information are stored in, and then
     # read it back and have it be the same.
     def __init__(self):
-        self.filename = 'data.mat'
         self.options = hdf5storage.Options()
 
         # Need a list of the supported numeric dtypes to test, excluding
@@ -74,20 +74,22 @@ class TestPythonMatlabFormat(object):
     def write_readback(self, data, name, options, read_options=None):
         # Write the data to the proper file with the given name, read it
         # back, and return the result. The file needs to be deleted
-        # before and after to keep junk from building up. Different
-        # options can be used for reading the data back.
-        if os.path.exists(self.filename):
-            os.remove(self.filename)
+        # after to keep junk from building up. Different options can be
+        # used for reading the data back.
+        f = None
         try:
-            hdf5storage.write(data, path=name, filename=self.filename,
+            f = tempfile.mkstemp()
+            os.close(f[0])
+            filename = f[1]
+            hdf5storage.write(data, path=name, filename=filename,
                               options=options)
-            out = hdf5storage.read(path=name, filename=self.filename,
+            out = hdf5storage.read(path=name, filename=filename,
                                    options=read_options)
         except:
             raise
         finally:
-            if os.path.exists(self.filename):
-                os.remove(self.filename)
+            if f is not None:
+                os.remove(f[1])
         return out
 
     def assert_equal(self, a, b):
@@ -589,7 +591,6 @@ class TestPythonFormat(TestPythonMatlabFormat):
         # name.
         TestPythonMatlabFormat.__init__(self)
         self.options = hdf5storage.Options(matlab_compatible=False)
-        self.filename = 'data.h5'
 
     # Won't throw an exception unlike the parent.
     def test_numpy_structured_array_field_forward_slash(self):
@@ -632,7 +633,6 @@ class TestMatlabFormat(TestPythonMatlabFormat):
         TestPythonMatlabFormat.__init__(self)
         self.options = hdf5storage.Options(store_python_metadata=False,
                                            matlab_compatible=True)
-        self.filename = 'data.mat'
 
     def assert_equal(self, a, b):
         assert_equal_matlab_format(a, b, self.options)

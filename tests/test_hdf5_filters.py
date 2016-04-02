@@ -27,6 +27,7 @@
 import os
 import os.path
 import random
+import tempfile
 
 import h5py
 
@@ -39,8 +40,6 @@ from make_randoms import *
 
 random.seed()
 
-
-filename = 'data.mat'
 
 
 def check_read_filters(filters):
@@ -66,10 +65,12 @@ def check_read_filters(filters):
 
     # Write the data to the proper file with the given name with the
     # provided filters and read it backt. The file needs to be deleted
-    # before and after to keep junk from building up.
-    if os.path.exists(filename):
-        os.remove(filename)
+    # after to keep junk from building up.
+    fld = None
     try:
+        fld = tempfile.mkstemp()
+        os.close(fld[0])
+        filename = fld[1]
         with h5py.File(filename) as f:
             f.create_dataset(name, data=data, chunks=True, **filts)
         out = hdf5storage.read(path=name, filename=filename,
@@ -77,8 +78,8 @@ def check_read_filters(filters):
     except:
         raise
     finally:
-        if os.path.exists(filename):
-            os.remove(filename)
+        if fld is not None:
+            os.remove(fld[1])
 
     # Compare
     assert_equal(out, data)
@@ -107,10 +108,12 @@ def check_write_filters(filters):
 
     # Write the data to the proper file with the given name with the
     # provided filters and read it backt. The file needs to be deleted
-    # before and after to keep junk from building up.
-    if os.path.exists(filename):
-        os.remove(filename)
+    # after to keep junk from building up.
+    fld = None
     try:
+        fld = tempfile.mkstemp()
+        os.close(fld[0])
+        filename = fld[1]
         hdf5storage.write(data, path=name, filename=filename, \
             store_python_metadata=False, matlab_compatible=False, \
             compress=True, compress_size_threshold=0, \
@@ -129,8 +132,8 @@ def check_write_filters(filters):
     except:
         raise
     finally:
-        if os.path.exists(filename):
-            os.remove(filename)
+        if fld is not None:
+            os.remove(fld[1])
 
     # Check the filters
     assert fletcher32 == filts['fletcher32']
@@ -177,10 +180,12 @@ def check_uncompressed_write_filters(method,
 
     # Write the data to the proper file with the given name with the
     # provided filters and read it backt. The file needs to be deleted
-    # before and after to keep junk from building up.
-    if os.path.exists(filename):
-        os.remove(filename)
+    # after to keep junk from building up.
+    fld = None
     try:
+        fld = tempfile.mkstemp()
+        os.close(fld[0])
+        filename = fld[1]
         hdf5storage.write(data, path=name, filename=filename, \
             store_python_metadata=False, matlab_compatible=False, \
             compression_algorithm=filts['compression'], \
@@ -201,8 +206,8 @@ def check_uncompressed_write_filters(method,
     except:
         raise
     finally:
-        if os.path.exists(filename):
-            os.remove(filename)
+        if fld is not None:
+            os.remove(fld[1])
 
     # Check the filters
     assert compression == None
