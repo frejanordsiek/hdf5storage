@@ -29,6 +29,8 @@ import os.path
 import random
 import tempfile
 
+import numpy as np
+
 import h5py
 
 import hdf5storage
@@ -133,7 +135,7 @@ def check_str_key_invalid_char(tp, ch, option_keywords):
             os.remove(fld[1])
 
 
-def check_bytes_key(tp, option_keywords):
+def check_string_type_non_str_key(tp, other_tp, option_keywords):
     options = hdf5storage.Options(**option_keywords)
     key_value_names = (options.dict_like_keys_name,
                        options.dict_like_values_name)
@@ -142,9 +144,17 @@ def check_bytes_key(tp, option_keywords):
     for k in key_value_names:
         if k in data:
             del data[k]
+    keys = list(data.keys())
 
-    key = random_bytes(max_dict_key_length)
+    key_gen = random_str_some_unicode(max_dict_key_length)
+    if other_tp == 'numpy.bytes_':
+        key = np.bytes_(key_gen.encode('UTF-8'))
+    elif other_tp == 'numpy.unicode_':
+        key = np.unicode_(key_gen)
+    elif other_tp == 'bytes':
+        key = key_gen.encode('UTF-8')
     data[key] = random_int()
+    keys.append(key_gen)
 
     # Make a random name.
     name = random_name()
@@ -161,7 +171,8 @@ def check_bytes_key(tp, option_keywords):
                           options=options)
 
         with h5py.File(filename) as f:
-            assert set(key_value_names) == set(f[name].keys())
+            assert set(keys) == set(f[name].keys())
+
     except:
         raise
     finally:
@@ -246,10 +257,12 @@ def test_str_key_invalid_char():
                         yield check_str_key_invalid_char, tp, c, options_keywords
 
 
-def test_bytes_key():
+def test_string_type_non_str_key():
+    # Set the other key types.
+    other_tps = ['bytes', 'numpy.bytes_', 'numpy.unicode_']
     # generate some random keys_values_names
     keys_values_names = [('keys', 'values')]
-    for i in range(3):
+    for i in range(1):
         names = ('a', 'a')
         while names[0] == names[1]:
             names = [random_str_ascii(8) for i in range(2)]
@@ -257,13 +270,14 @@ def test_bytes_key():
     for pyth_meta in (True, False):
         for mat_meta in (True, False):
             for tp in dict_like:
-                for names in keys_values_names:
-                    options_keywords = { \
-                        'store_python_metadata': pyth_meta, \
-                        'matlab_compatible': mat_meta, \
-                        'dict_like_keys_name': names[0], \
-                        'dict_like_values_name': names[1]}
-                    yield check_bytes_key, tp, options_keywords
+                for other_tp in other_tps:
+                    for names in keys_values_names:
+                        options_keywords = { \
+                            'store_python_metadata': pyth_meta, \
+                            'matlab_compatible': mat_meta, \
+                            'dict_like_keys_name': names[0], \
+                            'dict_like_values_name': names[1]}
+                    yield check_string_type_non_str_key, tp, other_tp, options_keywords
 
 
 def test_int_key():

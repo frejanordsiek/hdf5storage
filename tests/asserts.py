@@ -104,19 +104,48 @@ def assert_equal_none_format(a, b, options=None):
         # keys. Otherwise, they should be 'keys' and 'values'.
         all_str_keys = True
         if sys.hexversion >= 0x03000000:
-            tp = str
+            tp_str = str
+            tp_bytes = bytes
             invalids = ('\x00', '/')
+            converters = {tp_str: lambda x: x,
+                          tp_bytes: lambda x: x.decode('UTF-8'),
+                          np.bytes_:
+                          lambda x: bytes(x).decode('UTF-8'),
+                          np.unicode_: lambda x: str(x)}
+            tp_conv = lambda x: converters[type(x)](x)
+            tp_conv_str = lambda x: tp_conv(x)
         else:
-            tp = unicode
+            tp_str = unicode
+            tp_bytes = str
             invalids = (u'\x00', u'/')
+            converters = {tp_str: lambda x: x,
+                          tp_bytes: lambda x: x.decode('UTF-8'),
+                          np.bytes_:
+                          lambda x: bytes(x).decode('UTF-8'),
+                          np.unicode_: lambda x: unicode(x)}
+            tp_conv = lambda x: converters[type(x)](x)
+            tp_conv_str = lambda x: tp_conv(x).encode('UTF-8')
+        tps = tuple(converters.keys())
         for k in b.keys():
-            if not isinstance(k, tp) or any([c in k for c in invalids]):
+            if type(k) not in tps:
+                all_str_keys = False
+                break
+            try:
+                k_str = tp_conv(k)
+                if any([c in k_str for c in invalids]):
+                    all_str_keys = False
+                    break
+            except:
                 all_str_keys = False
                 break
         if all_str_keys:
-            assert set(a.dtype.names) == set(b.keys())
+            print(str(a.dtype.names))
+            print(str(tuple(b.keys())))
+            assert set(a.dtype.names) == set([tp_conv_str(k)
+                                              for k in b.keys()])
             for k in b:
-                assert_equal_none_format(a[k][0], b[k], options)
+                assert_equal_none_format(a[tp_conv_str(k)][0],
+                                         b[k], options)
         else:
             names = (options.dict_like_keys_name,
                      options.dict_like_values_name)
@@ -226,19 +255,46 @@ def assert_equal_matlab_format(a, b, options=None):
         # keys. Otherwise, they should be 'keys' and 'values'.
         all_str_keys = True
         if sys.hexversion >= 0x03000000:
-            tp = str
+            tp_str = str
+            tp_bytes = bytes
             invalids = ('\x00', '/')
+            converters = {tp_str: lambda x: x,
+                          tp_bytes: lambda x: x.decode('UTF-8'),
+                          np.bytes_:
+                          lambda x: bytes(x).decode('UTF-8'),
+                          np.unicode_: lambda x: str(x)}
+            tp_conv = lambda x: converters[type(x)](x)
+            tp_conv_str = lambda x: tp_conv(x)
         else:
-            tp = unicode
+            tp_str = unicode
+            tp_bytes = str
             invalids = (u'\x00', u'/')
+            converters = {tp_str: lambda x: x,
+                          tp_bytes: lambda x: x.decode('UTF-8'),
+                          np.bytes_:
+                          lambda x: bytes(x).decode('UTF-8'),
+                          np.unicode_: lambda x: unicode(x)}
+            tp_conv = lambda x: converters[type(x)](x)
+            tp_conv_str = lambda x: tp_conv(x).encode('UTF-8')
+        tps = tuple(converters.keys())
         for k in b.keys():
-            if not isinstance(k, tp) or any([c in k for c in invalids]):
+            if type(k) not in tps:
+                all_str_keys = False
+                break
+            try:
+                k_str = tp_conv(k)
+                if any([c in k_str for c in invalids]):
+                    all_str_keys = False
+                    break
+            except:
                 all_str_keys = False
                 break
         if all_str_keys:
-            assert set(a.dtype.names) == set(b.keys())
+            assert set(a.dtype.names) == set([tp_conv_str(k)
+                                              for k in b.keys()])
             for k in b:
-                assert_equal_matlab_format(a[k][0], b[k], options)
+                assert_equal_matlab_format(a[tp_conv_str(k)][0],
+                                           b[k], options)
         else:
             names = (options.dict_like_keys_name,
                      options.dict_like_values_name)

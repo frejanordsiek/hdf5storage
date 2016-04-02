@@ -252,9 +252,21 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    def check_dict_like_bytes_key(self, tp):
+    def check_dict_like_other_type_key(self, tp, other_tp):
         data = random_dict(tp)
-        key = random_bytes(max_dict_key_length)
+
+        key_gen = random_str_some_unicode(max_dict_key_length)
+        if other_tp == 'numpy.bytes_':
+            key = np.bytes_(key_gen.encode('UTF-8'))
+        elif other_tp == 'numpy.unicode_':
+            key = np.unicode_(key_gen)
+        elif other_tp == 'bytes':
+            key = key_gen.encode('UTF-8')
+        elif other_tp == 'int':
+            key = random_int()
+        elif other_tp == 'float':
+            key = random_float()
+
         data[key] = random_int()
         out = self.write_readback(data, random_name(),
                                   self.options)
@@ -571,9 +583,13 @@ class TestPythonMatlabFormat(object):
         for tp in self.dict_like:
             yield self.check_dict_like, tp
 
-    def test_dict_like_bytes_key(self):
+    def test_dict_like_other_type_key(self):
+        # Set the other key types.
+        other_tps = ['bytes', 'numpy.bytes_', 'numpy.unicode_',
+                     'int', 'float']
         for tp in self.dict_like:
-            yield self.check_dict_like_bytes_key, tp
+            for other_tp in other_tps:
+                yield self.check_dict_like_other_type_key, tp, other_tp
 
     def test_dict_like_key_null_character(self):
         for tp in self.dict_like:
