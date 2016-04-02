@@ -221,7 +221,13 @@ the Python version.
 Python 3
 ^^^^^^^^
 
-The ``dict`` keys must be ``str`` (the unicode string type).
+.. versionchanged:: 0.2
+   The ``dict`` keys no longer have to all be ``str`` (the unicode
+   string type). However, if python metadata is not included, other
+   string type keys can get converted to ``str`` when read back or one
+   reads back a ``dict`` with two fields, ``keys`` and ``values``,
+   holding all the keys and values if at least one key is not a string
+   type.
 
     >>> import numpy as np
     >>> import hdf5storage
@@ -247,32 +253,39 @@ The ``dict`` keys must be ``str`` (the unicode string type).
 Python 2
 ^^^^^^^^
 
-The same thing but in Python 2 where the ``dict`` keys must be
-``unicode``. The other datatypes are translated from the Python 3
-example appropriately. The rest of the examples on this page are run
-identically in Python 2 and 3, but the outputs are listed as is
-returned in Python 3.
+The datatypes are translated from the Python 3 example appropriately,
+except for the keys which will be Python 2 ``str``. The rest of the
+examples on this page are run identically in Python 2 and 3, but the
+outputs are listed as is returned in Python 3.
+
+.. versionchanged:: 0.2
+   The ``dict`` keys no longer have to all be ``unicode`` like they did
+   before. However, when python metadata is not stored, non ``unicode``
+   string keys (if all keys are string type) will be converted to
+   ``unicode``, or one reads back a ``dict`` with two fields, ``keys``
+   and ``values``, holding all the keys and values if at least one key
+   is not a string type.
 
     >>> import numpy as np
     >>> import hdf5storage
-    >>> a = {u'a': True,
-    ...      u'b': None,
-    ...      u'c': 2,
-    ...      u'd': -3.2,
-    ...      u'e': (1-2.3j),
-    ...      u'f': u'hello',
-    ...      u'g': 'goodbye',
-    ...      u'h': [u'list', u'of', u'stuff', [30, 2.3]],
-    ...      u'i': np.zeros(shape=(2,), dtype=[('bi', 'uint8')]),
-    ...      u'j':{u'aa': np.bool_(False),
-    ...            u'bb': np.uint8(4),
-    ...            u'cc': np.uint32([70, 8]),
-    ...            u'dd': np.int32([]),
-    ...            u'ee': np.float32([[3.3], [5.3e3]]),
-    ...            u'ff': np.complex128([[3.4, 3], [9+2j, 0]]),
-    ...            u'gg': np.array([u'one', u'two', u'three'], dtype='unicode'),
-    ...            u'hh': np.str_('how many?'),
-    ...            u'ii': np.object_([u'text', np.int8([1, -3, 0])])}}
+    >>> a = {'a': True,
+    ...      'b': None,
+    ...      'c': 2,
+    ...      'd': -3.2,
+    ...      'e': (1-2.3j),
+    ...      'f': u'hello',
+    ...      'g': 'goodbye',
+    ...      'h': [u'list', u'of', u'stuff', [30, 2.3]],
+    ...      'i': np.zeros(shape=(2,), dtype=[('bi', 'uint8')]),
+    ...      'j':{'aa': np.bool_(False),
+    ...           'bb': np.uint8(4),
+    ...           'cc': np.uint32([70, 8]),
+    ...           'dd': np.int32([]),
+    ...           'ee': np.float32([[3.3], [5.3e3]]),
+    ...           'ff': np.complex128([[3.4, 3], [9+2j, 0]]),
+    ...           'gg': np.array([u'one', u'two', u'three'], dtype='unicode'),
+    ...           'hh': np.str_('how many?'),
+    ...           'ii': np.object_([u'text', np.int8([1, -3, 0])])}}
 
 Using No Metadata
 -----------------

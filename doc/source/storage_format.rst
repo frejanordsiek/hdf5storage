@@ -124,9 +124,10 @@ np.recarray               0.1      structured np.ndarray [10]_           Dataset
        Otherwise, it is just written as ``np.bytes_``.
 .. [7] Stored either as each key-value as their own Dataset or as two
        Datasets, one for keys and one for values. The former is used if
-       all keys are ``str`` in Python 3 or ``unicode`` in Python 2 and
-       they don't have null characters (``'\x00'``) or forward slashes
-       (``'/'``) in them. Otherwise, the latter format is used.
+       all keys can be converted to ``str`` in Python 3 or ``unicode``
+       in Python 2 and they don't have null characters (``'\x00'``) or
+       forward slashes (``'/'``) in them. Otherwise, the latter format
+       is used.
 .. [8] Not supported in Python 2.6, so they are converted to ``dict``
        when read from a file in Python 2.6.
 .. [9] ``np.float16`` are not supported for h5py versions before
@@ -334,6 +335,38 @@ name. It is set to ``b'key_values'`` if the keys are all stored in their
 own Dataset (as a ``tuple``) and the values in another Dataset (as a
 ``tuple``).
 
+Python.dict.key_str_types
+-------------------------
+
+Python Attribute
+
+``np.bytes_``
+
+.. versionadded:: 0.2
+
+A ``dict`` like object (includes ``cl.OrderedDict``) is stored with
+each key-value pair as its own Dataset if all the keys are string like
+and either are Python 3.x ``str`` or Python 2.x ``unicode`` or can be
+converted to those, and none of the keys have forbidden characters (null
+and ``'/'``). A key is string like if it is a Python 3.x ``'str`` or
+``'bytes'``, a Python 2.x ``'unicode'`` or ``'str'``, a ``np.unicode_``,
+or a ``np.bytes_``.
+
+This Attribute stores what their original types are. Otherwise, the
+exact type would be lost in the conversion to Dataset names. The
+Attribute has one character corresponding to each field in the
+``'Python.Fields'`` Attribute. The character designates the type. The
+characters are
+
+=========  ============================================
+Character  Type
+=========  ============================================
+``b't'``   Python 3.x ``str`` or Python 2.x ``unicode``
+``b'b'``   Python 3.x ``bytes`` or Python 2.x ``str``
+``b'U'``   ``np.unicode_``
+``b'S'``   ``np.bytes_``
+=========  ============================================
+
 Python.dict.keys_values_names
 -----------------------------
 
@@ -405,10 +438,14 @@ dict and dict like
 
 ``dict`` like data (``dict`` and  ``cl.OrderedDict``) are stored either
 with each key-value as their own Dataset or as two Datasets, one for
-keys and one for values. The former is used if all keys are ``str`` in
-Python 3 or ``unicode`` in Python 2 and they don't have null characters
-(``'\x00'``) or forward slashes (``'/'``) in them. Otherwise, the latter
-format is used.
+keys and one for values. The former is used if all keys are string like
+and they don't have null characters (``'\x00'``) or forward slashes
+(``'/'``) in them. Keys are converted to Python 3.x ``str`` or Python
+2.x ``unicode``. Otherwise, the latter format is used. A key is string
+like if it is a Python 3.x ``'str`` or ``'bytes'``, a Python 2.x
+``'unicode'`` or ``'str'``, a ``np.unicode_``, or a ``np.bytes_`` and it
+can be converted successfully to Python 3.x ``str`` or Python 2.x
+``unicode``.
 
 When they can't be stored with each key-value pair as their own Dataset,
 the keys and values are stored as ``tuple`` in Datasets set by the the
@@ -419,17 +456,23 @@ the keys and values are stored as ``tuple`` in Datasets set by the the
 If Python metadata is being stored, Attributes are used to indicae how
 the data is stored. The Attribute ``'Python.dict.StoredAs'`` is used to
 store the method of storage (key-value pairs individually or as keys and
-values). When storing as keys and values in their own Datasets, the
-Dataset names are stored in the Attribute
-``'Python.dict.keys_values_names'``.
+values).
+
+When storing each key-value pair as its own Dataset, the Attribute
+``'Python.dict.key_str_types'`` is used to store the type of each key so
+that they can be converted back to the right string type.
+
+When storing as keys and values in their own Datasets, the Dataset names
+are stored in the Attribute ``'Python.dict.keys_values_names'``.
 
 .. versionchanged:: 0.2
    
    Support added for storing the keys and values as their own Datasets
    instead of each key-value pair as their own Dataset. This feature
    add the ability to store ``dict`` like data with keys that are not
-   ``str`` in Python 3 or ``unicode`` in Python 2 or have null
-   characters (``'\x00'``) or forward slashes (``'/'``) in them.
+   ``str`` in Python 3 or ``unicode`` in Python 2, can't be converted
+   to them, or have null characters (``'\x00'``) or forward slashes
+   (``'/'``) in them.
 
 np.object\_
 -----------

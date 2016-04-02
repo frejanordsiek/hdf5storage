@@ -45,10 +45,9 @@ Python 2
 
 This package was designed and written for Python 3, with Python 2.7 and
 2.6 support added later. This does mean that a few things are a little
-clunky in Python 2. Examples include requiring ``unicode`` keys for
-dictionaries, the ``int`` and ``long`` types both being mapped to the
-Python 3 ``int`` type, etc. The storage format's metadata looks more
-familiar from a Python 3 standpoint as well.
+clunky in Python 2. For example, Python 2 ``int`` and ``long`` types are
+both mapped to the Python 3 ``int`` type. The storage format's metadata
+looks more familiar from a Python 3 standpoint as well.
 
 The documentation is written in terms of Python 3 syntax and types
 primarily. Important Python 2 information beyond direct translations of
@@ -207,10 +206,11 @@ support writing it so MATlAB can read it.
        non-ASCII characters in which case a ``NotImplementedError`` is
        thrown). Otherwise, it is just written as ``np.bytes_``.
 .. [7] Stored either as each key-value as their own Dataset or as two
-       Datasets, one for keys and one ofr values. The former is used if
-       all keys are ``str`` in Python 3 or ``unicode`` in Python 2 and
-       they don't have null characters (``'\x00'``) or forward slashes
-       (``'/'``) in them. Otherwise, the latter format is used.
+       Datasets, one for keys and one for values. The former is used if
+       all keys can be converted to ``str`` in Python 3 or ``unicode``
+       in Python 2 and they don't have null characters (``'\x00'``) or
+       forward slashes (``'/'``) in them. Otherwise, the latter format
+       is used.
 .. [8] Not supported in Python 2.6, so they are converted to ``dict``
        when read from a file in Python 2.6.
 .. [9] ``np.float16`` are not supported for h5py versions before
@@ -279,10 +279,13 @@ Versions
        raises an exception.
      * Ability to write ``np.bytes_`` with non-ASCII characters in them.
        Doing so no longer raises an exception.
-     * Issue #25. Added support for writing ``dict`` like objects with
-       keys that are not all ``str`` without null and ``'/'``
+     * Issue #24 and #25. Added support for writing ``dict`` like
+       objects with keys that are not all ``str`` without null and ``'/'``
        characters. Two new options, ``'dict_like_keys_name'`` and
-       ``'dict_like_values_name'`` control how they are stored.
+       ``'dict_like_values_name'`` control how they are stored if the
+       keys are not string like, can't be converted to Python 3.x
+       ``str`` or Python 2.x ``unicode``, or have null or ``'/'``
+       characters.
      * Added support for ``cl.OrderedDict``. It was added to the
        ``Marshallers.PythonDictMarshaller``. Note that in Python 2.6,
        which doesn't support ``cl.OrderedDict``, they are mapped to
