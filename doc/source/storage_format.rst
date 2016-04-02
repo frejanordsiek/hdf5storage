@@ -122,9 +122,11 @@ np.recarray               0.1      structured np.ndarray [10]_           Dataset
        ``np.uint16`` in UTF-16 encoding unless it contains non-ASCII
        characters in which case a ``NotImplementedError`` is raised.
        Otherwise, it is just written as ``np.bytes_``.
-.. [7] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
-       They cannot have null characters (``'\x00'``) or forward slashes
-       (``'/'``) in them.
+.. [7] Stored either as each key-value as their own Dataset or as two
+       Datasets, one for keys and one for values. The former is used if
+       all keys are ``str`` in Python 3 or ``unicode`` in Python 2 and
+       they don't have null characters (``'\x00'``) or forward slashes
+       (``'/'``) in them. Otherwise, the latter format is used.
 .. [8] Not supported in Python 2.6, so they are converted to ``dict``
        when read from a file in Python 2.6.
 .. [9] ``np.float16`` are not supported for h5py versions before
@@ -316,7 +318,42 @@ Then ``fs`` looks like::
   array([array([b'a'], dtype='|S1'),
          array([b'c', b'd'], dtype='|S1']), dtype=object)
 
+Python.dict.StoredAs
+--------------------
 
+Python Attribute
+
+``np.bytes_`` : ``{b'individual', b'keys_values'}``
+
+.. versionadded:: 0.2
+
+``dict`` like data (includes ``cl.OrderedDict``) can be stored in two
+ways. This Attribute specifies which one. It is ``b'individual'`` if
+each key-value pair is stored as its own Dataset with the key as the
+name. It is set to ``b'key_values'`` if the keys are all stored in their
+own Dataset (as a ``tuple``) and the values in another Dataset (as a
+``tuple``).
+
+Python.dict.keys_values_names
+-----------------------------
+
+Python Attribute
+
+``np.object_`` array of ``str``
+
+.. versionadded:: 0.2
+
+If ``dict`` like data (includes ``cl.OrderedDict``) is stored with the
+keys in their own Dataset and the values in another Dataset (the
+``'Python.dict.StoredAs'`` Attribute is ``b'keys_values'``), it stores
+the names of the Datasets holding the keys and values respectively (in
+that order). It has exactly two elements.
+
+The two ``str`` used are controlled by the :py:class:`Options`
+:py:attr:`Options.dict_like_keys_name` and
+:py:attr:`Options.dict_like_values_name` respectively.
+
+	 
 Storage of Special Types
 ========================
 
@@ -363,6 +400,37 @@ automatically to ``('real', 'imag')`` when
 automatically checks numeric types for many combinations of reasonably
 expected field names to find complex types.
 
+dict and dict like
+------------------
+
+``dict`` like data (``dict`` and  ``cl.OrderedDict``) are stored either
+with each key-value as their own Dataset or as two Datasets, one for
+keys and one for values. The former is used if all keys are ``str`` in
+Python 3 or ``unicode`` in Python 2 and they don't have null characters
+(``'\x00'``) or forward slashes (``'/'``) in them. Otherwise, the latter
+format is used.
+
+When they can't be stored with each key-value pair as their own Dataset,
+the keys and values are stored as ``tuple`` in Datasets set by the the
+:py:class:`Options`
+:py:attr:`Options.dict_like_keys_name` and
+:py:attr:`Options.dict_like_values_name` respectively.
+
+If Python metadata is being stored, Attributes are used to indicae how
+the data is stored. The Attribute ``'Python.dict.StoredAs'`` is used to
+store the method of storage (key-value pairs individually or as keys and
+values). When storing as keys and values in their own Datasets, the
+Dataset names are stored in the Attribute
+``'Python.dict.keys_values_names'``.
+
+.. versionchanged:: 0.2
+   
+   Support added for storing the keys and values as their own Datasets
+   instead of each key-value pair as their own Dataset. This feature
+   add the ability to store ``dict`` like data with keys that are not
+   ``str`` in Python 3 or ``unicode`` in Python 2 or have null
+   characters (``'\x00'``) or forward slashes (``'/'``) in them.
+
 np.object\_
 -----------
 
@@ -382,16 +450,14 @@ empty has the same format as in MATLAB and is a Dataset named 'a' of
 'canonical empty' and the Attribute 'MATLAB_empty' set to
 ``np.uint8(1)``.
 
-Structure Like Data
--------------------
+Structure np.ndarray
+--------------------
 
-When storing data that is MATLAB struct like (``dict``,
-``cl.OrderedDict``, or structured ``np.ndarray`` when
-:py:attr:`Options.structured_numpy_ndarray_as_struct` is set and none of
-its fields are of dtype ``'object'``), it is stored as an HDF5 Group
-with its contents of its fields written inside of the Group. For single
-element data (``dict``, ``cl.OrderedDict``, or structured ``np.ndarray``
-with only a single element), the fields are written to Datasets inside
+When storing structured ``np.ndarray`` (or data that is stored as it)
+when :py:attr:`Options.structured_numpy_ndarray_as_struct` is set and
+none of its fields are of dtype ``'object'``), it is stored as an HDF5
+Group with its contents of its fields written inside of the Group. For
+single element data, the fields are written to Datasets inside
 the Group. For multi-element data, the elements for each field are
 written in :py:attr:`Options.group_for_references` and an HDF5 Reference
 array to all of those elements is written as a Dataset under the field
@@ -420,8 +486,8 @@ Numpy types, can be done and are controlled by individual settings in
 the :py:class:`Options` class. Most are set to fixed values when
 ``matlab_compatible == True``, which are shown in the table below. The
 transfomations are listed below by their option name, other than
-`complex_names` and `group_for_references` which were explained in the
-previous section.
+`complex_names`, `group_for_references`, `dict_like_keys_name` and
+`dict_like_values_name`, which were explained in the previous section.
 
 ==================================  ====================
 attribute                           value
