@@ -281,6 +281,8 @@ Versions
        ``Marshallers.PythonDictMarshaller``. Note that in Python 2.6,
        which doesn't support ``cl.OrderedDict``, they are mapped to
        ``dict`` when read.
+     * Documentation now uses the napoleon extension in Sphinx >= 1.3
+       as a replacement for numpydoc package.
 
 0.1.13. Bugfix release fixing the following bug.
         * Issue #36. Fixed bugs in writing ``int`` and ``long`` to HDF5
