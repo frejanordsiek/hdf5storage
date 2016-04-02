@@ -280,7 +280,9 @@ Versions
      * Added support for ``cl.OrderedDict``. It was added to the
        ``Marshallers.PythonDictMarshaller``. Note that in Python 2.6,
        which doesn't support ``cl.OrderedDict``, they are mapped to
-       ``dict`` when read.
+     ``dict`` when read.
+     * Issue #40. Made it so that tests use tempfiles instead of
+       using hardcoded filenames in the local directory.
      * Documentation now uses the napoleon extension in Sphinx >= 1.3
        as a replacement for numpydoc package.
 
@@ -296,8 +298,6 @@ Versions
           reading empty numpy string arrays.
         * Issue #34. Fixed a conversion error when ``np.chararray`` are
           written with Matlab metadata.
-        * Issue #40. Made it so that tests use tempfiles instead of
-	  using hardcoded filenames in the local directory.
 
 0.1.11. Bugfix release fixing the following.
         * Issue #30. Fixed ``loadmat`` not opening files in read mode.
