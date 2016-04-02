@@ -91,7 +91,7 @@ class TestPythonMatlabFormat(object):
         return out
 
     def assert_equal(self, a, b):
-        assert_equal(a, b)
+        assert_equal(a, b, self.options)
 
     def check_numpy_scalar(self, dtype):
         # Makes a random numpy scalar of the given type, writes it and
@@ -250,7 +250,6 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    @raises(NotImplementedError)
     def check_dict_like_bytes_key(self, tp):
         data = random_dict(tp)
         key = random_bytes(max_dict_key_length)
@@ -259,7 +258,6 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    @raises(NotImplementedError)
     def check_dict_like_key_null_character(self, tp):
         data = random_dict(tp)
         if sys.hexversion >= 0x03000000:
@@ -273,7 +271,6 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    @raises(NotImplementedError)
     def check_dict_like_key_forward_slash(self, tp):
         data = random_dict(tp)
         if sys.hexversion >= 0x03000000:
@@ -624,7 +621,7 @@ class TestNoneFormat(TestPythonMatlabFormat):
         self.check_numpy_recarray_field_special_char('/')
 
     def assert_equal(self, a, b):
-        assert_equal_none_format(a, b)
+        assert_equal_none_format(a, b, self.options)
 
 
 class TestMatlabFormat(TestPythonMatlabFormat):
@@ -638,4 +635,4 @@ class TestMatlabFormat(TestPythonMatlabFormat):
         self.filename = 'data.mat'
 
     def assert_equal(self, a, b):
-        assert_equal_matlab_format(a, b)
+        assert_equal_matlab_format(a, b, self.options)

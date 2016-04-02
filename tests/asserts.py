@@ -30,7 +30,7 @@ import collections
 import numpy as np
 import numpy.testing as npt
 
-def assert_equal(a, b):
+def assert_equal(a, b, options=None):
     # Compares a and b for equality. If they are dictionaries, they must
     # have the same set of keys, after which they values must all be
     # compared. If they are a collection type (list, tuple, set,
@@ -45,19 +45,19 @@ def assert_equal(a, b):
     if type(b) == dict:
         assert set(a.keys()) == set(b.keys())
         for k in b:
-            assert_equal(a[k], b[k])
+            assert_equal(a[k], b[k], options)
     elif (sys.hexversion >= 0x2070000
           and type(b) == collections.OrderedDict):
         assert list(a.keys()) == list(b.keys())
         for k in b:
-            assert_equal(a[k], b[k])
+            assert_equal(a[k], b[k], options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         assert len(a) == len(b)
         if type(b) in (set, frozenset):
             assert a == b
         else:
             for index in range(0, len(a)):
-                assert_equal(a[index], b[index])
+                assert_equal(a[index], b[index], options)
     elif not isinstance(b, (np.generic, np.ndarray)):
         if isinstance(b, complex):
             assert a.real == b.real \
@@ -73,10 +73,10 @@ def assert_equal(a, b):
             npt.assert_equal(a, b)
         else:
             for index, x in np.ndenumerate(a):
-                assert_equal(a[index], b[index])
+                assert_equal(a[index], b[index], options)
 
 
-def assert_equal_none_format(a, b):
+def assert_equal_none_format(a, b, options=None):
     # Compares a and b for equality. b is always the original. If they
     # are dictionaries, a must be a structured ndarray and they must
     # have the same set of keys, after which they values must all be
@@ -94,18 +94,39 @@ def assert_equal_none_format(a, b):
     # elements must all be the same. If it is string_ type, we must
     # convert to uint32 and then everything can be compared. Big longs
     # and ints get written as numpy.bytes_.
-    if type(b) == dict:
+    if type(b) == dict or (sys.hexversion >= 0x2070000
+                           and type(b) == collections.OrderedDict):
         assert type(a) == np.ndarray
         assert a.dtype.names is not None
-        assert set(a.dtype.names) == set(b.keys())
-        for k in b:
-            assert_equal_none_format(a[k][0], b[k])
-    elif (sys.hexversion >= 0x2070000
-          and type(b) == collections.OrderedDict):
-        # Field order is lost so might as well convert to dict.
-        assert_equal_none_format(a, dict(b))
+
+        # Determine if any of the keys could not be stored as str. If
+        # they all can be, then the dtype field names should be the
+        # keys. Otherwise, they should be 'keys' and 'values'.
+        all_str_keys = True
+        if sys.hexversion >= 0x03000000:
+            tp = str
+            invalids = ('\x00', '/')
+        else:
+            tp = unicode
+            invalids = (u'\x00', u'/')
+        for k in b.keys():
+            if not isinstance(k, tp) or any([c in k for c in invalids]):
+                all_str_keys = False
+                break
+        if all_str_keys:
+            assert set(a.dtype.names) == set(b.keys())
+            for k in b:
+                assert_equal_none_format(a[k][0], b[k], options)
+        else:
+            names = (options.dict_like_keys_name,
+                     options.dict_like_values_name)
+            assert set(a.dtype.names) == set(names)
+            keys = a[names[0]]
+            values = a[names[1]]
+            assert_equal_none_format(keys, tuple(b.keys()), options)
+            assert_equal_none_format(values, tuple(b.values()), options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
-        assert_equal_none_format(a, np.object_(list(b)))
+        assert_equal_none_format(a, np.object_(list(b)), options)
     elif not isinstance(b, (np.generic, np.ndarray)):
         if b is None:
             # It should be np.float64([])
@@ -121,24 +142,25 @@ def assert_equal_none_format(a, b):
                 and isinstance(b, str)) \
                 or (sys.hexversion < 0x03000000 \
                 and isinstance(b, unicode)):
-            assert_equal_none_format(a, np.unicode_(b))
+            assert_equal_none_format(a, np.unicode_(b), options)
         elif (sys.hexversion >= 0x03000000 \
                 and type(b) == int) \
                 or (sys.hexversion < 0x03000000 \
                 and type(b) == long):
             if b > 2**63 or b < -(2**63 - 1):
-                assert_equal_none_format(a, np.bytes_(b))
+                assert_equal_none_format(a, np.bytes_(b), options)
             else:
-                assert_equal_none_format(a, np.int64(b))
+                assert_equal_none_format(a, np.int64(b), options)
         else:
-            assert_equal_none_format(a, np.array(b)[()])
+            assert_equal_none_format(a, np.array(b)[()], options)
     else:
         if b.dtype.name != 'object':
             if b.dtype.char in ('U', 'S'):
                 if b.dtype.char == 'S' and b.shape == tuple() \
                         and len(b) == 0:
                     assert_equal(a, \
-                        np.zeros(shape=tuple(), dtype=b.dtype.char))
+                        np.zeros(shape=tuple(), dtype=b.dtype.char), \
+                        options)
                 elif b.dtype.char == 'U':
                     if b.shape == tuple() and len(b) == 0:
                         c = np.uint32(())
@@ -168,10 +190,10 @@ def assert_equal_none_format(a, b):
             assert a.dtype == b.dtype
             assert a.shape == b.shape
             for index, x in np.ndenumerate(a):
-                assert_equal_none_format(a[index], b[index])
+                assert_equal_none_format(a[index], b[index], options)
 
 
-def assert_equal_matlab_format(a, b):
+def assert_equal_matlab_format(a, b, options=None):
     # Compares a and b for equality. b is always the original. If they
     # are dictionaries, a must be a structured ndarray and they must
     # have the same set of keys, after which they values must all be
@@ -194,21 +216,40 @@ def assert_equal_matlab_format(a, b):
     #
     # In all cases, we expect things to be at least two dimensional
     # arrays.
-    if type(b) == dict:
+    if type(b) == dict or (sys.hexversion >= 0x2070000
+                           and type(b) == collections.OrderedDict):
         assert type(a) == np.ndarray
         assert a.dtype.names is not None
-        assert set(a.dtype.names) == set(b.keys())
-        for k in b:
-            assert_equal_matlab_format(a[k][0], b[k])
-    elif (sys.hexversion >= 0x2070000
-          and type(b) == collections.OrderedDict):
-        assert type(a) == np.ndarray
-        assert a.dtype.names is not None
-        assert list(a.dtype.names) == list(b.keys())
-        for k in b:
-            assert_equal_matlab_format(a[k][0], b[k])
+
+        # Determine if any of the keys could not be stored as str. If
+        # they all can be, then the dtype field names should be the
+        # keys. Otherwise, they should be 'keys' and 'values'.
+        all_str_keys = True
+        if sys.hexversion >= 0x03000000:
+            tp = str
+            invalids = ('\x00', '/')
+        else:
+            tp = unicode
+            invalids = (u'\x00', u'/')
+        for k in b.keys():
+            if not isinstance(k, tp) or any([c in k for c in invalids]):
+                all_str_keys = False
+                break
+        if all_str_keys:
+            assert set(a.dtype.names) == set(b.keys())
+            for k in b:
+                assert_equal_matlab_format(a[k][0], b[k], options)
+        else:
+            names = (options.dict_like_keys_name,
+                     options.dict_like_values_name)
+            assert set(a.dtype.names) == set(names)
+            keys = a[names[0]][0]
+            values = a[names[1]][0]
+            assert_equal_matlab_format(keys, tuple(b.keys()), options)
+            assert_equal_matlab_format(values, tuple(b.values()),
+                                       options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
-        assert_equal_matlab_format(a, np.object_(list(b)))
+        assert_equal_matlab_format(a, np.object_(list(b)), options)
     elif not isinstance(b, (np.generic, np.ndarray)):
         if b is None:
             # It should be np.zeros(shape=(0, 1), dtype='float64'))
@@ -220,32 +261,33 @@ def assert_equal_matlab_format(a, b):
                 or (sys.hexversion < 0x03000000 \
                 and isinstance(b, (bytes, unicode, bytearray))):
             if len(b) == 0:
-                assert_equal(a, np.zeros(shape=(1, 0), dtype='U'))
+                assert_equal(a, np.zeros(shape=(1, 0), dtype='U'),
+                             options)
             elif isinstance(b, (bytes, bytearray)):
                 try:
                     c = np.unicode_(b.decode('ASCII'))
                 except:
                     c = np.bytes_(b)
-                assert_equal(a, np.atleast_2d(c))
+                assert_equal(a, np.atleast_2d(c), options)
             else:
-                assert_equal(a, np.atleast_2d(np.unicode_(b)))
+                assert_equal(a, np.atleast_2d(np.unicode_(b)), options)
         elif (sys.hexversion >= 0x03000000 \
                 and type(b) == int) \
                 or (sys.hexversion < 0x03000000 \
                 and type(b) == long):
             if b > 2**63 or b < -(2**63 - 1):
-                assert_equal(a, np.atleast_2d(np.unicode_(b)))
+                assert_equal(a, np.atleast_2d(np.unicode_(b)), options)
             else:
-                assert_equal(a, np.atleast_2d(np.int64(b)))
+                assert_equal(a, np.atleast_2d(np.int64(b)), options)
         else:
-            assert_equal(a, np.atleast_2d(np.array(b)))
+            assert_equal(a, np.atleast_2d(np.array(b)), options)
     else:
         if b.dtype.name != 'object':
             if b.dtype.char in ('U', 'S'):
                 if len(b) == 0 and (b.shape == tuple() \
                         or b.shape == (0, )):
                     assert_equal(a, np.zeros(shape=(1, 0),
-                                 dtype='U'))
+                                             dtype='U'), options)
                 elif b.dtype.char == 'U':
                     c = np.atleast_1d(b)
                     c = np.atleast_2d(c.view(np.dtype('U' \
@@ -307,16 +349,17 @@ def assert_equal_matlab_format(a, b):
                     for k in b.dtype.names:
                         for index, x in np.ndenumerate(a):
                             assert_equal_from_matlab(a[k][index],
-                                                     b[k][index])
+                                                     b[k][index],
+                                                     options)
         else:
             c = np.atleast_2d(b)
             assert a.dtype == c.dtype
             assert a.shape == c.shape
             for index, x in np.ndenumerate(a):
-                assert_equal_matlab_format(a[index], c[index])
+                assert_equal_matlab_format(a[index], c[index], options)
 
 
-def assert_equal_from_matlab(a, b):
+def assert_equal_from_matlab(a, b, options=None):
     # Compares a and b for equality. They are all going to be numpy
     # types. hdf5storage and scipy behave differently when importing
     # arrays as to whether they are 2D or not, so we will make them all
@@ -336,7 +379,7 @@ def assert_equal_from_matlab(a, b):
         a = a.flatten()
         b = b.flatten()
         for index, x in np.ndenumerate(a):
-            assert_equal_from_matlab(a[index], b[index])
+            assert_equal_from_matlab(a[index], b[index], options)
     elif b.dtype.names is not None or a.dtype.names is not None:
         assert a.dtype.names is not None
         assert b.dtype.names is not None
@@ -345,6 +388,7 @@ def assert_equal_from_matlab(a, b):
         b = b.flatten()
         for k in b.dtype.names:
             for index, x in np.ndenumerate(a):
-                assert_equal_from_matlab(a[k][index], b[k][index])
+                assert_equal_from_matlab(a[k][index], b[k][index],
+                                         options)
     else:
         npt.assert_equal(a, b)
