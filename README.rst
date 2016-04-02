@@ -206,9 +206,11 @@ support writing it so MATlAB can read it.
        stored as ``np.uint16`` in UTF-16 encoding unless it has
        non-ASCII characters in which case a ``NotImplementedError`` is
        thrown). Otherwise, it is just written as ``np.bytes_``.
-.. [7] All keys must be ``str`` in Python 3 or ``unicode`` in Python 2.
-       They cannot have null characters (``'\x00'``) or forward slashes
-       (``'/'``) in them.
+.. [7] Stored either as each key-value as their own Dataset or as two
+       Datasets, one for keys and one ofr values. The former is used if
+       all keys are ``str`` in Python 3 or ``unicode`` in Python 2 and
+       they don't have null characters (``'\x00'``) or forward slashes
+       (``'/'``) in them. Otherwise, the latter format is used.
 .. [8] Not supported in Python 2.6, so they are converted to ``dict``
        when read from a file in Python 2.6.
 .. [9] ``np.float16`` are not supported for h5py versions before
@@ -277,10 +279,14 @@ Versions
        raises an exception.
      * Ability to write ``np.bytes_`` with non-ASCII characters in them.
        Doing so no longer raises an exception.
+     * Issue #25. Added support for writing ``dict`` like objects with
+       keys that are not all ``str`` without null and ``'/'``
+       characters. Two new options, ``'dict_like_keys_name'`` and
+       ``'dict_like_values_name'`` control how they are stored.
      * Added support for ``cl.OrderedDict``. It was added to the
        ``Marshallers.PythonDictMarshaller``. Note that in Python 2.6,
        which doesn't support ``cl.OrderedDict``, they are mapped to
-     ``dict`` when read.
+       ``dict`` when read.
      * Issue #40. Made it so that tests use tempfiles instead of
        using hardcoded filenames in the local directory.
      * Documentation now uses the napoleon extension in Sphinx >= 1.3
