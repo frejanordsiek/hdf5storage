@@ -64,6 +64,18 @@ structured_ndarray_subarray_dimensions = 2
 max_structured_ndarray_subarray_axis_length = 4
 
 
+def random_str_ascii_letters(length):
+    # Makes a random ASCII str of the specified length.
+    if sys.hexversion >= 0x03000000:
+        ltrs = string.ascii_letters
+        return ''.join([random.choice(ltrs) for i in
+                       range(0, length)])
+    else:
+        ltrs = unicode(string.ascii_letters)
+        return u''.join([random.choice(ltrs) for i in
+                        range(0, length)])
+
+
 def random_str_ascii(length):
     # Makes a random ASCII str of the specified length.
     if sys.hexversion >= 0x03000000:
@@ -110,7 +122,8 @@ def random_float():
 
 
 def random_numpy(shape, dtype, allow_nan=True,
-                 allow_unicode=False):
+                 allow_unicode=False,
+                 object_element_dtypes=None):
     # Makes a random numpy array of the specified shape and dtype
     # string. The method is slightly different depending on the
     # type. For 'bytes', 'str', and 'object'; an array of the
@@ -120,7 +133,8 @@ def random_numpy(shape, dtype, allow_nan=True,
     # any other type, then it is just a matter of constructing the
     # right sized ndarray from a random sequence of bytes (all must
     # be forced to 0 and 1 for bool). Optionally include unicode
-    # characters.
+    # characters. Optionally, for object dtypes, the allowed dtypes for
+    # their elements can be given.
     if dtype == 'S':
         length = random.randint(1, max_string_length)
         data = np.zeros(shape=shape, dtype='S' + str(length))
@@ -142,13 +156,15 @@ def random_numpy(shape, dtype, allow_nan=True,
             x[...] = np.unicode_(chars)
         return data
     elif dtype == 'object':
+        if object_element_dtypes is None:
+            object_element_dtypes = dtypes
         data = np.zeros(shape=shape, dtype='object')
         for index, x in np.ndenumerate(data):
             data[index] = random_numpy( \
                 shape=random_numpy_shape( \
                 object_subarray_dimensions, \
                 max_object_subarray_axis_length), \
-                dtype=random.choice(dtypes))
+                dtype=random.choice(object_element_dtypes))
         return data
     else:
         nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
@@ -166,7 +182,7 @@ def random_numpy(shape, dtype, allow_nan=True,
         return data
 
 
-def random_numpy_scalar(dtype):
+def random_numpy_scalar(dtype, object_element_dtypes=None):
     # How a random scalar is made depends on th type. For must, it
     # is just a single number. But for the string types, it is a
     # string of any length.
@@ -178,14 +194,15 @@ def random_numpy_scalar(dtype):
                            random.randint(1,
                            max_string_length)))
     else:
-        return random_numpy(tuple(), dtype)[()]
+        return random_numpy(tuple(), dtype, \
+            object_element_dtypes=object_element_dtypes)[()]
 
 
-def random_numpy_shape(dimensions, max_length):
+def random_numpy_shape(dimensions, max_length, min_length=1):
     # Makes a random shape tuple having the specified number of
     # dimensions. The maximum size along each axis is max_length.
-    return tuple([random.randint(1, max_length) for x in range(0,
-                 dimensions)])
+    return tuple([random.randint(min_length, max_length)
+                  for x in range(0, dimensions)])
 
 
 def random_list(N, python_or_numpy='numpy'):
@@ -234,6 +251,7 @@ def random_dict(tp='dict'):
 
 def random_structured_numpy_array(shape, field_shapes=None,
                                   nonascii_fields=False,
+                                  nondigits_fields=False,
                                   names=None):
     # Make random field names (if not provided with field names),
     # dtypes, and sizes. Though, if field_shapes is explicitly given,
@@ -245,6 +263,8 @@ def random_structured_numpy_array(shape, field_shapes=None,
     if names is None:
         if nonascii_fields:
             name_func = random_str_some_unicode
+        elif nondigits_fields:
+            name_func = random_str_ascii_letters
         else:
             name_func = random_str_ascii
         names = [name_func(
