@@ -28,8 +28,7 @@ This package only supports Python >= 2.6.
 
 This package requires the numpy and h5py (>= 2.1) packages to run. Note
 that full functionality requires h5py >= 2.3. An optional dependency is
-the scipy package. nose (>= 1.0) is used for testing and sphinx (>= 1.3)
-is used for building the documentation.
+the scipy package.
 
 To install hdf5storage, download the package and run the command on
 Python 3 ::
@@ -39,6 +38,41 @@ Python 3 ::
 or the command on Python 2 ::
 
     python setup.py install
+
+Running Tests
+-------------
+
+For testing, the package nose (>= 1.0) is required. There are some tests
+that require Matlab to be installed and be in the executable path. In
+addition, there are some tests that require
+`Julia <http://julialang.org/>`_ with the
+`MAT <https://github.com/simonster/MAT.jl>`_ package. Not having these
+just means that those tests cannot be run (they result in an error) but
+all the other tests will run.
+
+To run the tests, download the package and run the command on
+Python 3 ::
+
+    python3 setup.py nosetests
+
+or the command on Python 2 ::
+
+    python setup.py nosetests
+
+Building Documentation
+----------------------
+
+The documentation requires sphinx (>= 1.3).
+
+To build the documentation, download the package and run the command on
+Python 3 ::
+
+    python3 setup.py build_sphinx
+
+or the command on Python 2 ::
+
+    python setup.py build_sphinx
+
 
 Python 2
 ========
@@ -292,6 +326,8 @@ Versions
        ``dict`` when read.
      * Issue #40. Made it so that tests use tempfiles instead of
        using hardcoded filenames in the local directory.
+     * Issue #41. Added tests using the Julia MAT package to check
+       interop with Matlab v7.3 MAT files.
      * Documentation now uses the napoleon extension in Sphinx >= 1.3
        as a replacement for numpydoc package.
 
