@@ -24,20 +24,34 @@ The package is licensed under a 2-clause BSD license
 Installation
 ============
 
+Dependencies
+------------
+
 This package only supports Python >= 2.6.
 
 This package requires the numpy and h5py (>= 2.1) packages to run. Note
 that full functionality requires h5py >= 2.3. An optional dependency is
 the scipy package.
 
-To install hdf5storage, download the package and run the command on
-Python 3 ::
+Installing by pip
+-----------------
+
+This package is on `PyPI <https://pypi.python.org/pypi/hdf5storage>`_.
+To install hdf5storage using pip, run the command::
+
+    pip install hdf5storage
+
+Installing from Source
+----------------------
+
+To install hdf5storage from source, download the package and run the
+command on Python 3 ::
 
     python3 setup.py install
 
 or the command on Python 2 ::
 
-    python setup.py install
+    python2 setup.py install
 
 Running Tests
 -------------
@@ -57,7 +71,7 @@ Python 3 ::
 
 or the command on Python 2 ::
 
-    python setup.py nosetests
+    python2 setup.py nosetests
 
 Building Documentation
 ----------------------
@@ -71,7 +85,7 @@ Python 3 ::
 
 or the command on Python 2 ::
 
-    python setup.py build_sphinx
+    python2 setup.py build_sphinx
 
 
 Python 2
@@ -328,8 +342,8 @@ Versions
        using hardcoded filenames in the local directory.
      * Issue #41. Added tests using the Julia MAT package to check
        interop with Matlab v7.3 MAT files.
-     * Documentation now uses the napoleon extension in Sphinx >= 1.3
-       as a replacement for numpydoc package.
+     * Issue #39. Documentation now uses the napoleon extension in
+       Sphinx >= 1.3 as a replacement for numpydoc package.
 
 0.1.13. Bugfix release fixing the following bug.
         * Issue #36. Fixed bugs in writing ``int`` and ``long`` to HDF5
