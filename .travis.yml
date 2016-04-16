@@ -26,9 +26,11 @@ python:
   - "nightly" # currently points to 3.6-dev
 
 # command to install dependencies
+#
+# Seem to need unittest2 on Python 2.6 and numpy 1.8 or newer.
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
-  - pip install -U numpy
+  - if test "True" = `python -c 'from __future__ import print_function; from distutils.version import LooseVersion; import numpy; print(LooseVersion(numpy.__version__) < LooseVersion("1.8.0"))'`; pip install -I numpy==1.8.2; fi
   - pip install -r requirements.txt
 
 # command to run tests
