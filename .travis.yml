@@ -28,6 +28,7 @@ python:
 # command to install dependencies
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
+  - pip install -U numpy
   - pip install -r requirements.txt
 
 # command to run tests
