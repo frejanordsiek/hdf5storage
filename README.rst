@@ -57,12 +57,12 @@ Running Tests
 -------------
 
 For testing, the package nose (>= 1.0) is required. There are some tests
-that require Matlab to be installed and be in the executable path. In
-addition, there are some tests that require
-`Julia <http://julialang.org/>`_ with the
-`MAT <https://github.com/simonster/MAT.jl>`_ package. Not having these
-just means that those tests cannot be run (they result in an error) but
-all the other tests will run.
+that require Matlab and scipy to be installed and be in the executable
+path. In addition, there are some tests that require `Julia
+<http://julialang.org/>`_ with the `MAT
+<https://github.com/simonster/MAT.jl>`_ package. Not having these just
+means that those tests cannot be run (they result in an error) but all
+the other tests will run.
 
 To run the tests, download the package and run the command on
 Python 3 ::
