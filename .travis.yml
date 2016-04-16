@@ -7,7 +7,13 @@ addons:
   apt:
     packages:
     - gcc
+    - gfortran
     - libhdf5-serial-dev
+    - libblas-dev
+    - liblapack-dev
+    - libatlas-dev
+    - libatlas-base-dev
+    - libquadmath0
 
 python:
   - "2.6"
