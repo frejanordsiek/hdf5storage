@@ -7,13 +7,9 @@ addons:
   apt:
     packages:
     - gcc
-    - gfortran
     - libhdf5-serial-dev
-    - libblas-dev
-    - liblapack-dev
-    - libatlas-dev
-    - libatlas-base-dev
-    - libquadmath0
+    - python-scipy
+    - python3-scipy
 
 python:
   - "2.6"
@@ -27,10 +23,7 @@ python:
 
 # command to install dependencies
 install:
-  - pip install -U pip wheel setuptools
-  - pip install -I numpy==1.7.2
   - pip install -r requirements.txt
-  - pip install scipy
 
 # command to run tests
 script: nosetests
