@@ -127,7 +127,7 @@ def setup_module():
         hdf5storage.loadmat(file_name=mat_files[3],
                             mdict=from_julia_v7p3_to_v7p3)
     except:
-        pass
+        raise
     finally:
         for name in mat_files:
             if os.path.exists(name):
