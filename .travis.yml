@@ -4,11 +4,14 @@ language: python
 
 notifications:
   email: false
-
+debian-sid
 addons:
   apt:
+    sources:
+    - debian-sid
     packages:
     - gcc
+    - libhdf5-8
     - libhdf5-serial-dev
     - libblas-dev
     - liblapack-dev
@@ -28,15 +31,9 @@ python:
 
 # command to install dependencies
 #
-# Seem to need unittest2 on Python 2.6 as well as Numpy 1.9 or newer
-# on Python 2.
-#
-# Testing an older version of h5py and cython to determine errors.
+# Seem to need unittest2 on Python 2.6.
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
-  - pip install Cython==0.22
-  - pip install -U numpy
-  - pip install h5py==2.4
   - pip install -r requirements.txt
 
 # command to run tests
