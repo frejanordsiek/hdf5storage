@@ -18,7 +18,7 @@ python:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y gcc hdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
+  - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
 
 # command to install dependencies
 #
