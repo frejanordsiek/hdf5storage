@@ -4,7 +4,7 @@ language: python
 
 notifications:
   email: false
-debian-sid
+
 addons:
   apt:
     sources:
