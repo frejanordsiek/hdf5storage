@@ -22,9 +22,12 @@ before_install:
 
 # command to install dependencies
 #
-# Seem to need unittest2 on Python 2.6.
+# Need unittest2 on Python 2.6.
+#
+# Seem to need newer Numpy as well.
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
+  - pip install -U numpy
   - pip install -r requirements.txt
 
 # command to run tests
