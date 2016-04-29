@@ -150,7 +150,7 @@ def random_numpy(shape, dtype, allow_nan=True,
         data = np.zeros(shape=shape, dtype='U' + str(length))
         for x in np.nditer(data, op_flags=['readwrite']):
             if allow_unicode:
-                chars = _random_str_some_unicode(length)
+                chars = random_str_some_unicode(length)
             else:
                 chars = random_str_ascii(length)
             x[...] = np.unicode_(chars)
