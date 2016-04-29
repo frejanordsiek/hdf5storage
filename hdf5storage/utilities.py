@@ -108,7 +108,7 @@ def convert_numpy_str_to_uint16(data):
     # easily using ndarray's buffer option. The byte order mark, 2
     # bytes, needs to be removed.
     if not isinstance(data, np.ndarray):
-        s = data.encode(encoding='UTF-16', errors='strict')
+        s = data.encode('UTF-16')
         return np.ndarray(shape=((len(s)-2)//2,), dtype='uint16',
                           buffer=s[2:])
 
