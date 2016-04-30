@@ -221,16 +221,16 @@ def convert_to_str(data):
     if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
                   np.bytes_, np.unicode_)):
         if data.dtype.name == 'uint8':
-            return data.tobytes().decode('UTF-8')
+            return data.tostring().decode('UTF-8')
         elif data.dtype.name == 'uint16':
-            return data.tobytes().decode('UTF-16')
+            return data.tostring().decode('UTF-16')
         elif data.dtype.name == 'uint32':
-            return data.tobytes().decode('UTF-32')
+            return data.tostring().decode('UTF-32')
         elif data.dtype.char == 'S':
             return data.decode('UTF-8')
         else:
             if isinstance(data, np.ndarray):
-                return data.tobytes().decode('UTF-32')
+                return data.tostring().decode('UTF-32')
             else:
                 return data.encode('UTF-32').decode('UTF-32')
 
@@ -312,7 +312,7 @@ def convert_to_numpy_str(data, length=None):
         # needs to be have the dtype essentially changed by having its
         # bytes read into ndarray.
         return np.ndarray(shape=tuple(), dtype='U1',
-                          buffer=data.tobytes())[()]
+                          buffer=data.tostring())[()]
     elif isinstance(data, np.ndarray) and data.dtype.char == 'S':
         # We just need to convert it elementwise.
         new_data = np.zeros(shape=data.shape,
@@ -367,13 +367,13 @@ def convert_to_numpy_str(data, length=None):
             if data.dtype.name == 'uint32':
                 new_data[i] = np.ndarray(shape=tuple(),
                                          dtype=new_data.dtype,
-                                         buffer=chunk.tobytes())[()]
+                                         buffer=chunk.tostring())[()]
             elif data.dtype.name == 'uint16':
                 new_data[i] = np.unicode_( \
-                    chunk.tobytes().decode('UTF-16'))
+                    chunk.tostring().decode('UTF-16'))
             elif data.dtype.name == 'uint8':
                 new_data[i] = np.unicode_( \
-                    chunk.tobytes().decode('UTF-8'))
+                    chunk.tostring().decode('UTF-8'))
             else:
                 new_data[i] = np.unicode_(convert_to_str(chunk))
 
