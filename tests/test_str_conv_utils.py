@@ -41,6 +41,7 @@ def test_numpy_str_ascii_to_uint16_back():
                             allow_unicode=False)[()]
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)
+        assert out.tostring() == data.tostring()
         assert_equal(out, data)
 
 
@@ -50,6 +51,7 @@ def test_numpy_str_someunicode_to_uint16_back():
                             allow_unicode=True)[()]
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)
+        assert out.tostring() == data.tostring()
         assert_equal(out, data)
 
 
@@ -59,7 +61,8 @@ def test_numpy_str_ascii_to_uint32_back():
                             allow_unicode=False)[()]
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)
-        assert intermed.tobytes() == data.tobytes()
+        assert intermed.tostring() == data.tostring()
+        assert out.tostring() == data.tostring()
         assert_equal(out, data)
 
 
@@ -69,5 +72,6 @@ def test_numpy_str_someunicode_to_uint32_back():
                             allow_unicode=True)[()]
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)
-        assert intermed.tobytes() == data.tobytes()
+        assert intermed.tostring() == data.tostring()
+        assert out.tostring() == data.tostring()
         assert_equal(out, data)
