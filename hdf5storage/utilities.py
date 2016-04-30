@@ -108,9 +108,9 @@ def convert_numpy_str_to_uint16(data):
     # easily using ndarray's buffer option. The byte order mark, 2
     # bytes, needs to be removed.
     if not isinstance(data, np.ndarray):
-        s = data.encode('UTF-16LE')
-        return np.ndarray(shape=((len(s))//2,), dtype='<u2',
-                          buffer=s)
+        s = data.encode('UTF-16')
+        return np.ndarray(shape=((len(s)-2)//2,), dtype='uint16',
+                          buffer=s[2:])
 
     # It is an array of strings. Each string in the array needs to be
     # converted. An object array is needed to hold all the converted
@@ -133,7 +133,7 @@ def convert_numpy_str_to_uint16(data):
     length = np.max(sizes)
     shape = list(data.shape)
     shape[-1] *= length
-    new_data = np.zeros(shape=tuple(shape), dtype='<u2')
+    new_data = np.zeros(shape=tuple(shape), dtype='uint16')
 
     # Copy each string into new_data using clever indexing (using the
     # first part of index returns a 1d subarray that can be
@@ -223,7 +223,7 @@ def convert_to_str(data):
         if data.dtype.name == 'uint8':
             return data.tostring().decode('UTF-8')
         elif data.dtype.name == 'uint16':
-            return data.tostring().decode('UTF-16LE')
+            return data.tostring().decode('UTF-16')
         elif data.dtype.name == 'uint32':
             return data.tostring().decode('UTF-32')
         elif data.dtype.char == 'S':
@@ -370,7 +370,7 @@ def convert_to_numpy_str(data, length=None):
                                          buffer=chunk.tostring())[()]
             elif data.dtype.name == 'uint16':
                 new_data[i] = np.unicode_( \
-                    chunk.tostring().decode('UTF-16LE'))
+                    chunk.tostring().decode('UTF-16'))
             elif data.dtype.name == 'uint8':
                 new_data[i] = np.unicode_( \
                     chunk.tostring().decode('UTF-8'))
