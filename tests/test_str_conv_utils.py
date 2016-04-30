@@ -38,9 +38,9 @@ random.seed()
 def test_numpy_str_ascii_to_uint16_back():
     for i in range(10):
         data = random_numpy(shape=(1, ), dtype='U',
-                            allow_unicode=False)[()]
+                            allow_unicode=False)[0]
         intermed = utils.convert_numpy_str_to_uint16(data)
-        out = utils.convert_to_numpy_str(intermed)
+        out = utils.convert_to_numpy_str(intermed)[0]
         assert out.tostring() == data.tostring()
         assert_equal(out, data)
 
@@ -48,9 +48,9 @@ def test_numpy_str_ascii_to_uint16_back():
 def test_numpy_str_someunicode_to_uint16_back():
     for i in range(10):
         data = random_numpy(shape=(1, ), dtype='U',
-                            allow_unicode=True)[()]
+                            allow_unicode=True)[0]
         intermed = utils.convert_numpy_str_to_uint16(data)
-        out = utils.convert_to_numpy_str(intermed)
+        out = utils.convert_to_numpy_str(intermed)[0]
         assert out.tostring() == data.tostring()
         assert_equal(out, data)
 
@@ -58,9 +58,9 @@ def test_numpy_str_someunicode_to_uint16_back():
 def test_numpy_str_ascii_to_uint32_back():
     for i in range(10):
         data = random_numpy(shape=(1, ), dtype='U',
-                            allow_unicode=False)[()]
+                            allow_unicode=False)[0]
         intermed = utils.convert_numpy_str_to_uint32(data)
-        out = utils.convert_to_numpy_str(intermed)
+        out = utils.convert_to_numpy_str(intermed)[0]
         assert intermed.tostring() == data.tostring()
         assert out.tostring() == data.tostring()
         assert_equal(out, data)
@@ -69,9 +69,9 @@ def test_numpy_str_ascii_to_uint32_back():
 def test_numpy_str_someunicode_to_uint32_back():
     for i in range(10):
         data = random_numpy(shape=(1, ), dtype='U',
-                            allow_unicode=True)[()]
+                            allow_unicode=True)[0]
         intermed = utils.convert_numpy_str_to_uint32(data)
-        out = utils.convert_to_numpy_str(intermed)
+        out = utils.convert_to_numpy_str(intermed)[0]
         assert intermed.tostring() == data.tostring()
         assert out.tostring() == data.tostring()
         assert_equal(out, data)
