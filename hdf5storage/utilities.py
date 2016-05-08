@@ -328,35 +328,36 @@ def convert_to_numpy_str(data, length=None):
             new_shape = copy.deepcopy(shape)
             new_shape[-1] //= length
 
-        # The new array can be made as all zeros (nulls) with enough
-        # padding to hold everything (dtype='UL' where 'L' is the
-        # length). It will start out as a 1d array and be reshaped into
-        # the proper shape later (makes indexing easier).
-        new_data = np.zeros(shape=(np.prod(new_shape),),
-                            dtype='U'+str(length))
-
-        # With data flattened into a 1d array, we just need to take
-        # length sized chunks, convert them (if they are uint8 or 16,
-        # then decode to str first, if they are uint32, put them as an
-        # input buffer for an ndarray of type 'U').
-        data = data.flatten()
-        for i in range(0, new_data.shape[0]):
-            chunk = data[(i*length):((i+1)*length)]
-            if data.dtype.name == 'uint32':
-                new_data[i] = np.ndarray(shape=tuple(),
-                                         dtype=new_data.dtype,
-                                         buffer=chunk.tostring())[()]
-            elif data.dtype.name == 'uint16':
-                new_data[i] = np.unicode_( \
-                    chunk.tostring().decode('UTF-16'))
-            elif data.dtype.name == 'uint8':
-                new_data[i] = np.unicode_( \
-                    chunk.tostring().decode('UTF-8'))
+        # numpy.char.decode will be used to decode. It needs the
+        # encoding (UTF-8/16/32) which is gotten from the dtype. But it
+        # also needs the data to be in big endian format, so it must be
+        # byteswapped if it isn't. Without the swapping, an error occurs
+        # since trailing nulls are dropped in numpy bytes_ arrays. The
+        # dtype for each string element is just 'SX' where X is the
+        # number of bytes.
+        if data.dtype.name == 'uint8':
+            encoding = 'UTF-8'
+            swapbytes = False
+            dt = 'S' + str(length)
+        else:
+            if data.dtype.name == 'uint16':
+                encoding = 'UTF-16BE'
+                dt = 'S' + str(2 * length)
             else:
-                new_data[i] = np.unicode_(convert_to_str(chunk))
-
-        # Only thing is left is to reshape it.
-        return new_data.reshape(tuple(new_shape))
+                encoding = 'UTF-32BE'
+                dt = 'S' + str(4 * length)
+            if (data.dtype.byteorder == '<'
+                or (sys.byteorder == 'little'
+                    and data.dtype.byteorder == '=')):
+                swapbytes = True
+            else:
+                swapbytes = False
+        # Copy is needed to prevent errors.
+        if swapbytes:
+            return np.char.decode(data.copy().byteswap().view(dt),
+                                  encoding)
+        else:
+            return np.char.decode(data.copy().view(dt), encoding)
     else:
         # Couldn't figure out what it is, so nothing can be done but
         # return it as is.
