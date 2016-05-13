@@ -17,10 +17,8 @@ python:
   - "3.5-dev" # 3.5 development branch
   - "nightly" # currently points to 3.6-dev
 
-# Update libc6 and locales for better unicode handling (testing)
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libc6 locales
   - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
 
 # command to install dependencies
