@@ -281,10 +281,9 @@ def convert_to_numpy_str(data, length=None):
         # constructor.
         return np.unicode_(data.decode('UTF-8'))
     elif isinstance(data, (np.uint8, np.uint16)):
-        # They are single UTF-8 or UTF-16 scalars, and are easily
-        # converted to a UTF-8 string and then passed through the
-        # constructor.
-        return np.unicode_(convert_to_str(data))
+        # They are single UTF-8 or UTF-16 scalars, which can be wrapped
+        # into an array and recursed.
+        return convert_to_numpy_str(np.atleast_1d(data))[0]
     elif isinstance(data, np.uint32):
         # It is just the uint32 version of the character, so it just
         # needs to be have the dtype essentially changed by having its
