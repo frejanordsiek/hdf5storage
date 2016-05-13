@@ -292,12 +292,7 @@ def convert_to_numpy_str(data, length=None):
         return np.ndarray(shape=tuple(), dtype='U1',
                           buffer=data.tostring())[()]
     elif isinstance(data, np.ndarray) and data.dtype.char == 'S':
-        # We just need to convert it elementwise.
-        new_data = np.zeros(shape=data.shape,
-                            dtype='U' + str(data.dtype.itemsize))
-        for index, x in np.ndenumerate(data):
-            new_data[index] = np.unicode_(x.decode('UTF-8'))
-        return new_data
+        return np.char.encode(data, 'UTF-32')
     elif isinstance(data, np.ndarray) \
             and data.dtype.name in ('uint8', 'uint16', 'uint32'):
         # It is an ndarray of some uint type. How it is converted
