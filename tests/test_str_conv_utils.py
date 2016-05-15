@@ -24,21 +24,30 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import string
+
 import numpy as np
-import numpy.random
 
 import hdf5storage.utilities as utils
 
 from asserts import *
-from make_randoms import *
 
-random.seed()
+
+# Make two strings, one with the main ascii characters and another with
+# the same characters plus a lot of unicode characters.
+str_ascii = string.ascii_letters + string.digits
+if sys.hexversion >= 0x03000000:
+    str_unicode = str_ascii + ''.join([chr(500 + i)
+                                       for i in range(1000)])
+else:
+    str_ascii = unicode(str_ascii)
+    str_unicode = str_ascii + u''.join([unichr(500 + i)
+                                        for i in range(1000)])
 
 
 def test_numpy_str_ascii_to_uint16_back():
     for i in range(10):
-        length = random.randint(1, max_string_length)
-        data = np.unicode_(random_str_ascii(length))
+        data = np.unicode_(str_ascii)
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)[0]
         assert out.tostring() == data.tostring()
@@ -47,8 +56,7 @@ def test_numpy_str_ascii_to_uint16_back():
 
 def test_numpy_str_someunicode_to_uint16_back():
     for i in range(10):
-        length = random.randint(1, max_string_length)
-        data = np.unicode_(random_str_some_unicode(length))
+        data = np.unicode_(str_unicode)
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)[0]
         assert out.tostring() == data.tostring()
@@ -57,8 +65,7 @@ def test_numpy_str_someunicode_to_uint16_back():
 
 def test_numpy_str_ascii_to_uint32_back():
     for i in range(10):
-        length = random.randint(1, max_string_length)
-        data = np.unicode_(random_str_ascii(length))
+        data = np.unicode_(str_ascii)
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)[0]
         assert intermed.tostring() == data.tostring()
@@ -68,8 +75,7 @@ def test_numpy_str_ascii_to_uint32_back():
 
 def test_numpy_str_someunicode_to_uint32_back():
     for i in range(10):
-        length = random.randint(1, max_string_length)
-        data = np.unicode_(random_str_some_unicode(length))
+        data = np.unicode_(str_unicode)
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)[0]
         assert intermed.tostring() == data.tostring()
