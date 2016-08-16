@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright (c) 2013-2016, Freja Nordsiek
 # All rights reserved.
 #
@@ -80,9 +82,9 @@ def random_str_some_unicode(length):
     # length.
     ltrs = random_str_ascii(10)
     if sys.hexversion >= 0x03000000:
-        ltrs += ''.join([chr(500 + i) for i in range(100)])
+        ltrs += 'αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς'
     else:
-        ltrs += u''.join([unichr(500 + i) for i in range(100)])
+        ltrs += u'αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς'
     return ''.join([random.choice(ltrs) for i in range(0, length)])
 
 
