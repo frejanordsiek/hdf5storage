@@ -140,22 +140,22 @@ def random_numpy(shape, dtype, allow_nan=True,
     if dtype == 'S':
         length = random.randint(1, max_string_length)
         data = np.zeros(shape=shape, dtype='S' + str(length))
-        for x in np.nditer(data, op_flags=['readwrite']):
+        for index, x in np.ndenumerate(data):
             if allow_unicode:
                 chars = random_bytes_fullrange(length)
             else:
                 chars = random_bytes(length)
-            x[...] = np.bytes_(chars)
+            data[index] = np.bytes_(chars)
         return data
     elif dtype == 'U':
         length = random.randint(1, max_string_length)
         data = np.zeros(shape=shape, dtype='U' + str(length))
-        for x in np.nditer(data, op_flags=['readwrite']):
+        for index, x in np.ndenumerate(data):
             if allow_unicode:
                 chars = random_str_some_unicode(length)
             else:
                 chars = random_str_ascii(length)
-            x[...] = np.unicode_(chars)
+            data[index] = np.unicode_(chars)
         return data
     elif dtype == 'object':
         if object_element_dtypes is None:
