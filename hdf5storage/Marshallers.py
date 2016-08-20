@@ -1572,7 +1572,7 @@ class PythonDictMarshaller(TypeMarshaller):
                    str: 'b',
                    np.unicode_: 'U',
                    np.bytes_: 'S'}
-            invalid_char = (u'\x00', u'/')
+            invalid_char = (unicode('\x00'), unicode('/'))
 
         any_non_valid_str_keys = False
         keys_as_str = []

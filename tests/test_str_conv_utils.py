@@ -43,8 +43,8 @@ if sys.hexversion >= 0x03000000:
                                        for i in range(1000)])
 else:
     str_ascii = unicode(str_ascii)
-    str_unicode = str_ascii + u''.join([unichr(500 + i)
-                                        for i in range(1000)])
+    str_unicode = str_ascii + unicode('').join([unichr(500 + i)
+                                                for i in range(1000)])
 
 
 def test_numpy_str_ascii_to_uint16_back():

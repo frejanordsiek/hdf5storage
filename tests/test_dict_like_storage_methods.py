@@ -56,7 +56,7 @@ if sys.hexversion >= 0x2070000:
 if sys.hexversion >= 0x3000000:
     invalid_characters = ('\x00', '/')
 else:
-    invalid_characters = (u'\x00', u'/')
+    invalid_characters = (unicode('\x00'), unicode('/'))
 
 
 def check_all_valid_str_keys(tp, option_keywords):
