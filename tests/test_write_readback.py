@@ -403,8 +403,15 @@ class TestPythonMatlabFormat(object):
         self.assert_equal(out, data)
 
     def test_str_ascii_encoded_utf8(self):
-        data = random_str_some_unicode(random.randint(1, \
-            max_string_length)).encode('UTF-8')
+        ltrs = string.ascii_letters + string.digits
+        data = 'a'
+        if sys.hexversion < 0x03000000:
+            data = unicode(data)
+            ltrs = unicode(ltrs)
+        while all([(c in ltrs) for c in data]):
+            data = random_str_some_unicode(random.randint(1, \
+                max_string_length))
+        data = data.encode('utf-8')
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
