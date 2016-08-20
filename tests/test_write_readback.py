@@ -517,7 +517,7 @@ class TestPythonMatlabFormat(object):
         if sys.hexversion >= 0x03000000:
             ch = '\x00'
         else:
-            ch = u'\x00'
+            ch = unicode('\x00')
         key = ch.join([random_str_ascii(max_dict_key_length)
                       for i in range(2)])
         data[key] = random_int()
@@ -531,7 +531,7 @@ class TestPythonMatlabFormat(object):
         if sys.hexversion >= 0x03000000:
             ch = '/'
         else:
-            ch = u'/'
+            ch = unicode('/')
         key = ch.join([random_str_ascii(max_dict_key_length)
                       for i in range(2)])
         data[key] = random_int()
