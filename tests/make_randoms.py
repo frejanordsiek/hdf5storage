@@ -74,8 +74,8 @@ def random_str_ascii_letters(length):
                        range(0, length)])
     else:
         ltrs = unicode(string.ascii_letters)
-        return u''.join([random.choice(ltrs) for i in
-                        range(0, length)])
+        return unicode('').join([random.choice(ltrs) for i in
+                                 range(0, length)])
 
 
 def random_str_ascii(length):
@@ -86,8 +86,8 @@ def random_str_ascii(length):
                        range(0, length)])
     else:
         ltrs = unicode(string.ascii_letters + string.digits)
-        return u''.join([random.choice(ltrs) for i in
-                        range(0, length)])
+        return unicode('').join([random.choice(ltrs) for i in
+                                 range(0, length)])
 
 
 def random_str_some_unicode(length):
@@ -96,9 +96,12 @@ def random_str_some_unicode(length):
     ltrs = random_str_ascii(10)
     if sys.hexversion >= 0x03000000:
         ltrs += 'αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς'
+        c = ''
     else:
-        ltrs += u'αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς'
-    return ''.join([random.choice(ltrs) for i in range(0, length)])
+        ltrs += unicode('αβγδεζηθικλμνξοπρστυφχψω'
+                        + 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς', 'utf-8')
+        c = unicode('')
+    return c.join([random.choice(ltrs) for i in range(0, length)])
 
 
 def random_bytes(length):
