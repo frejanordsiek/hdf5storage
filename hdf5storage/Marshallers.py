@@ -1561,7 +1561,8 @@ class PythonDictMarshaller(TypeMarshaller):
                                               + 'unicode keys are not '
                                               + 'supported: '
                                               + repr(fieldname))
-                if u'\x00' in fieldname or u'/' in fieldname:
+                if unicode('\x00') in fieldname \
+                        or unicode('/') in fieldname:
                     raise NotImplementedError('Dictionary keys with ' \
                         + "null characters ('\x00') and '/' are not " \
                         + 'supported.')
