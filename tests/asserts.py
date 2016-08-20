@@ -117,7 +117,7 @@ def assert_equal_none_format(a, b, options=None):
         else:
             tp_str = unicode
             tp_bytes = str
-            invalids = (u'\x00', u'/')
+            invalids = (unicode('\x00'), unicode('/'))
             converters = {tp_str: lambda x: x,
                           tp_bytes: lambda x: x.decode('UTF-8'),
                           np.bytes_:
@@ -268,7 +268,7 @@ def assert_equal_matlab_format(a, b, options=None):
         else:
             tp_str = unicode
             tp_bytes = str
-            invalids = (u'\x00', u'/')
+            invalids = (unicode('\x00'), unicode('/'))
             converters = {tp_str: lambda x: x,
                           tp_bytes: lambda x: x.decode('UTF-8'),
                           np.bytes_:
@@ -395,8 +395,9 @@ def assert_equal_matlab_format(a, b, options=None):
                     if sys.hexversion >= 0x03000000:
                         allfields = ''.join(b.dtype.names)
                     else:
-                        allfields = u''.join([nm.decode('UTF-8')
-                                             for nm in b.dtype.names])
+                        allfields = unicode('').join( \
+                            [nm.decode('UTF-8') \
+                            for nm in b.dtype.names])
                     if np.all(np.array([ord(ch) < 128 \
                             for ch in allfields])):
                         assert a.dtype.names == b.dtype.names

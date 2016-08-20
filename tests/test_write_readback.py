@@ -290,7 +290,7 @@ class TestPythonMatlabFormat(object):
         if sys.hexversion >= 0x03000000:
             ch = '/'
         else:
-            ch = u'/'
+            ch = unicode('/')
         key = ch.join([random_str_ascii(max_dict_key_length)
                       for i in range(2)])
         data[key] = random_int()
@@ -414,7 +414,7 @@ class TestPythonMatlabFormat(object):
                 random.randint(1, max_string_length))
                 for i in range(2)]
         if sys.hexversion < 0x03000000:
-            data = u'\x00'.join(strs)
+            data = unicode('\x00').join(strs)
         else:
             data = '\x00'.join(strs)
         out = self.write_readback(data, random_name(),
