@@ -28,8 +28,6 @@ import os
 import os.path
 import subprocess
 
-import scipy.io
-
 from nose.plugins.skip import SkipTest
 
 import hdf5storage
@@ -60,6 +58,7 @@ ran_matlab_successful = [False]
 def setup_module():
     teardown_module()
     try:
+        import scipy.io
         matlab_command = "run('" + script_names[0] + "')"
         subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
                               '-nojvm', '-r', matlab_command])
