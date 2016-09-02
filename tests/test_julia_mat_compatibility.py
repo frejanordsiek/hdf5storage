@@ -30,7 +30,6 @@ import subprocess
 import tempfile
 
 import numpy as np
-import scipy.io
 
 from nose.plugins.skip import SkipTest
 
@@ -119,6 +118,7 @@ def julia_command(julia_file, fin, fout):
 def setup_module():
     temp_dir = None
     try:
+        import scipy.io
         temp_dir = tempfile.mkdtemp()
         for i in range(0, len(mat_files)):
             mat_files[i] = os.path.join(temp_dir, mat_files[i])
