@@ -26,9 +26,8 @@ before_install:
 #
 # Seem to need newer Numpy as well.
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
   - pip install -U numpy
-  - pip install -r requirements.txt
+  - pip install -r requirements_tests.txt
 
 # command to run tests
 script: nosetests
