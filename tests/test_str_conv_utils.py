@@ -24,8 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import print_function
-
 import string
 
 import numpy as np
@@ -49,7 +47,6 @@ else:
 
 def test_numpy_str_ascii_to_uint16_back():
     for i in range(100):
-        print('Attempt: ' + str(i))
         data = np.unicode_(str_ascii)
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)[0]
@@ -59,7 +56,6 @@ def test_numpy_str_ascii_to_uint16_back():
 
 def test_numpy_str_someunicode_to_uint16_back():
     for i in range(100):
-        print('Attempt: ' + str(i))
         data = np.unicode_(str_unicode)
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)[0]
@@ -69,7 +65,6 @@ def test_numpy_str_someunicode_to_uint16_back():
 
 def test_numpy_str_ascii_to_uint32_back():
     for i in range(100):
-        print('Attempt: ' + str(i))
         data = np.unicode_(str_ascii)
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)[0]
@@ -80,7 +75,6 @@ def test_numpy_str_ascii_to_uint32_back():
 
 def test_numpy_str_someunicode_to_uint32_back():
     for i in range(100):
-        print('Attempt: ' + str(i))
         data = np.unicode_(str_unicode)
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)[0]
