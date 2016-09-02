@@ -54,7 +54,7 @@ python_v7p3 = dict()
 
 # Have a flag for whether matlab was found and run successfully or not,
 # so tests can be skipped if not.
-ran_matlab_successful = False
+ran_matlab_successful = [False]
 
 
 def setup_module():
@@ -75,7 +75,7 @@ def setup_module():
     except:
         pass
     else:
-        ran_matlab_successful = True
+        ran_matlab_successful[0] = True
 
 
 def teardown_module():
@@ -85,7 +85,7 @@ def teardown_module():
 
 
 def test_read_from_matlab():
-    if not ran_matlab_successful:
+    if not ran_matlab_successful[0]:
         raise SkipTest
     for k in (set(types_v7.keys()) - set(['__version__', '__header__', \
             '__globals__'])):
@@ -93,7 +93,7 @@ def test_read_from_matlab():
 
 
 def test_to_matlab_back():
-    if not ran_matlab_successful:
+    if not ran_matlab_successful[0]:
         raise SkipTest
     for k in set(types_v7p3.keys()):
         yield check_variable_to_matlab_back, k
