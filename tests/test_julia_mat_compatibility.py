@@ -32,10 +32,16 @@ import tempfile
 import numpy as np
 import scipy.io
 
+from nose.plugins.skip import SkipTest
+
 import hdf5storage
 
 from asserts import *
 from make_randoms import *
+
+# Have a flag for whether julia was found and run successfully or not,
+# so tests can be skipped if not.
+ran_julia_successful = [False]
 
 mat_files = ['to_julia_v7.mat', 'to_julia_v7p3.mat',
              'julia_v7_to_v7p3.mat', 'julia_v7p3_to_v7p3.mat']
@@ -127,7 +133,9 @@ def setup_module():
         hdf5storage.loadmat(file_name=mat_files[3],
                             mdict=from_julia_v7p3_to_v7p3)
     except:
-        raise
+        pass
+    else:
+        ran_julia_successful[0] = True
     finally:
         for name in mat_files:
             if os.path.exists(name):
@@ -146,6 +154,8 @@ def teardown_module():
 
 
 def test_julia_v7p3_to_v7p3():
+    if not ran_julia_successful[0]:
+        raise SkipTest
     for k in to_julia.keys():
         yield check_variable_julia_v7p3_to_v7p3, k
 
