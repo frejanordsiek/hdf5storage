@@ -31,4 +31,4 @@ install:
   - pip install -r requirements.txt
 
 # command to run tests
-script: nosetests -I='*compatibility*'
+script: nosetests
