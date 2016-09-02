@@ -1,6 +1,7 @@
 include *.txt
 include *.rst
 include *.py
+include *.cfg
 recursive-include tests *.py *.m
 recursive-include doc *
 prune doc/build
