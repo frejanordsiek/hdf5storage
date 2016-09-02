@@ -30,6 +30,8 @@ import subprocess
 
 import scipy.io
 
+from nose.plugins.skip import SkipTest
+
 import hdf5storage
 
 from asserts import *
@@ -50,21 +52,30 @@ python_v7 = dict()
 python_v7p3 = dict()
 
 
+# Have a flag for whether matlab was found and run successfully or not,
+# so tests can be skipped if not.
+ran_matlab_successful = False
+
 
 def setup_module():
     teardown_module()
-    matlab_command = "run('" + script_names[0] + "')"
-    subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
-                          '-nojvm', '-r', matlab_command])
-    scipy.io.loadmat(file_name=mat_files[1], mdict=types_v7)
-    hdf5storage.loadmat(file_name=mat_files[0], mdict=types_v7p3)
+    try:
+        matlab_command = "run('" + script_names[0] + "')"
+        subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
+                              '-nojvm', '-r', matlab_command])
+        scipy.io.loadmat(file_name=mat_files[1], mdict=types_v7)
+        hdf5storage.loadmat(file_name=mat_files[0], mdict=types_v7p3)
 
-    hdf5storage.savemat(file_name=mat_files[2], mdict=types_v7p3)
-    matlab_command = "run('" + script_names[1] + "')"
-    subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
-                          '-nojvm', '-r', matlab_command])
-    scipy.io.loadmat(file_name=mat_files[3], mdict=python_v7)
-    hdf5storage.loadmat(file_name=mat_files[2], mdict=python_v7p3)
+        hdf5storage.savemat(file_name=mat_files[2], mdict=types_v7p3)
+        matlab_command = "run('" + script_names[1] + "')"
+        subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
+                              '-nojvm', '-r', matlab_command])
+        scipy.io.loadmat(file_name=mat_files[3], mdict=python_v7)
+        hdf5storage.loadmat(file_name=mat_files[2], mdict=python_v7p3)
+    except:
+        pass
+    else:
+        ran_matlab_successful = True
 
 
 def teardown_module():
@@ -74,12 +85,16 @@ def teardown_module():
 
 
 def test_read_from_matlab():
+    if not ran_matlab_successful:
+        raise SkipTest
     for k in (set(types_v7.keys()) - set(['__version__', '__header__', \
             '__globals__'])):
         yield check_variable_from_matlab, k
 
 
 def test_to_matlab_back():
+    if not ran_matlab_successful:
+        raise SkipTest
     for k in set(types_v7p3.keys()):
         yield check_variable_to_matlab_back, k
 
