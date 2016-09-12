@@ -26,6 +26,7 @@
 
 import sys
 import collections
+import warnings
 
 import numpy as np
 import numpy.testing as npt
@@ -59,18 +60,22 @@ def assert_equal(a, b, options=None):
             for index in range(0, len(a)):
                 assert_equal(a[index], b[index], options)
     elif not isinstance(b, (np.generic, np.ndarray)):
-        if isinstance(b, complex):
-            assert a.real == b.real \
-                or np.all(np.isnan([a.real, b.real]))
-            assert a.imag == b.imag \
-                or np.all(np.isnan([a.imag, b.imag]))
-        else:
-            assert a == b or np.all(np.isnan([a, b]))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            if isinstance(b, complex):
+                assert a.real == b.real \
+                    or np.all(np.isnan([a.real, b.real]))
+                assert a.imag == b.imag \
+                    or np.all(np.isnan([a.imag, b.imag]))
+            else:
+                assert a == b or np.all(np.isnan([a, b]))
     else:
         assert a.dtype == b.dtype
         assert a.shape == b.shape
         if b.dtype.name != 'object':
-            npt.assert_equal(a, b)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', RuntimeWarning)
+                npt.assert_equal(a, b)
         else:
             for index, x in np.ndenumerate(a):
                 assert_equal(a[index], b[index], options)
@@ -214,7 +219,9 @@ def assert_equal_none_format(a, b, options=None):
                 if np.prod(a.shape) == 1:
                     a = np.squeeze(a)
                     b = np.squeeze(b)
-                npt.assert_equal(a, b)
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore', RuntimeWarning)
+                    npt.assert_equal(a, b)
         else:
             assert a.dtype == b.dtype
             assert a.shape == b.shape
@@ -368,7 +375,9 @@ def assert_equal_matlab_format(a, b, options=None):
                     c = np.atleast_2d(b)
                     assert a.dtype == c.dtype
                     assert a.shape == c.shape
-                    npt.assert_equal(a, c)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore', RuntimeWarning)
+                        npt.assert_equal(a, c)
             else:
                 c = np.atleast_2d(b)
                 # An empty complex number gets turned into a real
@@ -383,7 +392,9 @@ def assert_equal_matlab_format(a, b, options=None):
                 if b.dtype.names is None and a.dtype.names is None:
                     assert a.dtype == c.dtype
                     assert a.shape == c.shape
-                    npt.assert_equal(a, c)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore', RuntimeWarning)
+                        npt.assert_equal(a, c)
                 else:
                     assert a.dtype.names is not None
                     assert b.dtype.names is not None
@@ -448,4 +459,6 @@ def assert_equal_from_matlab(a, b, options=None):
                 assert_equal_from_matlab(a[k][index], b[k][index],
                                          options)
     else:
-        npt.assert_equal(a, b)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            npt.assert_equal(a, b)

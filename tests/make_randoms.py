@@ -31,6 +31,7 @@ import posixpath
 import string
 import random
 import collections
+import warnings
 
 import numpy as np
 import numpy.random
@@ -179,11 +180,18 @@ def random_numpy(shape, dtype, allow_nan=True,
                 ch > 127] for ch in bts])
         data = np.ndarray(shape=shape, dtype=dtype, buffer=bts)
         # If it is a floating point type and we are supposed to
-        # remove NaN's, then turn them to zeros.
-        if not allow_nan and data.dtype.kind in ('f', 'c') \
-            and np.any(np.isnan(data)):
+        # remove NaN's, then turn them to zeros. Numpy will throw
+        # RuntimeWarnings for some NaN values, so those warnings need to
+        # be caught and ignored.
+        if not allow_nan and data.dtype.kind in ('f', 'c'):
             data = data.copy()
-            data[np.isnan(data)] = 0.0
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', RuntimeWarning)
+                if data.dtype.kind == 'f':
+                    data[np.isnan(data)] = 0.0
+                else:
+                    data.real[np.isnan(data.real)] = 0.0
+                    data.imag[np.isnan(data.imag)] = 0.0
         return data
 
 
