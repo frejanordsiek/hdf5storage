@@ -47,12 +47,12 @@ To install hdf5storage using pip, run the command::
 Installing from Source
 ----------------------
 
-To install hdf5storage from source, download the package and run the
-command on Python 3 ::
+To install hdf5storage from source, download the package and then
+install the dependencies ::
 
-    python3 setup.py install
+    pip install -r requirements.txt
 
-or the command on Python 2 ::
+Then to install the package, run the command with Python ::
 
     python2 setup.py install
 
@@ -90,6 +90,35 @@ or the command on Python 2 ::
 
     python2 setup.py build_sphinx
 
+
+Running Tests
+-------------
+
+For testing, the package nose (>= 1.0) is required as well as unittest2
+on Python 2.6. There are some tests that require Matlab and scipy to be
+installed and be in the executable path. Not having them means that
+those tests cannot be run (they will be skipped) but all the other
+tests will run. To install all testing dependencies, other than scipy,
+run ::
+
+    pip install -r requirements_tests.txt.
+
+To run the tests ::
+
+    python setup.py nosetests
+
+
+Building Documentation
+----------------------
+
+The documentation additionally requires sphinx (>= 1.0). The
+documentation dependencies can be installed by ::
+
+    pip install -r requirements_doc.txt
+
+To build the documentation ::
+
+    python setup.py build_sphinx
 
 Python 2
 ========
@@ -347,6 +376,18 @@ Versions
        interop with Matlab v7.3 MAT files.
      * Issue #39. Documentation now uses the napoleon extension in
        Sphinx >= 1.3 as a replacement for numpydoc package.
+
+0.1.14. Bugfix release that also added a couple features.
+        * Issue #45. Fixed syntax errors in unicode strings for Python
+          3.0 to 3.2.
+        * Issues #44 and #47. Fixed bugs in testing of conversion and
+          storage of string types.
+        * Issue #46. Fixed raising of ``RuntimeWarnings`` in tests due
+          to signalling NaNs.
+        * Added requirements files for building documentation and
+          running tests.
+        * Made it so that Matlab compatability tests are skipped if
+          Matlab is not found, instead of raising errors.
 
 0.1.13. Bugfix release fixing the following bug.
         * Issue #36. Fixed bugs in writing ``int`` and ``long`` to HDF5
