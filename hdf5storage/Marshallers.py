@@ -29,7 +29,6 @@
 """
 
 import sys
-import posixpath
 import collections
 import distutils.version
 
@@ -37,7 +36,7 @@ import numpy as np
 import h5py
 
 from hdf5storage.utilities import *
-from hdf5storage import lowlevel
+import hdf5storage.exceptions
 
 
 # Ubuntu 12.04's h5py doesn't have __version__ set so we need to try to
@@ -195,7 +194,7 @@ class TypeMarshaller(object):
         ------
         NotImplementedError
             If writing 'data' to file is currently not supported.
-        TypeNotMatlabCompatibleError
+        hdf5storage.exceptions.TypeNotMatlabCompatibleError
             If writing a type not compatible with MATLAB and
             `options.action_for_matlab_incompatible` is set to
             ``'error'``.
@@ -413,7 +412,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or (data.dtype.fields is not None \
                 and options.structured_numpy_ndarray_as_struct)):
             if options.action_for_matlab_incompatible == 'error':
-                raise lowlevel.TypeNotMatlabCompatibleError( \
+                raise hdf5storage.exceptions.TypeNotMatlabCompatibleError( \
                     'Data type ' + data.dtype.name
                     + ' not supported by MATLAB.')
             elif options.action_for_matlab_incompatible == 'discard':

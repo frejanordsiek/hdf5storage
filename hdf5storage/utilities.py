@@ -39,7 +39,7 @@ import posixpath
 import numpy as np
 import h5py
 
-import hdf5storage.lowlevel
+import hdf5storage.exceptions
 
 
 def write_data(f, grp, name, data, type_string, options):
@@ -131,7 +131,7 @@ def read_data(f, grp, name, options):
     """
     # If name isn't found, return error.
     if name not in grp:
-        raise hdf5storage.lowlevel.CantReadError('Could not find ' \
+        raise hdf5storage.exceptions.CantReadError('Could not find ' \
             + posixpath.join(grp.name, name))
 
     # Get the different attributes that can be used to identify they
@@ -169,8 +169,8 @@ def read_data(f, grp, name, options):
     if m is not None:
         return m.read(f, grp, name, options)
     else:
-        raise hdf5storage.lowlevel.CantReadError('Could not read '
-                                                 + grp[name].name)
+        raise hdf5storage.exceptions.CantReadError('Could not read '
+                                                   + grp[name].name)
 
 
 def write_object_array(f, data, options):

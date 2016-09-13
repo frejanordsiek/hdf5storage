@@ -1,9 +1,9 @@
-hdf5storage.lowlevel
-====================
+hdf5storage.exceptions
+======================
 
-.. currentmodule:: hdf5storage.lowlevel
+.. currentmodule:: hdf5storage.exceptions
 
-.. automodule:: hdf5storage.lowlevel
+.. automodule:: hdf5storage.exceptions
 
 .. autosummary::
    

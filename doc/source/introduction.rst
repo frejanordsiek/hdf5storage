@@ -148,7 +148,7 @@ The action to perform when doing MATLAB compatibility
 (``matlab_compatible == True``) but a type
 being written is not MATLAB compatible. The actions are to write the
 data anyways ('ignore'), don't write the incompatible data ('discard'),
-or throw a :py:exc:`lowlevel.TypeNotMatlabCompatibleError`
+or throw a :py:exc:`exceptions.TypeNotMatlabCompatibleError`
 exception. The default is 'error'.
 
 oned_as

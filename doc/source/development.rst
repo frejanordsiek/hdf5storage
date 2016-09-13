@@ -32,6 +32,10 @@ type string used for the 'Python.Type' Attribute, or the MATLAB class
 string (contained in the 'MATLAB_class' Attribute). One can give the
 collection additional user provided Marshallers.
 
+The :py:mod:`hdf5storage.exceptions` module contains the special
+exceptions/errors required for this package not covered by existing
+Python exceptions/errors or those from the h5py package.
+
 :py:mod:`hdf5storage.Marshallers` contains all the Marshallers for the
 different Python data types that can be read from or written to an HDF5
 file. They are all automitically added to any

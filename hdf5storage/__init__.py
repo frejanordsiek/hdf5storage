@@ -42,10 +42,8 @@ import inspect
 import datetime
 import h5py
 
+from . import exceptions
 from . import utilities
-from hdf5storage.lowlevel import Hdf5storageError, CantReadError, \
-    TypeNotMatlabCompatibleError
-
 from . import Marshallers
 
 
@@ -358,7 +356,7 @@ class Options(object):
         See Also
         --------
         matlab_compatible
-        hdf5storage.lowlevel.TypeNotMatlabCompatibleError
+        exceptions.TypeNotMatlabCompatibleError
 
         """
         return self._action_for_matlab_incompatible
@@ -1224,7 +1222,7 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
     ------
     NotImplementedError
         If writing `data` is not supported.
-    TypeNotMatlabCompatibleError
+    exceptions.TypeNotMatlabCompatibleError
         If writing a type not compatible with MATLAB and
         `options.action_for_matlab_incompatible` is set to ``'error'``.
 
@@ -1444,7 +1442,7 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
     ------
     NotImplementedError
         If writing `data` is not supported.
-    TypeNotMatlabCompatibleError
+    exceptions.TypeNotMatlabCompatibleError
         If writing a type not compatible with MATLAB and
         `options.action_for_matlab_incompatible` is set to ``'error'``.
 
@@ -1500,7 +1498,7 @@ def reads(paths, filename='data.h5', options=None, **keywords):
 
     Raises
     ------
-    CantReadError
+    exceptions.CantReadError
         If reading the data can't be done.
 
     See Also
@@ -1562,8 +1560,9 @@ def reads(paths, filename='data.h5', options=None, **keywords):
             # group. If it isn't an error needs to be thrown.
             if groupname not in f \
                     or not isinstance(f[groupname], h5py.Group):
-                raise CantReadError('Could not find containing Group '
-                                    + groupname + '.')
+                raise exceptions.CantReadError( \
+                    'Could not find containing Group ' \
+                    + groupname + '.')
 
             # Hand off everything to the low level reader.
             datas.append(utilities.read_data(f, f[groupname],
@@ -1616,7 +1615,7 @@ def read(path='/', filename='data.h5',
 
     Raises
     ------
-    CantReadError
+    exceptions.CantReadError
         If reading the data can't be done.
 
     See Also
@@ -1696,7 +1695,7 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         If `format` < 7.3 and the ``scipy`` module can't be found.
     NotImplementedError
         If writing a variable in `mdict` is not supported.
-    TypeNotMatlabCompatibleError
+    exceptions.TypeNotMatlabCompatibleError
         If writing a type not compatible with MATLAB and
         `action_for_matlab_incompatible` is set to ``'error'``.
 
@@ -1790,7 +1789,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
     ImportError
         If it is not a version 7.3 .mat file and the ``scipy`` module
         can't be found when dispatching to SciPy.
-    CantReadError
+    exceptions.CantReadError
         If reading the data can't be done.
 
     Notes
