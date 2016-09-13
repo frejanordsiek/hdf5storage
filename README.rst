@@ -24,19 +24,63 @@ The package is licensed under a 2-clause BSD license
 Installation
 ============
 
+Dependencies
+------------
+
 This package only supports Python >= 2.6.
 
-This package requires the numpy and h5py (>= 2.1) packages. An optional
-dependency is the scipy package.
+This package requires the numpy and h5py (>= 2.1) packages to run. Note
+that full functionality requires h5py >= 2.3. An optional dependency is
+the scipy package.
 
-To install hdf5storage, download the package and run the command on
-Python 3 ::
+Installing by pip
+-----------------
 
-    python3 setup.py install
+This package is on `PyPI <https://pypi.python.org/pypi/hdf5storage>`_.
+To install hdf5storage using pip, run the command::
 
-or the command on Python 2 ::
+    pip install hdf5storage
+
+Installing from Source
+----------------------
+
+To install hdf5storage from source, download the package and then
+install the dependencies ::
+
+    pip install -r requirements.txt
+
+Then to install the package, run the command with Python ::
 
     python setup.py install
+
+Running Tests
+-------------
+
+For testing, the package nose (>= 1.0) is required as well as unittest2
+on Python 2.6. There are some tests that require Matlab and scipy to be
+installed and be in the executable path. Not having them means that
+those tests cannot be run (they will be skipped) but all the other
+tests will run. To install all testing dependencies, other than scipy,
+run ::
+
+    pip install -r requirements_tests.txt.
+
+To run the tests ::
+
+    python setup.py nosetests
+
+
+Building Documentation
+----------------------
+
+The documentation additionally requires sphinx (>= 1.0). The
+documentation dependencies can be installed by ::
+
+    pip install -r requirements_doc.txt
+
+To build the documentation ::
+
+    python setup.py build_sphinx
 
 Python 2
 ========
@@ -212,6 +256,18 @@ canonical empty  0.1      ``np.float64([])``
 
 Versions
 ========
+
+0.1.14. Bugfix release that also added a couple features.
+        * Issue #45. Fixed syntax errors in unicode strings for Python
+          3.0 to 3.2.
+        * Issues #44 and #47. Fixed bugs in testing of conversion and
+          storage of string types.
+        * Issue #46. Fixed raising of ``RuntimeWarnings`` in tests due
+          to signalling NaNs.
+        * Added requirements files for building documentation and
+          running tests.
+        * Made it so that Matlab compatability tests are skipped if
+          Matlab is not found, instead of raising errors.
 
 0.1.13. Bugfix release fixing the following bug.
         * Issue #36. Fixed bugs in writing ``int`` and ``long`` to HDF5
