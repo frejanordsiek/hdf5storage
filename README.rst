@@ -54,52 +54,19 @@ install the dependencies ::
 
 Then to install the package, run the command with Python ::
 
-    python2 setup.py install
-
-Running Tests
--------------
-
-For testing, the package nose (>= 1.0) is required. There are some tests
-that require Matlab and scipy to be installed and be in the executable
-path. In addition, there are some tests that require `Julia
-<http://julialang.org/>`_ with the `MAT
-<https://github.com/simonster/MAT.jl>`_ package. Not having these just
-means that those tests cannot be run (they result in an error) but all
-the other tests will run.
-
-To run the tests, download the package and run the command on
-Python 3 ::
-
-    python3 setup.py nosetests
-
-or the command on Python 2 ::
-
-    python2 setup.py nosetests
-
-Building Documentation
-----------------------
-
-The documentation requires sphinx (>= 1.3).
-
-To build the documentation, download the package and run the command on
-Python 3 ::
-
-    python3 setup.py build_sphinx
-
-or the command on Python 2 ::
-
-    python2 setup.py build_sphinx
-
+    python setup.py install
 
 Running Tests
 -------------
 
 For testing, the package nose (>= 1.0) is required as well as unittest2
 on Python 2.6. There are some tests that require Matlab and scipy to be
-installed and be in the executable path. Not having them means that
-those tests cannot be run (they will be skipped) but all the other
-tests will run. To install all testing dependencies, other than scipy,
-run ::
+installed and be in the executable path. In addition, there are some
+tests that require `Julia <http://julialang.org/>`_ with the
+`MAT <https://github.com/simonster/MAT.jl>`_ package. Not having them
+means that those tests cannot be run (they will be skipped) but all
+the other tests will run. To install all testing dependencies, other
+than scipy, Julia, Matlab run ::
 
     pip install -r requirements_tests.txt.
 
@@ -111,7 +78,7 @@ To run the tests ::
 Building Documentation
 ----------------------
 
-The documentation additionally requires sphinx (>= 1.0). The
+The documentation additionally requires sphinx (>= 1.3). The
 documentation dependencies can be installed by ::
 
     pip install -r requirements_doc.txt
