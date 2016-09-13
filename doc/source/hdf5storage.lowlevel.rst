@@ -10,8 +10,6 @@ hdf5storage.lowlevel
    Hdf5storageError
    CantReadError
    TypeNotMatlabCompatibleError
-   write_data
-   read_data
 
 
 Hdf5storageError
@@ -33,16 +31,4 @@ TypeNotMatlabCompatibleError
 
 .. autoexception:: TypeNotMatlabCompatibleError
    :show-inheritance:
-
-
-write_data
-----------
-
-.. autofunction:: write_data
-
-
-read_data
----------
-
-.. autofunction:: read_data
 

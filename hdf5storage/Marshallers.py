@@ -38,7 +38,6 @@ import h5py
 
 from hdf5storage.utilities import *
 from hdf5storage import lowlevel
-from hdf5storage.lowlevel import write_data, read_data
 
 
 # Ubuntu 12.04's h5py doesn't have __version__ set so we need to try to
@@ -47,154 +46,6 @@ try:
     _H5PY_VERSION = h5py.__version__
 except:
     _H5PY_VERSION = '2.0'
-
-
-def write_object_array(f, data, options):
-    """ Writes an array of objects recursively.
-
-    Writes the elements of the given object array recursively in the
-    HDF5 Group ``options.group_for_references`` and returns an
-    ``h5py.Reference`` array to all the elements.
-
-    Parameters
-    ----------
-    f : h5py.File
-        The HDF5 file handle that is open.
-    data : numpy.ndarray of objects
-        Numpy object array to write the elements of.
-    options : hdf5storage.core.Options
-        hdf5storage options object.
-
-    Returns
-    -------
-    numpy.ndarray of h5py.Reference
-        A reference array pointing to all the elements written to the
-        HDF5 file. For those that couldn't be written, the respective
-        element points to the canonical empty.
-
-    Raises
-    ------
-    TypeNotMatlabCompatibleError
-        If writing a type not compatible with MATLAB and
-        `options.action_for_matlab_incompatible` is set to ``'error'``.
-
-    See Also
-    --------
-    read_object_array
-    hdf5storage.Options.group_for_references
-    h5py.Reference
-
-    """
-    # We need to grab the special reference dtype and make an empty
-    # array to store all the references in.
-    ref_dtype = h5py.special_dtype(ref=h5py.Reference)
-    data_refs = np.zeros(shape=data.shape, dtype='object')
-
-    # We need to make sure that the group to hold references is present,
-    # and create it if it isn't.
-
-    if options.group_for_references not in f:
-        f.create_group(options.group_for_references)
-
-    grp2 = f[options.group_for_references]
-
-    if not isinstance(grp2, h5py.Group):
-        del f[options.group_for_references]
-        f.create_group(options.group_for_references)
-        grp2 = f[options.group_for_references]
-
-    # The Dataset 'a' needs to be present as the canonical empty. It is
-    # just and np.uint32/64([0, 0]) with its a MATLAB_class of
-    # 'canonical empty' and the 'MATLAB_empty' attribute set. If it
-    # isn't present or is incorrectly formatted, it is created
-    # truncating anything previously there.
-    if 'a' not in grp2 or grp2['a'].shape != (2,) \
-            or not grp2['a'].dtype.name.startswith('uint') \
-            or np.any(grp2['a'][...] != np.uint64([0, 0])) \
-            or get_attribute_string(grp2['a'], 'MATLAB_class') != \
-            'canonical empty' \
-            or get_attribute(grp2['a'], 'MATLAB_empty') != 1:
-        if 'a' in grp2:
-            del grp2['a']
-        grp2.create_dataset('a', data=np.uint64([0, 0]))
-        set_attribute_string(grp2['a'], 'MATLAB_class',
-                             'canonical empty')
-        set_attribute(grp2['a'], 'MATLAB_empty',
-                      np.uint8(1))
-
-    # Go through all the elements of data and write them, gabbing their
-    # references and putting them in data_refs. They will be put in
-    # group_for_references, which is also what the H5PATH needs to be
-    # set to if we are doing MATLAB compatibility (otherwise, the
-    # attribute needs to be deleted). If an element can't be written
-    # (doing matlab compatibility, but it isn't compatible with matlab
-    # and action_for_matlab_incompatible option is True), the reference
-    # to the canonical empty will be used for the reference array to
-    # point to.
-    for index, x in np.ndenumerate(data):
-        data_refs[index] = None
-        name_for_ref = next_unused_name_in_group(grp2, 16)
-        write_data(f, grp2, name_for_ref, x, None, options)
-        if name_for_ref in grp2:
-            data_refs[index] = grp2[name_for_ref].ref
-            if options.matlab_compatible:
-                set_attribute_string(grp2[name_for_ref],
-                                     'H5PATH', grp2.name)
-            else:
-                del_attribute(grp2[name_for_ref], 'H5PATH')
-        else:
-            data_refs[index] = grp2['a'].ref
-
-    # Now, the dtype needs to be changed to the reference type and the
-    # whole thing copied over to data_to_store.
-    return data_refs.astype(ref_dtype).copy()
-
-
-def read_object_array(f, data, options):
-    """ Reads an array of objects recursively.
-
-    Read the elements of the given HDF5 Reference array recursively
-    in the and constructs a ``numpy.object_`` array from its elements,
-    which is returned.
-
-    Parameters
-    ----------
-    f : h5py.File
-        The HDF5 file handle that is open.
-    data : numpy.ndarray of h5py.Reference
-        The array of HDF5 References to read and make an object array
-        from.
-    options : hdf5storage.core.Options
-        hdf5storage options object.
-
-    Raises
-    ------
-    NotImplementedError
-        If reading the object from file is currently not supported.
-
-    Returns
-    -------
-    numpy.ndarray of numpy.object_
-        The Python object array containing the items pointed to by
-        `data`.
-
-    See Also
-    --------
-    write_object_array
-    hdf5storage.Options.group_for_references
-    h5py.Reference
-
-    """
-    # Go through all the elements of data and read them using their
-    # references, and the putting the output in new object array.
-    data_derefed = np.zeros(shape=data.shape, dtype='object')
-    for index, x in np.ndenumerate(data):
-        try:
-            data_derefed[index] = read_data(f, f[x].parent, \
-                posixpath.basename(f[x].name), options)
-        except:
-            raise
-    return data_derefed
 
 
 class TypeMarshaller(object):
@@ -215,7 +66,7 @@ class TypeMarshaller(object):
 
     For marshalling types that are containers of other data, one will
     need to appropriate read/write them with the lowlevel functions
-    ``lowlevel.read_data`` and ``lowlevel.write_data``.
+    ``utilities.read_data`` and ``utilities.write_data``.
 
     Attributes
     ----------
@@ -232,12 +83,12 @@ class TypeMarshaller(object):
 
     See Also
     --------
-    hdf5storage.core.Options
+    hdf5storage.Options
     h5py.Dataset
     h5py.Group
     h5py.AttributeManager
-    hdf5storage.lowlevel.read_data
-    hdf5storage.lowlevel.write_data
+    hdf5storage.utilities.read_data
+    hdf5storage.utilities.write_data
 
     """
     def __init__(self):
@@ -356,7 +207,7 @@ class TypeMarshaller(object):
 
         See Also
         --------
-        hdf5storage.lowlevel.write_data
+        hdf5storage.utilities.write_data
 
         """
         raise NotImplementedError('Can''t write data type: '
@@ -458,7 +309,7 @@ class TypeMarshaller(object):
 
         See Also
         --------
-        hdf5storage.lowlevel.read_data
+        hdf5storage.utilities.read_data
 
         """
         raise NotImplementedError('Can''t read data: ' + name)

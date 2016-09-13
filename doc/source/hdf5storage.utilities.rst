@@ -7,6 +7,10 @@ hdf5storage.utilities
 
 .. autosummary::
 
+   write_data
+   read_data
+   write_object_array
+   read_object_array
    next_unused_name_in_group
    convert_numpy_str_to_uint16
    convert_numpy_str_to_uint32
@@ -22,6 +26,30 @@ hdf5storage.utilities
    set_attribute_string
    set_attribute_string_array
    del_attribute
+
+
+write_data
+----------
+
+.. autofunction:: write_data
+
+
+read_data
+---------
+
+.. autofunction:: read_data
+
+
+write_object_array
+------------------
+
+.. autofunction:: write_object_array
+
+
+read_object_array
+------------------
+
+.. autofunction:: read_object_array
 
 
 next_unused_name_in_group

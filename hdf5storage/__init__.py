@@ -42,7 +42,7 @@ import inspect
 import datetime
 import h5py
 
-from . import lowlevel
+from . import utilities
 from hdf5storage.lowlevel import Hdf5storageError, CantReadError, \
     TypeNotMatlabCompatibleError
 
@@ -1234,7 +1234,7 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
     reads
     read
     Options
-    lowlevel.write_data : Low level version
+    utilities.write_data : Low level version
 
     """
     # Pack the different options into an Options class if an Options was
@@ -1378,8 +1378,8 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
                 grp = f[groupname]
 
             # Hand off to the low level function.
-            lowlevel.write_data(f, grp, targetname, data,
-                                None, options)
+            utilities.write_data(f, grp, targetname, data,
+                                 None, options)
     except:
         raise
     finally:
@@ -1454,7 +1454,7 @@ def write(data, path='/', filename='data.h5', truncate_existing=False,
     reads
     read
     Options
-    lowlevel.write_data : Low level version
+    utilities.write_data : Low level version
 
     """
     writes(mdict={path: data},  filename=filename,
@@ -1509,7 +1509,7 @@ def reads(paths, filename='data.h5', options=None, **keywords):
     writes
     write
     Options
-    lowlevel.read_data : Low level version.
+    utilities.read_data : Low level version.
 
     """
     # Pack the different options into an Options class if an Options was
@@ -1566,8 +1566,8 @@ def reads(paths, filename='data.h5', options=None, **keywords):
                                     + groupname + '.')
 
             # Hand off everything to the low level reader.
-            datas.append(lowlevel.read_data(f, f[groupname],
-                                            targetname, options))
+            datas.append(utilities.read_data(f, f[groupname],
+                                             targetname, options))
     except:
         raise
     finally:
@@ -1625,7 +1625,7 @@ def read(path='/', filename='data.h5',
     writes
     write
     Options
-    lowlevel.read_data : Low level version.
+    utilities.read_data : Low level version.
 
     """
     return reads(paths=(path,), filename=filename, options=options,
@@ -1837,8 +1837,8 @@ def loadmat(file_name, mdict=None, appendmat=True,
                     # file).
                     if f[k].name != options.group_for_references:
                         try:
-                            data[k] = lowlevel.read_data(f, f, k,
-                                                         options)
+                            data[k] = utilities.read_data(f, f, k,
+                                                          options)
                         except:
                             pass
 
