@@ -111,7 +111,6 @@ def assert_equal_none_format(a, b, options=None):
         if sys.hexversion >= 0x03000000:
             tp_str = str
             tp_bytes = bytes
-            invalids = ('\x00', '/')
             converters = {tp_str: lambda x: x,
                           tp_bytes: lambda x: x.decode('UTF-8'),
                           np.bytes_:
@@ -122,7 +121,6 @@ def assert_equal_none_format(a, b, options=None):
         else:
             tp_str = unicode
             tp_bytes = str
-            invalids = (unicode('\x00'), unicode('/'))
             converters = {tp_str: lambda x: x,
                           tp_bytes: lambda x: x.decode('UTF-8'),
                           np.bytes_:
@@ -137,15 +135,10 @@ def assert_equal_none_format(a, b, options=None):
                 break
             try:
                 k_str = tp_conv(k)
-                if any([c in k_str for c in invalids]):
-                    all_str_keys = False
-                    break
             except:
                 all_str_keys = False
                 break
         if all_str_keys:
-            print(str(a.dtype.names))
-            print(str(tuple(b.keys())))
             assert set(a.dtype.names) == set([tp_conv_str(k)
                                               for k in b.keys()])
             for k in b:
@@ -208,7 +201,6 @@ def assert_equal_none_format(a, b, options=None):
                     assert a.shape == b.shape
                     npt.assert_equal(a, b)
             else:
-                assert a.dtype == b.dtype
                 # Now, if b.shape is just all ones, then a.shape will
                 # just be (1,). Otherwise, we need to compare the shapes
                 # directly. Also, dimensions need to be squeezed before
@@ -219,9 +211,20 @@ def assert_equal_none_format(a, b, options=None):
                 if np.prod(a.shape) == 1:
                     a = np.squeeze(a)
                     b = np.squeeze(b)
+                # If there was a null in the dtype, then it was written
+                # as a Group so the field order could have changed.
+                if '\\x00' in str(b.dtype):
+                    assert set(a.dtype.descr) == set(b.dtype.descr)
+                    # Reorder the fields of a.
+                    c = np.empty(shape=b.shape, dtype=b.dtype)
+                    for n in b.dtype.names:
+                        c[n] = a[n]
+                else:
+                    c = a
+                assert c.dtype == b.dtype
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore', RuntimeWarning)
-                    npt.assert_equal(a, b)
+                    npt.assert_equal(c, b)
         else:
             assert a.dtype == b.dtype
             assert a.shape == b.shape
@@ -264,7 +267,6 @@ def assert_equal_matlab_format(a, b, options=None):
         if sys.hexversion >= 0x03000000:
             tp_str = str
             tp_bytes = bytes
-            invalids = ('\x00', '/')
             converters = {tp_str: lambda x: x,
                           tp_bytes: lambda x: x.decode('UTF-8'),
                           np.bytes_:
@@ -275,7 +277,6 @@ def assert_equal_matlab_format(a, b, options=None):
         else:
             tp_str = unicode
             tp_bytes = str
-            invalids = (unicode('\x00'), unicode('/'))
             converters = {tp_str: lambda x: x,
                           tp_bytes: lambda x: x.decode('UTF-8'),
                           np.bytes_:
@@ -290,9 +291,6 @@ def assert_equal_matlab_format(a, b, options=None):
                 break
             try:
                 k_str = tp_conv(k)
-                if any([c in k_str for c in invalids]):
-                    all_str_keys = False
-                    break
             except:
                 all_str_keys = False
                 break

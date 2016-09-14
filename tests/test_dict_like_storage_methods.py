@@ -34,6 +34,7 @@ import numpy as np
 import h5py
 
 import hdf5storage
+from hdf5storage.utilities import escape_path
 
 from nose.tools import raises
 
@@ -51,8 +52,8 @@ dict_like = ['dict']
 if sys.hexversion >= 0x2070000:
     dict_like += ['OrderedDict']
 
-# Need a list of invalid characters, which will depend on the Python
-# version.
+# Need a list of previously invalid characters, which will depend on the
+# Python version.
 if sys.hexversion >= 0x3000000:
     invalid_characters = ('\x00', '/')
 else:
@@ -85,9 +86,9 @@ def check_all_valid_str_keys(tp, option_keywords):
 
         with h5py.File(filename) as f:
             for k in key_value_names:
-                assert k not in f[name]
+                assert escape_path(k) not in f[name]
             for k in data:
-                assert k in f[name]
+                assert escape_path(k) in f[name]
     except:
         raise
     finally:
@@ -95,7 +96,7 @@ def check_all_valid_str_keys(tp, option_keywords):
             os.remove(fld[1])
 
 
-def check_str_key_invalid_char(tp, ch, option_keywords):
+def check_str_key_previously_invalid_char(tp, ch, option_keywords):
     options = hdf5storage.Options(**option_keywords)
     key_value_names = (options.dict_like_keys_name,
                        options.dict_like_values_name)
@@ -127,7 +128,10 @@ def check_str_key_invalid_char(tp, ch, option_keywords):
                           options=options)
 
         with h5py.File(filename) as f:
-            assert set(key_value_names) == set(f[name].keys())
+            for k in key_value_names:
+                assert escape_path(k) not in f[name]
+            for k in data:
+                assert escape_path(k) in f[name]
     except:
         raise
     finally:
@@ -236,7 +240,7 @@ def test_all_valid_str_keys():
                     yield check_all_valid_str_keys, tp, options_keywords
 
 
-def test_str_key_invalid_char():
+def test_str_key_previously_invalid_char():
     # generate some random keys_values_names
     keys_values_names = [('keys', 'values')]
     for i in range(3):
@@ -254,7 +258,7 @@ def test_str_key_invalid_char():
                             'matlab_compatible': mat_meta, \
                             'dict_like_keys_name': names[0], \
                             'dict_like_values_name': names[1]}
-                        yield check_str_key_invalid_char, tp, c, options_keywords
+                        yield check_str_key_previously_invalid_char, tp, c, options_keywords
 
 
 def test_string_type_non_str_key():

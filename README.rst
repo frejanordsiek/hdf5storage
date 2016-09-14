@@ -323,6 +323,10 @@ Versions
      * Issue #50. Python 2.6 support dropped. The
        ``pkgutil.find_loader`` function is required, and it is not
        present in Python 2.6.
+     * Issue #27. Added of paths with null characters and slashes. It
+       is used for the field names of structured numpy ndarrays as well
+       as the keys of ``dict`` like objects when writing their values
+       to individual Datasets.
      * Issue #49. Changed marshaller types and their handling code to
        support marshallers that handle types in modules that may not be
        available or should not be imported until needed. If the the

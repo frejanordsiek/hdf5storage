@@ -125,9 +125,7 @@ np.recarray               0.1      structured np.ndarray [9]_            Dataset
 .. [7] Stored either as each key-value as their own Dataset or as two
        Datasets, one for keys and one for values. The former is used if
        all keys can be converted to ``str`` in Python 3 or ``unicode``
-       in Python 2 and they don't have null characters (``'\x00'``) or
-       forward slashes (``'/'``) in them. Otherwise, the latter format
-       is used.
+       in Python 2. Otherwise, the latter format is used.
 .. [8] ``np.float16`` are not supported for h5py versions before
        ``2.2``.
 .. [9] If it doesn't have any fields in its dtype or if
@@ -136,8 +134,7 @@ np.recarray               0.1      structured np.ndarray [9]_            Dataset
        converted and is written as is as a Dataset. Otherwise, it
        is written as a Group with its the contents of its individual
        fields written as Datasets within the Group having the fields as
-       names. Field names cannot have null characters (``'\x00'``) and,
-       when writing as an GROUP, forward slashes (``'/'``) in them.
+       names.
 
 
 Attributes
@@ -255,6 +252,10 @@ For ``dict``, ``cl.OrderedDict``, and structured ``np.ndarray`` types
 is stored in this Attribute in the proper order. In the HDF5 file, they
 are variable length strings.
 
+.. versionchanged:: 0.2
+   
+   The field names are escaped as described in :ref:`Paths`.
+
 Python.Empty and MATLAB_empty
 -----------------------------
 
@@ -290,6 +291,7 @@ MATLAB Attribute
 numpy array of vlen numpy arrays of ``'S1'``
 
 .. versionchanged:: 0.1.2
+   
    Support for this Attribute added. Was deleted upon writing and
    ignored when reading before.
 
@@ -316,6 +318,10 @@ Then ``fs`` looks like::
   
   array([array([b'a'], dtype='|S1'),
          array([b'c', b'd'], dtype='|S1']), dtype=object)
+
+.. versionchanged:: 0.2
+   
+   The field names are escaped as described in :ref:`Paths`.
 
 Python.dict.StoredAs
 --------------------
@@ -345,10 +351,9 @@ Python Attribute
 A ``dict`` like object (includes ``cl.OrderedDict``) is stored with
 each key-value pair as its own Dataset if all the keys are string like
 and either are Python 3.x ``str`` or Python 2.x ``unicode`` or can be
-converted to those, and none of the keys have forbidden characters (null
-and ``'/'``). A key is string like if it is a Python 3.x ``'str`` or
-``'bytes'``, a Python 2.x ``'unicode'`` or ``'str'``, a ``np.unicode_``,
-or a ``np.bytes_``.
+converted to those. A key is string like if it is a Python 3.x ``'str``
+or ``'bytes'``, a Python 2.x ``'unicode'`` or ``'str'``, a
+``np.unicode_``, or a ``np.bytes_``.
 
 This Attribute stores what their original types are. Otherwise, the
 exact type would be lost in the conversion to Dataset names. The
@@ -436,11 +441,10 @@ dict and dict like
 
 ``dict`` like data (``dict`` and  ``cl.OrderedDict``) are stored either
 with each key-value as their own Dataset or as two Datasets, one for
-keys and one for values. The former is used if all keys are string like
-and they don't have null characters (``'\x00'``) or forward slashes
-(``'/'``) in them. Keys are converted to Python 3.x ``str`` or Python
-2.x ``unicode``. Otherwise, the latter format is used. A key is string
-like if it is a Python 3.x ``'str`` or ``'bytes'``, a Python 2.x
+keys and one for values. The former is used if all keys are string
+like. Keys are converted to Python 3.x ``str`` or Python 2.x
+``unicode``. Otherwise, the latter format is used. A key is string like
+if it is a Python 3.x ``'str`` or ``'bytes'``, a Python 2.x
 ``'unicode'`` or ``'str'``, a ``np.unicode_``, or a ``np.bytes_`` and it
 can be converted successfully to Python 3.x ``str`` or Python 2.x
 ``unicode``.
@@ -467,10 +471,10 @@ are stored in the Attribute ``'Python.dict.keys_values_names'``.
    
    Support added for storing the keys and values as their own Datasets
    instead of each key-value pair as their own Dataset. This feature
-   add the ability to store ``dict`` like data with keys that are not
-   ``str`` in Python 3 or ``unicode`` in Python 2, can't be converted
-   to them, or have null characters (``'\x00'``) or forward slashes
-   (``'/'``) in them.
+   adds the ability to store ``dict`` like data with keys that are not
+   ``str`` in Python 3 or ``unicode`` in Python 2 or can't be converted
+   to them. If writing the values to individual datasets, the key
+   names are escaped.
 
 np.object\_
 -----------
@@ -505,10 +509,17 @@ array to all of those elements is written as a Dataset under the field
 name in the Groups. Othewise, it is written as is as a Dataset that is
 an HDF5 COMPOUND type.
 
+.. versionchanged:: 0.2
+
+   Support for field names with null characters and forward slashes
+   in them added. The field names are escaped.
+
+
 .. warning::
 
    Field names cannot have null characters (``'\x00'``) and, when
-   writing as an HDF5 GROUP, forward slashes (``'/'``) in them.
+   writing as an HDF5 GROUP, forward slashes (``'/'``) in them are not
+   supported before version 0.2.
 
 
 .. warning::

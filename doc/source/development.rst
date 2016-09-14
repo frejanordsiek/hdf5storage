@@ -62,11 +62,13 @@ HDF5 files (the high level ones handle file creation/opening), can only
 be given options using a :py:class:`Options` object, and read/write
 individual Groups/Datasets and Python objects. Any Marshaller that needs
 to read or write a nested object within a Group or Python object must
-call these functions. There are also several functions to get, set, and
-delete different kinds of HDF5 Attributes (handle things such as them
-already existing, not existing, etc). Then there functions to convert
-between different string representations, as well as encode for writing
-and decode after reading complex types. And then there is the function
+call these functions. The functions to do path escaping, unescaping, and
+processing are also in the module. There are also several functions to
+get, set, and delete different kinds of HDF5 Attributes (handle things
+such as them already existing, not existing, etc). Then there functions
+to convert between different string representations, as well as encode
+for writing and decode after reading complex types. And then there is
+the function
 :py:func:`utilities.next_unused_name_in_group` which produces a random
 unused name in a Group.
 

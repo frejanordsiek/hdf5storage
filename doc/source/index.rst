@@ -13,6 +13,7 @@ Contents:
 
    information
    introduction
+   paths
    compression
    storage_format
    development

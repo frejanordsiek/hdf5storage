@@ -22,11 +22,18 @@ to Python types.
 
 HDF5 files are structured much like a Unix filesystem, so everything can
 be referenced with a POSIX style path, which look like
-``'/pyth/hf'``. Unlike a Windows path, back slashes (``'/'``) are used
-as directory separators instead of forward slashes (``'\'``) and the
-base of the file system is just ``'/'`` instead of something like
-``'C:\'``. In the language of HDF5, what we call directories and files
+``'/pyth/hf'``. Unlike a Windows path, forward slashes (``'/'``) are
+used as directory separators instead of backward slashes (``'\\'``) and
+the base of the file system is just ``'/'`` instead of something like
+``'C:\\'``. In the language of HDF5, what we call directories and files
 in filesystems are called groups and datasets.
+
+More information about paths, the supported escapes, etc. can be found
+at :ref:`Paths`.
+
+.. versionadded:: 0.2
+   
+   Ability to escape characters not allowed in Group or Dataset names.
 
 :py:func:`write` has many options for controlling how the data is
 stored, and what metadata is stored, but we can ignore that for now. If

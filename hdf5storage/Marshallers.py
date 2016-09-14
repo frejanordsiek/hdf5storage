@@ -649,27 +649,22 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # an object time (no matter how nested), then rather than
         # converting that field to a HDF5 Reference types, it will just
         # be written as a Group instead (just have to see if ", 'O'" is
-        # in str(data_to_store.dtype).
-        
+        # in str(data_to_store.dtype). The same goes for if there is a
+        # null inside its dtype.
+
+        str_dtype = str(data_to_store.dtype)
         if data_to_store.dtype.fields is not None \
                 and h5py.check_dtype(ref=data_to_store.dtype) \
                 is not h5py.Reference \
                 and not np.iscomplexobj(data) \
                 and (options.structured_numpy_ndarray_as_struct \
-                or ", 'O'" in str(data_to_store.dtype) \
+                or (", 'O'" in str_dtype or '\\x00' in str_dtype) \
                 or not all(data_to_store.shape) \
                 or not all([all(data_to_store[n].shape) \
                 for n in data_to_store.dtype.names])):
-            # Grab the list of fields that don't have a null character
-            # or a / in them since those can't be written.
-            field_names = [n for n in data_to_store.dtype.names
-                           if '/' not in n and '\x00' not in n]
-
-            # Throw and exception if we had to exclude any field names.
-            if len(field_names) != len(data_to_store.dtype.names):
-                raise NotImplementedError("Null characters ('\x00') " \
-                    + "and '/' in the field names of this type of " \
-                    + 'numpy.ndarray are not supported.')
+            # Grab the list of fields and properly escape them.
+            field_names = [n for n in data_to_store.dtype.names]
+            escaped_field_names = [escape_path(n) for n in field_names]
 
             # If the group doesn't exist, it needs to be created. If it
             # already exists but is not a group, it needs to be deleted
@@ -694,7 +689,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             if options.delete_unused_variables:
                 for field in set([i for i in grp2]).difference( \
-                        set(field_names)):
+                        set(escaped_field_names)):
                     del grp2[field]
 
             # Go field by field making an object array (make an empty
@@ -704,7 +699,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # Dataset as opposed to a HDF5 Reference array). The H5PATH
             # attribute needs to be set appropriately, while all other
             # attributes need to be deleted.
-            for field in field_names:
+            for i, field in enumerate(field_names):
+                esc_field = escaped_field_names[i]
                 new_data = np.zeros(shape=data_to_store.shape,
                                     dtype='object')
                 for index, x in np.ndenumerate(data_to_store):
@@ -721,39 +717,28 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # (don't need to use a Reference array in this
                 # case). Otherwise, write the whole thing.
                 if np.prod(new_data.shape) == 1:
-                    write_data(f, grp2, field, new_data.flatten()[0],
-                               None, options)
+                    write_data(f, grp2, esc_field,
+                               new_data.flatten()[0], None, options)
                 else:
-                    write_data(f, grp2, field, new_data, None, options)
+                    write_data(f, grp2, esc_field, new_data, None,
+                               options)
 
-                if field in grp2:
+                if esc_field in grp2:
                     if options.matlab_compatible:
-                        set_attribute_string(grp2[field], 'H5PATH',
+                        set_attribute_string(grp2[esc_field], 'H5PATH',
                                              grp2.name)
                     else:
-                        del_attribute(grp2[field], 'H5PATH')
+                        del_attribute(grp2[esc_field], 'H5PATH')
 
                     # In the case that we wrote a Reference array (not a
                     # single element), then all other attributes need to
                     # be removed.
                     if np.prod(new_data.shape) != 1:
                         for attribute in (set( \
-                                grp2[field].attrs.keys()) \
+                                grp2[esc_field].attrs.keys()) \
                                 - set(['H5PATH'])):
-                            del_attribute(grp2[field], attribute)
+                            del_attribute(grp2[esc_field], attribute)
         else:
-            # If it has fields and it isn't a Reference type, none of
-            # them can contain a / character.
-            if data_to_store.dtype.fields is not None \
-                    and h5py.check_dtype(ref=data_to_store.dtype) \
-                    is not h5py.Reference:
-                for n in data_to_store.dtype.fields:
-                    if '\x00' in n:
-                        raise NotImplementedError( \
-                            "Null characters ('\x00') " \
-                            + 'in the field names of this type of ' \
-                            + 'numpy.ndarray are not supported.')
-
             # Set the storage options such as compression, chunking,
             # filters, etc. If the data is being compressed (compression
             # is enabled and the data is bigger than the threshold),
@@ -866,24 +851,21 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # names if we are storing python metadata or doing matlab
         # compatibility and we are storing a structured ndarray as a
         # structure.
+        str_dtype = str(data.dtype)
         if data.dtype.fields is not None \
                 and (options.structured_numpy_ndarray_as_struct \
-                or "'O'" in str(data.dtype) \
+                or (", 'O'" in str_dtype or '\\x00' in str_dtype) \
                 or not all(data.shape) \
                 or not all([all(data[n].shape) \
                 for n in data.dtype.names])):
-            # Grab the list of fields. They need to be converted to
-            # unicode in Python 2.x.
-            if sys.hexversion >= 0x03000000:
-                field_names = list(data.dtype.names)
-            else:
-                field_names = [c.decode('UTF-8')
-                               for c in list(data.dtype.names)]
+            # Grab the list of fields and escape them.
+            field_names = [escape_path(c) for c in data.dtype.names]
 
             # Write or delete 'Python.Fields' as appropriate.
             if options.store_python_metadata \
                     and data.dtype.fields is not None \
-                    and options.structured_numpy_ndarray_as_struct:
+                    and (options.structured_numpy_ndarray_as_struct \
+                    or (", 'O'" in str_dtype or '\\x00' in str_dtype)):
                 set_attribute_string_array(grp[name],
                                            'Python.Fields',
                                            field_names)
@@ -904,8 +886,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
                     fs = np.empty(shape=(len(field_names),), dtype=dt)
                     for i, s in enumerate(field_names):
-                        fs[i] = np.array([c.encode('ascii') for c in s],
-                                         dtype='S1')
+                        fs[i] = np.array([c.encode('ascii')
+                                          for c in s], dtype='S1')
                 except UnicodeEncodeError:
                     del_attribute(grp[name], 'MATLAB_fields')
                 else:
@@ -1036,6 +1018,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             struct_data = dict()
             is_multi_element = True
             for k in grp[name]:
+                # Unescape the name.
+                unescaped_k = unescape_path(k)
                 # We must exclude group_for_references
                 if grp[name][k].name == options.group_for_references:
                     continue
@@ -1049,8 +1033,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         'Python.Empty']))) != 0:
                     is_multi_element = False
                 try:
-                    struct_data[k] = read_data(f, grp[name], k,
-                                               options)
+                    struct_data[unescaped_k] = read_data(f, grp[name],
+                                                         k, options)
                 except:
                     pass
 
@@ -1071,9 +1055,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             if python_fields is not None or matlab_fields is not None:
                 if python_fields is not None:
-                    fields = python_fields
+                    fields = [unescape_path(k) for k in python_fields]
                 else:
-                    fields = [k.tostring().decode()
+                    fields = [unescape_path(k.tostring().decode())
                               for k in matlab_fields]
                 # Now, there may be fields available that were not
                 # given, but still should be read. Keys that are not in
@@ -1159,7 +1143,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # the proper dtype for the structure.
             if python_fields is not None or matlab_fields is not None:
                 if python_fields is not None:
-                    fields = python_fields
+                    fields = [unescape_path(k) for k in python_fields]
                 else:
                     fields = [k.tostring().decode()
                               for k in matlab_fields]
@@ -1305,11 +1289,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 else:
                     dt_whole = list()
                     for k in matlab_fields:
+                        uk = unescape_path(k.tostring())
                         if sys.hexversion >= 0x03000000:
-                            dt_whole.append((k.tostring().decode(),
-                                            'object'))
+                            dt_whole.append((uk, 'object'))
                         else:
-                            dt_whole.append((k.tostring(), 'object'))
+                            dt_whole.append((uk.encode('utf-8'),
+                                             'object'))
                     data = np.zeros(shape=tuple(np.uint64(data)),
                                     dtype=dt_whole)
 
@@ -1528,22 +1513,19 @@ class PythonDictMarshaller(TypeMarshaller):
     def write(self, f, grp, name, data, type_string, options):
         # Check to see if any fields are not string like, or if they are
         # string like, if they cannot be converted to unicode and not
-        # have characters that can't be handled such as null and
-        # /). If the fields are string like, a list of all of them
-        # converted to str along with what they originally were needs to
-        # be generated.
+        # have characters that can't be handled. If the fields are
+        # string like, a list of all of them converted to str along with
+        # what they originally were needs to be generated.
         if sys.hexversion >= 0x03000000:
             tps = {str: b't',
                    bytes: b'b',
                    np.unicode_: b'U',
                    np.bytes_: b'S'}
-            invalid_char = ('\x00', '/')
         else:
             tps = {unicode: 't',
                    str: 'b',
                    np.unicode_: 'U',
                    np.bytes_: 'S'}
-            invalid_char = (unicode('\x00'), unicode('/'))
 
         any_non_valid_str_keys = False
         keys_as_str = []
@@ -1553,10 +1535,7 @@ class PythonDictMarshaller(TypeMarshaller):
                 any_non_valid_str_keys = True
                 break
             try:
-                field_str = convert_to_str(field)
-                if any([c in field_str for c in invalid_char]):
-                    any_non_valid_str_keys = True
-                    break
+                field_str = escape_path(convert_to_str(field))
                 keys_as_str.append(field_str)
                 key_str_types.append(tps[type(field)])
             except:
@@ -1605,7 +1584,8 @@ class PythonDictMarshaller(TypeMarshaller):
         # doing MATLAB compatibility (otherwise, the attribute needs to
         # be deleted).
         for i, k in enumerate(names):
-            write_data(f, grp2, k, values[i], None, options)
+            write_data(f, grp2, k, values[i], None,
+                       options)
             if k in grp2:
                 if options.matlab_compatible:
                     set_attribute_string(grp2[k], 'H5PATH', grp2.name)
@@ -1726,9 +1706,9 @@ class PythonDictMarshaller(TypeMarshaller):
         # generating the items directly from them. Otherwise, each field
         # needs to be read individually.
         if stored_as == 'keys_values' \
-                and keys_values_names[0] in grp[name] \
-                and keys_values_names[1] in grp[name]:
-            d = tuple([read_data(f, grp[name], k, options)
+                and escape_path(keys_values_names[0]) in grp[name] \
+                and escape_path(keys_values_names[1]) in grp[name]:
+            d = tuple([read_data(f, grp[name], escape_path(k), options)
                        for k in keys_values_names])
             items = zip(*d)
         else:
@@ -1741,7 +1721,8 @@ class PythonDictMarshaller(TypeMarshaller):
             if python_fields is not None:
                 fields.extend(python_fields)
             if matlab_fields is not None:
-                for s in [k.tostring().decode() for k in matlab_fields]:
+                for s in [k.tostring().decode()
+                          for k in matlab_fields]:
                     if s not in fields:
                         fields.append(s)
             for k in grp[name]:
@@ -1763,8 +1744,10 @@ class PythonDictMarshaller(TypeMarshaller):
             items = []
             for i, k in enumerate(fields):
                 try:
+                    uk = unescape_path(k)
                     # We must exclude group_for_references
-                    if grp[name][k].name == options.group_for_references:
+                    if grp[name][k].name \
+                            == options.group_for_references:
                         continue
                     v = read_data(f, grp[name], k, options)
 
@@ -1777,9 +1760,9 @@ class PythonDictMarshaller(TypeMarshaller):
                             and key_str_types is not None \
                             and i < len(key_str_types) \
                             and len(python_fields) == len(key_str_types):
-                        k_conv = tp_convert[key_str_types[i]](k)
+                        k_conv = tp_convert[key_str_types[i]](uk)
                     else:
-                        k_conv = k
+                        k_conv = uk
                     items.append((k_conv, v))
                 except:
                     pass

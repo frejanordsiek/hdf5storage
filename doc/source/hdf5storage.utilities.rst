@@ -7,6 +7,9 @@ hdf5storage.utilities
 
 .. autosummary::
 
+   escape_path
+   unescape_path
+   process_path
    write_data
    read_data
    write_object_array
@@ -26,6 +29,24 @@ hdf5storage.utilities
    set_attribute_string
    set_attribute_string_array
    del_attribute
+
+
+escape_path
+-----------
+
+.. autofunction:: escape_path
+
+
+unescape_path
+-------------
+
+.. autofunction:: unescape_path
+
+
+process_path
+------------
+
+.. autofunction:: process_path
 
 
 write_data

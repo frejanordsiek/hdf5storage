@@ -149,12 +149,17 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    def check_numpy_structured_array_field_special_char(self, ch):
+    def check_numpy_structured_array_field_special_char(self, ch,
+                                                        leading=False):
         # Makes a random 1d structured ndarray with the character
         # in one field, writes it and reads it back, and then compares
         # it.
         field_names = [random_str_ascii(max_dict_key_length)
                        for i in range(2)]
+        if leading:
+            field_names[1] = ch + field_names[1]
+        else:
+            field_names[1] = field_names[1][0] + ch + field_names[1][1:]
         field_names[1] = field_names[1][0] + ch + field_names[1][1:]
         if sys.hexversion < 0x03000000:
             for i in range(len(field_names)):
@@ -197,13 +202,17 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    def check_numpy_recarray_field_special_char(self, ch):
+    def check_numpy_recarray_field_special_char(self, ch,
+                                                leading=False):
         # Makes a random 1d structured ndarray with the character
         # in one field, converts it to a recarray, writes it and reads
         # it back, and then compares it.
         field_names = [random_str_ascii(max_dict_key_length)
                        for i in range(2)]
-        field_names[1] = field_names[1][0] + ch + field_names[1][1:]
+        if leading:
+            field_names[1] = ch + field_names[1]
+        else:
+            field_names[1] = field_names[1][0] + ch + field_names[1][1:]
         if sys.hexversion < 0x03000000:
             for i in range(len(field_names)):
                 field_names[i] = field_names[i].encode('UTF-8')
@@ -293,6 +302,31 @@ class TestPythonMatlabFormat(object):
             ch = unicode('/')
         key = ch.join([random_str_ascii(max_dict_key_length)
                       for i in range(2)])
+        data[key] = random_int()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def check_dict_like_key_back_slash(self, tp):
+        data = random_dict(tp)
+        if sys.hexversion >= 0x03000000:
+            ch = '\\'
+        else:
+            ch = unicode('\\')
+        key = ch.join([random_str_ascii(max_dict_key_length)
+                      for i in range(2)])
+        data[key] = random_int()
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def check_dict_like_key_leading_periods(self, tp):
+        data = random_dict(tp)
+        if sys.hexversion >= 0x03000000:
+            prefix = '.' * random.randint(1, 10)
+        else:
+            prefix = unicode('.') * random.randint(1, 10)
+        key = prefix + random_str_ascii(max_dict_key_length)
         data[key] = random_int()
         out = self.write_readback(data, random_name(),
                                   self.options)
@@ -537,13 +571,19 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    @raises(NotImplementedError)
     def test_numpy_structured_array_field_null_character(self):
         self.check_numpy_structured_array_field_special_char('\x00')
 
-    @raises(NotImplementedError)
     def test_numpy_structured_array_field_forward_slash(self):
         self.check_numpy_structured_array_field_special_char('/')
+
+    def test_numpy_structured_array_field_back_slash(self):
+        self.check_numpy_structured_array_field_special_char('\\')
+
+    def test_numpy_structured_array_field_leading_periods(self):
+        s = '.' * random.randint(1, 10)
+        self.check_numpy_structured_array_field_special_char( \
+            s, leading=True)
 
     def test_numpy_recarray(self):
         for i in range(1, 4):
@@ -565,13 +605,18 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    @raises(NotImplementedError)
     def test_numpy_recarray_field_null_character(self):
         self.check_numpy_recarray_field_special_char('\x00')
 
-    @raises(NotImplementedError)
     def test_numpy_recarray_field_forward_slash(self):
         self.check_numpy_recarray_field_special_char('/')
+
+    def test_numpy_recarray_field_back_slash(self):
+        self.check_numpy_recarray_field_special_char('\\')
+
+    def test_numpy_recarray_field_leading_periods(self):
+        s = '.' * random.randint(1, 10)
+        self.check_numpy_recarray_field_special_char(s, leading=True)
 
     def test_numpy_chararray(self):
         dims = range(1, 4)
@@ -606,6 +651,14 @@ class TestPythonMatlabFormat(object):
         for tp in self.dict_like:
             yield self.check_dict_like_key_forward_slash, tp
 
+    def test_dict_like_key_back_slash(self):
+        for tp in self.dict_like:
+            yield self.check_dict_like_key_back_slash, tp
+
+    def test_dict_like_key_leading_periods(self):
+        for tp in self.dict_like:
+            yield self.check_dict_like_key_leading_periods, tp
+
 
 class TestPythonFormat(TestPythonMatlabFormat):
     def __init__(self):
@@ -614,14 +667,6 @@ class TestPythonFormat(TestPythonMatlabFormat):
         # name.
         TestPythonMatlabFormat.__init__(self)
         self.options = hdf5storage.Options(matlab_compatible=False)
-
-    # Won't throw an exception unlike the parent.
-    def test_numpy_structured_array_field_forward_slash(self):
-        self.check_numpy_structured_array_field_special_char('/')
-
-    # Won't throw an exception unlike the parent.
-    def test_numpy_recarray_field_forward_slash(self):
-        self.check_numpy_recarray_field_special_char('/')
 
 
 class TestNoneFormat(TestPythonMatlabFormat):
@@ -635,14 +680,6 @@ class TestNoneFormat(TestPythonMatlabFormat):
 
         # Add in float16 to the set of types tested.
         self.dtypes.append('float16')
-
-    # Won't throw an exception unlike the parent.
-    def test_numpy_structured_array_field_forward_slash(self):
-        self.check_numpy_structured_array_field_special_char('/')
-
-    # Won't throw an exception unlike the parent.
-    def test_numpy_recarray_field_forward_slash(self):
-        self.check_numpy_recarray_field_special_char('/')
 
     def assert_equal(self, a, b):
         assert_equal_none_format(a, b, self.options)

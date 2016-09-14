@@ -650,6 +650,12 @@ class Options(object):
 
         Must be ``'/#refs#`` if doing MATLAB compatibility.
 
+        Must already be escaped.
+
+        See Also
+        --------
+        utilities.escape_path
+
         """
         return self._group_for_references
 
@@ -1334,6 +1340,17 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
     sure that MATLAB can import `data` correctly (the HDF5 header is
     also set so MATLAB will recognize it).
 
+    Paths are POSIX style and can either be given directly as ``str`` or
+    ``bytes``, or the separated path can be given as an iterable of
+    ``str`` and ``bytes``. Each part of a separated path is escaped
+    using ``utilities.escape_path``. Otherwise, the path is assumed to
+    be already escaped. Escaping is done so that targets with a part
+    that starts with one or more periods, contain slashes, and/or
+    contain nulls can be used without causing the wrong Group to be
+    looked in or the wrong target to be looked at. It essentially allows
+    one to make a Dataset named ``'..'`` or ``'a/a'`` instead of moving
+    around in the Dataset hierarchy.
+
     Parameters
     ----------
     mdict : dict, dict like
@@ -1361,6 +1378,8 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
 
     Raises
     ------
+    TypeError
+        If a path is of an invalid type.
     NotImplementedError
         If writing `data` is not supported.
     exceptions.TypeNotMatlabCompatibleError
@@ -1369,6 +1388,8 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
 
     See Also
     --------
+    utilities.process_path
+    utilities.escape_path
     write : Writes just a single piece of data
     reads
     read
@@ -1388,23 +1409,7 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
     # the third element the data to write.
     towrite = []
     for p, v in mdict.items():
-        # Remove double slashes and a non-root trailing slash.
-        path = posixpath.normpath(p)
-
-        # Extract the group name and the target name (will be a dataset if
-        # data can be mapped to it, but will end up being made into a group
-        # otherwise. As HDF5 files use posix path, conventions, posixpath
-        # will do everything.
-        groupname = posixpath.dirname(path)
-        targetname = posixpath.basename(path)
-
-        # If groupname got turned into blank, then it is just root.
-        if groupname == '':
-            groupname = '/'
-
-        # If targetname got turned blank, then it is the current directory.
-        if targetname == '':
-            targetname = '.'
+        groupname, targetname = utilities.process_path(p)
 
         # Pack into towrite.
         towrite.append((groupname, targetname, v))
@@ -1615,12 +1620,24 @@ def reads(paths, filename='data.h5', options=None, **keywords):
     into `options` or as additional keywords that will be used to make
     one by ``options = Options(**keywords)``.
 
+    Paths are POSIX style and can either be given directly as ``str`` or
+    ``bytes``, or the separated path can be given as an iterable of
+    ``str`` and ``bytes``. Each part of a separated path is escaped
+    using ``utilities.escape_path``. Otherwise, the path is assumed to
+    be already escaped. Escaping is done so that targets with a part
+    that starts with one or more periods, contain slashes, and/or
+    contain nulls can be used without causing the wrong Group to be
+    looked in or the wrong target to be looked at. It essentially allows
+    one to make a Dataset named ``'..'`` or ``'a/a'`` instead of moving
+    around in the Dataset hierarchy.
+
     Parameters
     ----------
-    paths : iterable of str
+    paths : iterable of paths
         An iterable of paths to read data from. Each must be a POSIX
         style path where the directory name is the Group to put it in
-        and the basename is the name to write it to.
+        and the basename is the name to write it to. The format of
+        paths is described in the paragraph above.
     filename : str, optional
         The name of the HDF5 file to read data from.
     options : Options, optional
@@ -1644,6 +1661,8 @@ def reads(paths, filename='data.h5', options=None, **keywords):
 
     See Also
     --------
+    utilities.process_path
+    utilities.escape_path
     read : Reads just a single piece of data
     writes
     write
@@ -1664,25 +1683,8 @@ def reads(paths, filename='data.h5', options=None, **keywords):
     # Process the paths and stuff the group names and target names as
     # tuples into toread.
     toread = []
-    for p in paths:    
-        # Remove double slashes and a non-root trailing slash.
-
-        path = posixpath.normpath(p)
-
-        # Extract the group name and the target name (will be a dataset if
-        # data can be mapped to it, but will end up being made into a group
-        # otherwise. As HDF5 files use posix path, conventions, posixpath
-        # will do everything.
-        groupname = posixpath.dirname(path)
-        targetname = posixpath.basename(path)
-
-        # If groupname got turned into blank, then it is just root.
-        if groupname == '':
-            groupname = '/'
-
-        # If targetname got turned blank, then it is the current directory.
-        if targetname == '':
-            targetname = '.'
+    for p in paths:
+        groupname, targetname = utilities.process_path(p)
 
         # Pack them into toread
         toread.append((groupname, targetname))
@@ -1977,8 +1979,8 @@ def loadmat(file_name, mdict=None, appendmat=True,
                     # file).
                     if f[k].name != options.group_for_references:
                         try:
-                            data[k] = utilities.read_data(f, f, k,
-                                                          options)
+                            data[utilities.unescape_path(k)] = \
+                                utilities.read_data(f, f, k, options)
                         except:
                             pass
 
