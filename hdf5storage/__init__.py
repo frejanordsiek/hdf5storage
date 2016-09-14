@@ -1531,80 +1531,20 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
             f.close()
 
 
-def write(data, path='/', filename='data.h5', truncate_existing=False,
-          truncate_invalid_matlab=False, options=None, **keywords):
+def write(data, path='/', **keywords):
     """ Writes one piece of data into an HDF5 file (high level).
 
     A wrapper around ``writes`` to write a single piece of data,
-    `data`, to a single location, `path`.
+    `data`, to a single location, `path`. It does the following
 
-    High level function to store a Python type (`data`) to a specified
-    path (`path`) in an HDF5 file. The path is specified as a POSIX
-    style path where the directory name is the Group to put it in and
-    the basename is the name to write it to.
-
-    There are various options that can be used to influence how the data
-    is written. They can be passed as an already constructed ``Options``
-    into `options` or as additional keywords that will be used to make
-    one by ``options = Options(**keywords)``.
-
-    Two very important options are ``store_python_metadata`` and
-    ``matlab_compatible``, which are ``bool``. The first makes it so
-    that enough metadata (HDF5 Attributes) are written that `data` can
-    be read back accurately without it (or its contents if it is a
-    container type) ending up different types, transposed in the case of
-    numpy arrays, etc. The latter makes it so that the appropriate
-    metadata is written, string and bool and complex types are converted
-    properly, and numpy arrays are transposed; which is needed to make
-    sure that MATLAB can import `data` correctly (the HDF5 header is
-    also set so MATLAB will recognize it).
-
-    Parameters
-    ----------
-    data : any
-        The data to write.
-    path : str, optional
-        The path to write `data` to. Must be a POSIX style path where
-        the directory name is the Group to put it in and the basename
-        is the name to write it to.
-    filename : str, optional
-        The name of the HDF5 file to write `data` to.
-    truncate_existing : bool, optional
-        Whether to truncate the file if it already exists before writing
-        to it.
-    truncate_invalid_matlab : bool, optional
-        Whether to truncate a file if matlab_compatibility is being
-        done and the file doesn't have the proper header (userblock in
-        HDF5 terms) setup for MATLAB metadata to be placed.
-    options : Options, optional
-        The options to use when writing. Is mutually exclusive with any
-        additional keyword arguments given (set to ``None`` or don't
-        provide to use them).
-    **keywords :
-        If `options` was not provided or was ``None``, these are used as
-        arguments to make a ``Options``.
-
-    Raises
-    ------
-    NotImplementedError
-        If writing `data` is not supported.
-    exceptions.TypeNotMatlabCompatibleError
-        If writing a type not compatible with MATLAB and
-        `options.action_for_matlab_incompatible` is set to ``'error'``.
+    ``writes(mdict={path: data}, **keywords)``
 
     See Also
     --------
     writes : Writes more than one piece of data at once
-    reads
-    read
-    Options
-    utilities.write_data : Low level version
 
     """
-    writes(mdict={path: data},  filename=filename,
-           truncate_existing=truncate_existing,
-           truncate_invalid_matlab=truncate_invalid_matlab,
-           options=options, **keywords)
+    writes(mdict={path: data}, **keywords)
 
 
 def reads(paths, filename='data.h5', options=None, **keywords):
@@ -1719,59 +1659,20 @@ def reads(paths, filename='data.h5', options=None, **keywords):
     return datas
 
 
-def read(path='/', filename='data.h5',
-         options=None, **keywords):
+def read(path='/', **keywords):
     """ Reads one piece of data from an HDF5 file (high level).
 
     A wrapper around ``reads`` to read a single piece of data at the
-    single location `path`.
+    single location `path`. It does the following
 
-    High level function to read data from an HDF5 file located at `path`
-    into Python types. The path is specified as a POSIX style path where
-    the data to read is located.
-
-    There are various options that can be used to influence how the data
-    is read. They can be passed as an already constructed ``Options``
-    into `options` or as additional keywords that will be used to make
-    one by ``options = Options(**keywords)``.
-
-    Parameters
-    ----------
-    path : str, optional
-        The path to read data from. Must be a POSIX style path where
-        the directory name is the Group to put it in and the basename
-        is the name to write it to.
-    filename : str, optional
-        The name of the HDF5 file to read data from.
-    options : Options, optional
-        The options to use when reading. Is mutually exclusive with any
-        additional keyword arguments given (set to ``None`` or don't
-        provide to use them).
-    **keywords :
-        If `options` was not provided or was ``None``, these are used as
-        arguments to make a ``Options``.
-
-    Returns
-    -------
-    data :
-        The piece of data at `path`.
-
-    Raises
-    ------
-    exceptions.CantReadError
-        If reading the data can't be done.
+    ``return reads(paths=(path,), **keywords)[0]``
 
     See Also
     --------
     reads : Reads more than one piece of data at once
-    writes
-    write
-    Options
-    utilities.read_data : Low level version.
 
     """
-    return reads(paths=(path,), filename=filename, options=options,
-                 **keywords)[0]
+    return reads(paths=(path,), **keywords)[0]
 
 
 def savemat(file_name, mdict, appendmat=True, format='7.3',
