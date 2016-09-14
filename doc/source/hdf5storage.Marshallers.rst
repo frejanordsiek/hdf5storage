@@ -21,9 +21,15 @@ TypeMarshaller
 --------------
 
 .. autoclass:: TypeMarshaller
-   :members: get_type_string, read, write, write_metadata 
+   :members: get_type_string, read, read_approximate, write, write_metadata 
    :show-inheritance:
-
+   
+   .. autoinstanceattribute:: TypeMarshaller.required_parent_modules
+      :annotation: = []
+   
+   .. autoinstanceattribute:: TypeMarshaller.required_modules
+      :annotation: = []
+   
    .. autoinstanceattribute:: TypeMarshaller.python_attributes
       :annotation: = {'Python.Type'}
 

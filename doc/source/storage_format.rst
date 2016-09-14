@@ -72,7 +72,7 @@ set                       0.1      np.object\_                           Dataset
 frozenset                 0.1      np.object\_                           Dataset
 cl.deque                  0.1      np.object\_                           Dataset
 dict [7]_                 0.1                                            Group
-cl.OrderedDict [7]_ [8]_  0.2                                            Group
+cl.OrderedDict [7]_       0.2                                            Group
 np.bool\_                 0.1      not or np.uint8 [1]_                  Dataset
 np.void                   0.1                                            Dataset
 np.uint8                  0.1                                            Dataset
@@ -83,7 +83,7 @@ np.uint8                  0.1                                            Dataset
 np.int16                  0.1                                            Dataset
 np.int32                  0.1                                            Dataset
 np.int64                  0.1                                            Dataset
-np.float16 [9]_           0.1                                            Dataset
+np.float16 [8]_           0.1                                            Dataset
 np.float32                0.1                                            Dataset
 np.float64                0.1                                            Dataset
 np.complex64              0.1                                            Dataset
@@ -91,10 +91,10 @@ np.complex128             0.1                                            Dataset
 np.str\_                  0.1      np.uint32/16 [5]_                     Dataset
 np.bytes\_                0.1      np.bytes\_ or np.uint16 [6]_          Dataset
 np.object\_               0.1                                            Dataset
-np.ndarray                0.1      not or Group of contents [10]_        Dataset or Group [10]_
+np.ndarray                0.1      not or Group of contents [9]_         Dataset or Group [9]_
 np.matrix                 0.1      np.ndarray                            Dataset
 np.chararray              0.1      np.bytes\_ or np.uint16/32 [5]_ [6]_  Dataset
-np.recarray               0.1      structured np.ndarray [10]_           Dataset or Group [10]_
+np.recarray               0.1      structured np.ndarray [9]_            Dataset or Group [9]_
 ========================  =======  ====================================  ======================
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when
@@ -128,18 +128,16 @@ np.recarray               0.1      structured np.ndarray [10]_           Dataset
        in Python 2 and they don't have null characters (``'\x00'``) or
        forward slashes (``'/'``) in them. Otherwise, the latter format
        is used.
-.. [8] Not supported in Python 2.6, so they are converted to ``dict``
-       when read from a file in Python 2.6.
-.. [9] ``np.float16`` are not supported for h5py versions before
+.. [8] ``np.float16`` are not supported for h5py versions before
        ``2.2``.
-.. [10] If it doesn't have any fields in its dtype or if
-        :py:attr:`Options.structured_numpy_ndarray_as_struct` is not set
-        and none of its fields are of dtype ``'object'``, it is not
-        converted and is written as is as a Dataset. Otherwise, it
-        is written as a Group with its the contents of its individual
-        fields written as Datasets within the Group having the fields as
-        names. Field names cannot have null characters (``'\x00'``) and,
-        when writing as an GROUP, forward slashes (``'/'``) in them.
+.. [9] If it doesn't have any fields in its dtype or if
+       :py:attr:`Options.structured_numpy_ndarray_as_struct` is not set
+       and none of its fields are of dtype ``'object'``, it is not
+       converted and is written as is as a Dataset. Otherwise, it
+       is written as a Group with its the contents of its individual
+       fields written as Datasets within the Group having the fields as
+       names. Field names cannot have null characters (``'\x00'``) and,
+       when writing as an GROUP, forward slashes (``'/'``) in them.
 
 
 Attributes
@@ -167,13 +165,13 @@ Type            Python.Type                Python.numpy.UnderlyingType      MATL
 ==============  =========================  ===============================  ==================  =====================
 bool            'bool'                     'bool'                           'logical'           1
 None            'builtins.NoneType'        'float64'                        'double'
-int             'int'                      'int64' or 'bytes#' [11]_ [12]_  'int64' or 'char'   *not used* or 2 [11]_
-long            'long'                     'int64' or 'bytes#' [11]_ [12]_  'int64' or 'char'   *not used* or 2 [11]_
+int             'int'                      'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
+long            'long'                     'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
 float           'float'                    'float64'                        'double'
 complex         'complex'                  'complex128'                     'double'
-str             'str'                      'str#' [12]_                     'char'              2
-bytes           'bytes'                    'bytes#' [12]_                   'char'              2
-bytearray       'bytearray'                'bytes#' [12]_                   'char'              2
+str             'str'                      'str#' [11]_                     'char'              2
+bytes           'bytes'                    'bytes#' [11]_                   'char'              2
+bytearray       'bytearray'                'bytes#' [11]_                   'char'              2
 list            'list'                     'object'                         'cell'
 tuple           'tuple'                    'object'                         'cell'
 set             'set'                      'object'                         'cell'
@@ -182,7 +180,7 @@ cl.deque        'collections.deque'        'object'                         'cel
 dict            'dict'                                                      'struct'
 cl.OrderedDict  'collections.OrderedDict'                                   'struct'
 np.bool\_       'numpy.bool'               'bool'                           'logical'           1
-np.void         'numpy.void'               'void#' [12]_    
+np.void         'numpy.void'               'void#' [11]_    
 np.uint8        'numpy.uint8'              'uint8'                          'uint8'
 np.uint16       'numpy.uint16'             'uint16'                         'uint16'
 np.uint32       'numpy.uint32'             'uint32'                         'uint32'
@@ -196,25 +194,25 @@ np.float32      'numpy.float32'            'float32'                        'sin
 np.float64      'numpy.float64'            'float64'                        'double'
 np.complex64    'numpy.complex64'          'complex64'                      'single'
 np.complex128   'numpy.complex128'         'complex128'                     'double'
-np.str\_        'numpy.str\_'              'str#' [12]_                     'char' or 'uint32'  2 or 4 [13]_
-np.bytes\_      'numpy.bytes\_'            'bytes#' [12]_                   'char'              2
+np.str\_        'numpy.str\_'              'str#' [11]_                     'char' or 'uint32'  2 or 4 [12]_
+np.bytes\_      'numpy.bytes\_'            'bytes#' [11]_                   'char'              2
 np.object\_     'numpy.object\_'           'object'                         'cell'
-np.ndarray      'numpy.ndarray'            [14]_                            [14]_ [15]_
-np.matrix       'numpy.matrix'             [14]_                            [14]_
-np.chararray    'numpy.chararray'          [14]_                            'char' [14]_
-np.recarray     'numpy.recarray'           [14]_                            [14]_ [15]_
+np.ndarray      'numpy.ndarray'            [13]_                            [13]_ [14]_
+np.matrix       'numpy.matrix'             [13]_                            [13]_
+np.chararray    'numpy.chararray'          [13]_                            'char' [13]_
+np.recarray     'numpy.recarray'           [13]_                            [13]_ [14]_
 ==============  =========================  ===============================  ==================  =====================
 
-.. [11] The former if it can fit in a ``np.int64`` and the latter if
+.. [10] The former if it can fit in a ``np.int64`` and the latter if
 	not.
-.. [12] '#' is replaced by the number of bits taken up by the string, or
+.. [11] '#' is replaced by the number of bits taken up by the string, or
         each string in the case that it is an array of strings. This is 8
         and 32 bits per character for ``np.bytes_`` and ``np.str_``
         respectively.
-.. [13] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
-.. [14] The value that would be put in for a scalar of the same dtype is
+.. [12] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
+.. [13] The value that would be put in for a scalar of the same dtype is
        used.
-.. [15] If it is structured (its dtype has fields),
+.. [14] If it is structured (its dtype has fields),
         :py:attr:`Options.structured_numpy_ndarray_as_struct` is set,
         and none of its fields are of dtype ``'object'``; it is set to
         ``'struct'`` overriding anything else.

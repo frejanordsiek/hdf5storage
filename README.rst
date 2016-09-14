@@ -30,7 +30,8 @@ Installation
 Dependencies
 ------------
 
-This package only supports Python >= 2.6.
+This package only supports Python >= 2.7. Python 2.6 support was dropped
+in version 0.2.
 
 This package requires the numpy and h5py (>= 2.1) packages to run. Note
 that full functionality requires h5py >= 2.3. An optional dependency is
@@ -59,10 +60,10 @@ Then to install the package, run the command with Python ::
 Running Tests
 -------------
 
-For testing, the package nose (>= 1.0) is required as well as unittest2
-on Python 2.6. There are some tests that require Matlab and scipy to be
-installed and be in the executable path. In addition, there are some
-tests that require `Julia <http://julialang.org/>`_ with the
+For testing, the package nose (>= 1.0) is additionally required. There
+are some tests that require Matlab and scipy to be installed and be in
+the executable path. In addition, there are some tests that require
+`Julia <http://julialang.org/>`_ with the
 `MAT <https://github.com/simonster/MAT.jl>`_ package. Not having them
 means that those tests cannot be run (they will be skipped) but all
 the other tests will run. To install all testing dependencies, other
@@ -90,8 +91,8 @@ To build the documentation ::
 Python 2
 ========
 
-This package was designed and written for Python 3, with Python 2.7 and
-2.6 support added later. This does mean that a few things are a little
+This package was designed and written for Python 3, and then backported
+to Python 2.x. This does mean that a few things are a little
 clunky in Python 2. For example, Python 2 ``int`` and ``long`` types are
 both mapped to the Python 3 ``int`` type. The storage format's metadata
 looks more familiar from a Python 3 standpoint as well.
@@ -182,7 +183,7 @@ support writing it so MATlAB can read it.
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | dict           | 0.1     |                         | struct      | 0.1     | [7]_              |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
-| cl.OrderedDict | 0.2     |                         | struct      | 0.2     | [7]_ [8]_         |
+| cl.OrderedDict | 0.2     |                         | struct      | 0.2     | [7]_              |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | np.bool\_      | 0.1     |                         | logical     | 0.1     |                   |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
@@ -204,7 +205,7 @@ support writing it so MATlAB can read it.
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | np.int64       | 0.1     |                         | int64       | 0.1     |                   |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
-| np.float16     | 0.1     |                         |             |         | [9]_              |
+| np.float16     | 0.1     |                         |             |         | [8]_              |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | np.float32     | 0.1     |                         | single      | 0.1     |                   |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
@@ -220,13 +221,13 @@ support writing it so MATlAB can read it.
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | np.object\_    | 0.1     |                         | cell        | 0.1     |                   |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
-| np.ndarray     | 0.1     | *see notes*             | *see notes* | 0.1     | [10]_ [11]_ [12]_ |
+| np.ndarray     | 0.1     | *see notes*             | *see notes* | 0.1     | [9]_  [10]_ [11]_ |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
-| np.matrix      | 0.1     | *see notes*             | *see notes* | 0.1     | [10]_             |
+| np.matrix      | 0.1     | *see notes*             | *see notes* | 0.1     | [9]_              |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
-| np.chararray   | 0.1     | *see notes*             | *see notes* | 0.1     | [10]_             |
+| np.chararray   | 0.1     | *see notes*             | *see notes* | 0.1     | [9]_              |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
-| np.recarray    | 0.1     | structured np.ndarray   | *see notes* | 0.1     | [10]_ [11]_       |
+| np.recarray    | 0.1     | structured np.ndarray   | *see notes* | 0.1     | [9]_ [10]_        |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
@@ -258,13 +259,11 @@ support writing it so MATlAB can read it.
        in Python 2 and they don't have null characters (``'\x00'``) or
        forward slashes (``'/'``) in them. Otherwise, the latter format
        is used.
-.. [8] Not supported in Python 2.6, so they are converted to ``dict``
-       when read from a file in Python 2.6.
-.. [9] ``np.float16`` are not supported for h5py versions before
+.. [8] ``np.float16`` are not supported for h5py versions before
        ``2.2``.
-.. [10] Container types are only supported if their underlying dtype is
-        supported. Data conversions are done based on its dtype.
-.. [11] Structured ``np.ndarray`` s (have fields in their dtypes) can be
+.. [9] Container types are only supported if their underlying dtype is
+       supported. Data conversions are done based on its dtype.
+.. [10] Structured ``np.ndarray`` s (have fields in their dtypes) can be
         written as an HDF5 COMPOUND type or as an HDF5 Group with
         Datasets holding its fields (either the values directly, or as
         an HDF5 Reference array to the values for the different elements
@@ -272,7 +271,7 @@ support writing it so MATlAB can read it.
         none of its field are of dtype ``'object'``. Field names cannot
         have null characters (``'\x00'``) and, when writing as an HDF5
         GROUP, forward slashes (``'/'``) in them.
-.. [12] Structured ``np.ndarray`` s with no elements, when written like a
+.. [11] Structured ``np.ndarray`` s with no elements, when written like a
         structure, will not be read back with the right dtypes for their
         fields (will all become 'object').
 
@@ -285,9 +284,9 @@ type they are read as.
 +=================+=========+===================================+
 | logical         | 0.1     | np.bool\_                         |
 +-----------------+---------+-----------------------------------+
-| single          | 0.1     | np.float32 or np.complex64 [13]_  |
+| single          | 0.1     | np.float32 or np.complex64 [12]_  |
 +-----------------+---------+-----------------------------------+
-| double          | 0.1     | np.float64 or np.complex128 [13]_ |
+| double          | 0.1     | np.float64 or np.complex128 [12]_ |
 +-----------------+---------+-----------------------------------+
 | uint8           | 0.1     | np.uint8                          |
 +-----------------+---------+-----------------------------------+
@@ -314,13 +313,29 @@ type they are read as.
 | canonical empty | 0.1     | ``np.float64([])``                |
 +-----------------+---------+-----------------------------------+
 
-.. [13] Depends on whether there is a complex part or not.
+.. [12] Depends on whether there is a complex part or not.
 
 
 Versions
 ========
 
-0.2. Feature release adding the following.
+0.2. Feature release adding/changing the following, including some API breaking changes.
+     * Issue #50. Python 2.6 support dropped. The
+       ``pkgutil.find_loader`` function is required, and it is not
+       present in Python 2.6.
+     * Issue #49. Changed marshaller types and their handling code to
+       support marshallers that handle types in modules that may not be
+       available or should not be imported until needed. If the the
+       required modules are not available, an approximate version of
+       the data is read using the ``read_approximate`` method of the
+       marshaller instead of the ``read`` method. The required modules,
+       if available, can either be imported immediately upon the
+       creation of the ``MarshallerCollection`` or they can be imported
+       only when the marshaller is needed for actual use (lazy loading).
+     * Issue #42. read and write functions moved from the ``lowlevel``
+       and ``Marshallers`` modules to the ``utilities`` module and
+       the ``lowlevel`` module renamed to ``exceptions`` since that is
+       all that remains in it.
      * Ability to write Python 3.x ``int`` and Python 2.x ``long`` that
        are too large to fit into ``np.int64``. Doing so no longer
        raises an exception.
@@ -333,10 +348,8 @@ Versions
        keys are not string like, can't be converted to Python 3.x
        ``str`` or Python 2.x ``unicode``, or have null or ``'/'``
        characters.
-     * Added support for ``cl.OrderedDict``. It was added to the
-       ``Marshallers.PythonDictMarshaller``. Note that in Python 2.6,
-       which doesn't support ``cl.OrderedDict``, they are mapped to
-       ``dict`` when read.
+     * Issue #38. Added support for ``cl.OrderedDict``. It was added to
+       the ``Marshallers.PythonDictMarshaller``.
      * Issue #40. Made it so that tests use tempfiles instead of
        using hardcoded filenames in the local directory.
      * Issue #41. Added tests using the Julia MAT package to check
