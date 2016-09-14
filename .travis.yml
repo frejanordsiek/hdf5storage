@@ -8,7 +8,6 @@ notifications:
   email: false
 
 python:
-  - "2.6"
   - "2.7"
   - "3.2"
   - "3.3"
@@ -22,8 +21,6 @@ before_install:
   - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
 
 # command to install dependencies
-#
-# Need unittest2 on Python 2.6.
 #
 # Seem to need newer Numpy as well.
 install:

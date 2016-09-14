@@ -1,3 +1,2 @@
 -r requirements.txt
-unittest2 ; python_version == '2.6'
 nose>=1.0

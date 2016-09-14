@@ -1,7 +1,7 @@
 import sys
 
-if sys.hexversion < 0x2060000:
-    raise NotImplementedError('Python < 2.6 not supported.')
+if sys.hexversion < 0x2070000:
+    raise NotImplementedError('Python < 2.7 not supported.')
 
 import ez_setup
 ez_setup.use_setuptools()
@@ -26,7 +26,6 @@ setup(name='hdf5storage',
       keywords='hdf5 matlab',
       zip_safe=True,
       classifiers=[
-          "Programming Language :: Python :: 2.6",
           "Programming Language :: Python :: 2.7",
           "Programming Language :: Python :: 3",
           "Development Status :: 3 - Alpha",
