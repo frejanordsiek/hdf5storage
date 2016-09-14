@@ -57,11 +57,45 @@ class TypeMarshaller(object):
     know if it is the appropriate marshaller to use and methods to
     actually do the reading and writing.
 
+    Marshallers are supported for types whose modules/packages may not
+    be present (only guaranteed modules/packages are the Python runtime,
+    numpy, and h5py). Obviously, if such a type is run into for writing,
+    the needed modules are there. However, if such a type is found in a
+    file for reading, it still needs to be read regardless of whether
+    the required modules are present or not. If the required modules are
+    there, the data will be read accurately using the ``read``
+    method. However, if one or more of the required modules are missing,
+    the data will be read approximately/inaccurately using the
+    ``read_approximate`` method is used, which must return an
+    approximation of the data utilizing standard Python types or numpy
+    types. A good example of a situation where this would be needed
+    would be reading back a scipy sparse type when scipy is not present
+    and thus it must be approximated (say, a conversion to a dense array
+    or just the fields specifying it in a ``dict``). Note that for types
+    not in the main Python runtime or numpy, their types in ``types``
+    must be specified as ``str`` of the form ``"<type 'X'>"`` where X is
+    the type (includes module path).
+
+    Whether the marshaller can read types accurately with ``read`` or
+    approximately with ``read_approximate`` is determined by whether the
+    parent modules in ``required_parent_modules`` is/are present or
+    not. If ``read`` is called, all the modules in ``required_modules``
+    will be loaded first (no additional latency). The ``read`` method
+    must locally load the modules, though, in order to use them.
+
+    Note that it may be convenient for a marshaller that handles types
+    in the main Python runtime but in modules that are rather large to
+    use specify their types as ``str`` in ``types`` and put the required
+    modules in ``required_parent_modules`` to not load those modules
+    unless they are necessary - lazy loading essentially.
+
     Subclasses should run this class's ``__init__()`` first
     thing. Inheritance information is in the **Notes** section of each
     method. Generally, ``read``, ``write``, and ``write_metadata`` need
     to be overridden and the different attributes set to the proper
-    values.
+    values. ``read_approximate`` needs to be overridden for marshallers
+    meant to handle types not from the main Python runtime and not from
+    numpy.
 
     For marshalling types that are containers of other data, one will
     need to appropriate read/write them with the lowlevel functions
@@ -69,6 +103,10 @@ class TypeMarshaller(object):
 
     Attributes
     ----------
+    required_parent_modules : list of str
+        The parent modules required for reading types accurately.
+    required_modules: list of str
+        The modules required to be loaded for reading types accurately.
     python_attributes : set of str
         Attributes used to store type information.
     matlab_attributes : set of str
@@ -91,6 +129,31 @@ class TypeMarshaller(object):
 
     """
     def __init__(self):
+        #: Parent modules required to accurately read types.
+        #:
+        #: list of str
+        #:
+        #: The names of the parent modules required to accurately
+        #: read the types handled by this marshaller. This list is
+        #: used to determine whether they can be read accurately, or
+        #: innaccurately due to missing the needed modules. Modules in
+        #: the main Python runtime and numpy do not need to be included
+        #: (they are assumed to be present). The default is ``[]``.
+        self.required_parent_modules = []
+
+        #: All required modules for reading the types accurately.
+        #:
+        #: list of str
+        #:
+        #: The modules (and submodules) that need to be loaded, in
+        #: order, to be able to read the types handled by this
+        #: marshaller accurately. All of the modules in
+        #: ``required_parent_modules`` must be included. Modules in
+        #: the main Python runtime and numpy do not need to be
+        #: included (they are assumed to be present). The default is
+        #: ``[]``.
+        self.required_modules = []
+
         #: Attributes used to store type information.
         #:
         #: set of str
@@ -110,10 +173,13 @@ class TypeMarshaller(object):
 
         #: List of Python types that can be marshalled.
         #:
-        #: list of types
+        #: list of types or str
         #:
-        #: ``list`` of the types (gotten by doing ``type(data)``) that the
-        #: marshaller can marshall. Default value is ``[]``.
+        #: ``list`` of the types that the marshaller can marshall. They
+        #: must all be the actual types gotten from ``type(data)``
+        #: or all be ``str`` gotten from doing ``str(type(data))`` which
+        #: look like ``"<type 'X'>"`` where X is the name of the type.
+        #: Default value is ``[]``.
         self.types = []
 
         #: Type strings of readable types.
@@ -279,6 +345,10 @@ class TypeMarshaller(object):
         Reads the Python object 'name' from the HDF5 Group 'grp', if
         possible, and returns it.
 
+        This method is called if the modules in
+        ``required_parent_modules`` can be found. Otherwise,
+        ``read_approximate`` is used instead.
+
         Parameters
         ----------
         f : h5py.File
@@ -308,6 +378,57 @@ class TypeMarshaller(object):
 
         See Also
         --------
+        read_approximate
+        required_parent_modules
+        required_modules
+        hdf5storage.utilities.read_data
+
+        """
+        raise NotImplementedError('Can''t read data: ' + name)
+
+    def read_approximate(self, f, grp, name, options):
+        """ Read a Python object approximately from file.
+
+        Reads the Python object 'name' from the HDF5 Group 'grp', if
+        possible, and returns an approximation of it constructed from
+        the types in the main Python runtime and numpy.
+
+        This method is called if the modules in
+        ``required_parent_modules`` cannot be found. Otherwise, ``read``
+        is used instead.
+
+        Parameters
+        ----------
+        f : h5py.File
+            The HDF5 file handle that is open.
+        grp : h5py.Group or h5py.File
+            The parent HDF5 Group (or File if at '/') that contains the
+            object with the specified name.
+        name : str
+            Name of the object.
+        options : hdf5storage.core.Options
+            hdf5storage options object.
+
+        Raises
+        ------
+        NotImplementedError
+            If reading the object from file is currently not supported.
+
+        Returns
+        -------
+        data
+            The Python object 'name' in the HDF5 Group 'grp'.
+
+        Notes
+        -----
+        Must be overridden in a subclass because a
+        ``NotImplementedError`` is thrown immediately.
+
+        See Also
+        --------
+        read
+        required_parent_modules
+        required_modules
         hdf5storage.utilities.read_data
 
         """

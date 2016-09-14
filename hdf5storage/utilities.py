@@ -79,17 +79,19 @@ def write_data(f, grp, name, data, type_string, options):
     hdf5storage.Options
 
     """
-    # Get the marshaller for type(data).
-
+    # Get the marshaller for type(data). The required modules should be
+    # here and imported.
     tp = type(data)
-    m = options.marshaller_collection.get_marshaller_for_type(tp)
+    m, has_modules = \
+        options.marshaller_collection.get_marshaller_for_type(tp)
 
-    # If a marshaller was found, use it to write the data. Otherwise,
-    # return an error. If we get something other than None back, then we
-    # must recurse through the entries. Also, we must set the H5PATH
-    # attribute to be the path to the containing group.
+    # If a marshaller was found and we have the required modules, use it
+    # to write the data. Otherwise, return an error. If we get something
+    # other than None back, then we must recurse through the
+    # entries. Also, we must set the H5PATH attribute to be the path to
+    # the containing group.
 
-    if m is not None:
+    if m is not None and has_modules:
         m.write(f, grp, name, data, type_string, options)
     else:
         raise NotImplementedError('Can''t write data type: '+str(tp))
@@ -144,30 +146,37 @@ def read_data(f, grp, name, options):
     # use the fallback (NumpyScalarArrayMarshaller for both Datasets and
     # Groups). If calls to the marshaller collection to get the right
     # marshaller don't return one (return None), we also go to the
-    # default).
+    # default). Also get whether we have the modules required to read it
+    # accurately or not (approximately)
 
     m = None
+    has_modules = False
     mc = options.marshaller_collection
     if type_string is not None:
-        m = mc.get_marshaller_for_type_string(type_string)
+        m, has_modules = mc.get_marshaller_for_type_string(type_string)
     elif matlab_class is not None:
-        m = mc.get_marshaller_for_matlab_class(matlab_class)
+        m, has_modules = \
+            mc.get_marshaller_for_matlab_class(matlab_class)
     elif hasattr(grp[name], 'dtype'):
         # Numpy dataset
-        m = mc.get_marshaller_for_type(grp[name].dtype)
+        m, has_modules = \
+            mc.get_marshaller_for_type(grp[name].dtype.type)
     elif isinstance(grp[name], (h5py.Group, h5py.File)):
         # Groups and files are like Matlab struct
-        m = mc.get_marshaller_for_matlab_class('struct')
+        m, has_modules = mc.get_marshaller_for_matlab_class('struct')
 
     if m is None:
         # use Numpy as a fallback
-        m = mc.get_marshaller_for_type(np.uint8)
+        m, has_modules = mc.get_marshaller_for_type(np.uint8)
 
     # If a marshaller was found, use it to write the data. Otherwise,
     # return an error.
 
     if m is not None:
-        return m.read(f, grp, name, options)
+        if has_modules:
+            return m.read(f, grp, name, options)
+        else:
+            return m.read_approximate(f, grp, name, options)
     else:
         raise hdf5storage.exceptions.CantReadError('Could not read '
                                                    + grp[name].name)

@@ -36,10 +36,21 @@ __version__ = "0.2"
 
 import sys
 import os
+import collections
 import posixpath
 import copy
 import inspect
 import datetime
+import pkgutil
+
+# Try to import importlib, setting a flag for whether it was found or
+# not.
+try:
+    import importlib
+    _has_importlib = True
+except:
+    _has_importlib = False
+
 import h5py
 
 from . import exceptions
@@ -944,9 +955,12 @@ class MarshallerCollection(object):
 
     Parameters
     ----------
-    marshallers : marshaller or list of marshallers, optional
-        The user marshaller/s to add to the collection. Could also be a
-        ``tuple``, ``set``, or ``frozenset`` of marshallers.
+    lazy_loading : bool, optional
+        Whether to attempt to load the required modules for each
+        marshaller right away when added/given or to only do so when
+        required (when marshaller is needed).
+    marshallers : marshaller or iterable of marshallers, optional
+        The user marshaller/s to add to the collection.
 
     See Also
     --------
@@ -954,7 +968,11 @@ class MarshallerCollection(object):
     hdf5storage.Marshallers.TypeMarshaller
 
     """
-    def __init__(self, marshallers=[]):
+    def __init__(self, lazy_loading=True, marshallers=[]):
+        if not isinstance(lazy_loading, bool):
+            raise TypeError('lazy_loading must be bool.')
+        self._lazy_loading = lazy_loading
+
         # Two lists of marshallers need to be maintained: one for the
         # builtin ones in the Marshallers module, and another for user
         # supplied ones.
@@ -969,8 +987,12 @@ class MarshallerCollection(object):
         # A list of all the marshallers will be needed along with
         # dictionaries to lookup up the marshaller to use for given
         # types, type string, or MATLAB class string (they are the
-        # keys).
+        # keys). Additional lists will be used to keep track of whether
+        # the required parent modules for each marshaller are present or
+        # not and whether the required modules are imported or not.
         self._marshallers = []
+        self._has_required_modules = []
+        self._imported_required_modules = []
         self._types = dict()
         self._type_strings = dict()
         self._matlab_classes = dict()
@@ -986,52 +1008,131 @@ class MarshallerCollection(object):
         marshaller to use for reading/writing Python objects to/from
         file.
 
+        Also checks for whether the required modules are present or not,
+        loading the required modules (if not doing lazy loading), and
+        whether the required modules are imported already or not.
+
         """
         # Combine both sets of marshallers.
-        self._marshallers = copy.deepcopy(self._builtin_marshallers)
-        self._marshallers.extend(copy.deepcopy(self._user_marshallers))
+        self._marshallers = []
+        self._marshallers.extend(self._builtin_marshallers)
+        self._marshallers.extend(self._user_marshallers)
+
+        # Determine whether the required modules are present, do module
+        # loading, and determine whether the required modules are
+        # imported.
+        self._has_required_modules = len(self._marshallers) * [False]
+        self._imported_required_modules = \
+            len(self._marshallers) * [False]
+
+        for i, m in enumerate(self._marshallers):
+            # Check if the required modules are here.
+            try:
+                for name in m.required_parent_modules:
+                    if name not in sys.modules \
+                            and pkgutil.find_loader(name) is None:
+                        raise ImportError('module not present')
+            except ImportError:
+                self._has_required_modules[i] = False
+            except:
+                raise
+            else:
+                self._has_required_modules[i] = True
+
+            # Modules obviously can't be fully loaded if not all are
+            # present.
+            if not self._has_required_modules[i]:
+                self._imported_required_modules[i] = False
+                continue
+
+            # Check if all modules are loaded or not, and load them if
+            # doing lazy loading.
+            try:
+                for name in m.required_modules:
+                    if name not in sys.modules:
+                        raise ImportError('module not loaded yet.')
+            except ImportError:
+                if self._lazy_loading:
+                    self._imported_required_modules[i] = False
+                else:
+                    success = self._import_marshaller_modules(m)
+                    self._has_required_modules[i] = success
+                    self._imported_required_modules[i] = success
+            except:
+                raise
+            else:
+                self._imported_required_modules[i] = True
 
         # Construct the dictionary to look up the appropriate marshaller
         # by type. It would normally be a dict comprehension such as
         #
-        # self._types = {tp: m for m in self._marshallers
+        # self._types = {tp: i for i, m in enumerate(self._marshallers)
         #                for tp in m.types}
         #
         # but that is not supported in Python 2.6 so it has to be done
         # with a for loop.
 
         self._types = dict()
-        for m in self._marshallers:
+        for i, m in enumerate(self._marshallers):
             for tp in m.types:
-                self._types[tp] = m
+                self._types[tp] = i
 
         # The equivalent one to read data types given type strings needs
         # to be created from it. Basically, we have to make the key be
         # the python_type_string from it. Same issue as before with
         # Python 2.6
         #
-        # self._type_strings = {type_string: m for key, m in
+        # self._type_strings = {type_string: i for key, i in
         #                       self._types.items() for type_string in
-        #                       m.python_type_strings}
+        #                       self._marshallers[i].python_type_strings}
 
         self._type_strings = dict()
-        for key, m in self._types.items():
-            for type_string in m.python_type_strings:
-                self._type_strings[type_string] = m
+        for key, i in self._types.items():
+            for type_string in self._marshallers[i].python_type_strings:
+                self._type_strings[type_string] = i
 
         # The equivalent one to read data types given MATLAB class
         # strings needs to be created from it. Basically, we have to
         # make the key be the matlab_class from it. Same issue as before
         # with Python 2.6
         #
-        # self._matlab_classes = {matlab_class: m for key, m in
+        # self._matlab_classes = {matlab_class: i for key, i in
         #                         self._types.items() for matlab_class in
-        #                         m.matlab_classes}
+        #                         self._marshallers[i].matlab_classes}
 
         self._matlab_classes = dict()
-        for key, m in self._types.items():
-            for matlab_class in m.matlab_classes:
-                self._matlab_classes[matlab_class] = m
+        for key, i in self._types.items():
+            for matlab_class in self._marshallers[i].matlab_classes:
+                self._matlab_classes[matlab_class] = i
+
+    def _import_marshaller_modules(self, m):
+        """ Imports the modules required by the marshaller.
+
+        Parameters
+        ----------
+        m : marshaller
+            The marshaller to load the modules for.
+
+        Returns
+        -------
+        success : bool
+            Whether the modules `m` requires could be imported
+            successfully or not.
+
+        """
+        try:
+            for name in m.required_modules:
+                if name not in sys.modules:
+                    if _has_importlib:
+                        importlib.import_module(name)
+                    else:
+                        __import__(name)
+        except ImportError:
+            return False
+        except:
+            raise
+        else:
+            return True
 
     def add_marshaller(self, marshallers):
         """ Add a marshaller/s to the user provided list.
@@ -1041,13 +1142,12 @@ class MarshallerCollection(object):
 
         Parameters
         ----------
-        marshallers : marshaller or list of marshallers
+        marshallers : marshaller or iterable of marshallers
             The user marshaller/s to add to the user provided
-            collection. Could also be a ``tuple``, ``set``, or
-            ``frozenset`` of marshallers.
+            collection.
 
         """
-        if not isinstance(marshallers, (list, tuple, set, frozenset)):
+        if not isinstance(marshallers, collections.Iterable):
             marshallers = [marshallers]
         for m in marshallers:
             if m not in self._user_marshallers:
@@ -1064,11 +1164,9 @@ class MarshallerCollection(object):
         ----------
         marshallers : marshaller or list of marshallers
             The user marshaller/s to from the user provided collection.
-            Could also be a ``tuple``, ``set``, or ``frozenset`` of
-            marshallers.
 
         """
-        if not isinstance(marshallers, (list, tuple, set, frozenset)):
+        if not isinstance(marshallers, collections.Iterable):
             marshallers = [marshallers]
         for m in marshallers:
             if m in self._user_marshallers:
@@ -1090,7 +1188,8 @@ class MarshallerCollection(object):
         """ Gets the appropriate marshaller for a type.
 
         Retrieves the marshaller, if any, that can be used to read/write
-        a Python object with type 'tp'.
+        a Python object with type 'tp'. The modules it requires, if
+        available, will be loaded.
 
         Parameters
         ----------
@@ -1099,25 +1198,42 @@ class MarshallerCollection(object):
 
         Returns
         -------
-        marshaller
+        marshaller : marshaller or None
             The marshaller that can read/write the type to
             file. ``None`` if no appropriate marshaller is found.
+        has_required_modules : bool
+            Whether the required modules for reading the type are
+            present or not.
 
         See Also
         --------
         hdf5storage.Marshallers.TypeMarshaller.types
 
         """
+        index = None
         if tp in self._types:
-            return copy.deepcopy(self._types[tp])
+            index = self._types[tp]
+        elif str(tp) in self._types:
+            index = self._types[str(tp)]
+        if index is None:
+            return None, False
         else:
-            return None
+            m = copy.deepcopy(self._marshallers[index])
+            if self._imported_required_modules[index]:
+                return m, True
+            if not self._has_required_modules[index]:
+                return m, False
+            success = self._import_marshaller_modules(m)
+            self._has_required_modules[index] = success
+            self._imported_required_modules[index] = success
+            return m, success
 
     def get_marshaller_for_type_string(self, type_string):
         """ Gets the appropriate marshaller for a type string.
 
         Retrieves the marshaller, if any, that can be used to read/write
-        a Python object with the given type string.
+        a Python object with the given type string. The modules it
+        requires, if available, will be loaded.
 
         Parameters
         ----------
@@ -1126,9 +1242,12 @@ class MarshallerCollection(object):
 
         Returns
         -------
-        marshaller
+        marshaller : marshaller or None
             The marshaller that can read/write the type to
             file. ``None`` if no appropriate marshaller is found.
+        has_required_modules : bool
+            Whether the required modules for reading the type are
+            present or not.
 
         See Also
         --------
@@ -1136,15 +1255,25 @@ class MarshallerCollection(object):
 
         """
         if type_string in self._type_strings:
-            return copy.deepcopy(self._type_strings[type_string])
+            index = self._type_strings[type_string]
+            m = copy.deepcopy(self._marshallers[index])
+            if self._imported_required_modules[index]:
+                return m, True
+            if not self._has_required_modules[index]:
+                return m, False
+            success = self._import_marshaller_modules(m)
+            self._has_required_modules[index] = success
+            self._imported_required_modules[index] = success
+            return m, success
         else:
-            return None
+            return None, False
 
     def get_marshaller_for_matlab_class(self, matlab_class):
         """ Gets the appropriate marshaller for a MATLAB class string.
 
         Retrieves the marshaller, if any, that can be used to read/write
-        a Python object associated with the given MATLAB class string.
+        a Python object associated with the given MATLAB class
+        string. The modules it requires, if available, will be loaded.
 
         Parameters
         ----------
@@ -1153,9 +1282,12 @@ class MarshallerCollection(object):
 
         Returns
         -------
-        marshaller
+        marshaller : marshaller or None
             The marshaller that can read/write the type to
             file. ``None`` if no appropriate marshaller is found.
+        has_required_modules : bool
+            Whether the required modules for reading the type are
+            present or not.
 
         See Also
         --------
@@ -1163,9 +1295,18 @@ class MarshallerCollection(object):
 
         """
         if matlab_class in self._matlab_classes:
-            return copy.deepcopy(self._matlab_classes[matlab_class])
+            index = self._matlab_classes[matlab_class]
+            m = copy.deepcopy(self._marshallers[index])
+            if self._imported_required_modules[index]:
+                return m, True
+            if not self._has_required_modules[index]:
+                return m, False
+            success = self._import_marshaller_modules(m)
+            self._has_required_modules[index] = success
+            self._imported_required_modules[index] = success
+            return m, success
         else:
-            return None
+            return None, False
 
 
 def writes(mdict, filename='data.h5', truncate_existing=False,
