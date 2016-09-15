@@ -257,24 +257,38 @@ class Options(object):
 
         # Use the given marshaller collection if it was
         # given. Otherwise, use the default.
-
-        #: Collection of marshallers to disk.
-        #:
-        #: MarshallerCollection
-        #:
-        #: If not passed as an initialization argument, the default one
-        #: from ``get_default_MarshallerCollection`` is used.
-        #:
-        #: See Also
-        #: --------
-        #: MarshallerCollection
-        #: get_default_MarshallerCollection
-        #: make_new_default_MarshallerCollection
         if isinstance(marshaller_collection, MarshallerCollection):
-            self.marshaller_collection = marshaller_collection
+            self._marshaller_collection = marshaller_collection
         else:
-            self.marshaller_collection = \
+            self._marshaller_collection = \
                 get_default_MarshallerCollection()
+
+    @property
+    def marshaller_collection(self):
+        """ The MarshallerCollection to use.
+
+        MarshallerCollection
+
+        The ``MarshallerCollection`` (collection of marshallers to disk)
+        to use. The default is to use the default one from
+        ``get_default_MarshallerCollection``. Only copies are returned.
+
+        See Also
+        --------
+        MarshallerCollection
+        get_default_MarshallerCollection
+        make_new_default_MarshallerCollection
+
+        """
+        return copy.deepcopy(self._marshaller_collection)
+
+    @marshaller_collection.setter
+    def marshaller_collection(self, value):
+        # Check that it is a MarshallerCollection, and then set it. This
+        # option does not effect MATLAB compatibility
+        if isinstance(value, MarshallerCollection):
+            self._marshaller_collection = value
+
 
     @property
     def store_python_metadata(self):
