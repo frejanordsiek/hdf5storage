@@ -169,10 +169,6 @@ class Options(object):
     shuffle_filter : bool
     compressed_fletcher32_filter : bool
     uncompressed_fletcher32_filter : bool
-    scalar_options : dict
-        ``h5py.Group.create_dataset`` options for writing scalars.
-    array_options : dict
-        ``h5py.Group.create_dataset`` options for writing scalars.
     marshaller_collection : MarshallerCollection
         Collection of marshallers to disk.
 
@@ -258,12 +254,6 @@ class Options(object):
         self.uncompressed_fletcher32_filter = \
             uncompressed_fletcher32_filter
         self.matlab_compatible = matlab_compatible
-
-        # Set the h5py options to use for writing scalars and arrays to
-        # blank for now.
-
-        self.scalar_options = dict()
-        self.array_options = dict()
 
         # Use the given marshaller collection if it was
         # given. Otherwise, use the default.
