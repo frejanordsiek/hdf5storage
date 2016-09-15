@@ -272,12 +272,19 @@ class Options(object):
         #:
         #: MarshallerCollection
         #:
+        #: If not passed as an initialization argument, the default one
+        #: from ``get_default_MarshallerCollection`` is used.
+        #:
         #: See Also
         #: --------
         #: MarshallerCollection
-        self.marshaller_collection = marshaller_collection
-        if not isinstance(marshaller_collection, MarshallerCollection):
-            self.marshaller_collection = MarshallerCollection()
+        #: get_default_MarshallerCollection
+        #: make_new_default_MarshallerCollection
+        if isinstance(marshaller_collection, MarshallerCollection):
+            self.marshaller_collection = marshaller_collection
+        else:
+            self.marshaller_collection = \
+                get_default_MarshallerCollection()
 
     @property
     def store_python_metadata(self):
@@ -1905,3 +1912,55 @@ def loadmat(file_name, mdict=None, appendmat=True,
         return scipy.io.loadmat(file_name, mdict, appendmat=appendmat,
                                 variable_names=variable_names,
                                 **keywords)
+
+
+def get_default_MarshallerCollection():
+    """ Gets a copy of the default MarshallerCollection.
+
+    It only includes the builtin marshallers in the ``Marshallers``
+    submodule.
+
+    Returns
+    -------
+    mc : MarshallerCollection
+        The default MarshallerCollection.
+
+    See Also
+    --------
+    make_new_default_MarshallerCollection
+
+    """
+    return copy.deepcopy(_default_marshaller_collection[0])
+
+
+def make_new_default_MarshallerCollection(*args, **keywords):
+    """ Makes a new default MarshallerCollection.
+
+    Replaces the current default ``MarshallerCollection`` with a new
+    one.
+
+    Parameters
+    ----------
+    *args : positional arguments
+        Positional arguments to use in creating the
+       ``MarshallerCollection``.
+    **keywords : keywords arguments
+        Keyword arguments to use in creating the
+       ``MarshallerCollection``.
+
+    See Also
+    --------
+    MarshallerCollection
+    get_default_MarshallerCollection
+
+    """
+    _default_marshaller_collection[0] = MarshallerCollection(*args,
+                                                             **keywords)
+
+
+# Make a default MarshallerCollection of just the builtins with lazy
+# loading. This will be used as the source for those used in options. It
+# must be packed into a list so that it can be set from functions inside
+# this module without scoping problems.
+_default_marshaller_collection = [None]
+make_new_default_MarshallerCollection(lazy_loading=True)

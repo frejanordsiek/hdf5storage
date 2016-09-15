@@ -336,6 +336,13 @@ Versions
        if available, can either be imported immediately upon the
        creation of the ``MarshallerCollection`` or they can be imported
        only when the marshaller is needed for actual use (lazy loading).
+     * Issue #52. Added the usage of a default ``MarshallerColllection``
+       which is used whenever creating a new ``Options`` without
+       a ``MarshallerCollection`` specified. The default can be
+       obtained using ``get_default_MarshallerCollection`` and a new
+       default can be generated using
+       ``make_new_default_MarshallerCollection``. This is useful if
+       one wants to override the default lazy loading behavior.
      * Issue #42. read and write functions moved from the ``lowlevel``
        and ``Marshallers`` modules to the ``utilities`` module and
        the ``lowlevel`` module renamed to ``exceptions`` since that is

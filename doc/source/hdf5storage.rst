@@ -13,6 +13,8 @@ hdf5storage
    reads
    savemat
    loadmat
+   get_default_MarshallerCollection
+   make_new_default_MarshallerCollection
    Options
    MarshallerCollection
 
@@ -51,6 +53,18 @@ loadmat
 -------
 
 .. autofunction:: loadmat
+
+
+get_default_MarshallerCollection
+--------------------------------
+
+.. autofunction:: get_default_MarshallerCollection
+
+
+make_new_default_MarshallerCollection
+-------------------------------------
+
+.. autofunction:: make_new_default_MarshallerCollection
 
 
 Options
