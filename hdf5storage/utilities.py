@@ -124,9 +124,10 @@ def _replace_fun_unescape(m):
     if count % 2 == 0:
         return s
     else:
-        c = chr(int(s[(count + 1):], base=16))
-        if sys.hexversion < 0x03000000:
-            c = c.decode('utf-8')
+        if sys.hexversion >= 0x03000000:
+            c = chr(int(s[(count + 1):], base=16))
+        else:
+            c = unichr(int(s[(count + 1):], base=16))
         return slsh * (count - 1) + c
 
 
