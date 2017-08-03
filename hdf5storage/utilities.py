@@ -552,18 +552,19 @@ def write_object_array(f, data, options):
     # and action_for_matlab_incompatible option is True), the reference
     # to the canonical empty will be used for the reference array to
     # point to.
+    grp2name = grp2.name
     for index, x in np.ndenumerate(data):
-        data_refs[index] = None
         name_for_ref = next_unused_name_in_group(grp2, 16)
         write_data(f, grp2, name_for_ref, x, None, options)
-        if name_for_ref in grp2:
-            data_refs[index] = grp2[name_for_ref].ref
+        try:
+            dset = grp2[name_for_ref]
+            data_refs[index] = dset.ref
             if options.matlab_compatible:
-                set_attribute_string(grp2[name_for_ref],
-                                     'H5PATH', grp2.name)
+                set_attribute_string(dset,
+                                     'H5PATH', grp2name)
             else:
-                del_attribute(grp2[name_for_ref], 'H5PATH')
-        else:
+                del_attribute(dset, 'H5PATH')
+        except:
             data_refs[index] = grp2['a'].ref
 
     # Now, the dtype needs to be changed to the reference type and the
@@ -610,11 +611,8 @@ def read_object_array(f, data, options):
     # references, and the putting the output in new object array.
     data_derefed = np.zeros(shape=data.shape, dtype='object')
     for index, x in np.ndenumerate(data):
-        try:
-            data_derefed[index] = read_data(f, f[x].parent, \
-                posixpath.basename(f[x].name), options)
-        except:
-            raise
+        data_derefed[index] = read_data(f, f[x].parent, \
+            posixpath.basename(f[x].name), options)
     return data_derefed
 
 
@@ -1230,10 +1228,10 @@ def get_attribute(target, name):
     isn't.
 
     """
-    if name not in target.attrs:
-        return None
-    else:
+    try:
         return target.attrs[name]
+    except:
+        return None
 
 
 def get_attribute_string(target, name):
@@ -1315,13 +1313,10 @@ def set_attribute(target, name, value):
         Value to set the attribute to.
 
     """
-    if name not in target.attrs:
-        target.attrs.create(name, value)
-    elif target.attrs[name].dtype != value.dtype \
-            or target.attrs[name].shape != value.shape:
-        target.attrs.create(name, value)
-    elif np.any(target.attrs[name] != value):
+    try:
         target.attrs.modify(name, value)
+    except:
+        target.attrs.create(name, value)
 
 
 def set_attribute_string(target, name, value):
@@ -1383,5 +1378,7 @@ def del_attribute(target, name):
         Name of the attribute to delete.
 
     """
-    if name in target.attrs:
+    try:
         del target.attrs[name]
+    except:
+        pass

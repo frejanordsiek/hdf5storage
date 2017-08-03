@@ -46,6 +46,11 @@ try:
 except:
     _H5PY_VERSION = '2.0'
 
+_has_h5py_2p2 = (distutils.version.LooseVersion(_H5PY_VERSION)
+                 >= distutils.version.LooseVersion('2.2'))
+_has_h5py_2p3 = (distutils.version.LooseVersion(_H5PY_VERSION)
+                 >= distutils.version.LooseVersion('2.3'))
+
 
 class TypeMarshaller(object):
     """ Base class for marshallers of Python types.
@@ -517,8 +522,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_classes = list(self.__MATLAB_classes.values())
 
         # For h5py >= 2.2, half precisions (np.float16) are supported.
-        if distutils.version.LooseVersion(_H5PY_VERSION) \
-                >= distutils.version.LooseVersion('2.2'):
+        if _has_h5py_2p2:
             self.types.append(np.float16)
             self.python_type_strings.append('numpy.float16')
 
@@ -542,7 +546,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # Need to make a set of data that will be stored. It will start
         # out as a copy of data and then be steadily manipulated.
 
-        data_to_store = data.copy()
+        data_to_store = data
 
         # recarrays must be converted to structured ndarrays in order
         # for h5py to be able to write them.
@@ -718,7 +722,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # case). Otherwise, write the whole thing.
                 if np.prod(new_data.shape) == 1:
                     write_data(f, grp2, esc_field,
-                               new_data.flatten()[0], None, options)
+                               new_data.flat[0], None, options)
                 else:
                     write_data(f, grp2, esc_field, new_data, None,
                                options)
@@ -810,6 +814,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         TypeMarshaller.write_metadata(self, f, grp, name, data,
                                       type_string, options)
+        dset = grp[name]
 
         # Write the underlying numpy type if we are storing python
         # information.
@@ -819,7 +824,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # 'matrix', or 'chararray') need to be stored.
 
         if options.store_python_metadata:
-            set_attribute(grp[name], 'Python.Shape',
+            set_attribute(dset, 'Python.Shape',
                           np.uint64(data.shape))
 
             # Now, in Python 3, the dtype names for bare bytes and
@@ -827,7 +832,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # but in Python 2, they start with 'string' and 'unicode'
             # respectively. The Python 2 ones must be converted to the
             # Python 3 ones for writing.
-            set_attribute_string(grp[name], \
+            set_attribute_string(dset, \
                 'Python.numpy.UnderlyingType', \
                 data.dtype.name.replace('string', 'bytes').replace( \
                 'unicode', 'str'))
@@ -841,7 +846,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 container = 'ndarray'
             else:
                 container = 'scalar'
-            set_attribute_string(grp[name], 'Python.numpy.Container',
+            set_attribute_string(dset, 'Python.numpy.Container',
                                  container)
 
         # If its dtype has fields and we would have written it as a
@@ -866,11 +871,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     and data.dtype.fields is not None \
                     and (options.structured_numpy_ndarray_as_struct \
                     or (", 'O'" in str_dtype or '\\x00' in str_dtype)):
-                set_attribute_string_array(grp[name],
+                set_attribute_string_array(dset,
                                            'Python.Fields',
                                            field_names)
             else:
-                del_attribute(grp[name], 'Python.Fields')
+                del_attribute(dset, 'Python.Fields')
 
             # If we are making it MATLAB compatible and have h5py
             # version >= 2.3, then we can set the MATLAB_fields
@@ -878,10 +883,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # ASCII. Otherwise, the attribute should be deleted. It is
             # written as a vlen='S1' array of bytes_ arrays of the
             # individual characters.
-            if options.matlab_compatible \
-                    and distutils.version.LooseVersion( \
-                    _H5PY_VERSION) \
-                    >= distutils.version.LooseVersion('2.3'):
+            if options.matlab_compatible and _has_h5py_2p3:
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
                     fs = np.empty(shape=(len(field_names),), dtype=dt)
@@ -889,14 +891,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         fs[i] = np.array([c.encode('ascii')
                                           for c in s], dtype='S1')
                 except UnicodeEncodeError:
-                    del_attribute(grp[name], 'MATLAB_fields')
+                    del_attribute(dset, 'MATLAB_fields')
                 else:
-                    set_attribute(grp[name], 'MATLAB_fields', fs)
+                    set_attribute(dset, 'MATLAB_fields', fs)
             else:
-                del_attribute(grp[name], 'MATLAB_fields')
+                del_attribute(dset, 'MATLAB_fields')
         else:
-            del_attribute(grp[name], 'Python.Fields')
-            del_attribute(grp[name], 'MATLAB_fields')
+            del_attribute(dset, 'Python.Fields')
+            del_attribute(dset, 'MATLAB_fields')
 
         # If data is empty, we need to set the Python.Empty and
         # MATLAB_empty attributes to 1 if we are storing type info or
@@ -907,18 +909,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or data.dtype.type == np.str_)
                 and data.nbytes == 0):
             if options.store_python_metadata:
-                set_attribute(grp[name], 'Python.Empty',
+                set_attribute(dset, 'Python.Empty',
                                           np.uint8(1))
             else:
-                del_attribute(grp[name], 'Python.Empty')
+                del_attribute(dset, 'Python.Empty')
             if options.matlab_compatible:
-                set_attribute(grp[name], 'MATLAB_empty',
+                set_attribute(dset, 'MATLAB_empty',
                                           np.uint8(1))
             else:
-                del_attribute(grp[name], 'MATLAB_empty')
+                del_attribute(dset, 'MATLAB_empty')
         else:
-            del_attribute(grp[name], 'Python.Empty')
-            del_attribute(grp[name], 'MATLAB_empty')
+            del_attribute(dset, 'Python.Empty')
+            del_attribute(dset, 'MATLAB_empty')
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set looking up the data type (gotten
@@ -934,74 +936,74 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if options.matlab_compatible:
             if data.dtype.fields is not None \
                     and options.structured_numpy_ndarray_as_struct:
-                set_attribute_string(grp[name], 'MATLAB_class',
+                set_attribute_string(dset, 'MATLAB_class',
                                      'struct')
             elif tp in self.__MATLAB_classes:
-                set_attribute_string(grp[name], 'MATLAB_class',
+                set_attribute_string(dset, 'MATLAB_class',
                                      self.__MATLAB_classes[tp])
                 if tp in (np.bytes_, np.str_, np.bool_):
-                    if grp[name].dtype.type == np.bytes_:
-                        set_attribute(grp[name], 'MATLAB_int_decode', 1)
+                    if dset.dtype.type == np.bytes_:
+                        set_attribute(dset, 'MATLAB_int_decode', 1)
                     else:
-                        set_attribute(grp[name], 'MATLAB_int_decode', \
-                            np.int64(grp[name].dtype.itemsize))
+                        set_attribute(dset, 'MATLAB_int_decode', \
+                            np.int64(dset.dtype.itemsize))
                 else:
-                    del_attribute(grp[name], 'MATLAB_int_decode')
+                    del_attribute(dset, 'MATLAB_int_decode')
             else:
-                del_attribute(grp[name], 'MATLAB_class')
-                del_attribute(grp[name], 'MATLAB_empty')
-                del_attribute(grp[name], 'MATLAB_int_decode')
+                del_attribute(dset, 'MATLAB_class')
+                del_attribute(dset, 'MATLAB_empty')
+                del_attribute(dset, 'MATLAB_int_decode')
         else:
-            del_attribute(grp[name], 'MATLAB_class')
-            del_attribute(grp[name], 'MATLAB_empty')
-            del_attribute(grp[name], 'MATLAB_int_decode')
+            del_attribute(dset, 'MATLAB_class')
+            del_attribute(dset, 'MATLAB_empty')
+            del_attribute(dset, 'MATLAB_int_decode')
 
     def read(self, f, grp, name, options):
         # If name is not present, then we can't read it and have to
         # throw an error.
         if name not in grp:
             raise NotImplementedError(name + ' is not present.')
+        dset = grp[name]
 
         # Get the different attributes this marshaller uses.
 
-        type_string = get_attribute_string(grp[name], 'Python.Type')
-        underlying_type = get_attribute_string(grp[name], \
+        type_string = get_attribute_string(dset, 'Python.Type')
+        underlying_type = get_attribute_string(dset, \
             'Python.numpy.UnderlyingType')
-        shape = get_attribute(grp[name], 'Python.Shape')
-        container = get_attribute_string(grp[name], \
+        shape = get_attribute(dset, 'Python.Shape')
+        container = get_attribute_string(dset, \
             'Python.numpy.Container')
-        python_empty = get_attribute(grp[name], 'Python.Empty')
-        python_fields = get_attribute_string_array(grp[name], \
+        python_empty = get_attribute(dset, 'Python.Empty')
+        python_fields = get_attribute_string_array(dset, \
             'Python.Fields')
 
-        matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
-        matlab_empty = get_attribute(grp[name], 'MATLAB_empty')
+        matlab_class = get_attribute_string(dset, 'MATLAB_class')
+        matlab_empty = get_attribute(dset, 'MATLAB_empty')
 
         # If we are using h5py version >= 2.3, we can actually read the
         # MATLAB_fields Attribute if it is present.
         matlab_fields = None
-        if distutils.version.LooseVersion(_H5PY_VERSION) \
-                >= distutils.version.LooseVersion('2.3'):
-            matlab_fields = get_attribute(grp[name], 'MATLAB_fields')
+        if _has_h5py_2p3:
+            matlab_fields = get_attribute(dset, 'MATLAB_fields')
 
         # If it is a Dataset, it can simply be read and then acted upon
         # (if it is an HDF5 Reference array, it will need to be read
         # recursively). If it is a Group, then it is a structured
         # ndarray like object that needs to be read field wise and
         # constructed.
-        if isinstance(grp[name], h5py.Dataset):
+        if isinstance(dset, h5py.Dataset):
             # Read the data.
-            data = grp[name][...]
+            data = dset[...]
 
             # If it is a reference type, then we need to make an object
             # array that is its replicate, but with the objects they are
             # pointing to in their elements instead of just the
             # references.
-            if h5py.check_dtype(ref=grp[name].dtype) is not None:
+            if h5py.check_dtype(ref=dset.dtype) is not None:
                 data = read_object_array(f, data, options)
         else:
             # Starting with an empty dict, all that has to be done is
-            # iterate through all the Datasets and Groups in grp[name]
+            # iterate through all the Datasets and Groups in dset
             # and add them to a dict with their name as the key. Since
             # we don't want an exception thrown by reading an element to
             # stop the whole reading process, the reading is wrapped in
@@ -1017,23 +1019,23 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # struct_data.
             struct_data = dict()
             is_multi_element = True
-            for k in grp[name]:
+            for k in dset:
                 # Unescape the name.
                 unescaped_k = unescape_path(k)
                 # We must exclude group_for_references
-                if grp[name][k].name == options.group_for_references:
+                if dset[k].name == options.group_for_references:
                     continue
-                fld = grp[name][k]
+                fld = dset[k]
                 if isinstance(fld, h5py.Group) \
                         or h5py.check_dtype(ref=fld.dtype) is None \
-                        or len(set(fld.attrs.keys()) \
+                        or len(set(fld.attrs) \
                         & ((set(self.python_attributes) \
                         | set(self.matlab_attributes))
                         - set(['H5PATH', 'MATLAB_empty',
                         'Python.Empty']))) != 0:
                     is_multi_element = False
                 try:
-                    struct_data[unescaped_k] = read_data(f, grp[name],
+                    struct_data[unescaped_k] = read_data(f, dset,
                                                          k, options)
                 except:
                     pass
@@ -1062,11 +1064,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # Now, there may be fields available that were not
                 # given, but still should be read. Keys that are not in
                 # python_fields need to be added to the list.
-                extra_fields = list(set(struct_data.keys())
+                extra_fields = list(set(struct_data)
                                     - set(fields))
                 fields.extend(sorted(extra_fields))
             else:
-                fields = sorted(list(struct_data.keys()))
+                fields = sorted(struct_data)
 
             dt_whole = []
             for k in fields:
@@ -1084,12 +1086,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # If any of the elements are not Numpy types or if they
                 # don't all have the exact same dtype and shape, then
                 # this field will just be an object field.
-                if v.size == 0 or not isinstance(v.flatten()[0], \
+                if v.size == 0 or not isinstance(v.flat[0], \
                         tuple(self.types)):
                     dt_whole.append((k_name, 'object'))
                     continue
 
-                first = v.flatten()[0]
+                first = v.flat[0]
                 dt = first.dtype
                 sp = first.shape
                 all_same = True
@@ -1239,7 +1241,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # needs to be reshaped.
             if tuple(shape) != data.shape \
                     and np.prod(shape) == np.prod(data.shape):
-                data = data.reshape(tuple(shape))
+                data.shape = tuple(shape)
 
             # If data is a structured ndarray and the type string says
             # it is a recarray, then turn it into one.
@@ -1255,14 +1257,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     if python_empty == 1:
                         data = np.bytes_(b'')
                     elif isinstance(data, np.ndarray):
-                        data = data.flatten()[0]
+                        data = data.flat[0]
                 elif underlying_type.startswith('str'):
                     if python_empty == 1:
                         data = np.unicode_('')
                     elif isinstance(data, np.ndarray):
-                        data = data.flatten()[0]
+                        data = data.flat[0]
                 else:
-                    data = data.flatten()[0]
+                    data = data.flat[0]
             elif container == 'matrix':
                 data = np.asmatrix(data)
             elif container == 'chararray':
@@ -1605,6 +1607,7 @@ class PythonDictMarshaller(TypeMarshaller):
 
         TypeMarshaller.write_metadata(self, f, grp, name, data,
                                       type_string, options)
+        dset = grp[name]
 
         # Grab all the keys in whatever order is given (OrderedDict will
         # be in the order they were entered and dict will be sorted).
@@ -1616,22 +1619,22 @@ class PythonDictMarshaller(TypeMarshaller):
         # being stored individually.
         if options.store_python_metadata:
             if any_non_valid_str_keys is True:
-                set_attribute_string(grp[name], 'Python.dict.StoredAs',
+                set_attribute_string(dset, 'Python.dict.StoredAs',
                               'keys_values')
-                set_attribute_string_array(grp[name], \
+                set_attribute_string_array(dset, \
                     'Python.dict.keys_values_names', \
                     [options.dict_like_keys_name, \
                     options.dict_like_values_name])
-                del_attribute(grp[name], 'Python.Fields')
-                del_attribute(grp[name], 'Python.dict.key_str_types')
+                del_attribute(dset, 'Python.Fields')
+                del_attribute(dset, 'Python.dict.key_str_types')
             else:
-                set_attribute_string(grp[name], 'Python.dict.StoredAs',
+                set_attribute_string(dset, 'Python.dict.StoredAs',
                               'individually')
-                del_attribute(grp[name],
+                del_attribute(dset,
                               'Python.dict.keys_values_names')
-                set_attribute_string_array(grp[name], 'Python.Fields',
+                set_attribute_string_array(dset, 'Python.Fields',
                                            fields)
-                set_attribute_string(grp[name],
+                set_attribute_string(dset,
                                      'Python.dict.key_str_types',
                                      convert_to_str(key_str_types))
 
@@ -1642,8 +1645,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # bytes_ arrays of the individual characters.
         if options.matlab_compatible \
                 and any_non_valid_str_keys is False \
-                and distutils.version.LooseVersion(_H5PY_VERSION) \
-                >= distutils.version.LooseVersion('2.3'):
+                and _has_h5py_2p3:
             try:
                 dt = h5py.special_dtype(vlen=np.dtype('S1'))
                 fs = np.empty(shape=(len(fields),), dtype=dt)
@@ -1651,13 +1653,13 @@ class PythonDictMarshaller(TypeMarshaller):
                     fs[i] = np.array([c.encode('ascii') for c in s],
                                      dtype='S1')
             except UnicodeDecodeError:
-                del_attribute(grp[name], 'MATLAB_fields')
+                del_attribute(dset, 'MATLAB_fields')
             except UnicodeEncodeError:
-                del_attribute(grp[name], 'MATLAB_fields')
+                del_attribute(dset, 'MATLAB_fields')
             else:
-                set_attribute(grp[name], 'MATLAB_fields', fs)
+                set_attribute(dset, 'MATLAB_fields', fs)
         else:
-            del_attribute(grp[name], 'MATLAB_fields')
+            del_attribute(dset, 'MATLAB_fields')
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set for the data type. If the type
@@ -1666,10 +1668,10 @@ class PythonDictMarshaller(TypeMarshaller):
 
         tp = type(data)
         if options.matlab_compatible and tp in self.__MATLAB_classes:
-            set_attribute_string(grp[name], 'MATLAB_class',
+            set_attribute_string(dset, 'MATLAB_class',
                                  self.__MATLAB_classes[tp])
         else:
-            del_attribute(grp[name], 'MATLAB_class')
+            del_attribute(dset, 'MATLAB_class')
 
     def read(self, f, grp, name, options):
         # If name is not present or is not a Group, then we can't read
@@ -1677,28 +1679,28 @@ class PythonDictMarshaller(TypeMarshaller):
         if name not in grp or not isinstance(grp[name], h5py.Group):
             raise NotImplementedError('No Group ' + name +
                                       ' is present.')
+        grp2 = grp[name]
 
         # Get the different attributes this marshaller uses.
 
-        type_string = get_attribute_string(grp[name], 'Python.Type')
-        python_fields = get_attribute_string_array(grp[name],
+        type_string = get_attribute_string(grp2, 'Python.Type')
+        python_fields = get_attribute_string_array(grp2,
                                                    'Python.Fields')
-        stored_as = get_attribute_string(grp[name],
+        stored_as = get_attribute_string(grp2,
                                          'Python.dict.StoredAs')
-        keys_values_names = get_attribute_string_array(grp[name], \
+        keys_values_names = get_attribute_string_array(grp2, \
             'Python.dict.keys_values_names')
         if keys_values_names is None:
             keys_values_names = (options.dict_like_keys_name,
                                  options.dict_like_values_name)
-        key_str_types = get_attribute_string(grp[name], \
+        key_str_types = get_attribute_string(grp2, \
             'Python.dict.key_str_types')
 
         # If we are using h5py version >= 2.3, we can actually read the
         # MATLAB_fields Attribute if it is present.
         matlab_fields = None
-        if distutils.version.LooseVersion(_H5PY_VERSION) \
-                >= distutils.version.LooseVersion('2.3'):
-            matlab_fields = get_attribute(grp[name], 'MATLAB_fields')
+        if _has_h5py_2p3:
+            matlab_fields = get_attribute(grp2, 'MATLAB_fields')
 
         # How the dict like is read depends on how it is stored as. The
         # dict like's items will be constructed. If it is stored as
@@ -1706,9 +1708,9 @@ class PythonDictMarshaller(TypeMarshaller):
         # generating the items directly from them. Otherwise, each field
         # needs to be read individually.
         if stored_as == 'keys_values' \
-                and escape_path(keys_values_names[0]) in grp[name] \
-                and escape_path(keys_values_names[1]) in grp[name]:
-            d = tuple([read_data(f, grp[name], escape_path(k), options)
+                and escape_path(keys_values_names[0]) in grp2 \
+                and escape_path(keys_values_names[1]) in grp2:
+            d = tuple([read_data(f, grp2, escape_path(k), options)
                        for k in keys_values_names])
             items = zip(*d)
         else:
@@ -1725,7 +1727,7 @@ class PythonDictMarshaller(TypeMarshaller):
                           for k in matlab_fields]:
                     if s not in fields:
                         fields.append(s)
-            for k in grp[name]:
+            for k in grp2:
                 if k not in fields:
                     fields.append(k)
 
@@ -1746,10 +1748,10 @@ class PythonDictMarshaller(TypeMarshaller):
                 try:
                     uk = unescape_path(k)
                     # We must exclude group_for_references
-                    if grp[name][k].name \
+                    if grp2[k].name \
                             == options.group_for_references:
                         continue
-                    v = read_data(f, grp[name], k, options)
+                    v = read_data(f, grp2, k, options)
 
                     # Now, if python_fields and key_str_types are both
                     # present and we haven't gotten past the
