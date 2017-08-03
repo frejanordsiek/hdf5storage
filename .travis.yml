@@ -28,14 +28,14 @@ python:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
+  - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0 cython cython3
 
 # command to install dependencies
 #
 # Seem to need newer Numpy as well.
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' || $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -U numpy==1.11.3; else pip install -U numpy; fi
-  - pip install -U h5py$H5PY_VERSION
+  - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
 
 # command to run tests
