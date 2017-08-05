@@ -635,17 +635,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # those have to be excluded too. Also, if any of its fields are
         # an object time (no matter how nested), then rather than
         # converting that field to a HDF5 Reference types, it will just
-        # be written as a Group instead (just have to see if ", 'O'" is
-        # in str(data_to_store.dtype). The same goes for if there is a
-        # null inside its dtype.
+        # be written as a Group instead (dtypes have a useful hasobject
+        # method). The same goes for if there is a null inside its
+        # dtype.
 
-        str_dtype = str(data_to_store.dtype)
         if data_to_store.dtype.fields is not None \
                 and h5py.check_dtype(ref=data_to_store.dtype) \
                 is not h5py.Reference \
                 and not np.iscomplexobj(data) \
                 and (options.structured_numpy_ndarray_as_struct \
-                or (", 'O'" in str_dtype or '\\x00' in str_dtype) \
+                or (data_to_store.dtype.hasobject \
+                or '\\x00' in str(data_to_store.dtype)) \
                 or not all(data_to_store.shape) \
                 or not all([all(data_to_store[n].shape) \
                 for n in data_to_store.dtype.names])):
@@ -839,10 +839,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # names if we are storing python metadata or doing matlab
         # compatibility and we are storing a structured ndarray as a
         # structure.
-        str_dtype = str(data.dtype)
+        has_obj = data.dtype.hasobject
+        has_null = '\\x00' in str(data.dtype)
         if data.dtype.fields is not None \
                 and (options.structured_numpy_ndarray_as_struct \
-                or (", 'O'" in str_dtype or '\\x00' in str_dtype) \
+                or (has_obj or has_null) \
                 or not all(data.shape) \
                 or not all([all(data[n].shape) \
                 for n in data.dtype.names])):
@@ -853,7 +854,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             if options.store_python_metadata \
                     and data.dtype.fields is not None \
                     and (options.structured_numpy_ndarray_as_struct \
-                    or (", 'O'" in str_dtype or '\\x00' in str_dtype)):
+                    or (has_obj or has_null)):
                 set_attribute_string_array(dset,
                                            'Python.Fields',
                                            field_names)
