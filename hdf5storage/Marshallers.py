@@ -39,19 +39,6 @@ from hdf5storage.utilities import *
 import hdf5storage.exceptions
 
 
-# Ubuntu 12.04's h5py doesn't have __version__ set so we need to try to
-# grab the version and if it isn't available, just assume it is 2.0.
-try:
-    _H5PY_VERSION = h5py.__version__
-except:
-    _H5PY_VERSION = '2.0'
-
-_has_h5py_2p2 = (distutils.version.LooseVersion(_H5PY_VERSION)
-                 >= distutils.version.LooseVersion('2.2'))
-_has_h5py_2p3 = (distutils.version.LooseVersion(_H5PY_VERSION)
-                 >= distutils.version.LooseVersion('2.3'))
-
-
 class TypeMarshaller(object):
     """ Base class for marshallers of Python types.
 
@@ -458,7 +445,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.bool_, np.void,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
-                      np.float32, np.float64,
+                      np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
                       np.bytes_, np.unicode_, np.object_]
         # Using Python 3 type strings.
@@ -470,6 +457,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                     'numpy.uint32', 'numpy.uint64',
                                     'numpy.int8', 'numpy.int16',
                                     'numpy.int32', 'numpy.int64',
+                                    'numpy.float16',
                                     'numpy.float32', 'numpy.float64',
                                     'numpy.complex64',
                                     'numpy.complex128',
@@ -520,11 +508,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Set matlab_classes to the supported classes (the values).
         self.matlab_classes = list(self.__MATLAB_classes.values())
-
-        # For h5py >= 2.2, half precisions (np.float16) are supported.
-        if _has_h5py_2p2:
-            self.types.append(np.float16)
-            self.python_type_strings.append('numpy.float16')
 
     def write(self, f, grp, name, data, type_string, options):
         # If we are doing matlab compatibility and the data type is not
@@ -877,13 +860,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             else:
                 del_attribute(dset, 'Python.Fields')
 
-            # If we are making it MATLAB compatible and have h5py
-            # version >= 2.3, then we can set the MATLAB_fields
-            # Attribute as long as all keys are mappable to
-            # ASCII. Otherwise, the attribute should be deleted. It is
-            # written as a vlen='S1' array of bytes_ arrays of the
+            # If we are making it MATLAB compatible, then we can set the
+            # MATLAB_fields Attribute as long as all keys are mappable
+            # to ASCII. Otherwise, the attribute should be deleted. It
+            # is written as a vlen='S1' array of bytes_ arrays of the
             # individual characters.
-            if options.matlab_compatible and _has_h5py_2p3:
+            if options.matlab_compatible:
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
                     fs = np.empty(shape=(len(field_names),), dtype=dt)
@@ -980,11 +962,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         matlab_class = get_attribute_string(dset, 'MATLAB_class')
         matlab_empty = get_attribute(dset, 'MATLAB_empty')
 
-        # If we are using h5py version >= 2.3, we can actually read the
-        # MATLAB_fields Attribute if it is present.
-        matlab_fields = None
-        if _has_h5py_2p3:
-            matlab_fields = get_attribute(dset, 'MATLAB_fields')
+        # We can actually read the MATLAB_fields Attribute if it is
+        # present.
+        matlab_fields = get_attribute(dset, 'MATLAB_fields')
 
         # If it is a Dataset, it can simply be read and then acted upon
         # (if it is an HDF5 Reference array, it will need to be read
@@ -1638,14 +1618,13 @@ class PythonDictMarshaller(TypeMarshaller):
                                      'Python.dict.key_str_types',
                                      convert_to_str(key_str_types))
 
-        # If we are making it MATLAB compatible and have h5py version
-        # >= 2.3, then we can set the MATLAB_fields Attribute as long as
-        # all keys are mappable to ASCII. Otherwise, the attribute
-        # should be deleted. It is written as a vlen='S1' array of
-        # bytes_ arrays of the individual characters.
+        # If we are making it MATLAB compatible, then we can set the
+        # MATLAB_fields Attribute as long as all keys are mappable to
+        # ASCII. Otherwise, the attribute should be deleted. It is
+        # written as a vlen='S1' array of bytes_ arrays of the
+        # individual characters.
         if options.matlab_compatible \
-                and any_non_valid_str_keys is False \
-                and _has_h5py_2p3:
+                and any_non_valid_str_keys is False:
             try:
                 dt = h5py.special_dtype(vlen=np.dtype('S1'))
                 fs = np.empty(shape=(len(fields),), dtype=dt)
@@ -1696,11 +1675,8 @@ class PythonDictMarshaller(TypeMarshaller):
         key_str_types = get_attribute_string(grp2, \
             'Python.dict.key_str_types')
 
-        # If we are using h5py version >= 2.3, we can actually read the
-        # MATLAB_fields Attribute if it is present.
-        matlab_fields = None
-        if _has_h5py_2p3:
-            matlab_fields = get_attribute(grp2, 'MATLAB_fields')
+        # We can actually read the MATLAB_fields Attribute if it is present.
+        matlab_fields = get_attribute(grp2, 'MATLAB_fields')
 
         # How the dict like is read depends on how it is stored as. The
         # dict like's items will be constructed. If it is stored as

@@ -33,9 +33,9 @@ Dependencies
 This package only supports Python >= 2.7. Python 2.6 support was dropped
 in version 0.2.
 
-This package requires the numpy and h5py (>= 2.1) packages to run. Note
-that full functionality requires h5py >= 2.3. An optional dependency is
-the scipy package.
+This package requires the numpy and h5py (>= 2.3) packages to run. Note
+that support for h5py 2.1.x and 2.2.x has been dropped in version 0.2.
+An optional dependency is the scipy package.
 
 Installing by pip
 -----------------
@@ -260,7 +260,8 @@ support writing it so MATlAB can read it.
        forward slashes (``'/'``) in them. Otherwise, the latter format
        is used.
 .. [8] ``np.float16`` are not supported for h5py versions before
-       ``2.2``.
+       ``2.2``. Version ``2.3`` or higher is required for this package
+       since version ``0.2``.
 .. [9] Container types are only supported if their underlying dtype is
        supported. Data conversions are done based on its dtype.
 .. [10] Structured ``np.ndarray`` s (have fields in their dtypes) can be
@@ -323,6 +324,7 @@ Versions
      * Issue #50. Python 2.6 support dropped. The
        ``pkgutil.find_loader`` function is required, and it is not
        present in Python 2.6.
+     * Issue #53. h5py 2.1.x and 2.2.x  support dropped.
      * Issue #27. Added of paths with null characters and slashes. It
        is used for the field names of structured numpy ndarrays as well
        as the keys of ``dict`` like objects when writing their values

@@ -127,7 +127,8 @@ np.recarray               0.1      structured np.ndarray [9]_            Dataset
        all keys can be converted to ``str`` in Python 3 or ``unicode``
        in Python 2. Otherwise, the latter format is used.
 .. [8] ``np.float16`` are not supported for h5py versions before
-       ``2.2``.
+       ``2.2``. Version ``2.3`` or higher is required for this package
+       since version ``0.2``.
 .. [9] If it doesn't have any fields in its dtype or if
        :py:attr:`Options.structured_numpy_ndarray_as_struct` is not set
        and none of its fields are of dtype ``'object'``, it is not
@@ -301,7 +302,8 @@ care. Can only be set or read properly for h5py version ``2.3`` and
 newer. Trying to set it to a differently formatted array of strings that
 older versions of h5py can handle causes an error in MATLAB when the file
 is imported, so this package does not set this Attribute at all for h5py
-version before ``2.3``.
+version before ``2.3``. Version ``0.2`` of this package drops support for
+h5py ``2.1.x`` and ``2.2.x``.
   
 The Attribute is an array of variable length arrays of single character
 ASCII numpy strings (vlen of ``'S1'``). If there are two fields named
