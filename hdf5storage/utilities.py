@@ -540,18 +540,25 @@ def write_object_array(f, data, options):
     # 'canonical empty' and the 'MATLAB_empty' attribute set. If it
     # isn't present or is incorrectly formatted, it is created
     # truncating anything previously there.
-    if 'a' not in grp2 or grp2['a'].shape != (2,) \
-            or not grp2['a'].dtype.name.startswith('uint') \
-            or np.any(grp2['a'][...] != np.uint64([0, 0])) \
-            or get_attribute_string(grp2['a'], 'MATLAB_class') != \
-            'canonical empty' \
-            or get_attribute(grp2['a'], 'MATLAB_empty') != 1:
-        if 'a' in grp2:
+    try:
+        dset_a = grp2['a']
+        if dset_a.shape != (2,) \
+                or not dset_a.dtype.name.startswith('uint') \
+                or np.any(dset_a[...] != np.uint64([0, 0])) \
+                or get_attribute_string(dset_a, 'MATLAB_class') != \
+                'canonical empty' \
+                or get_attribute(dset_a, 'MATLAB_empty') != 1:
             del grp2['a']
-        grp2.create_dataset('a', data=np.uint64([0, 0]))
-        set_attribute_string(grp2['a'], 'MATLAB_class',
+            dset_a = grp2.create_dataset('a', data=np.uint64([0, 0]))
+            set_attribute_string(dset_a, 'MATLAB_class',
+                                 'canonical empty')
+            set_attribute(dset_a, 'MATLAB_empty',
+                          np.uint8(1))
+    except:
+        dset_a = grp2.create_dataset('a', data=np.uint64([0, 0]))
+        set_attribute_string(dset_a, 'MATLAB_class',
                              'canonical empty')
-        set_attribute(grp2['a'], 'MATLAB_empty',
+        set_attribute(dset_a, 'MATLAB_empty',
                       np.uint8(1))
 
     # Go through all the elements of data and write them, gabbing their
@@ -576,7 +583,7 @@ def write_object_array(f, data, options):
             else:
                 del_attribute(dset, 'H5PATH')
         except:
-            data_refs[index] = grp2['a'].ref
+            data_refs[index] = dset_a.ref
 
     # Now, the dtype needs to be changed to the reference type and the
     # whole thing copied over to data_to_store.
