@@ -1081,26 +1081,23 @@ class MarshallerCollection(object):
                 self._imported_required_modules[i] = True
 
         # Construct the dictionary to look up the appropriate marshaller
-        # by type. It would normally be a dict comprehension such as
-        #
+        # by type.
         self._types = {tp: i for i, m in enumerate(self._marshallers)
                        for tp in m.types}
 
         # The equivalent one to read data types given type strings needs
         # to be created from it. Basically, we have to make the key be
         # the python_type_string from it.
-        #
-        self._type_strings = {type_string: i for key, i in
-                              self._types.items() for type_string in
-                              self._marshallers[i].python_type_strings}
+        self._type_strings = {type_string: i
+                              for i, m in enumerate(self._marshallers)
+                              for type_string in m.python_type_strings}
 
         # The equivalent one to read data types given MATLAB class
         # strings needs to be created from it. Basically, we have to
         # make the key be the matlab_class from it.
-        #
-        self._matlab_classes = {matlab_class: i for key, i in
-                                self._types.items() for matlab_class in
-                                self._marshallers[i].matlab_classes}
+        self._matlab_classes = {matlab_class: i
+                                for i, m in enumerate(self._marshallers)
+                                for matlab_class in m.matlab_classes}
 
     def _import_marshaller_modules(self, m):
         """ Imports the modules required by the marshaller.
