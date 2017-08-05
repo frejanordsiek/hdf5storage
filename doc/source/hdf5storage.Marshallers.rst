@@ -21,7 +21,7 @@ TypeMarshaller
 --------------
 
 .. autoclass:: TypeMarshaller
-   :members: get_type_string, read, read_approximate, write, write_metadata 
+   :members: update_type_lookups, get_type_string, read, read_approximate, write, write_metadata 
    :show-inheritance:
    
    .. autoinstanceattribute:: TypeMarshaller.required_parent_modules
@@ -44,6 +44,12 @@ TypeMarshaller
 
    .. autoinstanceattribute:: TypeMarshaller.matlab_classes
       :annotation: = []
+
+   .. autoinstanceattribute:: TypeMarshaller.type_to_typestring
+      :annotation: = dict()
+
+   .. autoinstanceattribute:: TypeMarshaller.typestring_to_type
+      :annotation: = dict()
 
 
 NumpyScalarArrayMarshaller

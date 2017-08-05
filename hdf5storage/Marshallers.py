@@ -82,9 +82,12 @@ class TypeMarshaller(object):
     unless they are necessary - lazy loading essentially.
 
     Subclasses should run this class's ``__init__()`` first
-    thing. Inheritance information is in the **Notes** section of each
-    method. Generally, ``read``, ``write``, and ``write_metadata`` need
-    to be overridden and the different attributes set to the proper
+    thing, set all attributes except ``type_to_typestring`` and
+    ``typestring_to_type`` appropriately, and then call
+    ``update_type_lookups()`` to set the two previous
+    attributes. Inheritance information is in the **Notes** section of
+    each method. Generally, ``read``, ``write``, and ``write_metadata``
+    need to be overridden and the different attributes set to the proper
     values. ``read_approximate`` needs to be overridden for marshallers
     meant to handle types not from the main Python runtime and not from
     numpy.
@@ -104,11 +107,21 @@ class TypeMarshaller(object):
     matlab_attributes : set of str
         Attributes used for MATLAB compatibility.
     types : list of types
-        Types the marshaller can work on.
+        Types the marshaller can work on, which can be the actual
+        classes themselves or ``str(type(x))`` where ``x`` is an object
+        of the specified type.
     python_type_strings : list of str
         Type strings of readable types.
     matlab_classes : list of str
         Readable MATLAB classes.
+    type_to_typestring: dict
+        Lookup using the types in ``types`` as keys and the matching
+        entries in ``python_type_strings`` as values. Set using
+        ``update_type_lookups``.
+    typestring_to_type: dict
+        Lookup using the type strings in ``python_type_strings`` as keys
+        and the matching entries in ``types`` as values. Set using
+        ``update_type_lookups``.
 
     See Also
     --------
@@ -191,6 +204,41 @@ class TypeMarshaller(object):
         #: read into Python objects. Default value is ``[]``.
         self.matlab_classes = []
 
+        #: Type to typestring lookup.
+        #:
+        #: dict
+        #:
+        #: Lookup using the types in ``types`` as keys and the matching
+        #: entries in ``python_type_strings`` as values. Set using
+        #: ``update_type_lookups``.
+        self.type_to_typestring = dict()
+
+        #: Typestring to type lookup.
+        #:
+        #: dict
+        #:
+        #: Lookup using the type strings in ``python_type_strings`` as
+        #: keys and the matching entries in ``types`` as values. Set
+        #: using ``update_type_lookups``.
+        self.typestring_to_type = dict()
+
+    def update_type_lookups(self):
+        """ Update type and typestring lookup dicts.
+
+        Must be called once the ``types`` and ``python_type_strings``
+        attributes are set so that ``type_to_typestring`` and
+        ``typestring_to_type`` are constructed.
+
+        Notes
+        -----
+        Subclasses need to call this function explicitly.
+
+        """
+        self.type_to_typestring = dict(zip(self.types,
+                                           self.python_type_strings))
+        self.typestring_to_type = dict(zip(self.python_type_strings,
+                                           self.types))
+
     def get_type_string(self, data, type_string):
         """ Gets type string.
 
@@ -223,8 +271,11 @@ class TypeMarshaller(object):
         if type_string is not None:
             return type_string
         else:
-            i = self.types.index(type(data))
-            return self.python_type_strings[i]
+            tp = type(data)
+            try:
+                return self.type_to_typestring[tp]
+            except KeyError:
+                return self.type_to_typestring[str(tp)]
 
     def write(self, f, grp, name, data, type_string, options):
         """ Writes an object's metadata to file.
@@ -508,6 +559,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Set matlab_classes to the supported classes (the values).
         self.matlab_classes = list(self.__MATLAB_classes.values())
+
+        # Update the type lookups.
+        self.update_type_lookups()
 
     def write(self, f, grp, name, data, type_string, options):
         # If we are doing matlab compatibility and the data type is not
@@ -1067,8 +1121,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # If any of the elements are not Numpy types or if they
                 # don't all have the exact same dtype and shape, then
                 # this field will just be an object field.
-                if v.size == 0 or not isinstance(v.flat[0], \
-                        tuple(self.types)):
+                if v.size == 0 or type(v.flat[0]) \
+                        not in self.type_to_typestring:
                     dt_whole.append((k_name, 'object'))
                     continue
 
@@ -1077,7 +1131,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 sp = first.shape
                 all_same = True
                 for index, x in np.ndenumerate(v):
-                    if not isinstance(x, tuple(self.types)) \
+                    if type(x) not in self.type_to_typestring \
                             or dt != x.dtype or sp != x.shape:
                         all_same = False
                         break
@@ -1326,6 +1380,9 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
 
+        # Update the type lookups.
+        self.update_type_lookups()
+
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to the appropriate numpy
         # type. If it is a Python 3.x int or Python 2.x long that is too
@@ -1372,9 +1429,8 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # it is returned as an int. If it would not fit, it is returned
         # as a long.
         type_string = get_attribute_string(grp[name], 'Python.Type')
-        if type_string in self.python_type_strings:
-            tp = self.types[self.python_type_strings.index(
-                            type_string)]
+        if type_string in self.typestring_to_type:
+            tp = self.typestring_to_type[type_string]
             sdata = np.asscalar(data)
             if sys.hexversion >= 0x03000000 or tp != int:
                 return tp(sdata)
@@ -1404,6 +1460,9 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
+
+        # Update the type lookups.
+        self.update_type_lookups()
 
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to a numpy string of the
@@ -1453,6 +1512,8 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
         self.python_type_strings = ['builtins.NoneType']
         # None corresponds to no MATLAB class.
         self.matlab_classes = []
+        # Update the type lookups.
+        self.update_type_lookups()
 
     def write(self, f, grp, name, data, type_string, options):
         # Just going to use the parent function with an empty double
@@ -1485,6 +1546,8 @@ class PythonDictMarshaller(TypeMarshaller):
         # Set matlab_classes to empty since NumpyScalarArrayMarshaller
         # handles Groups by default now.
         self.matlab_classes = list()
+        # Update the type lookups.
+        self.update_type_lookups()
 
     def write(self, f, grp, name, data, type_string, options):
         # Check to see if any fields are not string like, or if they are
@@ -1740,9 +1803,8 @@ class PythonDictMarshaller(TypeMarshaller):
                     pass
 
         # Construct the dict like from the items.
-        if type_string in self.python_type_strings:
-            tp = self.types[self.python_type_strings.index(
-                            type_string)]
+        if type_string in self.typestring_to_type:
+            tp = self.typestring_to_type[type_string]
         else:
             tp = dict
         return tp(items)
@@ -1756,6 +1818,8 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
+        # Update the type lookups.
+        self.update_type_lookups()
 
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to the appropriate numpy type
@@ -1789,6 +1853,8 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
+        # Update the type lookups.
+        self.update_type_lookups()
 
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to a list and then pass it to
@@ -1809,9 +1875,8 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types).
         type_string = get_attribute_string(grp[name], 'Python.Type')
-        if type_string in self.python_type_strings:
-            tp = self.types[self.python_type_strings.index(
-                            type_string)]
+        if type_string in self.typestring_to_type:
+            tp = self.typestring_to_type[type_string]
             return tp(data)
         else:
             # Must be some other type, so return it as is.
