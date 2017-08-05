@@ -325,6 +325,8 @@ Versions
        ``pkgutil.find_loader`` function is required, and it is not
        present in Python 2.6.
      * Issue #53. h5py 2.1.x and 2.2.x  support dropped.
+     * Issue #60. Platform label in the MAT file header changed to
+       ``hdf5storage VERSION`` from ``CPython VERSION``.
      * Issue #27. Added of paths with null characters and slashes. It
        is used for the field names of structured numpy ndarrays as well
        as the keys of ``dict`` like objects when writing their values

@@ -1458,19 +1458,10 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
         #     + now.strftime('%a %b %d %H:%M:%S %Y') \
         #     + ' HDF5 schema 1.00 .'
         #
-        # Platform is going to be changed to CPython version. The
-        # version is just gotten from sys.version_info, which is a class
-        # for Python >= 2.7, but a tuple before that.
+        # Platform is going to be changed to hdf5storage version.
 
-        v = sys.version_info
-        if sys.hexversion >= 0x02070000:
-            v = {'major': v.major, 'minor': v.minor, 'micro': v.micro}
-        else:
-            v = {'major': v[0], 'minor': v[1], 'micro': v[1]}
-
-        s = 'MATLAB 7.3 MAT-file, Platform: CPython ' \
-            + '{0}.{1}.{2}'.format(v['major'], v['minor'], v['micro']) \
-            + ', Created on: ' \
+        s = 'MATLAB 7.3 MAT-file, Platform: hdf5storage ' \
+            + __version__ + ', Created on: ' \
             + now.strftime('%a %b %d %H:%M:%S %Y') \
             + ' HDF5 schema 1.00 .'
 

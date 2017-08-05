@@ -34,9 +34,15 @@ specific 12 byte sequence (magic number). On MATLAB, the 116 byte string, depend
 
 This package just changes the Platform part to ::
 
-    b'CPython A.B.C'
+    b'hdf5storage VERSION'
 
-Where A, B, and C are the major, minor, and micro version numbers of the Python interpreter (e.g. 3.3.0).
+Where VERSION is the hdf5storage version.
+
+.. versionchanged:: 0.2
+
+   In the version 0.1.x series, the platform part was
+   ``b'CPython A.B.C'`` where A, B, and C are the major, minor, and
+   micro version numbers of the Python interpreter (e.g. 3.3.0).
 
 The 12 byte sequence, in hexidecimal is ::
 
