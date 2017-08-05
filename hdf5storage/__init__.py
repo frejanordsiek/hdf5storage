@@ -1083,44 +1083,24 @@ class MarshallerCollection(object):
         # Construct the dictionary to look up the appropriate marshaller
         # by type. It would normally be a dict comprehension such as
         #
-        # self._types = {tp: i for i, m in enumerate(self._marshallers)
-        #                for tp in m.types}
-        #
-        # but that is not supported in Python 2.6 so it has to be done
-        # with a for loop.
-
-        self._types = dict()
-        for i, m in enumerate(self._marshallers):
-            for tp in m.types:
-                self._types[tp] = i
+        self._types = {tp: i for i, m in enumerate(self._marshallers)
+                       for tp in m.types}
 
         # The equivalent one to read data types given type strings needs
         # to be created from it. Basically, we have to make the key be
-        # the python_type_string from it. Same issue as before with
-        # Python 2.6
+        # the python_type_string from it.
         #
-        # self._type_strings = {type_string: i for key, i in
-        #                       self._types.items() for type_string in
-        #                       self._marshallers[i].python_type_strings}
-
-        self._type_strings = dict()
-        for key, i in self._types.items():
-            for type_string in self._marshallers[i].python_type_strings:
-                self._type_strings[type_string] = i
+        self._type_strings = {type_string: i for key, i in
+                              self._types.items() for type_string in
+                              self._marshallers[i].python_type_strings}
 
         # The equivalent one to read data types given MATLAB class
         # strings needs to be created from it. Basically, we have to
-        # make the key be the matlab_class from it. Same issue as before
-        # with Python 2.6
+        # make the key be the matlab_class from it.
         #
-        # self._matlab_classes = {matlab_class: i for key, i in
-        #                         self._types.items() for matlab_class in
-        #                         self._marshallers[i].matlab_classes}
-
-        self._matlab_classes = dict()
-        for key, i in self._types.items():
-            for matlab_class in self._marshallers[i].matlab_classes:
-                self._matlab_classes[matlab_class] = i
+        self._matlab_classes = {matlab_class: i for key, i in
+                                self._types.items() for matlab_class in
+                                self._marshallers[i].matlab_classes}
 
     def _import_marshaller_modules(self, m):
         """ Imports the modules required by the marshaller.
@@ -1500,11 +1480,9 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
         b = bytearray(s + (128-12-len(s))*' ', encoding='utf-8')
 
         # Add 8 nulls (0) and the magic number (or something) that
-        # MATLAB uses. Lengths must be gone to to make sure the argument
-        # to fromhex is unicode because Python 2.6 requires it.
+        # MATLAB uses.
 
-        b.extend(bytearray.fromhex(
-                 b'00000000 00000000 0002494D'.decode()))
+        b.extend(bytearray.fromhex('00000000 00000000 0002494D'))
 
         # Now, write it to the beginning of the file.
 

@@ -1476,14 +1476,7 @@ class PythonDictMarshaller(TypeMarshaller):
                                        'Python.dict.keys_values_names',
                                        'Python.dict.key_str_types'])
         self.matlab_attributes |= set(['MATLAB_class', 'MATLAB_fields'])
-        self.types = [dict]
-
-        # OrderedDict is only available for Python >= 2.7. For Python
-        # 2.6, it will be mapped to dict.
-        if sys.hexversion < 0x2070000:
-            self.types += [dict]
-        else:
-            self.types += [collections.OrderedDict]
+        self.types = [dict, collections.OrderedDict]
 
         self.python_type_strings = ['dict', 'collections.OrderedDict']
         self.__MATLAB_classes = {dict: 'struct',
