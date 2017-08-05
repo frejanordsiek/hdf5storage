@@ -1015,7 +1015,7 @@ class MarshallerCollection(object):
         self._matlab_classes = dict()
 
         # Add any user given marshallers.
-        self.add_marshaller(copy.deepcopy(marshallers))
+        self.add_marshaller(marshallers)
 
     def _update_marshallers(self):
         """ Update the full marshaller list and other data structures.
@@ -1145,7 +1145,7 @@ class MarshallerCollection(object):
             marshallers = [marshallers]
         for m in marshallers:
             if m not in self._user_marshallers:
-                self._user_marshallers.append(copy.deepcopy(m))
+                self._user_marshallers.append(m)
         self._update_marshallers()
 
     def remove_marshaller(self, marshallers):
@@ -1212,7 +1212,7 @@ class MarshallerCollection(object):
         if index is None:
             return None, False
         else:
-            m = copy.deepcopy(self._marshallers[index])
+            m = self._marshallers[index]
             if self._imported_required_modules[index]:
                 return m, True
             if not self._has_required_modules[index]:
@@ -1250,7 +1250,7 @@ class MarshallerCollection(object):
         """
         if type_string in self._type_strings:
             index = self._type_strings[type_string]
-            m = copy.deepcopy(self._marshallers[index])
+            m = self._marshallers[index]
             if self._imported_required_modules[index]:
                 return m, True
             if not self._has_required_modules[index]:
@@ -1290,7 +1290,7 @@ class MarshallerCollection(object):
         """
         if matlab_class in self._matlab_classes:
             index = self._matlab_classes[matlab_class]
-            m = copy.deepcopy(self._marshallers[index])
+            m = self._marshallers[index]
             if self._imported_required_modules[index]:
                 return m, True
             if not self._has_required_modules[index]:
