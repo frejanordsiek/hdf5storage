@@ -1130,11 +1130,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 dt = first.dtype
                 sp = first.shape
                 all_same = True
-                for index, x in np.ndenumerate(v):
-                    if type(x) not in self.type_to_typestring \
-                            or dt != x.dtype or sp != x.shape:
-                        all_same = False
-                        break
+                try:
+                    for index, x in np.ndenumerate(v):
+                        if dt != x.dtype or sp != x.shape:
+                            all_same = False
+                            break
+                except:
+                    all_same = False
 
                 # If they are all the same, then dt and shape should be
                 # used. Otherwise, it has to be object.
@@ -1160,15 +1162,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                 dtype='int8').astype(dtwhole)
             else:
                 data = np.zeros(shape=v.shape, dtype=dtwhole)
+
             for k, v in struct_data.items():
+                if sys.hexversion < 0x03000000:
+                    k = k.encode('UTF-8')
                 # There is no sense iterating through the elements if
                 # the shape is an empty shape.
                 if all(data.shape) and all(v.shape):
                     for index, x in np.ndenumerate(v):
-                        if sys.hexversion >= 0x03000000:
-                            data[k][index] = x
-                        else:
-                            data[k.encode('UTF-8')][index] = x
+                        data[k][index] = x
 
         # If metadata is present, that can be used to do convert to the
         # desired/closest Python data types. If none is present, or not
