@@ -321,7 +321,7 @@ class TypeMarshaller(object):
         raise NotImplementedError('Can''t write data type: '
                                   + str(type(data)))
 
-    def write_metadata(self, f, grp, name, data, type_string, options):
+    def write_metadata(self, f, dsetgrp, data, type_string, options):
         """ Writes an object to file.
 
         Writes the metadata for a Python object `data` to file at `name`
@@ -333,11 +333,8 @@ class TypeMarshaller(object):
         ----------
         f : h5py.File
             The HDF5 file handle that is open.
-        grp : h5py.Group or h5py.File
-            The parent HDF5 Group (or File if at '/') that contains the
-            object with the specified name.
-        name : str
-            Name of the object.
+        dsetgrp : h5py.Dataset or h5py.Group
+            The Dataset or Group object to add metadata to.
         data
             The object to write to file.
         type_string : str or None
@@ -365,7 +362,7 @@ class TypeMarshaller(object):
         # The metadata that is written depends on the format.
 
         if options.store_python_metadata:
-            set_attribute_string(grp[name], 'Python.Type', type_string)
+            set_attribute_string(dsetgrp, 'Python.Type', type_string)
 
         # If we are not storing python information or doing MATLAB
         # compatibility, then attributes not in the python and/or
@@ -379,8 +376,8 @@ class TypeMarshaller(object):
         if options.matlab_compatible:
             attributes_used |= self.matlab_attributes
 
-        for attribute in (set(grp[name].attrs.keys()) - attributes_used):
-            del_attribute(grp[name], attribute)
+        for attribute in (set(dsetgrp.attrs.keys()) - attributes_used):
+            del_attribute(dsetgrp, attribute)
 
     def read(self, f, dsetgrp, options):
         """ Read a Python object from file.
@@ -705,27 +702,26 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # already exists but is not a group, it needs to be deleted
             # before being created.
 
-            if name not in grp:
-                grp.create_group(name)
-            elif not isinstance(grp[name], h5py.Group):
-                del grp[name]
-                grp.create_group(name)
-
-            grp2 = grp[name]
+            try:
+                if not isinstance(grp[name], h5py.Group):
+                    del grp[name]
+            except:
+                pass
+            dsetgrp = grp.create_group(name)
 
             # Write the metadata, and set the MATLAB_class to 'struct'
             # explicitly.
             if options.matlab_compatible:
-                set_attribute_string(grp[name], 'MATLAB_class',
+                set_attribute_string(dsetgrp, 'MATLAB_class',
                                      'struct')
 
             # Delete any Datasets/Groups not corresponding to a field
             # name in data if that option is set.
 
             if options.delete_unused_variables:
-                for field in set([i for i in grp2]).difference( \
+                for field in set([i for i in dsetgrp]).difference( \
                         set(escaped_field_names)):
-                    del grp2[field]
+                    del dsetgrp[field]
 
             # Go field by field making an object array (make an empty
             # object array and assign element wise) and write it inside
@@ -752,27 +748,27 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # (don't need to use a Reference array in this
                 # case). Otherwise, write the whole thing.
                 if np.prod(new_data.shape) == 1:
-                    write_data(f, grp2, esc_field,
+                    write_data(f, dsetgrp, esc_field,
                                new_data.flat[0], None, options)
                 else:
-                    write_data(f, grp2, esc_field, new_data, None,
+                    write_data(f, dsetgrp, esc_field, new_data, None,
                                options)
 
-                if esc_field in grp2:
+                if esc_field in dsetgrp:
                     if options.matlab_compatible:
-                        set_attribute_string(grp2[esc_field], 'H5PATH',
-                                             grp2.name)
+                        set_attribute_string(dsetgrp[esc_field], 'H5PATH',
+                                             dsetgrp.name)
                     else:
-                        del_attribute(grp2[esc_field], 'H5PATH')
+                        del_attribute(dsetgrp[esc_field], 'H5PATH')
 
                     # In the case that we wrote a Reference array (not a
                     # single element), then all other attributes need to
                     # be removed.
                     if np.prod(new_data.shape) != 1:
                         for attribute in (set( \
-                                grp2[esc_field].attrs.keys()) \
+                                dsetgrp[esc_field].attrs.keys()) \
                                 - set(['H5PATH'])):
-                            del_attribute(grp2[esc_field], attribute)
+                            del_attribute(dsetgrp[esc_field], attribute)
         else:
             # Set the storage options such as compression, chunking,
             # filters, etc. If the data is being compressed (compression
@@ -819,33 +815,37 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # use the same compression, or doesn't use the same filters;
             # then it must be deleted and then written. Otherwise, it is
             # just overwritten in place.
-            if name not in grp:
-                grp.create_dataset(name, data=data_to_store,
-                                   **filters)
-            elif not isinstance(grp[name], h5py.Dataset) \
-                    or grp[name].dtype != data_to_store.dtype \
-                    or grp[name].shape != data_to_store.shape \
-                    or grp[name].compression != filters['compression'] \
-                    or grp[name].shuffle != filters['shuffle'] \
-                    or grp[name].fletcher32 != filters['fletcher32'] \
-                    or grp[name].compression_opts != \
-                    filters['compression_opts']:
-                del grp[name]
-                grp.create_dataset(name, data=data_to_store,
-                                   **filters)
-            else:
-                grp[name][...] = data_to_store
+            try:
+                dsetgrp = grp[name]
+                if not isinstance(dsetgrp, h5py.Dataset) \
+                        or dsetgrp.dtype != data_to_store.dtype \
+                        or dsetgrp.shape != data_to_store.shape \
+                        or dsetgrp.compression \
+                        != filters['compression'] \
+                        or dsetgrp.shuffle != filters['shuffle'] \
+                        or dsetgrp.fletcher32 \
+                        != filters['fletcher32'] \
+                        or dsetgrp.compression_opts != \
+                        filters['compression_opts']:
+                    del dsetgrp
+                    dsetgrp = grp.create_dataset(name,
+                                                 data=data_to_store,
+                                                 **filters)
+                else:
+                    dsetgrp[...] = data_to_store
+            except:
+                dsetgrp = grp.create_dataset(name, data=data_to_store,
+                                             **filters)
 
         # Write the metadata using the inherited function (good enough).
-        self.write_metadata(f, grp, name, data, type_string,
+        self.write_metadata(f, dsetgrp, data, type_string,
                             options)
 
-    def write_metadata(self, f, grp, name, data, type_string, options):
+    def write_metadata(self, f, dsetgrp, data, type_string, options):
         # First, call the inherited version to do most of the work.
 
-        TypeMarshaller.write_metadata(self, f, grp, name, data,
+        TypeMarshaller.write_metadata(self, f, dsetgrp, data,
                                       type_string, options)
-        dset = grp[name]
 
         # Write the underlying numpy type if we are storing python
         # information.
@@ -855,7 +855,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # 'matrix', or 'chararray') need to be stored.
 
         if options.store_python_metadata:
-            set_attribute(dset, 'Python.Shape',
+            set_attribute(dsetgrp, 'Python.Shape',
                           np.uint64(data.shape))
 
             # Now, in Python 3, the dtype names for bare bytes and
@@ -863,7 +863,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # but in Python 2, they start with 'string' and 'unicode'
             # respectively. The Python 2 ones must be converted to the
             # Python 3 ones for writing.
-            set_attribute_string(dset, \
+            set_attribute_string(dsetgrp, \
                 'Python.numpy.UnderlyingType', \
                 data.dtype.name.replace('string', 'bytes').replace( \
                 'unicode', 'str'))
@@ -877,7 +877,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 container = 'ndarray'
             else:
                 container = 'scalar'
-            set_attribute_string(dset, 'Python.numpy.Container',
+            set_attribute_string(dsetgrp, 'Python.numpy.Container',
                                  container)
 
         # If its dtype has fields and we would have written it as a
@@ -903,11 +903,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     and data.dtype.fields is not None \
                     and (options.structured_numpy_ndarray_as_struct \
                     or (has_obj or has_null)):
-                set_attribute_string_array(dset,
+                set_attribute_string_array(dsetgrp,
                                            'Python.Fields',
                                            field_names)
             else:
-                del_attribute(dset, 'Python.Fields')
+                del_attribute(dsetgrp, 'Python.Fields')
 
             # If we are making it MATLAB compatible, then we can set the
             # MATLAB_fields Attribute as long as all keys are mappable
@@ -922,14 +922,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         fs[i] = np.array([c.encode('ascii')
                                           for c in s], dtype='S1')
                 except UnicodeEncodeError:
-                    del_attribute(dset, 'MATLAB_fields')
+                    del_attribute(dsetgrp, 'MATLAB_fields')
                 else:
-                    set_attribute(dset, 'MATLAB_fields', fs)
+                    set_attribute(dsetgrp, 'MATLAB_fields', fs)
             else:
-                del_attribute(dset, 'MATLAB_fields')
+                del_attribute(dsetgrp, 'MATLAB_fields')
         else:
-            del_attribute(dset, 'Python.Fields')
-            del_attribute(dset, 'MATLAB_fields')
+            del_attribute(dsetgrp, 'Python.Fields')
+            del_attribute(dsetgrp, 'MATLAB_fields')
 
         # If data is empty, we need to set the Python.Empty and
         # MATLAB_empty attributes to 1 if we are storing type info or
@@ -940,18 +940,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or data.dtype.type == np.str_)
                 and data.nbytes == 0):
             if options.store_python_metadata:
-                set_attribute(dset, 'Python.Empty',
+                set_attribute(dsetgrp, 'Python.Empty',
                                           np.uint8(1))
             else:
-                del_attribute(dset, 'Python.Empty')
+                del_attribute(dsetgrp, 'Python.Empty')
             if options.matlab_compatible:
-                set_attribute(dset, 'MATLAB_empty',
+                set_attribute(dsetgrp, 'MATLAB_empty',
                                           np.uint8(1))
             else:
-                del_attribute(dset, 'MATLAB_empty')
+                del_attribute(dsetgrp, 'MATLAB_empty')
         else:
-            del_attribute(dset, 'Python.Empty')
-            del_attribute(dset, 'MATLAB_empty')
+            del_attribute(dsetgrp, 'Python.Empty')
+            del_attribute(dsetgrp, 'MATLAB_empty')
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set looking up the data type (gotten
@@ -967,27 +967,27 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if options.matlab_compatible:
             if data.dtype.fields is not None \
                     and options.structured_numpy_ndarray_as_struct:
-                set_attribute_string(dset, 'MATLAB_class',
+                set_attribute_string(dsetgrp, 'MATLAB_class',
                                      'struct')
             elif tp in self.__MATLAB_classes:
-                set_attribute_string(dset, 'MATLAB_class',
+                set_attribute_string(dsetgrp, 'MATLAB_class',
                                      self.__MATLAB_classes[tp])
                 if tp in (np.bytes_, np.str_, np.bool_):
-                    if dset.dtype.type == np.bytes_:
-                        set_attribute(dset, 'MATLAB_int_decode', 1)
+                    if dsetgrp.dtype.type == np.bytes_:
+                        set_attribute(dsetgrp, 'MATLAB_int_decode', 1)
                     else:
-                        set_attribute(dset, 'MATLAB_int_decode', \
-                            np.int64(dset.dtype.itemsize))
+                        set_attribute(dsetgrp, 'MATLAB_int_decode', \
+                            np.int64(dsetgrp.dtype.itemsize))
                 else:
-                    del_attribute(dset, 'MATLAB_int_decode')
+                    del_attribute(dsetgrp, 'MATLAB_int_decode')
             else:
-                del_attribute(dset, 'MATLAB_class')
-                del_attribute(dset, 'MATLAB_empty')
-                del_attribute(dset, 'MATLAB_int_decode')
+                del_attribute(dsetgrp, 'MATLAB_class')
+                del_attribute(dsetgrp, 'MATLAB_empty')
+                del_attribute(dsetgrp, 'MATLAB_int_decode')
         else:
-            del_attribute(dset, 'MATLAB_class')
-            del_attribute(dset, 'MATLAB_empty')
-            del_attribute(dset, 'MATLAB_int_decode')
+            del_attribute(dsetgrp, 'MATLAB_class')
+            del_attribute(dsetgrp, 'MATLAB_empty')
+            del_attribute(dsetgrp, 'MATLAB_int_decode')
 
     def read(self, f, dsetgrp, options):
         dset = dsetgrp
@@ -1577,16 +1577,16 @@ class PythonDictMarshaller(TypeMarshaller):
         # already exists but is not a group, it needs to be deleted
         # before being created.
 
-        if name not in grp:
-            grp.create_group(name)
-        elif not isinstance(grp[name], h5py.Group):
-            del grp[name]
-            grp.create_group(name)
-
-        grp2 = grp[name]
+        try:
+            grp2 = grp[name]
+            if not isinstance(grp[name], h5py.Group):
+                del grp[name]
+                grp2 = grp.create_group(name)
+        except:
+            grp2 = grp.create_group(name)
 
         # Write the metadata.
-        self.write_metadata(f, grp, name, data, type_string, options, \
+        self.write_metadata(f, grp2, data, type_string, options, \
             any_non_valid_str_keys=any_non_valid_str_keys, \
             keys_as_str=keys_as_str, \
             key_str_types=b''.join(key_str_types))
@@ -1623,7 +1623,7 @@ class PythonDictMarshaller(TypeMarshaller):
                 else:
                     del_attribute(grp2[k], 'H5PATH')
 
-    def write_metadata(self, f, grp, name, data, type_string, options,
+    def write_metadata(self, f, dsetgrp, data, type_string, options,
                        any_non_valid_str_keys=None,
                        keys_as_str=None,
                        key_str_types=None):
@@ -1634,9 +1634,8 @@ class PythonDictMarshaller(TypeMarshaller):
 
         # First, call the inherited version to do most of the work.
 
-        TypeMarshaller.write_metadata(self, f, grp, name, data,
+        TypeMarshaller.write_metadata(self, f, dsetgrp, data,
                                       type_string, options)
-        dset = grp[name]
 
         # Grab all the keys in whatever order is given (OrderedDict will
         # be in the order they were entered and dict will be sorted).
@@ -1648,22 +1647,22 @@ class PythonDictMarshaller(TypeMarshaller):
         # being stored individually.
         if options.store_python_metadata:
             if any_non_valid_str_keys is True:
-                set_attribute_string(dset, 'Python.dict.StoredAs',
+                set_attribute_string(dsetgrp, 'Python.dict.StoredAs',
                               'keys_values')
-                set_attribute_string_array(dset, \
+                set_attribute_string_array(dsetgrp, \
                     'Python.dict.keys_values_names', \
                     [options.dict_like_keys_name, \
                     options.dict_like_values_name])
-                del_attribute(dset, 'Python.Fields')
-                del_attribute(dset, 'Python.dict.key_str_types')
+                del_attribute(dsetgrp, 'Python.Fields')
+                del_attribute(dsetgrp, 'Python.dict.key_str_types')
             else:
-                set_attribute_string(dset, 'Python.dict.StoredAs',
+                set_attribute_string(dsetgrp, 'Python.dict.StoredAs',
                               'individually')
-                del_attribute(dset,
+                del_attribute(dsetgrp,
                               'Python.dict.keys_values_names')
-                set_attribute_string_array(dset, 'Python.Fields',
+                set_attribute_string_array(dsetgrp, 'Python.Fields',
                                            fields)
-                set_attribute_string(dset,
+                set_attribute_string(dsetgrp,
                                      'Python.dict.key_str_types',
                                      convert_to_str(key_str_types))
 
@@ -1681,13 +1680,13 @@ class PythonDictMarshaller(TypeMarshaller):
                     fs[i] = np.array([c.encode('ascii') for c in s],
                                      dtype='S1')
             except UnicodeDecodeError:
-                del_attribute(dset, 'MATLAB_fields')
+                del_attribute(dsetgrp, 'MATLAB_fields')
             except UnicodeEncodeError:
-                del_attribute(dset, 'MATLAB_fields')
+                del_attribute(dsetgrp, 'MATLAB_fields')
             else:
-                set_attribute(dset, 'MATLAB_fields', fs)
+                set_attribute(dsetgrp, 'MATLAB_fields', fs)
         else:
-            del_attribute(dset, 'MATLAB_fields')
+            del_attribute(dsetgrp, 'MATLAB_fields')
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set for the data type. If the type
@@ -1696,10 +1695,10 @@ class PythonDictMarshaller(TypeMarshaller):
 
         tp = type(data)
         if options.matlab_compatible and tp in self.__MATLAB_classes:
-            set_attribute_string(dset, 'MATLAB_class',
+            set_attribute_string(dsetgrp, 'MATLAB_class',
                                  self.__MATLAB_classes[tp])
         else:
-            del_attribute(dset, 'MATLAB_class')
+            del_attribute(dsetgrp, 'MATLAB_class')
 
     def read(self, f, dsetgrp, options):
         grp2 = dsetgrp
@@ -1854,8 +1853,8 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
         # modified form of data to guess from if not given the right one
         # explicitly.
         PythonListMarshaller.write(self, f, grp, name, list(data),
-                                  self.get_type_string(data,
-                                  type_string), options)
+                                   self.get_type_string(data,
+                                   type_string), options)
 
     def read(self, f, dsetgrp, options):
         # Use the parent class version to read it and do most of the
