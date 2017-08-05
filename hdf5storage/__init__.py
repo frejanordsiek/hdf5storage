@@ -280,7 +280,7 @@ class Options(object):
         make_new_default_MarshallerCollection
 
         """
-        return copy.deepcopy(self._marshaller_collection)
+        return self._marshaller_collection
 
     @marshaller_collection.setter
     def marshaller_collection(self, value):
@@ -1885,7 +1885,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
 
 
 def get_default_MarshallerCollection():
-    """ Gets a copy of the default MarshallerCollection.
+    """ Gets the default MarshallerCollection.
 
     It only includes the builtin marshallers in the ``Marshallers``
     submodule.
@@ -1895,12 +1895,18 @@ def get_default_MarshallerCollection():
     mc : MarshallerCollection
         The default MarshallerCollection.
 
+    Warning
+    -------
+    Any changes made to `mc` after getting it will be persistent to
+    future calls of this function till
+    ``make_new_default_MarshallerCollection`` is called.
+
     See Also
     --------
     make_new_default_MarshallerCollection
 
     """
-    return copy.deepcopy(_default_marshaller_collection[0])
+    return _default_marshaller_collection[0]
 
 
 def make_new_default_MarshallerCollection(*args, **keywords):
