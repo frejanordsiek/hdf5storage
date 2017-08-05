@@ -77,6 +77,10 @@ else:
                                 unicode('/'): unicode('\\x2f'),
                                 unicode('\\'): unicode('\\\\')}
 
+# Get the letters that will be used to generate unused names in a
+# group.
+_ltrs_nunig = string.ascii_letters + string.digits
+
 
 def _replace_fun_escape(m):
     """ Hex/unicode escape single characters found in regex matches.
@@ -647,12 +651,11 @@ def next_unused_name_in_group(grp, length):
         `grp`.
 
     """
-    ltrs = string.ascii_letters + string.digits
-    existing_names = set(grp.keys())
-    while True:
-        name = ''.join([random.choice(ltrs) for i in range(0, length)])
-        if name not in existing_names:
-            return name
+    name = ''.join([random.choice(_ltrs_nunig) for i in range(length)])
+    while name in grp:
+        name = ''.join([random.choice(_ltrs_nunig)
+                        for i in range(length)])
+    return name
 
 def convert_numpy_str_to_uint16(data):
     """ Converts a numpy.str_ to UTF-16 encoding in numpy.uint16 form.
