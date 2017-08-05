@@ -385,7 +385,7 @@ def write_data(f, grp, name, data, type_string, options):
         raise NotImplementedError('Can''t write data type: '+str(tp))
 
 
-def read_data(f, grp, name, options):
+def read_data(f, grp, name, options, dsetgrp=None):
     """ Writes a piece of data into an open HDF5 file.
 
     Low level function to read a Python type of the specified name from
@@ -401,6 +401,10 @@ def read_data(f, grp, name, options):
         The name of the data to read.
     options : hdf5storage.core.Options
         The options to use when reading.
+    dsetgrp : h5py.Dataset or h5py.Group or None, optional
+        The Dataset or Group object to read if that has already been
+        obtained and thus should not be re-obtained (``None``
+        otherwise). If given, overrides `grp` and `name`.
 
     Returns
     -------
@@ -419,15 +423,18 @@ def read_data(f, grp, name, options):
     hdf5storage.Options
 
     """
-    # If name isn't found, return error.
-    if name not in grp:
-        raise hdf5storage.exceptions.CantReadError('Could not find ' \
-            + posixpath.join(grp.name, name))
+    if dsetgrp is None:
+        # If name isn't found, return error.
+        try:
+            dsetgrp = grp[name]
+        except:
+            raise hdf5storage.exceptions.CantReadError( \
+                'Could not find ' + posixpath.join(grp.name, name))
 
     # Get the different attributes that can be used to identify they
     # type, which are the type string and the MATLAB class.
-    type_string = get_attribute_string(grp[name], 'Python.Type')
-    matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
+    type_string = get_attribute_string(dsetgrp, 'Python.Type')
+    matlab_class = get_attribute_string(dsetgrp, 'MATLAB_class')
 
     # If the type_string is present, get the marshaller for it. If it is
     # not, use the one for the matlab class if it is given. Otherwise,
@@ -445,11 +452,11 @@ def read_data(f, grp, name, options):
     elif matlab_class is not None:
         m, has_modules = \
             mc.get_marshaller_for_matlab_class(matlab_class)
-    elif hasattr(grp[name], 'dtype'):
+    elif hasattr(dsetgrp, 'dtype'):
         # Numpy dataset
         m, has_modules = \
-            mc.get_marshaller_for_type(grp[name].dtype.type)
-    elif isinstance(grp[name], (h5py.Group, h5py.File)):
+            mc.get_marshaller_for_type(dsetgrp.dtype.type)
+    elif isinstance(dsetgrp, (h5py.Group, h5py.File)):
         # Groups and files are like Matlab struct
         m, has_modules = mc.get_marshaller_for_matlab_class('struct')
 
@@ -462,12 +469,12 @@ def read_data(f, grp, name, options):
 
     if m is not None:
         if has_modules:
-            return m.read(f, grp, name, options)
+            return m.read(f, dsetgrp, options)
         else:
-            return m.read_approximate(f, grp, name, options)
+            return m.read_approximate(f, dsetgrp, options)
     else:
         raise hdf5storage.exceptions.CantReadError('Could not read '
-                                                   + grp[name].name)
+                                                   + dsetgrp.name)
 
 
 def write_object_array(f, data, options):
@@ -611,8 +618,9 @@ def read_object_array(f, data, options):
     # references, and the putting the output in new object array.
     data_derefed = np.zeros(shape=data.shape, dtype='object')
     for index, x in np.ndenumerate(data):
-        data_derefed[index] = read_data(f, f[x].parent, \
-            posixpath.basename(f[x].name), options)
+        data_derefed[index] = read_data(f, None, None,
+                                        options,
+                                        dsetgrp=f[x])
     return data_derefed
 
 

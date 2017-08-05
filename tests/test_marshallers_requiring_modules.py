@@ -40,10 +40,10 @@ from nose.tools import assert_is_not_none, assert_is_none, \
 
 
 class Tmarshaller(hdf5storage.Marshallers.TypeMarshaller):
-    def read(self, f, grp, name, options):
+    def read(self, f, dsetgrp, options):
         return 'read'
 
-    def read_approximate(self, f, grp, name, options):
+    def read_approximate(self, f, dsetgrp, options):
         return 'read_approximate'
 
 

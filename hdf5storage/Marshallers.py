@@ -382,11 +382,11 @@ class TypeMarshaller(object):
         for attribute in (set(grp[name].attrs.keys()) - attributes_used):
             del_attribute(grp[name], attribute)
 
-    def read(self, f, grp, name, options):
+    def read(self, f, dsetgrp, options):
         """ Read a Python object from file.
 
-        Reads the Python object 'name' from the HDF5 Group 'grp', if
-        possible, and returns it.
+        Reads the data at `dsetgrp` and converts it to a Python object
+        and returns it.
 
         This method is called if the modules in
         ``required_parent_modules`` can be found. Otherwise,
@@ -396,11 +396,8 @@ class TypeMarshaller(object):
         ----------
         f : h5py.File
             The HDF5 file handle that is open.
-        grp : h5py.Group or h5py.File
-            The parent HDF5 Group (or File if at '/') that contains the
-            object with the specified name.
-        name : str
-            Name of the object.
+        dsetgrp : h5py.Dataset or h5py.Group
+            The Dataset or Group object to read.
         options : hdf5storage.core.Options
             hdf5storage options object.
 
@@ -412,7 +409,7 @@ class TypeMarshaller(object):
         Returns
         -------
         data
-            The Python object 'name' in the HDF5 Group 'grp'.
+            The Python object.
 
         Notes
         -----
@@ -427,14 +424,14 @@ class TypeMarshaller(object):
         hdf5storage.utilities.read_data
 
         """
-        raise NotImplementedError('Can''t read data: ' + name)
+        raise NotImplementedError('Can''t read data: ' + dsetgrp.name)
 
-    def read_approximate(self, f, grp, name, options):
+    def read_approximate(self, f, grp, name, options, dsetgrp=None):
         """ Read a Python object approximately from file.
 
-        Reads the Python object 'name' from the HDF5 Group 'grp', if
-        possible, and returns an approximation of it constructed from
-        the types in the main Python runtime and numpy.
+        Reads the data at `dsetgrp` and returns an approximation of it
+        constructed from the types in the main Python runtime and
+        numpy.
 
         This method is called if the modules in
         ``required_parent_modules`` cannot be found. Otherwise, ``read``
@@ -444,11 +441,8 @@ class TypeMarshaller(object):
         ----------
         f : h5py.File
             The HDF5 file handle that is open.
-        grp : h5py.Group or h5py.File
-            The parent HDF5 Group (or File if at '/') that contains the
-            object with the specified name.
-        name : str
-            Name of the object.
+        dsetgrp : h5py.Dataset or h5py.Group
+            The Dataset or Group object to read.
         options : hdf5storage.core.Options
             hdf5storage options object.
 
@@ -460,7 +454,7 @@ class TypeMarshaller(object):
         Returns
         -------
         data
-            The Python object 'name' in the HDF5 Group 'grp'.
+            The Python object.
 
         Notes
         -----
@@ -475,7 +469,7 @@ class TypeMarshaller(object):
         hdf5storage.utilities.read_data
 
         """
-        raise NotImplementedError('Can''t read data: ' + name)
+        raise NotImplementedError('Can''t read data: ' + dsetgrp.name)
 
 
 class NumpyScalarArrayMarshaller(TypeMarshaller):
@@ -995,12 +989,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             del_attribute(dset, 'MATLAB_empty')
             del_attribute(dset, 'MATLAB_int_decode')
 
-    def read(self, f, grp, name, options):
-        # If name is not present, then we can't read it and have to
-        # throw an error.
-        if name not in grp:
-            raise NotImplementedError(name + ' is not present.')
-        dset = grp[name]
+    def read(self, f, dsetgrp, options):
+        dset = dsetgrp
 
         # Get the different attributes this marshaller uses.
 
@@ -1415,10 +1405,10 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
-    def read(self, f, grp, name, options):
+    def read(self, f, dsetgrp, options):
         # Use the parent class version to read it and do most of the
         # work.
-        data = NumpyScalarArrayMarshaller.read(self, f, grp, name,
+        data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
                                                options)
 
         # The type string determines how to convert it back to a Python
@@ -1430,7 +1420,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # can fit into an int if we are in Python 2.x. If it will fit,
         # it is returned as an int. If it would not fit, it is returned
         # as a long.
-        type_string = get_attribute_string(grp[name], 'Python.Type')
+        type_string = get_attribute_string(dsetgrp, 'Python.Type')
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
             sdata = np.asscalar(data)
@@ -1484,16 +1474,16 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
-    def read(self, f, grp, name, options):
+    def read(self, f, dsetgrp, options):
         # Use the parent class version to read it and do most of the
         # work.
-        data = NumpyScalarArrayMarshaller.read(self, f, grp, name,
+        data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
                                                options)
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). Otherwise, return it
         # as is.
-        type_string = get_attribute_string(grp[name], 'Python.Type')
+        type_string = get_attribute_string(dsetgrp, 'Python.Type')
         if type_string == 'str':
             return convert_to_str(data)
         elif type_string == 'bytes':
@@ -1527,7 +1517,7 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
-    def read(self, f, grp, name, options):
+    def read(self, f, dsetgrp, options):
         # There is only one value, so return it.
         return None
 
@@ -1711,13 +1701,12 @@ class PythonDictMarshaller(TypeMarshaller):
         else:
             del_attribute(dset, 'MATLAB_class')
 
-    def read(self, f, grp, name, options):
+    def read(self, f, dsetgrp, options):
+        grp2 = dsetgrp
         # If name is not present or is not a Group, then we can't read
         # it and have to throw an error.
-        if name not in grp or not isinstance(grp[name], h5py.Group):
-            raise NotImplementedError('No Group ' + name +
-                                      ' is present.')
-        grp2 = grp[name]
+        if not isinstance(grp2, h5py.Group):
+            raise NotImplementedError('Not a Group.')
 
         # Get the different attributes this marshaller uses.
 
@@ -1835,10 +1824,10 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
-    def read(self, f, grp, name, options):
+    def read(self, f, dsetgrp, options):
         # Use the parent class version to read it and do most of the
         # work.
-        data = NumpyScalarArrayMarshaller.read(self, f, grp, name,
+        data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
                                                options)
 
         # Passing it through list does all the work of making it a list
@@ -1868,15 +1857,15 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
                                   self.get_type_string(data,
                                   type_string), options)
 
-    def read(self, f, grp, name, options):
+    def read(self, f, dsetgrp, options):
         # Use the parent class version to read it and do most of the
         # work.
-        data = PythonListMarshaller.read(self, f, grp, name,
-                                        options)
+        data = PythonListMarshaller.read(self, f, dsetgrp,
+                                         options)
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types).
-        type_string = get_attribute_string(grp[name], 'Python.Type')
+        type_string = get_attribute_string(dsetgrp, 'Python.Type')
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
             return tp(data)
