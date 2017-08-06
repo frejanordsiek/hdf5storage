@@ -1515,7 +1515,7 @@ class PythonDictMarshaller(TypeMarshaller):
 
         self.python_type_strings = ['dict', 'collections.OrderedDict']
         self.__MATLAB_classes = {dict: 'struct',
-                                 self.types[1]: 'struct'}
+                                 collections.OrderedDict: 'struct'}
         # Set matlab_classes to empty since NumpyScalarArrayMarshaller
         # handles Groups by default now.
         self.matlab_classes = list()
