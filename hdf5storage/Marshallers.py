@@ -1598,7 +1598,7 @@ class PythonDictMarshaller(TypeMarshaller):
         if any_non_valid_str_keys:
             names = (options.dict_like_keys_name,
                      options.dict_like_values_name)
-            values = (tuple(data.keys()), tuple(data.values()))
+            values = (tuple(data), tuple(data.values()))
         else:
             names = tuple(keys_as_str)
             values = tuple(data.values())
