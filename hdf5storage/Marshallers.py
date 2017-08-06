@@ -740,8 +740,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 esc_field = escaped_field_names[i]
                 new_data = np.zeros(shape=data_to_store.shape,
                                     dtype='object')
-                for index, x in np.ndenumerate(data_to_store):
-                    new_data[index] = x[field]
+                for index, x in enumerate(data_to_store.flat):
+                    new_data.flat[index] = x[field]
 
                 # If we are supposed to reverse dimension order, it has
                 # already been done, but write_data expects that it
@@ -1100,7 +1100,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 sp = first.shape
                 all_same = True
                 try:
-                    for index, x in np.ndenumerate(v):
+                    for x in v.flat:
                         if dt != x.dtype or sp != x.shape:
                             all_same = False
                             break
