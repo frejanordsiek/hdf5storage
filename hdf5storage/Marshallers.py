@@ -829,7 +829,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         != filters['fletcher32'] \
                         or dsetgrp.compression_opts != \
                         filters['compression_opts']:
-                    del dsetgrp
+                    del grp[name]
                     dsetgrp = grp.create_dataset(name,
                                                  data=data_to_store,
                                                  **filters)
