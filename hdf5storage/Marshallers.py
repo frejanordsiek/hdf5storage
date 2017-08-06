@@ -321,7 +321,8 @@ class TypeMarshaller(object):
         raise NotImplementedError('Can''t write data type: '
                                   + str(type(data)))
 
-    def write_metadata(self, f, dsetgrp, data, type_string, options):
+    def write_metadata(self, f, dsetgrp, data, type_string, options,
+                       attributes=None):
         """ Writes an object to file.
 
         Writes the metadata for a Python object `data` to file at `name`
@@ -342,6 +343,14 @@ class TypeMarshaller(object):
             to be gotten by ``get_type_string``.
         options : hdf5storage.core.Options
             hdf5storage options object.
+        attributes : dict or None, optional
+            The Attributes to set. The keys (``str``) are the names. The
+            values are ``tuple`` of the Attribute kind and the value to
+            set. Valid kinds are ``'string_array'``, ``'string'``, and
+            ``'value'``. The values must correspond to what
+            ``set_attribute_string_array``, ``set_attribute_string`` and
+            ``set_attribute`` would take respectively. Default is
+            no Attributes to set (``None``).
 
         Notes
         -----
@@ -355,29 +364,19 @@ class TypeMarshaller(object):
         that the names of any additional HDF5 Attributes are put in the
         appropriate set.
 
+        See Also
+        --------
+        utilities.set_attributes_all
+
         """
+        if attributes is None:
+            attributes = dict()
         # Make sure we have a complete type_string.
-        type_string = self.get_type_string(data, type_string)
-
-        # The metadata that is written depends on the format.
-
-        if options.store_python_metadata:
-            set_attribute_string(dsetgrp, 'Python.Type', type_string)
-
-        # If we are not storing python information or doing MATLAB
-        # compatibility, then attributes not in the python and/or
-        # MATLAB lists need to be removed.
-
-        attributes_used = set()
-
-        if options.store_python_metadata:
-            attributes_used |= self.python_attributes
-
-        if options.matlab_compatible:
-            attributes_used |= self.matlab_attributes
-
-        for attribute in (set(dsetgrp.attrs.keys()) - attributes_used):
-            del_attribute(dsetgrp, attribute)
+        if options.store_python_metadata \
+                and 'Python.Type' not in attributes:
+            attributes['Python.Type'] = \
+                ('string', self.get_type_string(data, type_string))
+        set_attributes_all(dsetgrp, attributes, discard_others=True)
 
     def read(self, f, dsetgrp, attributes, options):
         """ Read a Python object from file.
@@ -561,6 +560,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.update_type_lookups()
 
     def write(self, f, grp, name, data, type_string, options):
+        # Start with an emtpy attributes.
+        attributes = dict()
         # If we are doing matlab compatibility and the data type is not
         # one of those that is supported for matlab, skip writing the
         # data or throw an error if appropriate. structured ndarrays and
@@ -718,8 +719,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # Write the metadata, and set the MATLAB_class to 'struct'
             # explicitly.
             if options.matlab_compatible:
-                set_attribute_string(dsetgrp, 'MATLAB_class',
-                                     'struct')
+                attributes['MATLAB_class'] = ('value', 'struct')
 
             # Delete any Datasets/Groups not corresponding to a field
             # name in data if that option is set.
@@ -761,20 +761,16 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                options)
 
                 if esc_field in dsetgrp:
+                    esc_attrs = dict()
                     if options.matlab_compatible:
-                        set_attribute_string(dsetgrp[esc_field], 'H5PATH',
-                                             dsetgrp.name)
-                    else:
-                        del_attribute(dsetgrp[esc_field], 'H5PATH')
+                        esc_attrs['H5PATH'] = ('string', dsetgrp.name)
 
                     # In the case that we wrote a Reference array (not a
                     # single element), then all other attributes need to
                     # be removed.
-                    if np.prod(new_data.shape) != 1:
-                        for attribute in (set( \
-                                dsetgrp[esc_field].attrs.keys()) \
-                                - set(['H5PATH'])):
-                            del_attribute(dsetgrp[esc_field], attribute)
+                    set_attributes_all(dsetgrp[esc_field],
+                                       esc_attrs,
+                                       np.prod(new_data.shape) != 1)
         else:
             # Set the storage options such as compression, chunking,
             # filters, etc. If the data is being compressed (compression
@@ -845,14 +841,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Write the metadata using the inherited function (good enough).
         self.write_metadata(f, dsetgrp, data, type_string,
-                            options)
+                            options, attributes=attributes)
 
-    def write_metadata(self, f, dsetgrp, data, type_string, options):
-        # First, call the inherited version to do most of the work.
-
-        TypeMarshaller.write_metadata(self, f, dsetgrp, data,
-                                      type_string, options)
-
+    def write_metadata(self, f, dsetgrp, data, type_string, options,
+                       attributes=None):
+        if attributes is None:
+            attributes = dict()
         # Write the underlying numpy type if we are storing python
         # information.
 
@@ -861,16 +855,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # 'matrix', or 'chararray') need to be stored.
 
         if options.store_python_metadata:
-            set_attribute(dsetgrp, 'Python.Shape',
-                          np.uint64(data.shape))
+            attributes['Python.Shape'] = ('value', np.uint64(data.shape))
 
             # Now, in Python 3, the dtype names for bare bytes and
             # unicode strings start with 'bytes' and 'str' respectively,
             # but in Python 2, they start with 'string' and 'unicode'
             # respectively. The Python 2 ones must be converted to the
             # Python 3 ones for writing.
-            set_attribute_string(dsetgrp, \
-                'Python.numpy.UnderlyingType', \
+            attributes['Python.numpy.UnderlyingType'] = ('string', \
                 data.dtype.name.replace('string', 'bytes').replace( \
                 'unicode', 'str'))
             if isinstance(data, np.matrix):
@@ -883,8 +875,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 container = 'ndarray'
             else:
                 container = 'scalar'
-            set_attribute_string(dsetgrp, 'Python.numpy.Container',
-                                 container)
+            attributes['Python.numpy.Container'] = ('string', container)
 
         # If its dtype has fields and we would have written it as a
         # Group (option is set, one of the field dtypes is object, or if
@@ -909,11 +900,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     and data.dtype.fields is not None \
                     and (options.structured_numpy_ndarray_as_struct \
                     or (has_obj or has_null)):
-                set_attribute_string_array(dsetgrp,
-                                           'Python.Fields',
-                                           field_names)
-            else:
-                del_attribute(dsetgrp, 'Python.Fields')
+                attributes['Python.Fields'] = ('string_array',
+                                               field_names)
 
             # If we are making it MATLAB compatible, then we can set the
             # MATLAB_fields Attribute as long as all keys are mappable
@@ -928,14 +916,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         fs[i] = np.array([c.encode('ascii')
                                           for c in s], dtype='S1')
                 except UnicodeEncodeError:
-                    del_attribute(dsetgrp, 'MATLAB_fields')
+                    pass
                 else:
-                    set_attribute(dsetgrp, 'MATLAB_fields', fs)
-            else:
-                del_attribute(dsetgrp, 'MATLAB_fields')
-        else:
-            del_attribute(dsetgrp, 'Python.Fields')
-            del_attribute(dsetgrp, 'MATLAB_fields')
+                    attributes['MATLAB_fields'] = ('value', fs)
 
         # If data is empty, we need to set the Python.Empty and
         # MATLAB_empty attributes to 1 if we are storing type info or
@@ -946,18 +929,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or data.dtype.type == np.str_)
                 and data.nbytes == 0):
             if options.store_python_metadata:
-                set_attribute(dsetgrp, 'Python.Empty',
-                                          np.uint8(1))
-            else:
-                del_attribute(dsetgrp, 'Python.Empty')
+                attributes['Python.Empty'] = ('value',
+                                              np.uint8(1))
             if options.matlab_compatible:
-                set_attribute(dsetgrp, 'MATLAB_empty',
-                                          np.uint8(1))
-            else:
-                del_attribute(dsetgrp, 'MATLAB_empty')
-        else:
-            del_attribute(dsetgrp, 'Python.Empty')
-            del_attribute(dsetgrp, 'MATLAB_empty')
+                attributes['MATLAB_empty'] = ('value',
+                                              np.uint8(1))
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set looking up the data type (gotten
@@ -973,27 +949,22 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if options.matlab_compatible:
             if data.dtype.fields is not None \
                     and options.structured_numpy_ndarray_as_struct:
-                set_attribute_string(dsetgrp, 'MATLAB_class',
-                                     'struct')
+                attributes['MATLAB_class'] = ('string', 'struct')
             elif tp in self.__MATLAB_classes:
-                set_attribute_string(dsetgrp, 'MATLAB_class',
-                                     self.__MATLAB_classes[tp])
+                attributes['MATLAB_class'] = ('string',
+                                              self.__MATLAB_classes[tp])
                 if tp in (np.bytes_, np.str_, np.bool_):
                     if dsetgrp.dtype.type == np.bytes_:
-                        set_attribute(dsetgrp, 'MATLAB_int_decode', 1)
+                        attributes['MATLAB_int_decode'] = ('value', 1)
                     else:
-                        set_attribute(dsetgrp, 'MATLAB_int_decode', \
+                        attributes['MATLAB_int_decode'] = ('value', \
                             np.int64(dsetgrp.dtype.itemsize))
-                else:
-                    del_attribute(dsetgrp, 'MATLAB_int_decode')
-            else:
-                del_attribute(dsetgrp, 'MATLAB_class')
-                del_attribute(dsetgrp, 'MATLAB_empty')
-                del_attribute(dsetgrp, 'MATLAB_int_decode')
-        else:
-            del_attribute(dsetgrp, 'MATLAB_class')
-            del_attribute(dsetgrp, 'MATLAB_empty')
-            del_attribute(dsetgrp, 'MATLAB_int_decode')
+
+        # Now call the parent class's version to do the actual setting
+        # of Attributes.
+        TypeMarshaller.write_metadata(self, f, dsetgrp, data,
+                                      type_string, options,
+                                      attributes=attributes)
 
     def read(self, f, dsetgrp, attributes, options):
         dset = dsetgrp
@@ -1634,18 +1605,16 @@ class PythonDictMarshaller(TypeMarshaller):
                     del_attribute(grp2[k], 'H5PATH')
 
     def write_metadata(self, f, dsetgrp, data, type_string, options,
+                       attributes=None,
                        any_non_valid_str_keys=None,
                        keys_as_str=None,
                        key_str_types=None):
+        if attributes is None:
+            attributes = dict()
         # Two keyword arguments were added beyond what the base class
         # requires. These are used to pass whether there were any keys
         # that were valid string types and if they were all valid string
         # types, their type characters.
-
-        # First, call the inherited version to do most of the work.
-
-        TypeMarshaller.write_metadata(self, f, dsetgrp, data,
-                                      type_string, options)
 
         # Grab all the keys in whatever order is given (OrderedDict will
         # be in the order they were entered and dict will be sorted).
@@ -1657,24 +1626,18 @@ class PythonDictMarshaller(TypeMarshaller):
         # being stored individually.
         if options.store_python_metadata:
             if any_non_valid_str_keys is True:
-                set_attribute_string(dsetgrp, 'Python.dict.StoredAs',
-                              'keys_values')
-                set_attribute_string_array(dsetgrp, \
-                    'Python.dict.keys_values_names', \
+                attributes['Python.dict.StoredAs'] = ('string',
+                                                      'keys_values')
+                attributes['Python.dict.keys_values_names'] = \
+                    ('string_array', \
                     [options.dict_like_keys_name, \
                     options.dict_like_values_name])
-                del_attribute(dsetgrp, 'Python.Fields')
-                del_attribute(dsetgrp, 'Python.dict.key_str_types')
             else:
-                set_attribute_string(dsetgrp, 'Python.dict.StoredAs',
-                              'individually')
-                del_attribute(dsetgrp,
-                              'Python.dict.keys_values_names')
-                set_attribute_string_array(dsetgrp, 'Python.Fields',
-                                           fields)
-                set_attribute_string(dsetgrp,
-                                     'Python.dict.key_str_types',
-                                     convert_to_str(key_str_types))
+                attributes['Python.dict.StoredAs'] = ('string',
+                                                      'individually')
+                attributes['Python.Fields'] = ('string_array', fields)
+                attributes['Python.dict.key_str_types'] = \
+                    ('string', convert_to_str(key_str_types))
 
         # If we are making it MATLAB compatible, then we can set the
         # MATLAB_fields Attribute as long as all keys are mappable to
@@ -1690,13 +1653,11 @@ class PythonDictMarshaller(TypeMarshaller):
                     fs[i] = np.array([c.encode('ascii') for c in s],
                                      dtype='S1')
             except UnicodeDecodeError:
-                del_attribute(dsetgrp, 'MATLAB_fields')
+                pass
             except UnicodeEncodeError:
-                del_attribute(dsetgrp, 'MATLAB_fields')
+                pass
             else:
-                set_attribute(dsetgrp, 'MATLAB_fields', fs)
-        else:
-            del_attribute(dsetgrp, 'MATLAB_fields')
+                attributes['MATLAB_fields'] = ('value', fs)
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set for the data type. If the type
@@ -1705,10 +1666,14 @@ class PythonDictMarshaller(TypeMarshaller):
 
         tp = type(data)
         if options.matlab_compatible and tp in self.__MATLAB_classes:
-            set_attribute_string(dsetgrp, 'MATLAB_class',
-                                 self.__MATLAB_classes[tp])
-        else:
-            del_attribute(dsetgrp, 'MATLAB_class')
+            attributes['MATLAB_class'] = ('string',
+                                          self.__MATLAB_classes[tp])
+
+        # Now call the parent class's version to do the actual setting
+        # of Attributes.
+        TypeMarshaller.write_metadata(self, f, dsetgrp, data,
+                                      type_string, options,
+                                      attributes=attributes)
 
     def read(self, f, dsetgrp, attributes, options):
         grp2 = dsetgrp

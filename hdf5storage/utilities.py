@@ -1381,6 +1381,11 @@ def set_attribute(target, name, value):
     If the attribute `name` doesn't exist yet, it is created. If it
     already exists, it is overwritten if it differs from `value`.
 
+    Notes
+    -----
+    ``set_attributes_all`` is the fastest way to set and delete
+    Attributes in bulk.
+
     Parameters
     ----------
     target : Dataset or Group
@@ -1389,6 +1394,10 @@ def set_attribute(target, name, value):
         Name of the attribute to set.
     value : numpy type other than ``numpy.str_``
         Value to set the attribute to.
+
+    See Also
+    --------
+    set_attributes_all
 
     """
     try:
@@ -1403,6 +1412,11 @@ def set_attribute_string(target, name, value):
     If the attribute `name` doesn't exist yet, it is created. If it
     already exists, it is overwritten if it differs from `value`.
 
+    Notes
+    -----
+    ``set_attributes_all`` is the fastest way to set and delete
+    Attributes in bulk.
+
     Parameters
     ----------
     target : Dataset or Group
@@ -1412,6 +1426,10 @@ def set_attribute_string(target, name, value):
     value : string
         Value to set the attribute to. Can be any sort of string type
         that will convert to a ``numpy.bytes_``
+
+    See Also
+    --------
+    set_attributes_all
 
     """
     set_attribute(target, name, np.bytes_(value))
@@ -1424,6 +1442,11 @@ def set_attribute_string_array(target, name, string_list):
     already exists, it is overwritten with the list of string
     `string_list` (they will be vlen strings).
 
+    Notes
+    -----
+    ``set_attributes_all`` is the fastest way to set and delete
+    Attributes in bulk.
+
     Parameters
     ----------
     target : Dataset or Group
@@ -1433,6 +1456,10 @@ def set_attribute_string_array(target, name, string_list):
     string_list : list of str
         List of strings to set the attribute to. Strings must be ``str``
 
+    See Also
+    --------
+    set_attributes_all
+
     """
     s_list = [convert_to_str(s) for s in string_list]
     if sys.hexversion >= 0x03000000:
@@ -1441,6 +1468,71 @@ def set_attribute_string_array(target, name, string_list):
     else:
         target.attrs.create(name, s_list,
                             dtype=h5py.special_dtype(vlen=unicode))
+
+
+def set_attributes_all(target, attributes, discard_others=True):
+    """ Set Attributes in bulk and optionally discard others.
+
+    Sets each Attribute in turn (modifying it in place if possible if it
+    is already present) and optionally discarding all other Attributes
+    not explicitly set. This function yields much greater performance
+    than the required individual calls to ``set_attribute``,
+    ``set_attribute_string``, ``set_attribute_string_array`` and
+    ``del_attribute`` put together.
+
+    .. versionadded:: 0.2
+
+    Parameters
+    ----------
+    target : Dataset or Group
+        Dataset or Group to set the Attributes of.
+    attributes : dict
+        The Attributes to set. The keys (``str``) are the names. The
+        values are ``tuple`` of the Attribute kind and the value to
+        set. Valid kinds are ``'string_array'``, ``'string'``, and
+        ``'value'``. The values must correspond to what
+        ``set_attribute_string_array``, ``set_attribute_string`` and
+        ``set_attribute`` would take respectively.
+    discard_others : bool, optional
+        Whether to discard all other Attributes not explicitly set
+        (default) or not.
+
+    See Also
+    --------
+    set_attribute
+    set_attribute_string
+    set_attribute_string_array
+
+    """
+    attrs = target.attrs
+    existing = dict(attrs.items())
+    # Generate special dtype for string arrays.
+    if sys.hexversion >= 0x03000000:
+        str_arr_dtype = h5py.special_dtype(vlen=str)
+    else:
+        str_arr_dtype = dtype=h5py.special_dtype(vlen=unicode)
+    # Go through each attribute. If it is already present, modify it if
+    # possible and create it otherwise (deletes old value.)
+    for k, (kind, value) in attributes.items():
+        if kind == 'string_array':
+            attrs.create(k, [convert_to_str(s) for s in value],
+                         dtype=str_arr_dtype)
+        else:
+            if kind == 'string':
+                value = np.bytes_(value)
+            if k not in existing:
+                attrs.create(k, value)
+            else:
+                try:
+                    if value.dtype == existing[k].dtype \
+                            and value.shape == existing[k].shape:
+                        attrs.modify(k, value)
+                except:
+                    attrs.create(k, value)
+    # Discard all other attributes.
+    if discard_others:
+        for k in set(existing) - set(attributes):
+            del attrs[k]
 
 
 def del_attribute(target, name):
