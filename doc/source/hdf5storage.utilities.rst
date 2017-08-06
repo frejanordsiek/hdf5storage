@@ -30,6 +30,7 @@ hdf5storage.utilities
    set_attribute
    set_attribute_string
    set_attribute_string_array
+   set_attributes_all
    del_attribute
 
 
@@ -170,6 +171,12 @@ set_attribute_string_array
 --------------------------
 
 .. autofunction:: set_attribute_string_array
+
+
+set_attributes_all
+------------------
+
+.. autofunction:: set_attributes_all
 
 
 del_attribute

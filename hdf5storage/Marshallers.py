@@ -96,6 +96,16 @@ class TypeMarshaller(object):
     need to appropriate read/write them with the lowlevel functions
     ``utilities.read_data`` and ``utilities.write_data``.
 
+    .. versionchanged:: 0.2
+       Attributes were added, ``read_approximate`` was added, call
+       signatures of the methods, and the initialization procedure were
+       changed.
+
+    Warning
+    -------
+    Marshallers for version 0.1.x of this package are not compatible
+    with version 0.2.x.
+
     Attributes
     ----------
     required_parent_modules : list of str
@@ -144,6 +154,8 @@ class TypeMarshaller(object):
         #: innaccurately due to missing the needed modules. Modules in
         #: the main Python runtime and numpy do not need to be included
         #: (they are assumed to be present). The default is ``[]``.
+        #:
+        #: .. versionadded:: 0.2
         self.required_parent_modules = []
 
         #: All required modules for reading the types accurately.
@@ -157,6 +169,8 @@ class TypeMarshaller(object):
         #: the main Python runtime and numpy do not need to be
         #: included (they are assumed to be present). The default is
         #: ``[]``.
+        #:
+        #: .. versionadded:: 0.2
         self.required_modules = []
 
         #: Attributes used to store type information.
@@ -211,6 +225,8 @@ class TypeMarshaller(object):
         #: Lookup using the types in ``types`` as keys and the matching
         #: entries in ``python_type_strings`` as values. Set using
         #: ``update_type_lookups``.
+        #:
+        #: .. versionadded:: 0.2
         self.type_to_typestring = dict()
 
         #: Typestring to type lookup.
@@ -220,6 +236,8 @@ class TypeMarshaller(object):
         #: Lookup using the type strings in ``python_type_strings`` as
         #: keys and the matching entries in ``types`` as values. Set
         #: using ``update_type_lookups``.
+        #:
+        #: .. versionadded:: 0.2
         self.typestring_to_type = dict()
 
     def update_type_lookups(self):
@@ -228,6 +246,8 @@ class TypeMarshaller(object):
         Must be called once the ``types`` and ``python_type_strings``
         attributes are set so that ``type_to_typestring`` and
         ``typestring_to_type`` are constructed.
+
+        .. versionadded:: 0.2
 
         Notes
         -----
@@ -282,6 +302,9 @@ class TypeMarshaller(object):
 
         Writes the Python object 'data' to 'name' in h5py.Group 'grp'.
 
+        .. versionchanged:: 0.2
+           Arguements changed.
+
         Parameters
         ----------
         f : h5py.File
@@ -329,6 +352,9 @@ class TypeMarshaller(object):
         in h5py.Group `grp`. Metadata is written to HDF5
         Attributes. Existing Attributes that are not being used are
         deleted.
+
+        .. versionchanged:: 0.2
+           Arguements changed.
 
         Parameters
         ----------
@@ -388,6 +414,9 @@ class TypeMarshaller(object):
         ``required_parent_modules`` can be found. Otherwise,
         ``read_approximate`` is used instead.
 
+        .. versionchanged:: 0.2
+           Arguements changed.
+
         Parameters
         ----------
         f : h5py.File
@@ -435,6 +464,8 @@ class TypeMarshaller(object):
         This method is called if the modules in
         ``required_parent_modules`` cannot be found. Otherwise, ``read``
         is used instead.
+
+        .. versionadded:: 0.2
 
         Parameters
         ----------

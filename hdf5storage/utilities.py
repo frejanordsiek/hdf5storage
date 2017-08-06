@@ -88,6 +88,8 @@ def _replace_fun_escape(m):
     Only supports forward slash, backward slash, and null for now,
     which are done by lookup.
 
+    .. versionadded:: 0.2
+
     Parameters
     ----------
     m : regex match
@@ -107,6 +109,8 @@ def _replace_fun_unescape(m):
     Supports single hex/unicode escapes of the form ``'\\xYY'``,
     ``'\\uYYYY'``, and ``'\\UYYYYYYYY'`` where Y is a hex digit. Only
     decodes if there is an odd number of backslashes.
+
+    .. versionadded:: 0.2
 
     Parameters
     ----------
@@ -142,6 +146,8 @@ def escape_path(pth):
     are hex digits depending on the unicode numerical value of the
     character. for ``'.'``, both slashes, and null; this will be the
     former (``'\\xYY'``).
+
+    .. versionadded:: 0.2
 
     Parameters
     ----------
@@ -195,6 +201,8 @@ def unescape_path(pth):
     ``'\\UYYYYYYYY'`` where Y are hex digits giving the character's
     unicode numerical value and double backslashes which are the escape
     for single backslashes.
+
+    .. versionadded:: 0.2
 
     Parameters
     ----------
@@ -251,6 +259,8 @@ def process_path(pth):
     hierarchy.
 
     All paths are POSIX style.
+
+    .. versionadded:: 0.2
 
     Parameters
     ----------
@@ -391,6 +401,9 @@ def read_data(f, grp, name, options, dsetgrp=None):
     Low level function to read a Python type of the specified name from
     specified Group.
 
+    .. versionchanged:: 0.2
+       Added argument `dsetgrp`.
+
     Parameters
     ----------
     f : h5py.File
@@ -504,7 +517,7 @@ def write_object_array(f, data, options):
 
     Returns
     -------
-    numpy.ndarray of h5py.Reference
+    obj_array : numpy.ndarray of h5py.Reference
         A reference array pointing to all the elements written to the
         HDF5 file. For those that couldn't be written, the respective
         element points to the canonical empty.
@@ -619,7 +632,7 @@ def read_object_array(f, data, options):
 
     Returns
     -------
-    numpy.ndarray of numpy.object_
+    obj_array : numpy.ndarray of numpy.object\_
         The Python object array containing the items pointed to by
         `data`.
 
@@ -658,7 +671,7 @@ def next_unused_name_in_group(grp, length):
 
     Returns
     -------
-    str
+    name : str
         A name that isn't already an existing Dataset or Group in
         `grp`.
 
@@ -684,9 +697,9 @@ def next_unused_name_in_group(grp, length):
     return name
 
 def convert_numpy_str_to_uint16(data):
-    """ Converts a numpy.str_ to UTF-16 encoding in numpy.uint16 form.
+    """ Converts a numpy.unicode\_ to UTF-16 in numpy.uint16 form.
 
-    Convert a ``numpy.str`` or an array of them (they are UTF-32
+    Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
     strings) to UTF-16 in the equivalent array of ``numpy.uint16``. The
     conversion will throw an exception if any characters cannot be
     converted to UTF-16. Strings are expanded along rows (across columns)
@@ -696,12 +709,12 @@ def convert_numpy_str_to_uint16(data):
 
     Parameters
     ----------
-    data : numpy.str_ or numpy.ndarray of numpy.str_
+    data : numpy.unicode\_ or numpy.ndarray of numpy.unicode\_
         The string or array of them to convert.
 
     Returns
     -------
-    numpy.ndarray of numpy.uint16
+    array : numpy.ndarray of numpy.uint16
         The result of the conversion.
 
     Raises
@@ -712,7 +725,7 @@ def convert_numpy_str_to_uint16(data):
     See Also
     --------
     convert_numpy_str_to_uint32
-    decode_to_numpy_str
+    convert_to_numpy_str
 
     """
     # An empty string should be an empty uint16
@@ -739,9 +752,9 @@ def convert_numpy_str_to_uint16(data):
 
 
 def convert_numpy_str_to_uint32(data):
-    """ Converts a numpy.str_ to its numpy.uint32 representation.
+    """ Converts a numpy.unicode\_ to its numpy.uint32 representation.
 
-    Convert a ``numpy.str`` or an array of them (they are UTF-32
+    Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
     strings) into the equivalent array of ``numpy.uint32`` that is byte
     for byte identical. Strings are expanded along rows (across columns)
     so a 2x3x4 array of 10 element strings will get turned into a 2x30x4
@@ -749,18 +762,18 @@ def convert_numpy_str_to_uint32(data):
 
     Parameters
     ----------
-    data : numpy.str_ or numpy.ndarray of numpy.str_
+    data : numpy.unicode\_ or numpy.ndarray of numpy.unicode\_
         The string or array of them to convert.
 
     Returns
     -------
-    numpy.ndarray of numpy.uint32
+    array : numpy.ndarray of numpy.uint32
         The result of the conversion.
 
     See Also
     --------
     convert_numpy_str_to_uint16
-    decode_to_numpy_str
+    convert_to_numpy_str
 
     """
     if data.nbytes == 0:
@@ -783,7 +796,7 @@ def convert_to_str(data):
 
     Decodes `data` to a Python 3.x ``str`` (Python 2.x ``unicode``). If
     it can't be decoded, it is returned as is. Unsigned integers, Python
-    ``bytes``, and Numpy strings (``numpy.str_`` and
+    ``bytes``, and Numpy strings (``numpy.unicode_`` and
     ``numpy.bytes_``). Python 3.x ``bytes``, Python 2.x ``str``, and
     ``numpy.bytes_`` are assumed to be encoded in UTF-8.
 
@@ -794,7 +807,7 @@ def convert_to_str(data):
 
     Returns
     -------
-    str or data
+    s : str or data
         If `data` can be decoded into a ``str``, the decoded version is
         returned. Otherwise, `data` is returned unchanged.
 
@@ -835,15 +848,15 @@ def convert_to_str(data):
 
 
 def convert_to_numpy_str(data, length=None):
-    """ Decodes data to Numpy unicode string (str_).
+    """ Decodes data to Numpy unicode string (numpy.unicode\_).
 
     Decodes `data` to Numpy unicode string (UTF-32), which is
-    ``numpy.str_``, or an array of them. If it can't be decoded, it is
-    returned as is. Unsigned integers, Python string types (``str``,
+    ``numpy.unicode_``, or an array of them. If it can't be decoded, it
+    is returned as is. Unsigned integers, Python string types (``str``,
     ``bytes``), and ``numpy.bytes_`` are supported. If it is an array of
-    ``numpy.bytes_``, an array of those all converted to ``numpy.str_``
-    is returned. Python 3.x ``bytes``, Python 2.x ``str``, and
-    ``numpy.bytes_`` are assumed to be encoded in UTF-8.
+    ``numpy.bytes_``, an array of those all converted to
+    ``numpy.unicode_`` is returned. Python 3.x ``bytes``, Python 2.x
+    ``str``, and ``numpy.bytes_`` are assumed to be encoded in UTF-8.
 
     For an array of unsigned integers, it may be desirable to make an
     array with strings of some specified length as opposed to an array
@@ -869,8 +882,8 @@ def convert_to_numpy_str(data, length=None):
 
     Returns
     -------
-    numpy.str_ or numpy.ndarray of numpy.str_ or data
-        If `data` can be decoded into a ``numpy.str_`` or a
+    s : numpy.unicode\_ or numpy.ndarray of numpy.unicode\_ or data
+        If `data` can be decoded into a ``numpy.unicode_`` or a
         ``numpy.ndarray`` of them, the decoded version is returned.
         Otherwise, `data` is returned unchanged.
 
@@ -878,7 +891,7 @@ def convert_to_numpy_str(data, length=None):
     --------
     convert_to_str
     convert_to_numpy_bytes
-    numpy.str_
+    numpy.unicode\_
 
     """
     # The method of conversion depends on its type.
@@ -975,13 +988,13 @@ def convert_to_numpy_str(data, length=None):
 
 
 def convert_to_numpy_bytes(data, length=None):
-    """ Decodes data to Numpy UTF-8 econded string (bytes_).
+    """ Decodes data to Numpy UTF-8 econded string (bytes\_).
 
     Decodes `data` to a Numpy UTF-8 encoded string, which is
     ``numpy.bytes_``, or an array of them in which case it will be ASCII
     encoded instead. If it can't be decoded, it is returned as
     is. Unsigned integers, Python string types (``str``, ``bytes``), and
-    ``numpy.str_`` (UTF-32) are supported.
+    ``numpy.unicode_`` (UTF-32) are supported.
 
     For an array of unsigned integers, it may be desirable to make an
     array with strings of some specified length as opposed to an array
@@ -1007,7 +1020,7 @@ def convert_to_numpy_bytes(data, length=None):
 
     Returns
     -------
-    numpy.bytes_ or numpy.ndarray of numpy.bytes_ or data
+    b : numpy.bytes\_ or numpy.ndarray of numpy.bytes\_ or data
         If `data` can be decoded into a ``numpy.bytes_`` or a
         ``numpy.ndarray`` of them, the decoded version is returned.
         Otherwise, `data` is returned unchanged.
@@ -1016,7 +1029,7 @@ def convert_to_numpy_bytes(data, length=None):
     --------
     convert_to_str
     convert_to_numpy_str
-    numpy.bytes_
+    numpy.bytes\_
 
     """
     # The method of conversion depends on its type.
@@ -1140,7 +1153,7 @@ def decode_complex(data, complex_names=(None, None)):
 
     Returns
     -------
-    decoded data or data
+    c : decoded data or data
         If `data` can be decoded into a complex type, the decoded
         complex version is returned. Otherwise, `data` is returned
         unchanged.
@@ -1223,7 +1236,7 @@ def encode_complex(data, complex_names):
 
     Returns
     -------
-    encoded data
+    d : encoded data
         `data` encoded into having the specified field names for the
         real and imaginary parts.
 
@@ -1261,8 +1274,9 @@ def get_attribute(target, name):
 
     Returns
     -------
-    The value of the attribute if it is present, or ``None`` if it
-    isn't.
+    value
+        The value of the attribute if it is present, or ``None`` if it
+        isn't.
 
     """
     if name not in target.attrs:
@@ -1277,6 +1291,8 @@ def convert_attribute_to_string(value):
     Converts the attribute value to a string if possible (get ``None``
     if isn't a string type).
 
+    .. versionadded:: 0.2
+
     Parameters
     ----------
     value :
@@ -1284,7 +1300,7 @@ def convert_attribute_to_string(value):
 
     Returns
     -------
-    str or None
+    s : str or None
         The ``str`` value of the attribute if the conversion is
         possible, or ``None`` if not.
 
@@ -1320,7 +1336,7 @@ def get_attribute_string(target, name):
 
     Returns
     -------
-    str or None
+    s : str or None
         The ``str`` value of the attribute if it is present, or ``None``
         if it isn't or isn't a type that can be converted to ``str``
 
@@ -1334,6 +1350,8 @@ def convert_attribute_to_string_array(value):
     Converts the value of an Attribute to a string array if possible
     (get ``None`` if not).
 
+    .. versionadded:: 0.2
+
     Parameters
     ----------
     value :
@@ -1341,9 +1359,9 @@ def convert_attribute_to_string_array(value):
 
     Returns
     -------
-    str or None
-        The ``str`` value of the attribute if the conversion is
-        possible, or ``None`` if not.
+    array : list of str or None
+        The converted string array value if possible, or ``None`` if it
+        isn't.
 
     """
     if value is None:
@@ -1366,7 +1384,7 @@ def get_attribute_string_array(target, name):
 
     Returns
     -------
-    list of str or None
+    array : list of str or None
         The string array value of the Attribute if it is present, or
         ``None`` if it isn't.
 
@@ -1392,7 +1410,7 @@ def set_attribute(target, name, value):
         Dataset or Group to set the attribute of.
     name : str
         Name of the attribute to set.
-    value : numpy type other than ``numpy.str_``
+    value : numpy type other than numpy.unicode\_
         Value to set the attribute to.
 
     See Also

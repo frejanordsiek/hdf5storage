@@ -371,6 +371,8 @@ Versions
        interop with Matlab v7.3 MAT files.
      * Issue #39. Documentation now uses the napoleon extension in
        Sphinx >= 1.3 as a replacement for numpydoc package.
+     * Issue #55. Major performance increases by reducing the overhead
+       involved with reading and writing each Dataset and Group.
 
 0.1.14. Bugfix release that also added a couple features.
         * Issue #45. Fixed syntax errors in unicode strings for Python

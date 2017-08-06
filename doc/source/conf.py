@@ -249,7 +249,7 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 
-intersphinx_mapping = {'python': ('http://docs.python.org/3.3', None),
+intersphinx_mapping = {'python': ('http://docs.python.org/3', None),
 		       'numpy': ('http://docs.scipy.org/doc/numpy', None),
 		       'scipy': ('http://docs.scipy.org/doc/scipy/reference', None),
 		       'h5py': ('http://docs.h5py.org/en/latest/', None)}
@@ -261,5 +261,5 @@ autosummary_generate = True
 # -- Options for Napoleon ------------------------------------------------------
 
 napoleon_use_ivar = True
-napoleon_use_param = False
-napoleon_use_rtype = False
+napoleon_use_param = True
+napoleon_use_rtype = True

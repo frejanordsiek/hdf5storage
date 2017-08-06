@@ -421,7 +421,7 @@ class Options(object):
         bool
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
-        is being done), all ``numpy.ndarray``s with fields (compound
+        is being done), all ``numpy.ndarray`` with fields (compound
         dtypes) are written as HDF5 Groups with the fields as Datasets
         (correspond to struct arrays in MATLAB).
 
@@ -472,7 +472,7 @@ class Options(object):
 
     @property
     def convert_numpy_bytes_to_utf16(self):
-        """ Whether or not to convert numpy.bytes_ to UTF-16.
+        """ Whether or not to convert numpy.bytes\_ to UTF-16.
 
         bool
 
@@ -503,19 +503,19 @@ class Options(object):
 
     @property
     def convert_numpy_str_to_utf16(self):
-        """ Whether or not to convert numpy.str_ to UTF-16.
+        """ Whether or not to convert numpy.unicode\_ to UTF-16.
 
         bool
 
         If ``True`` (defaults to ``False`` unless MATLAB compatibility
-        is being done), ``numpy.str_`` and anything that is converted
-        to them (``str``) will be converted to UTF-16 if possible before
-        being written to file as ``numpy.uint16``. If doing so would
-        lead to a loss of data (character can't be translated to
-        UTF-16) or would change the shape of an array of ``numpy.str_``
-        due to a character being converted into a pair 2-bytes, the
-        conversion will not be made and the string will be stored in
-        UTF-32 form as a ``numpy.uint32``.
+        is being done), ``numpy.unicode_`` and anything that is
+        converted to them (``str``) will be converted to UTF-16 if
+        possible before being written to file as ``numpy.uint16``. If
+        doing so would lead to a loss of data (character can't be
+        translated to UTF-16) or would change the shape of an array of
+        ``numpy.unicode_`` due to a character being converted into a
+        pair 2-bytes, the conversion will not be made and the string
+        will be stored in UTF-32 form as a ``numpy.uint32``.
 
         Must be ``True`` if doing MATLAB compatibility. MATLAB uses
         UTF-16 for its strings.
