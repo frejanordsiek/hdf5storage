@@ -23,7 +23,9 @@ hdf5storage.utilities
    decode_complex
    encode_complex
    get_attribute
+   convert_attribute_to_string
    get_attribute_string
+   convert_attribute_to_string_array
    get_attribute_string_array
    set_attribute
    set_attribute_string
@@ -127,10 +129,23 @@ get_attribute
 .. autofunction:: get_attribute
 
 
+
+convert_attribute_to_string
+---------------------------
+
+.. autofunction:: convert_attribute_to_string
+
+
 get_attribute_string
 --------------------
 
 .. autofunction:: get_attribute_string
+
+
+convert_attribute_to_string_array
+---------------------------------
+
+.. autofunction:: convert_attribute_to_string_array
 
 
 get_attribute_string_array

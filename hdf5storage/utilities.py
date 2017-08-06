@@ -431,10 +431,19 @@ def read_data(f, grp, name, options, dsetgrp=None):
             raise hdf5storage.exceptions.CantReadError( \
                 'Could not find ' + posixpath.join(grp.name, name))
 
+    # Get all attributes with values.
+    if sys.hexversion >= 0x03000000:
+        defaultfactory = type(None)
+    else:
+        defaultfactory = lambda : None
+    attributes = collections.defaultdict(defaultfactory,
+                                         dsetgrp.attrs.items())
+
     # Get the different attributes that can be used to identify they
     # type, which are the type string and the MATLAB class.
-    type_string = get_attribute_string(dsetgrp, 'Python.Type')
-    matlab_class = get_attribute_string(dsetgrp, 'MATLAB_class')
+    type_string = convert_attribute_to_string(attributes['Python.Type'])
+    matlab_class = convert_attribute_to_string( \
+        attributes['MATLAB_class'])
 
     # If the type_string is present, get the marshaller for it. If it is
     # not, use the one for the matlab class if it is given. Otherwise,
@@ -469,9 +478,9 @@ def read_data(f, grp, name, options, dsetgrp=None):
 
     if m is not None:
         if has_modules:
-            return m.read(f, dsetgrp, options)
+            return m.read(f, dsetgrp, attributes, options)
         else:
-            return m.read_approximate(f, dsetgrp, options)
+            return m.read_approximate(f, dsetgrp, attributes, options)
     else:
         raise hdf5storage.exceptions.CantReadError('Could not read '
                                                    + dsetgrp.name)
@@ -1256,9 +1265,43 @@ def get_attribute(target, name):
     isn't.
 
     """
-    try:
+    if name not in target.attrs:
+        return None
+    else:
         return target.attrs[name]
-    except:
+
+
+def convert_attribute_to_string(value):
+    """ Convert an attribute value to a string.
+
+    Converts the attribute value to a string if possible (get ``None``
+    if isn't a string type).
+
+    Parameters
+    ----------
+    value :
+        The Attribute value.
+
+    Returns
+    -------
+    str or None
+        The ``str`` value of the attribute if the conversion is
+        possible, or ``None`` if not.
+
+    """
+    if value is None:
+        return value
+    elif (sys.hexversion >= 0x03000000 and isinstance(value, str)) \
+            or (sys.hexversion < 0x03000000 \
+            and isinstance(value, unicode)):
+        return value
+    elif isinstance(value, bytes):
+        return value.decode()
+    elif isinstance(value, np.unicode_):
+        return str(value)
+    elif isinstance(value, np.bytes_):
+        return value.decode()
+    else:
         return None
 
 
@@ -1282,21 +1325,30 @@ def get_attribute_string(target, name):
         if it isn't or isn't a type that can be converted to ``str``
 
     """
-    value = get_attribute(target, name)
+    return convert_attribute_to_string(get_attribute(target, name))
+
+
+def convert_attribute_to_string_array(value):
+    """ Converts an Attribute value to a string array.
+
+    Converts the value of an Attribute to a string array if possible
+    (get ``None`` if not).
+
+    Parameters
+    ----------
+    value :
+        The Attribute value.
+
+    Returns
+    -------
+    str or None
+        The ``str`` value of the attribute if the conversion is
+        possible, or ``None`` if not.
+
+    """
     if value is None:
         return value
-    elif (sys.hexversion >= 0x03000000 and isinstance(value, str)) \
-            or (sys.hexversion < 0x03000000 \
-            and isinstance(value, unicode)):
-        return value
-    elif isinstance(value, bytes):
-        return value.decode()
-    elif isinstance(value, np.unicode_):
-        return str(value)
-    elif isinstance(value, np.bytes_):
-        return value.decode()
-    else:
-        return None
+    return [convert_to_str(x) for x in value]
 
 
 def get_attribute_string_array(target, name):
@@ -1319,10 +1371,8 @@ def get_attribute_string_array(target, name):
         ``None`` if it isn't.
 
     """
-    value = get_attribute(target, name)
-    if value is None:
-        return value
-    return [convert_to_str(x) for x in value]
+    return convert_attribute_to_string_array(get_attribute(target,
+                                                           name))
 
 
 def set_attribute(target, name, value):

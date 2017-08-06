@@ -379,7 +379,7 @@ class TypeMarshaller(object):
         for attribute in (set(dsetgrp.attrs.keys()) - attributes_used):
             del_attribute(dsetgrp, attribute)
 
-    def read(self, f, dsetgrp, options):
+    def read(self, f, dsetgrp, attributes, options):
         """ Read a Python object from file.
 
         Reads the data at `dsetgrp` and converts it to a Python object
@@ -395,6 +395,9 @@ class TypeMarshaller(object):
             The HDF5 file handle that is open.
         dsetgrp : h5py.Dataset or h5py.Group
             The Dataset or Group object to read.
+        attributes : collections.defaultdict
+            All the Attributes of `dsetgrp` with their names as keys and
+            their values as values.
         options : hdf5storage.core.Options
             hdf5storage options object.
 
@@ -423,7 +426,7 @@ class TypeMarshaller(object):
         """
         raise NotImplementedError('Can''t read data: ' + dsetgrp.name)
 
-    def read_approximate(self, f, grp, name, options, dsetgrp=None):
+    def read_approximate(self, f, dsetgrp, attributes, options):
         """ Read a Python object approximately from file.
 
         Reads the data at `dsetgrp` and returns an approximation of it
@@ -440,6 +443,9 @@ class TypeMarshaller(object):
             The HDF5 file handle that is open.
         dsetgrp : h5py.Dataset or h5py.Group
             The Dataset or Group object to read.
+        attributes : collections.defaultdict
+            All the Attributes of `dsetgrp` with their names as keys and
+            their values as values.
         options : hdf5storage.core.Options
             hdf5storage options object.
 
@@ -989,27 +995,29 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             del_attribute(dsetgrp, 'MATLAB_empty')
             del_attribute(dsetgrp, 'MATLAB_int_decode')
 
-    def read(self, f, dsetgrp, options):
+    def read(self, f, dsetgrp, attributes, options):
         dset = dsetgrp
 
         # Get the different attributes this marshaller uses.
 
-        type_string = get_attribute_string(dset, 'Python.Type')
-        underlying_type = get_attribute_string(dset, \
-            'Python.numpy.UnderlyingType')
-        shape = get_attribute(dset, 'Python.Shape')
-        container = get_attribute_string(dset, \
-            'Python.numpy.Container')
-        python_empty = get_attribute(dset, 'Python.Empty')
-        python_fields = get_attribute_string_array(dset, \
-            'Python.Fields')
+        type_string = convert_attribute_to_string( \
+            attributes['Python.Type'])
+        underlying_type = convert_attribute_to_string( \
+            attributes['Python.numpy.UnderlyingType'])
+        shape = attributes['Python.Shape']
+        container = convert_attribute_to_string( \
+            attributes['Python.numpy.Container'])
+        python_empty = attributes['Python.Empty']
+        python_fields = convert_attribute_to_string_array( \
+            attributes['Python.Fields'])
 
-        matlab_class = get_attribute_string(dset, 'MATLAB_class')
-        matlab_empty = get_attribute(dset, 'MATLAB_empty')
+        matlab_class = convert_attribute_to_string( \
+            attributes['MATLAB_class'])
+        matlab_empty = attributes['MATLAB_empty']
 
         # We can actually read the MATLAB_fields Attribute if it is
         # present.
-        matlab_fields = get_attribute(dset, 'MATLAB_fields')
+        matlab_fields = attributes['MATLAB_fields']
 
         # If it is a Dataset, it can simply be read and then acted upon
         # (if it is an HDF5 Reference array, it will need to be read
@@ -1405,11 +1413,11 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
-    def read(self, f, dsetgrp, options):
+    def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the
         # work.
         data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
-                                               options)
+                                               attributes, options)
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). As it might be
@@ -1420,7 +1428,8 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # can fit into an int if we are in Python 2.x. If it will fit,
         # it is returned as an int. If it would not fit, it is returned
         # as a long.
-        type_string = get_attribute_string(dsetgrp, 'Python.Type')
+        type_string = convert_attribute_to_string( \
+            attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
             sdata = np.asscalar(data)
@@ -1474,16 +1483,17 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
-    def read(self, f, dsetgrp, options):
+    def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the
         # work.
         data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
-                                               options)
+                                               attributes, options)
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). Otherwise, return it
         # as is.
-        type_string = get_attribute_string(dsetgrp, 'Python.Type')
+        type_string = convert_attribute_to_string( \
+            attributes['Python.Type'])
         if type_string == 'str':
             return convert_to_str(data)
         elif type_string == 'bytes':
@@ -1517,7 +1527,7 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
-    def read(self, f, dsetgrp, options):
+    def read(self, f, dsetgrp, attributes, options):
         # There is only one value, so return it.
         return None
 
@@ -1700,7 +1710,7 @@ class PythonDictMarshaller(TypeMarshaller):
         else:
             del_attribute(dsetgrp, 'MATLAB_class')
 
-    def read(self, f, dsetgrp, options):
+    def read(self, f, dsetgrp, attributes, options):
         grp2 = dsetgrp
         # If name is not present or is not a Group, then we can't read
         # it and have to throw an error.
@@ -1709,21 +1719,23 @@ class PythonDictMarshaller(TypeMarshaller):
 
         # Get the different attributes this marshaller uses.
 
-        type_string = get_attribute_string(grp2, 'Python.Type')
-        python_fields = get_attribute_string_array(grp2,
-                                                   'Python.Fields')
-        stored_as = get_attribute_string(grp2,
-                                         'Python.dict.StoredAs')
-        keys_values_names = get_attribute_string_array(grp2, \
-            'Python.dict.keys_values_names')
+        type_string = convert_attribute_to_string( \
+            attributes['Python.Type'])
+        python_fields = convert_attribute_to_string_array( \
+            attributes['Python.Fields'])
+
+        stored_as = convert_attribute_to_string( \
+            attributes['Python.dict.StoredAs'])
+        keys_values_names = convert_attribute_to_string_array( \
+            attributes['Python.dict.keys_values_names'])
         if keys_values_names is None:
             keys_values_names = (options.dict_like_keys_name,
                                  options.dict_like_values_name)
-        key_str_types = get_attribute_string(grp2, \
-            'Python.dict.key_str_types')
+        key_str_types = convert_attribute_to_string( \
+            attributes['Python.dict.key_str_types'])
 
         # We can actually read the MATLAB_fields Attribute if it is present.
-        matlab_fields = get_attribute(grp2, 'MATLAB_fields')
+        matlab_fields = attributes['MATLAB_fields']
 
         # How the dict like is read depends on how it is stored as. The
         # dict like's items will be constructed. If it is stored as
@@ -1823,11 +1835,11 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
                                          self.get_type_string(data,
                                          type_string), options)
 
-    def read(self, f, dsetgrp, options):
+    def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the
         # work.
         data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
-                                               options)
+                                               attributes, options)
 
         # Passing it through list does all the work of making it a list
         # again.
@@ -1856,15 +1868,16 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
                                    self.get_type_string(data,
                                    type_string), options)
 
-    def read(self, f, dsetgrp, options):
+    def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the
         # work.
-        data = PythonListMarshaller.read(self, f, dsetgrp,
+        data = PythonListMarshaller.read(self, f, dsetgrp, attributes,
                                          options)
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types).
-        type_string = get_attribute_string(dsetgrp, 'Python.Type')
+        type_string = convert_attribute_to_string( \
+            attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
             return tp(data)
