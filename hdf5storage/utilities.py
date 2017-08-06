@@ -77,10 +77,6 @@ else:
                                 unicode('/'): unicode('\\x2f'),
                                 unicode('\\'): unicode('\\\\')}
 
-# Get the letters that will be used to generate unused names in a
-# group.
-_ltrs_nunig = string.ascii_letters + string.digits
-
 
 def _replace_fun_escape(m):
     """ Hex/unicode escape single characters found in regex matches.
@@ -658,10 +654,24 @@ def next_unused_name_in_group(grp, length):
         `grp`.
 
     """
-    name = ''.join([random.choice(_ltrs_nunig) for i in range(length)])
+    # While
+    #
+    # ltrs = string.ascii_letters + string.digits
+    # name = ''.join([random.choice(ltrs) for i in range(length)])
+    #
+    # seems intuitive, its performance is abysmal compared to
+    #
+    # '%0{0}x'.format(length) % random.getrandbits(length * 4)
+    #
+    # The difference is a factor of 20. Idea from
+    #
+    # https://stackoverflow.com/questions/2782229/most-lightweight-way-
+    #   to-create-a-random-string-and-a-random-hexadecimal-number/
+    #   35161595#35161595
+    fmt = '%0{0}x'.format(length)
+    name = fmt % random.getrandbits(length * 4)
     while name in grp:
-        name = ''.join([random.choice(_ltrs_nunig)
-                        for i in range(length)])
+        name = fmt % random.getrandbits(length * 4)
     return name
 
 def convert_numpy_str_to_uint16(data):
