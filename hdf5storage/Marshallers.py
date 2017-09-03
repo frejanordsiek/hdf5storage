@@ -43,8 +43,9 @@ class TypeMarshaller(object):
     """ Base class for marshallers of Python types.
 
     Base class providing the class interface for marshallers of Python
-    types to/from disk. All marshallers should inherit from this class
-    or at least replicate its functionality. This includes several
+    types to/from disk. All marshallers must inherit from this
+    class and override some of its methods and attributes. Just
+    replicating its functionality is not enough. This includes several
     attributes that are needed in order for reading/writing methods to
     know if it is the appropriate marshaller to use and methods to
     actually do the reading and writing.
@@ -95,6 +96,9 @@ class TypeMarshaller(object):
     For marshalling types that are containers of other data, one will
     need to appropriate read/write them with the lowlevel functions
     ``utilities.read_data`` and ``utilities.write_data``.
+
+    .. versionchanged:: 0.2
+       All marshallers must now inherit from this class.
 
     .. versionchanged:: 0.2
        Attributes were added, ``read_approximate`` was added, call

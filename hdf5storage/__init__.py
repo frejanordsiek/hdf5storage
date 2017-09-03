@@ -966,9 +966,13 @@ class MarshallerCollection(object):
     marshaller appropriate for ``type`` or type_string for a python data
     type.
 
-    User marshallers must provide the same interface as
-    ``hdf5storage.Marshallers.TypeMarshaller``, which is probably most
-    easily done by inheriting from it.
+    User marshallers must inherit from
+    ``hdf5storage.Marshallers.TypeMarshaller`` and provide its
+    interface.
+
+    .. versionchanged:: 0.2
+       All marshallers must now inherit from
+       ``hdf5storage.Marshallers.TypeMarshaller``.
 
     Parameters
     ----------
@@ -977,7 +981,13 @@ class MarshallerCollection(object):
         marshaller right away when added/given or to only do so when
         required (when marshaller is needed).
     marshallers : marshaller or iterable of marshallers, optional
-        The user marshaller/s to add to the collection.
+        The user marshaller/s to add to the collection. Must inherit
+        from ``hdf5storage.Marshallers.TypeMarshaller``.
+
+    Raises
+    ------
+    TypeError
+        If one of the arguments is the wrong type.
 
     See Also
     --------
@@ -995,10 +1005,12 @@ class MarshallerCollection(object):
         # supplied ones.
 
         # Grab all the marshallers in the Marshallers module (they are
-        # the classes) by inspection.
-        self._builtin_marshallers = [m() for key, m in dict(
-                                     inspect.getmembers(Marshallers,
-                                     inspect.isclass)).items()]
+        # the classes that inherit from TypeMarshaller) by inspection.
+        self._builtin_marshallers = [m() \
+            for key, m in dict(inspect.getmembers(Marshallers, \
+            lambda x: inspect.isclass(x) \
+            and Marshallers.TypeMarshaller \
+            in inspect.getmro(x))).items()]
         self._user_marshallers = []
 
         # A list of all the marshallers will be needed along with
@@ -1134,16 +1146,34 @@ class MarshallerCollection(object):
         Adds a marshaller or a list of them to the user provided set of
         marshallers.
 
+        .. versionchanged:: 0.2
+           All marshallers must now inherit from
+           ``hdf5storage.Marshallers.TypeMarshaller``.
+
         Parameters
         ----------
         marshallers : marshaller or iterable of marshallers
             The user marshaller/s to add to the user provided
-            collection.
+            collection. Must inherit from
+            ``hdf5storage.Marshallers.TypeMarshaller``.
+
+        Raises
+        ------
+        TypeError
+            If one of `marshallers` is the wrong type.
+
+        See Also
+        --------
+        hdf5storage.Marshallers.TypeMarshaller
 
         """
         if not isinstance(marshallers, collections.Iterable):
             marshallers = [marshallers]
         for m in marshallers:
+            if not isinstance(m, Marshallers.TypeMarshaller):
+                raise TypeError('Each marshaller must inherit from '
+                                'hdf5storage.Marshallers.'
+                                'TypeMarshaller.')
             if m not in self._user_marshallers:
                 self._user_marshallers.append(m)
         self._update_marshallers()
