@@ -970,9 +970,15 @@ class MarshallerCollection(object):
     ``hdf5storage.Marshallers.TypeMarshaller`` and provide its
     interface.
 
+    The builtin marshallers take priority when choosing the right
+    marshaller.
+
     .. versionchanged:: 0.2
        All marshallers must now inherit from
        ``hdf5storage.Marshallers.TypeMarshaller``.
+
+    .. versionchanged:: 0.2
+       Builtin marshallers take priority over user provided ones.
 
     Parameters
     ----------
@@ -1093,23 +1099,39 @@ class MarshallerCollection(object):
                 self._imported_required_modules[i] = True
 
         # Construct the dictionary to look up the appropriate marshaller
-        # by type.
-        self._types = {tp: i for i, m in enumerate(self._marshallers)
-                       for tp in m.types}
-
-        # The equivalent one to read data types given type strings needs
-        # to be created from it. Basically, we have to make the key be
-        # the python_type_string from it.
-        self._type_strings = {type_string: i
-                              for i, m in enumerate(self._marshallers)
-                              for type_string in m.python_type_strings}
-
-        # The equivalent one to read data types given MATLAB class
-        # strings needs to be created from it. Basically, we have to
-        # make the key be the matlab_class from it.
-        self._matlab_classes = {matlab_class: i
-                                for i, m in enumerate(self._marshallers)
-                                for matlab_class in m.matlab_classes}
+        # by type, the equivalent one to read data types given type
+        # strings needs to be created from it (basically, we have to
+        # make the key be the python_type_string from it), and the
+        # equivalent one to read data types given MATLAB class strings
+        # needs to be created from it (basically, we have to make the
+        # key be the matlab_class from it).
+        #
+        # Marshallers earlier in the list have priority (means that the
+        # builtins have the highest). Since the types can be specified
+        # as strings as well, duplicates will be checked for by running
+        # each type through str if it isn't str.
+        types_as_str = set()
+        self._types = dict()
+        self._type_strings = dict()
+        self._matlab_classes = dict()
+        for i, m in enumerate(self._marshallers):
+            # types.
+            for tp in m.types:
+                if isinstance(tp, str):
+                    tp_as_str = tp
+                else:
+                    tp_as_str = str(tp)
+                if tp_as_str not in types_as_str:
+                    self._types[tp] = i
+                    types_as_str.add(tp_as_str)
+            # type strings
+            for type_string in m.python_type_strings:
+                if type_string not in self._type_strings:
+                    self._type_strings[type_string] = i
+            # matlab classes.
+            for matlab_class in m.matlab_classes:
+                if matlab_class not in self._matlab_classes:
+                    self._matlab_classes[matlab_class] = i
 
     def _import_marshaller_modules(self, m):
         """ Imports the modules required by the marshaller.
@@ -1146,9 +1168,15 @@ class MarshallerCollection(object):
         Adds a marshaller or a list of them to the user provided set of
         marshallers.
 
+        Note that the builtin marshallers take priority when choosing
+        the right marshaller.
+
         .. versionchanged:: 0.2
            All marshallers must now inherit from
            ``hdf5storage.Marshallers.TypeMarshaller``.
+
+        .. versionchanged:: 0.2
+           Builtin marshallers take priority over user provided ones.
 
         Parameters
         ----------
