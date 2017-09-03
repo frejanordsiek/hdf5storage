@@ -31,6 +31,8 @@ import tempfile
 import numpy as np
 import h5py
 
+from nose.tools import assert_equal as assert_equal_nose
+
 import hdf5storage
 
 
@@ -51,7 +53,7 @@ def test_conv_utf16():
                           store_python_metadata=False,
                           convert_numpy_str_to_utf16=True)
         with h5py.File(filename) as f:
-            assert f[name].dtype.type == np.uint16
+            assert_equal_nose(f[name].dtype.type, np.uint16)
     except:
         raise
     finally:

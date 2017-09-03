@@ -34,6 +34,7 @@ import h5py
 import hdf5storage
 
 from nose.tools import raises
+from nose.tools import assert_equal as assert_equal_nose
 
 from asserts import *
 from make_randoms import *
@@ -136,11 +137,11 @@ def check_write_filters(filters):
             os.remove(fld[1])
 
     # Check the filters
-    assert fletcher32 == filts['fletcher32']
-    assert shuffle == filts['shuffle']
-    assert compression == filts['compression']
+    assert_equal_nose(fletcher32, filts['fletcher32'])
+    assert_equal_nose(shuffle, filts['shuffle'])
+    assert_equal_nose(compression, filts['compression'])
     if filts['compression'] == 'gzip':
-        assert gzip_level == filts['gzip_level']
+        assert_equal_nose(gzip_level, filts['gzip_level'])
 
     # Compare
     assert_equal(out, data)
@@ -210,9 +211,9 @@ def check_uncompressed_write_filters(method,
             os.remove(fld[1])
 
     # Check the filters
-    assert compression == None
-    assert shuffle == False
-    assert fletcher32 == uncompressed_fletcher32_filter
+    assert_equal_nose(compression, None)
+    assert_equal_nose(shuffle, False)
+    assert_equal_nose(fletcher32, uncompressed_fletcher32_filter)
 
     # Compare
     assert_equal(out, data)

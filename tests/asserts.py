@@ -31,6 +31,9 @@ import warnings
 import numpy as np
 import numpy.testing as npt
 
+from nose.tools import assert_equal as assert_equal_nose
+
+
 def assert_equal(a, b, options=None):
     # Compares a and b for equality. If they are dictionaries, they must
     # have the same set of keys, after which they values must all be
@@ -42,20 +45,20 @@ def assert_equal(a, b, options=None):
     # have to be compared. Then, if they are not an object array,
     # numpy.testing.assert_equal will compare them elementwise. For
     # object arrays, each element must be iterated over to be compared.
-    assert type(a) == type(b)
+    assert_equal_nose(type(a), type(b))
     if type(b) == dict:
-        assert set(a.keys()) == set(b.keys())
+        assert_equal_nose(set(a.keys()), set(b.keys()))
         for k in b:
             assert_equal(a[k], b[k], options)
     elif (sys.hexversion >= 0x2070000
           and type(b) == collections.OrderedDict):
-        assert list(a.keys()) == list(b.keys())
+        assert_equal_nose(list(a.keys()), list(b.keys()))
         for k in b:
             assert_equal(a[k], b[k], options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
-        assert len(a) == len(b)
+        assert_equal_nose(len(a), len(b))
         if type(b) in (set, frozenset):
-            assert a == b
+            assert_equal_nose(a, b)
         else:
             for index in range(0, len(a)):
                 assert_equal(a[index], b[index], options)
@@ -70,8 +73,8 @@ def assert_equal(a, b, options=None):
             else:
                 assert a == b or np.all(np.isnan([a, b]))
     else:
-        assert a.dtype == b.dtype
-        assert a.shape == b.shape
+        assert_equal_nose(a.dtype, b.dtype)
+        assert_equal_nose(a.shape, b.shape)
         if b.dtype.name != 'object':
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', RuntimeWarning)
@@ -101,7 +104,7 @@ def assert_equal_none_format(a, b, options=None):
     # and ints get written as numpy.bytes_.
     if type(b) == dict or (sys.hexversion >= 0x2070000
                            and type(b) == collections.OrderedDict):
-        assert type(a) == np.ndarray
+        assert_equal_nose(type(a), np.ndarray)
         assert a.dtype.names is not None
 
         # Determine if any of the keys could not be stored as str. If
@@ -139,8 +142,8 @@ def assert_equal_none_format(a, b, options=None):
                 all_str_keys = False
                 break
         if all_str_keys:
-            assert set(a.dtype.names) == set([tp_conv_str(k)
-                                              for k in b.keys()])
+            assert_equal_nose(set(a.dtype.names),
+                              set([tp_conv_str(k) for k in b.keys()]))
             for k in b:
                 assert_equal_none_format(a[tp_conv_str(k)][0],
                                          b[k], options)
@@ -157,14 +160,14 @@ def assert_equal_none_format(a, b, options=None):
     elif not isinstance(b, (np.generic, np.ndarray)):
         if b is None:
             # It should be np.float64([])
-            assert type(a) == np.ndarray
-            assert a.dtype == np.float64([]).dtype
-            assert a.shape == (0, )
+            assert_equal_nose(type(a), np.ndarray)
+            assert_equal_nose(a.dtype, np.float64([]).dtype)
+            assert_equal_nose(a.shape, (0, ))
         elif (sys.hexversion >= 0x03000000 \
                 and isinstance(b, (bytes, bytearray))) \
                 or (sys.hexversion < 0x03000000 \
                 and isinstance(b, (bytes, bytearray))):
-            assert a == np.bytes_(b)
+            assert_equal_nose(a, np.bytes_(b))
         elif (sys.hexversion >= 0x03000000 \
                 and isinstance(b, str)) \
                 or (sys.hexversion < 0x03000000 \
@@ -193,19 +196,19 @@ def assert_equal_none_format(a, b, options=None):
                         c = np.uint32(())
                     else:
                         c = np.atleast_1d(b).view(np.uint32)
-                    assert a.dtype == c.dtype
-                    assert a.shape == c.shape
+                    assert_equal_nose(a.dtype, c.dtype)
+                    assert_equal_nose(a.shape, c.shape)
                     npt.assert_equal(a, c)
                 else:
-                    assert a.dtype == b.dtype
-                    assert a.shape == b.shape
+                    assert_equal_nose(a.dtype, b.dtype)
+                    assert_equal_nose(a.shape, b.shape)
                     npt.assert_equal(a, b)
             else:
                 # Now, if b.shape is just all ones, then a.shape will
                 # just be (1,). Otherwise, we need to compare the shapes
                 # directly. Also, dimensions need to be squeezed before
                 # comparison in this case.
-                assert np.prod(a.shape) == np.prod(b.shape)
+                assert_equal_nose(np.prod(a.shape), np.prod(b.shape))
                 assert a.shape == b.shape \
                     or (np.prod(b.shape) == 1 and a.shape == (1,))
                 if np.prod(a.shape) == 1:
@@ -214,20 +217,21 @@ def assert_equal_none_format(a, b, options=None):
                 # If there was a null in the dtype, then it was written
                 # as a Group so the field order could have changed.
                 if '\\x00' in str(b.dtype):
-                    assert set(a.dtype.descr) == set(b.dtype.descr)
+                    assert_equal_nose(set(a.dtype.descr),
+                                      set(b.dtype.descr))
                     # Reorder the fields of a.
                     c = np.empty(shape=b.shape, dtype=b.dtype)
                     for n in b.dtype.names:
                         c[n] = a[n]
                 else:
                     c = a
-                assert c.dtype == b.dtype
+                assert_equal_nose(c.dtype, b.dtype)
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore', RuntimeWarning)
                     npt.assert_equal(c, b)
         else:
-            assert a.dtype == b.dtype
-            assert a.shape == b.shape
+            assert_equal_nose(a.dtype, b.dtype)
+            assert_equal_nose(a.shape, b.shape)
             for index, x in np.ndenumerate(a):
                 assert_equal_none_format(a[index], b[index], options)
 
@@ -257,7 +261,7 @@ def assert_equal_matlab_format(a, b, options=None):
     # arrays.
     if type(b) == dict or (sys.hexversion >= 0x2070000
                            and type(b) == collections.OrderedDict):
-        assert type(a) == np.ndarray
+        assert_equal_nose(type(a), np.ndarray)
         assert a.dtype.names is not None
 
         # Determine if any of the keys could not be stored as str. If
@@ -295,15 +299,16 @@ def assert_equal_matlab_format(a, b, options=None):
                 all_str_keys = False
                 break
         if all_str_keys:
-            assert set(a.dtype.names) == set([tp_conv_str(k)
-                                              for k in b.keys()])
+            assert_equal_nose(set(a.dtype.names),
+                              set([tp_conv_str(k)
+                                   for k in b.keys()]))
             for k in b:
                 assert_equal_matlab_format(a[tp_conv_str(k)][0],
                                            b[k], options)
         else:
             names = (options.dict_like_keys_name,
                      options.dict_like_values_name)
-            assert set(a.dtype.names) == set(names)
+            assert_equal_nose(set(a.dtype.names), set(names))
             keys = a[names[0]][0]
             values = a[names[1]][0]
             assert_equal_matlab_format(keys, tuple(b.keys()), options)
@@ -314,9 +319,9 @@ def assert_equal_matlab_format(a, b, options=None):
     elif not isinstance(b, (np.generic, np.ndarray)):
         if b is None:
             # It should be np.zeros(shape=(0, 1), dtype='float64'))
-            assert type(a) == np.ndarray
-            assert a.dtype == np.dtype('float64')
-            assert a.shape == (1, 0)
+            assert_equal_nose(type(a), np.ndarray)
+            assert_equal_nose(a.dtype, np.dtype('float64'))
+            assert_equal_nose(a.shape, (1, 0))
         elif (sys.hexversion >= 0x03000000 \
                 and isinstance(b, (bytes, str, bytearray))) \
                 or (sys.hexversion < 0x03000000 \
@@ -353,8 +358,8 @@ def assert_equal_matlab_format(a, b, options=None):
                     c = np.atleast_1d(b)
                     c = np.atleast_2d(c.view(np.dtype('U' \
                         + str(c.shape[-1]*c.dtype.itemsize//4))))
-                    assert a.dtype == c.dtype
-                    assert a.shape == c.shape
+                    assert_equal_nose(a.dtype, c.dtype)
+                    assert_equal_nose(a.shape, c.shape)
                     npt.assert_equal(a, c)
                 elif b.dtype.char == 'S':
                     c = np.atleast_1d(b).view(np.ndarray)
@@ -365,14 +370,14 @@ def assert_equal_matlab_format(a, b, options=None):
                         c = np.uint32(c.view(np.dtype('uint8')))
                         c = c.view(np.dtype('U' + str(c.shape[-1])))
                     c = np.atleast_2d(c)
-                    assert a.dtype == c.dtype
-                    assert a.shape == c.shape
+                    assert_equal_nose(a.dtype, c.dtype)
+                    assert_equal_nose(a.shape, c.shape)
                     npt.assert_equal(a, c)
                     pass
                 else:
                     c = np.atleast_2d(b)
-                    assert a.dtype == c.dtype
-                    assert a.shape == c.shape
+                    assert_equal_nose(a.dtype, c.dtype)
+                    assert_equal_nose(a.shape, c.shape)
                     with warnings.catch_warnings():
                         warnings.simplefilter('ignore', RuntimeWarning)
                         npt.assert_equal(a, c)
@@ -388,15 +393,16 @@ def assert_equal_matlab_format(a, b, options=None):
                 # one by one. Otherwise, make sure the dtypes and shapes
                 # are the same before comparing all values.
                 if b.dtype.names is None and a.dtype.names is None:
-                    assert a.dtype == c.dtype
-                    assert a.shape == c.shape
+                    assert_equal_nose(a.dtype, c.dtype)
+                    assert_equal_nose(a.shape, c.shape)
                     with warnings.catch_warnings():
                         warnings.simplefilter('ignore', RuntimeWarning)
                         npt.assert_equal(a, c)
                 else:
                     assert a.dtype.names is not None
                     assert b.dtype.names is not None
-                    assert set(a.dtype.names) == set(b.dtype.names)
+                    assert_equal_nose(set(a.dtype.names),
+                                      set(b.dtype.names))
                     # The ordering of fields must be preserved if the
                     # MATLAB_fields attribute could be used, which can
                     # only be done if there are no non-ascii characters
@@ -409,7 +415,7 @@ def assert_equal_matlab_format(a, b, options=None):
                             for nm in b.dtype.names])
                     if np.all(np.array([ord(ch) < 128 \
                             for ch in allfields])):
-                        assert a.dtype.names == b.dtype.names
+                        assert_equal_nose(a.dtype.names, b.dtype.names)
                     a = a.flatten()
                     b = b.flatten()
                     for k in b.dtype.names:
@@ -419,8 +425,8 @@ def assert_equal_matlab_format(a, b, options=None):
                                                      options)
         else:
             c = np.atleast_2d(b)
-            assert a.dtype == c.dtype
-            assert a.shape == c.shape
+            assert_equal_nose(a.dtype, c.dtype)
+            assert_equal_nose(a.shape, c.shape)
             for index, x in np.ndenumerate(a):
                 assert_equal_matlab_format(a[index], c[index], options)
 

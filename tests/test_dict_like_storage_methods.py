@@ -37,6 +37,7 @@ import hdf5storage
 from hdf5storage.utilities import escape_path
 
 from nose.tools import raises
+from nose.tools import assert_equal as assert_equal_nose
 
 from asserts import *
 from make_randoms import *
@@ -175,7 +176,7 @@ def check_string_type_non_str_key(tp, other_tp, option_keywords):
                           options=options)
 
         with h5py.File(filename) as f:
-            assert set(keys) == set(f[name].keys())
+            assert_equal_nose(set(keys), set(f[name].keys()))
 
     except:
         raise
@@ -212,7 +213,7 @@ def check_int_key(tp, option_keywords):
                           options=options)
 
         with h5py.File(filename) as f:
-            assert set(key_value_names) == set(f[name].keys())
+            assert_equal_nose(set(key_value_names), set(f[name].keys()))
     except:
         raise
     finally:
