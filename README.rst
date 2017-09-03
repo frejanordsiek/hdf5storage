@@ -327,6 +327,12 @@ Versions
      * Issue #53. h5py 2.1.x and 2.2.x  support dropped.
      * Issue #60. Platform label in the MAT file header changed to
        ``hdf5storage VERSION`` from ``CPython VERSION``.
+     * Issue #61. User provided marshallers must inherit from
+       ``Marshallers.TypeMarshaller``. Before, they just had to provide
+       the same interface.
+     * Issue #62. Builtin marshallers have priority over user provided
+       ones when selecting the right marshaller to handle a particular
+       type, as opposed to the other way around in the 0.1.x.
      * Issue #27. Added of paths with null characters and slashes. It
        is used for the field names of structured numpy ndarrays as well
        as the keys of ``dict`` like objects when writing their values
@@ -340,7 +346,7 @@ Versions
        if available, can either be imported immediately upon the
        creation of the ``MarshallerCollection`` or they can be imported
        only when the marshaller is needed for actual use (lazy loading).
-     * Issue #52. Added the usage of a default ``MarshallerColllection``
+     * Issue #52. Added the usage of a default ``MarshallerCollection``
        which is used whenever creating a new ``Options`` without
        a ``MarshallerCollection`` specified. The default can be
        obtained using ``get_default_MarshallerCollection`` and a new
