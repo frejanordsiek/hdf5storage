@@ -341,6 +341,10 @@ class Options(object):
         block of bytes is put at the front of the file so that MATLAB
         can recognize its format.
 
+        ``reverse_dimesion_order`` may be reset to False after the
+        Options object is created to preserve 'native' dimension
+        ordering.
+
         """
         return self._matlab_compatible
 
@@ -575,20 +579,19 @@ class Options(object):
         ordering to Fortran ordering. The switch of ordering is
         essentially a transpose.
 
-        Must be ``True`` if doing MATLAB compatibility. MATLAB uses
-        Fortran ordering.
+        MATLAB compatibility sets this to ``True``, but this may be
+        overridden by updating the property to ``False`` after the
+        Options object is created. ``False`` keeps array dimesions in the
+        'native' order for MATLAB (Fortran) and NumPy (C).
 
         """
         return self._reverse_dimension_order
 
     @reverse_dimension_order.setter
     def reverse_dimension_order(self, value):
-        # Check that it is a bool, and then set it. If it is false, we
-        # are not doing MATLAB compatible formatting.
+        # Check that it is a bool, and then set it.
         if isinstance(value, bool):
             self._reverse_dimension_order = value
-        if not self._reverse_dimension_order:
-            self._matlab_compatible = False
 
     @property
     def store_shape_for_empty(self):
@@ -1714,7 +1717,8 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
             oned_as='row', store_python_metadata=True,
             action_for_matlab_incompatible='error',
             marshaller_collection=None, truncate_existing=False,
-            truncate_invalid_matlab=False, **keywords):
+            truncate_invalid_matlab=False, reverse_dimension_order=True,
+            **keywords):
     """ Save a dictionary of python types to a MATLAB MAT file.
 
     Saves the data provided in the dictionary `mdict` to a MATLAB MAT
@@ -1764,6 +1768,11 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         Whether to truncate a file if the file doesn't have the proper
         header (userblock in HDF5 terms) setup for MATLAB metadata to be
         placed.
+    reverse_dimension_order : bool, optional
+        Transpose multidimensional arrays so that the apparent
+        dimension order remains the same between MATLAB and Python. E.g.
+        an MxN NumPy array appears as an MxN MATLAB array. Default is
+        True.
     **keywords :
         Additional keywords arguments to be passed onto
         ``scipy.io.savemat`` if dispatching to SciPy (`format` < 7.3).
@@ -1814,6 +1823,10 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         matlab_compatible=True, oned_as=oned_as, \
         action_for_matlab_incompatible=action_for_matlab_incompatible, \
         marshaller_collection=marshaller_collection)
+    if not reverse_dimension_order:
+        # If False, override the default value set by the
+        # matlab_compatible setter.
+        options.reverse_dimension_order = reverse_dimension_order
 
     # Write the variables in the dictionary to file.
     writes(mdict=mdict, filename=file_name,
@@ -1824,7 +1837,8 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
 
 def loadmat(file_name, mdict=None, appendmat=True,
             variable_names=None,
-            marshaller_collection=None, **keywords):
+            marshaller_collection=None, reverse_dimension_order=True,
+            **keywords):
     """ Loads data to a MATLAB MAT file.
 
     Reads data from the specified variables (or all) in a  MATLAB MAT
@@ -1852,6 +1866,10 @@ def loadmat(file_name, mdict=None, appendmat=True,
     marshaller_collection : MarshallerCollection, optional
         Collection of marshallers from disk to use. Only applicable if
         not dispatching to SciPy (version 7.3 and newer files).
+    reverse_dimension_order : bool, optional
+        Transpose multidimensional arrays so that the apparent dimension
+        order remains the same between MATLAB and Python. E.g. an MxN
+        MATLAB array appears as an MxN NumPy array. Default is True.
     **keywords :
         Additional keywords arguments to be passed onto
         ``scipy.io.loadmat`` if dispatching to SciPy if the file is not
@@ -1894,6 +1912,11 @@ def loadmat(file_name, mdict=None, appendmat=True,
     try:
         # Make the options with the given marshallers.
         options = Options(marshaller_collection=marshaller_collection)
+        if not reverse_dimension_order:
+            # If False, override the default value set by the
+            # matlab_compatible setter.
+            options.reverse_dimension_order = reverse_dimension_order
+
 
         # Append .mat if it isn't on the end of the file name and we are
         # supposed to.

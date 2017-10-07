@@ -558,12 +558,13 @@ make_atleast_2d                     ``True``
 convert_numpy_bytes_to_utf16        ``True``
 convert_numpy_str_to_utf16          ``True``
 convert_bools_to_uint8              ``True``
-reverse_dimension_order             ``True``
+reverse_dimension_order             ``True`` \*
 store_shape_for_empty               ``True``
 complex_names                       ``('real', 'imag')``
 group_for_references                ``'/#refs#'``
 ==================================  ====================
-
+:sup:`\* reverse_dimension_order may be reset to False after the Options
+object has been created.`
 
 delete_unused_variables
 -----------------------
@@ -643,12 +644,12 @@ reverse_dimension_order
 
 Whether the dimension order of all arrays should be reversed
 (essentially a transpose) or not before writing to the file. This option
-is set to ``True`` implicitly by ``matlab_compatible``. This option
-needs to be set if one wants an array to end up the same shape when
-imported into MATLAB. This option is necessary because Numpy and MATLAB
-use opposite dimension ordering schemes, which are C and Fortan schemes
-respectively. 2D arrays are stored by row in the C scheme and column in
-the Fortran scheme.
+is set to ``True`` implicitly by ``matlab_compatible``, but may be
+overridden. This option needs to be set if one wants an array to end up
+the same shape when imported into MATLAB. This option is provided
+because Numpy and MATLAB use opposite dimension ordering schemes, which
+are C and Fortan schemes respectively. 2D arrays are stored by row in the
+C scheme and column in the Fortran scheme.
 
 store_shape_for_empty
 ---------------------
