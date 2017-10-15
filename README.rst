@@ -330,9 +330,10 @@ Versions
      * Issue #61. User provided marshallers must inherit from
        ``Marshallers.TypeMarshaller``. Before, they just had to provide
        the same interface.
-     * Issue #62. Builtin marshallers have priority over user provided
-       ones when selecting the right marshaller to handle a particular
-       type, as opposed to the other way around in the 0.1.x.
+     * Issue #62. The priority ordering between builtin, plugin, and
+       user provided marshallers can be selected. The default is now
+       builtin, plugin, user; as opposed to user, builtin in the 0.1.x
+       branch.
      * Issue #65. Added the ability to load marshallers from other python
        packages via plugin using the
        ``'hdf5storage.marshallers.plugins'`` entry point in their

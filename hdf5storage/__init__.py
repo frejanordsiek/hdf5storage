@@ -1028,22 +1028,23 @@ class MarshallerCollection(object):
     ``hdf5storage.Marshallers.TypeMarshaller`` and provide its
     interface.
 
-    The builtin marshallers take priority when choosing the right
-    marshaller. Marshallers from third party plugins take next priority,
-    followed by user provided marshallers last. Within marshallers from
-    third party plugins, those supporting the higher Marshaller API
+    The priority with which marshallers are chosen (builtin, plugin, or
+    user) can be set using the `priority` option. Within marshallers
+    from third party plugins, those supporting the higher Marshaller API
     versions take priority over those supporting lower versions.
 
     .. versionchanged:: 0.2
        All marshallers must now inherit from
        ``hdf5storage.Marshallers.TypeMarshaller``.
 
-    .. versionchanged:: 0.2
-       Builtin marshallers take priority over user provided ones.
-
     .. versionadded:: 0.2
        Marshallers can be loaded from third party plugins that declare
        the ``'hdf5storage.marshallers.plugins'`` entry point.
+
+    .. versionchanged:: 0.2
+       The order of marshaller priority (builtin, plugin, or user) can
+       be changed. The default is now builtin, plugin, user whereas
+       previously the default was user, builtin.
 
     Parameters
     ----------
@@ -1054,9 +1055,21 @@ class MarshallerCollection(object):
         Whether to attempt to load the required modules for each
         marshaller right away when added/given or to only do so when
         required (when marshaller is needed). Default is ``True``.
+    priority : tuple or list of str, optional
+        3-element ``tuple`` or ``list`` specifying the priority ordering
+        (first has highest priority). The three elements must be
+        ``'builtin'`` for the builtin marshallers included in this
+        package, ``'plugin'`` for marshallers provided by other python
+        packages via plugin, and ``'user'`` for marshallers provided to
+        this class explicityly during creation. The default priority
+        order is builtin, plugin, user.
     marshallers : marshaller or iterable of marshallers, optional
         The user marshaller/s to add to the collection. Must inherit
         from ``hdf5storage.Marshallers.TypeMarshaller``.
+
+    Attributes
+    ----------
+    priority : tuple of str
 
     Raises
     ------
@@ -1070,13 +1083,20 @@ class MarshallerCollection(object):
 
     """
     def __init__(self, load_plugins=False, lazy_loading=True,
+                 priority=('builtin', 'plugin', 'user'),
                  marshallers=[]):
         if not isinstance(load_plugins, bool):
             raise TypeError('load_plugins must be bool.')
         if not isinstance(lazy_loading, bool):
             raise TypeError('lazy_loading must be bool.')
+        if not isinstance(priority, (tuple, list)):
+            raise TypeError('priority must be a tuple or list.')
+        if sorted(priority) != sorted(('builtin', 'plugin', 'user')):
+            raise ValueError('priority has a missing or invalid '
+                             'element.')
         self._load_plugins = load_plugins
         self._lazy_loading = lazy_loading
+        self._priority = tuple(priority)
 
         # Two lists of marshallers need to be maintained: one for the
         # builtin ones in the Marshallers module, and another for user
@@ -1134,6 +1154,22 @@ class MarshallerCollection(object):
         # Add any user given marshallers.
         self.add_marshaller(marshallers)
 
+    @property
+    def priority(self):
+        """ The priority order when choosing the marshaller to use.
+
+        tuple of str
+
+        3-element ``tuple`` specifying the priority ordering (first has
+        highest priority). The three elements are ``'builtin'`` for the
+        builtin marshallers included in this package, ``'plugin'`` for
+        marshallers provided by other python packages via plugin, and
+        ``'user'`` for marshallers provided to this class explicityly
+        during creation.
+
+        """
+        return self._priority
+
     def _update_marshallers(self):
         """ Update the full marshaller list and other data structures.
 
@@ -1147,11 +1183,18 @@ class MarshallerCollection(object):
         whether the required modules are imported already or not.
 
         """
-        # Combine both sets of marshallers.
+        # Combine all sets of marshallers.
         self._marshallers = []
-        self._marshallers.extend(self._builtin_marshallers)
-        self._marshallers.extend(self._plugin_marshallers)
-        self._marshallers.extend(self._user_marshallers)
+        for v in self._priority:
+            if v == 'builtin':
+                self._marshallers.extend(self._builtin_marshallers)
+            elif v == 'plugin':
+                self._marshallers.extend(self._plugin_marshallers)
+            elif v == 'user':
+                self._marshallers.extend(self._user_marshallers)
+            else:
+                raise ValueError('priority attribute has an illegal '
+                                 'element value.')
 
         # Determine whether the required modules are present, do module
         # loading, and determine whether the required modules are
