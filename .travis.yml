@@ -40,6 +40,7 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' || $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -U numpy==1.11.3; else pip install -U numpy; fi
   - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
+  - pip install -e examples/example_hdf5storage_marshaller_plugin
 
 # command to run tests
 script: nosetests
