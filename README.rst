@@ -333,6 +333,18 @@ Versions
      * Issue #62. Builtin marshallers have priority over user provided
        ones when selecting the right marshaller to handle a particular
        type, as opposed to the other way around in the 0.1.x.
+     * Issue #65. Added the ability to load marshallers from other python
+       packages via plugin using the
+       ``'hdf5storage.marshallers.plugins'`` entry point in their
+       ``setup.py`` files. Third party marshallers are not loaded into
+       the default initial ``MarshallerCollection``. Users who want
+       to use them must call ``make_new_default_MarshallerCollection``
+       with the ``load_plugins`` option set to ``True``.
+     * Issue #66. A version Marshaller API has been added to make it
+       easier for developers to write plugin marshallers without having
+       to do extensive checking of the ``hdf5storage`` package version.
+       The Marshaller API version will advance separately from the
+       package version. The initial version is ``'1.0'``.
      * Issue #27. Added of paths with null characters and slashes. It
        is used for the field names of structured numpy ndarrays as well
        as the keys of ``dict`` like objects when writing their values

@@ -1,8 +1,3 @@
-import sys
-
-if sys.hexversion < 0x2070000:
-    raise NotImplementedError('Python < 2.7 not supported.')
-
 import ez_setup
 ez_setup.use_setuptools()
 
@@ -11,19 +6,18 @@ from setuptools import setup
 with open('README.rst') as file:
     long_description = file.read()
 
-setup(name='hdf5storage',
+setup(name='example_hdf5storage_marshaller_plugin',
       version='0.2',
-      description='Utilities to read/write Python types to/from HDF5 files, including MATLAB v7.3 MAT files.',
+      description='Example marshaller plugin for hdf5storage package.',
       long_description=long_description,
       author='Freja Nordsiek',
       author_email='fnordsie at gmail dt com',
-      url='https://github.com/frejanordsiek/hdf5storage',
-      packages=['hdf5storage'],
-      install_requires=['setuptools', 'numpy', 'h5py>=2.3'],
-      tests_require=['nose>=1.0'],
-      test_suite='nose.collector',
+      url='https://github.com/frejanordsiek/hdf5storage/tests/example_hdf5storage_marshaller_plugin',
+      py_modules=['example_hdf5storage_marshaller_plugin'],
+      entry_points={'hdf5storage.marshallers.plugins':
+                    '1.0 = example_hdf5storage_marshaller_plugin:get_marshallers_1p0'},
       license='BSD',
-      keywords='hdf5 matlab',
+      keywords='hdf5storage',
       zip_safe=True,
       classifiers=[
           "Programming Language :: Python :: 2.7",

@@ -51,11 +51,68 @@ try:
 except:
     _has_importlib = False
 
+# From setuptools, despite name.
+import pkg_resources
+
 import h5py
 
 from . import exceptions
 from . import utilities
 from . import Marshallers
+
+
+def supported_marshaller_api_versions():
+    """ Get the Marshaller API versions that are supported.
+
+    Gets the different Marshaller API versions that this version of
+    ``hdf5storage`` supports.
+
+    .. versionadded:: 0.3
+
+    Returns
+    -------
+    versions : tuple
+        The different versions of marshallers that are supported. Each
+        element is a version that is supported. The versions are
+        specified in standard major, minor, etc. format as ``str``
+        (e.g. ``'1.0'``). They are in descending order (highest version
+        first, lowest version last).
+
+    """
+    return ('1.0', )
+
+
+def find_thirdparty_marshaller_plugins():
+    """ Find, but don't load, all third party marshaller plugins.
+
+    Third party marshaller plugins declare the entry point
+    ``'hdf5storage.marshallers.plugins'`` with the name being the
+    Marshaller API version and the target being a function that returns
+    a ``tuple`` or ``list`` of all the marshallers provided by that
+    plugin when given the hdf5storage version (``str``) as its only
+    argument.
+
+    .. versionadded:: 0.2
+
+    Returns
+    -------
+    plugins : dict
+        The marshaller obtaining entry points from third party
+        plugins. The keys are the Marshaller API versions (``str``) and
+        the values are ``dict`` of the entry points, with the module
+        names as the keys (``str``) and the values being the entry
+        points (``pkg_resources.EntryPoint``).
+
+    See Also
+    --------
+    supported_marshaller_api_versions
+
+    """
+    all_plugins = tuple(pkg_resources.iter_entry_points(
+        'hdf5storage.marshallers.plugins'))
+    return {ver: {p.module_name: p
+                  for p in all_plugins if p.name == ver}
+            for ver in supported_marshaller_api_versions()}
 
 
 class Options(object):
@@ -960,7 +1017,8 @@ class MarshallerCollection(object):
 
     Maintains a list of marshallers used to marshal data types to and
     from HDF5 files. It includes the builtin marshallers from the
-    ``hdf5storage.Marshallers`` module as well as any user supplied or
+    ``hdf5storage.Marshallers`` module, optionally any marshallers from
+    installed third party plugins, as well as any user supplied or
     added marshallers. While the builtin list cannot be changed; user
     ones can be added or removed. Also has functions to get the
     marshaller appropriate for ``type`` or type_string for a python data
@@ -971,7 +1029,10 @@ class MarshallerCollection(object):
     interface.
 
     The builtin marshallers take priority when choosing the right
-    marshaller.
+    marshaller. Marshallers from third party plugins take next priority,
+    followed by user provided marshallers last. Within marshallers from
+    third party plugins, those supporting the higher Marshaller API
+    versions take priority over those supporting lower versions.
 
     .. versionchanged:: 0.2
        All marshallers must now inherit from
@@ -980,12 +1041,19 @@ class MarshallerCollection(object):
     .. versionchanged:: 0.2
        Builtin marshallers take priority over user provided ones.
 
+    .. versionadded:: 0.2
+       Marshallers can be loaded from third party plugins that declare
+       the ``'hdf5storage.marshallers.plugins'`` entry point.
+
     Parameters
     ----------
+    load_plugins : bool, optional
+        Whether to load marshallers from the third party plugins or
+        not. Default is ``False``.
     lazy_loading : bool, optional
         Whether to attempt to load the required modules for each
         marshaller right away when added/given or to only do so when
-        required (when marshaller is needed).
+        required (when marshaller is needed). Default is ``True``.
     marshallers : marshaller or iterable of marshallers, optional
         The user marshaller/s to add to the collection. Must inherit
         from ``hdf5storage.Marshallers.TypeMarshaller``.
@@ -1001,9 +1069,13 @@ class MarshallerCollection(object):
     hdf5storage.Marshallers.TypeMarshaller
 
     """
-    def __init__(self, lazy_loading=True, marshallers=[]):
+    def __init__(self, load_plugins=False, lazy_loading=True,
+                 marshallers=[]):
+        if not isinstance(load_plugins, bool):
+            raise TypeError('load_plugins must be bool.')
         if not isinstance(lazy_loading, bool):
             raise TypeError('lazy_loading must be bool.')
+        self._load_plugins = load_plugins
         self._lazy_loading = lazy_loading
 
         # Two lists of marshallers need to be maintained: one for the
@@ -1017,6 +1089,33 @@ class MarshallerCollection(object):
             lambda x: inspect.isclass(x) \
             and Marshallers.TypeMarshaller \
             in inspect.getmro(x))).items()]
+
+        # If loading marshallers from plugins, grab all the entry points
+        # by version and then go through them in version order, load the
+        # entry points, call them to get the marshallers, and check that
+        # they inherit from TypeMarshaller before adding them to the
+        # list of marshallers.
+        self._plugin_marshallers = []
+        if load_plugins:
+            plugins = find_thirdparty_marshaller_plugins()
+            for ver in supported_marshaller_api_versions():
+                for module, p in plugins[ver].items():
+                    try:
+                        fun = p.load()
+                        # Check that it is a routine before getting the
+                        # marshallers.
+                        if not inspect.isroutine(fun):
+                            continue
+                        ms = [m for m in fun(__version__)
+                              if isinstance(m,
+                                            Marshallers.TypeMarshaller)]
+                        self._plugin_marshallers.extend(ms)
+                    except:
+                        pass
+
+        # Start with an initially empty list of user marshallers. The
+        # ones given as an argument will be added using the adding
+        # function.
         self._user_marshallers = []
 
         # A list of all the marshallers will be needed along with
@@ -1051,6 +1150,7 @@ class MarshallerCollection(object):
         # Combine both sets of marshallers.
         self._marshallers = []
         self._marshallers.extend(self._builtin_marshallers)
+        self._marshallers.extend(self._plugin_marshallers)
         self._marshallers.extend(self._user_marshallers)
 
         # Determine whether the required modules are present, do module
