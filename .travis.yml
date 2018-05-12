@@ -74,12 +74,12 @@ before_install:
 #
 # For Python 2.6 and 3.2, the version of Cython can't be too new.
 #
-# Appears that it is similar for h5py==2.3 on python >= 3.5
+# Appears that it is similar for h5py==2.3 on python >= 3.5.
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install -U Cython==0.26.1; fi
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U Cython==0.24; fi
-  - if [[ $H5PY_VERSION == '2.3' && $TRAVIS_PYTHON_VERSION == '3.5' ]]; then pip install Cython=0.26.1; fi
-  - if [[ $H5PY_VERSION == '2.3' && $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pip install Cython=0.26.1; fi
+  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.5' ]]; then pip install Cython=0.26.1; fi
+  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pip install Cython=0.26.1; fi
   - pip install numpy$NUMPY_VERSION
   - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
