@@ -144,7 +144,15 @@ def assert_equal_none_format(a, b):
                     assert a.shape == b.shape
                     npt.assert_equal(a, b)
             else:
-                assert a.dtype == b.dtype
+                # If the original is structued, it is possible that the
+                # fields got out of order, in which case the dtype won't
+                # quite match. It will need to be checked just to make
+                # sure all pieces are there. Otherwise, the dtypes can
+                # be directly compared.
+                if b.dtype.fields is None:
+                    assert a.dtype == b.dtype
+                else:
+                    assert dict(a.dtype.fields) == dict(b.dtype.fields)
                 # Now, if b.shape is just all ones, then a.shape will
                 # just be (1,). Otherwise, we need to compare the shapes
                 # directly. Also, dimensions need to be squeezed before
