@@ -408,6 +408,9 @@ Versions
         * Fixed an assertion in the tests to handle field re-ordering when
           no metadata is used for structured dtypes that only worked on
           older versions of numpy.
+        * Issue #72. Fixed bug where python collections filled with ndarrays
+          that all have the same shape were converted to multi-dimensional
+          object ndarrays instead of a 1D object ndarray of the elements.
 
 0.1.14. Bugfix release that also added a couple features.
         * Issue #45. Fixed syntax errors in unicode strings for Python

@@ -242,15 +242,29 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    def check_python_collection(self, tp):
+    def check_python_collection(self, tp, same_dims):
         # Makes a random collection of the specified type, writes it and
         # reads it back, and then compares it.
         if tp in (set, frozenset):
             data = tp(random_list(max_list_length,
                       python_or_numpy='python'))
         else:
-            data = tp(random_list(max_list_length,
-                      python_or_numpy='numpy'))
+            if same_dims == 'same-dims':
+                shape = random_numpy_shape(random.randrange(2, 4),
+                                           random.randrange(1, 4))
+                dtypes = ('uint8', 'uint16', 'uint32', 'uint64',
+                          'int8', 'int16', 'int32', 'int64',
+                          'float32', 'float64',
+                          'complex64', 'complex128')
+                data = tp([random_numpy(shape, random.choice(dtypes),
+                                        allow_nan=True)
+                           for i in range(random.randrange(2, 7))])
+
+            elif same_dims == 'diff-dims':
+                data = tp(random_list(max_list_length,
+                                      python_or_numpy='numpy'))
+            else:
+                raise ValueError('invalid value of same_dims')
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
@@ -629,7 +643,8 @@ class TestPythonMatlabFormat(object):
 
     def test_python_collection(self):
         for tp in (list, tuple, set, frozenset, collections.deque):
-            yield self.check_python_collection, tp
+            yield self.check_python_collection, tp, 'same-dims'
+            yield self.check_python_collection, tp, 'diff-dims'
 
     def test_dict_like(self):
         for tp in self.dict_like:

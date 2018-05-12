@@ -156,7 +156,10 @@ def assert_equal_none_format(a, b, options=None):
             assert_equal_none_format(keys, tuple(b.keys()), options)
             assert_equal_none_format(values, tuple(b.values()), options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
-        assert_equal_none_format(a, np.object_(list(b)), options)
+        b_conv = np.zeros(dtype='object', shape=(len(b), ))
+        for i, v in enumerate(b):
+            b_conv[i] = v
+        assert_equal_none_format(a, b_conv, options)
     elif not isinstance(b, (np.generic, np.ndarray)):
         if b is None:
             # It should be np.float64([])
@@ -323,7 +326,10 @@ def assert_equal_matlab_format(a, b, options=None):
             assert_equal_matlab_format(values, tuple(b.values()),
                                        options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
-        assert_equal_matlab_format(a, np.object_(list(b)), options)
+        b_conv = np.zeros(dtype='object', shape=(len(b), ))
+        for i, v in enumerate(b):
+            b_conv[i] = v
+        assert_equal_matlab_format(a, b_conv, options)
     elif not isinstance(b, (np.generic, np.ndarray)):
         if b is None:
             # It should be np.zeros(shape=(0, 1), dtype='float64'))
