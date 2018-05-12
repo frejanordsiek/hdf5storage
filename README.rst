@@ -398,9 +398,16 @@ Versions
           strings (but not ndarrays of them) were saved in
           ``uint32`` format regardless of the value of
           ``Options.convert_numpy_bytes_to_utf16``.
-        * Updated ``setup.py`` and ``requirements.txt`` to specify the
-          maximum versions of numpy and h5py that can be used for specific
+        * Issue #70. Updated ``setup.py`` and ``requirements.txt`` to specify
+          the maximum versions of numpy and h5py that can be used for specific
           python versions (avoid version with dropped support).
+        * Issue #71. Fixed bug where the ``'python_fields'`` attribute wouldn't
+          always be written when doing python metadata for data written in
+          a struct-like fashion. The bug caused the field order to not be
+          preserved when writing and reading.
+        * Fixed an assertion in the tests to handle field re-ordering when
+          no metadata is used for structured dtypes that only worked on
+          older versions of numpy.
 
 0.1.14. Bugfix release that also added a couple features.
         * Issue #45. Fixed syntax errors in unicode strings for Python
