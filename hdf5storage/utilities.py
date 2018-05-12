@@ -30,7 +30,6 @@
 
 import sys
 import copy
-import string
 import random
 
 import numpy as np
@@ -60,12 +59,26 @@ def next_unused_name_in_group(grp, length):
         `grp`.
 
     """
-    ltrs = string.ascii_letters + string.digits
-    existing_names = set(grp.keys())
-    while True:
-        name = ''.join([random.choice(ltrs) for i in range(0, length)])
-        if name not in existing_names:
-            return name
+    # While
+    #
+    # ltrs = string.ascii_letters + string.digits
+    # name = ''.join([random.choice(ltrs) for i in range(length)])
+    #
+    # seems intuitive, its performance is abysmal compared to
+    #
+    # '%0{0}x'.format(length) % random.getrandbits(length * 4)
+    #
+    # The difference is a factor of 20. Idea from
+    #
+    # https://stackoverflow.com/questions/2782229/most-lightweight-way-
+    #   to-create-a-random-string-and-a-random-hexadecimal-number/
+    #   35161595#35161595
+    fmt = '%0{0}x'.format(length)
+    name = fmt % random.getrandbits(length * 4)
+    while name in grp:
+        name = fmt % random.getrandbits(length * 4)
+    return name
+
 
 def convert_numpy_str_to_uint16(data):
     """ Converts a numpy.unicode\_ to UTF-16 in numpy.uint16 form.
