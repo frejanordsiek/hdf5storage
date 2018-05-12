@@ -1693,8 +1693,10 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
         # to be grabbed now as the parent function will have a modified
         # form of data to guess from if not given the right one
         # explicitly.
+        out = np.zeros(dtype='object', shape=(len(data), ))
+        out[:] = data
         NumpyScalarArrayMarshaller.write(self, f, grp, name,
-                                         np.object_(data),
+                                         out,
                                          self.get_type_string(data,
                                          type_string), options)
 

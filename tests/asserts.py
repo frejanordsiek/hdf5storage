@@ -31,6 +31,7 @@ import warnings
 import numpy as np
 import numpy.testing as npt
 
+
 def assert_equal(a, b):
     # Compares a and b for equality. If they are dictionaries, they must
     # have the same set of keys, after which they values must all be
@@ -100,7 +101,10 @@ def assert_equal_none_format(a, b):
         for k in b:
             assert_equal_none_format(a[k][0], b[k])
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
-        assert_equal_none_format(a, np.object_(list(b)))
+        b_conv = np.zeros(dtype='object', shape=(len(b), ))
+        for i, v in enumerate(b):
+            b_conv[i] = v
+        assert_equal_none_format(a, b_conv)
     elif not isinstance(b, (np.generic, np.ndarray)):
         if b is None:
             # It should be np.float64([])
@@ -200,7 +204,10 @@ def assert_equal_matlab_format(a, b):
         for k in b:
             assert_equal_matlab_format(a[k][0], b[k])
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
-        assert_equal_matlab_format(a, np.object_(list(b)))
+        b_conv = np.zeros(dtype='object', shape=(len(b), ))
+        for i, v in enumerate(b):
+            b_conv[i] = v
+        assert_equal_matlab_format(a, b_conv)
     elif not isinstance(b, (np.generic, np.ndarray)):
         if b is None:
             # It should be np.zeros(shape=(0, 1), dtype='float64'))
