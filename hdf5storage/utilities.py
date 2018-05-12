@@ -68,81 +68,54 @@ def next_unused_name_in_group(grp, length):
             return name
 
 def convert_numpy_str_to_uint16(data):
-    """ Converts a numpy.str_ to UTF-16 encoding in numpy.uint16 form.
+    """ Converts a numpy.unicode\_ to UTF-16 in numpy.uint16 form.
 
-    Convert a ``numpy.str`` or an array of them (they are UTF-32
+    Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
     strings) to UTF-16 in the equivalent array of ``numpy.uint16``. The
     conversion will throw an exception if any characters cannot be
     converted to UTF-16. Strings are expanded along rows (across columns)
     so a 2x3x4 array of 10 element strings will get turned into a 2x30x4
     array of uint16's if every UTF-32 character converts easily to a
     UTF-16 singlet, as opposed to a UTF-16 doublet.
-
     Parameters
     ----------
-    data : numpy.str_ or numpy.ndarray of numpy.str_
+    data : numpy.unicode\_ or numpy.ndarray of numpy.unicode\_
         The string or array of them to convert.
-
     Returns
     -------
-    numpy.ndarray of numpy.uint16
+    array : numpy.ndarray of numpy.uint16
         The result of the conversion.
-
     Raises
     ------
     UnicodeEncodeError
         If a UTF-32 character has no UTF-16 representation.
-
     See Also
     --------
     convert_numpy_str_to_uint32
-    decode_to_numpy_str
-
+    convert_to_numpy_str
     """
     # An empty string should be an empty uint16
     if data.nbytes == 0:
         return np.uint16([])
 
-    # If it is just a string instead of an array of them, then the
-    # string can simply be converted and returned as a 1d array pretty
-    # easily using ndarray's buffer option. The byte order mark, 2
-    # bytes, needs to be removed.
-    if not isinstance(data, np.ndarray):
-        s = data.encode(encoding='UTF-16', errors='strict')
-        return np.ndarray(shape=((len(s)-2)//2,), dtype='uint16',
-                          buffer=s[2:])
+    # We need to use the UTF-16 codec for our endianness. Using the
+    # right one means we don't have to worry about removing the BOM.
+    if sys.byteorder == 'little':
+        codec = 'UTF-16LE'
+    else:
+        codec = 'UTF-16BE'
 
-    # It is an array of strings. Each string in the array needs to be
-    # converted. An object array is needed to hold all the converted
-    # forms, as opposed to just constructing the final uint16 array,
-    # because the converted forms could end up greatly differing lengths
-    # depending on how many characters turn into doublets. The sizes of
-    # each one need to be grabbed along the way to be able to construct
-    # the final array. The easiest way to convert each string is to use
-    # recursion.
-    converted_strings = np.ndarray(shape=data.shape, dtype='object')
-    sizes = np.zeros(shape=data.shape, dtype='int64')
+    # numpy.char.encode can do the conversion element wise. Then, we
+    # just have convert to uin16 with the appropriate dimensions. The
+    # dimensions are gotten from the shape of the converted data with
+    # the number of column increased by the number of words (pair of
+    # bytes) in the strings.
+    cdata = np.char.encode(np.atleast_1d(data), codec)
+    shape = list(cdata.shape)
+    shape[-1] *= (cdata.dtype.itemsize // 2)
+    return np.ndarray(shape=shape, dtype='uint16',
+                      buffer=cdata.tostring())
 
-    for index, x in np.ndenumerate(data):
-        converted_strings[index] = convert_numpy_str_to_uint16(x)
-        sizes[index] = np.prod(converted_strings[index].shape)
-
-    # The shape of the new array is simply the shape of the old one with
-    # the number of columns increased multiplicatively by the size of
-    # the largest UTF-16 string so that everything will fit.
-    length = np.max(sizes)
-    shape = list(data.shape)
-    shape[-1] *= length
-    new_data = np.zeros(shape=tuple(shape), dtype='uint16')
-
-    # Copy each string into new_data using clever indexing (using the
-    # first part of index returns a 1d subarray that can be
-    # addressed). Then, the conversion is done.
-    for index, x in np.ndenumerate(converted_strings):
-        new_data[index[:-1]][ \
-            (length*index[-1]):(length*index[-1]+sizes[index])] = x
-
-    return new_data
 
 def convert_numpy_str_to_uint32(data):
     """ Converts a numpy.str_ to its numpy.uint32 representation.
