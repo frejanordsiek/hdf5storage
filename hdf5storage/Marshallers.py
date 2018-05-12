@@ -725,7 +725,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # be written as a Group instead (dtypes have a useful hasobject
         # method). The same goes for if there is a null inside its
         # dtype.
-
+        #
+        # A flag, wrote_as_struct, is set depending on which path is
+        # taken, which is then passed onto write_metadata.
         if data_to_store.dtype.fields is not None \
                 and h5py.check_dtype(ref=data_to_store.dtype) \
                 is not h5py.Reference \
@@ -736,6 +738,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or not all(data_to_store.shape) \
                 or not all([all(data_to_store[n].shape) \
                 for n in data_to_store.dtype.names])):
+            wrote_as_struct = True
             # Grab the list of fields and properly escape them.
             field_names = [n for n in data_to_store.dtype.names]
             escaped_field_names = [escape_path(n) for n in field_names]
@@ -807,6 +810,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                        esc_attrs,
                                        np.prod(new_data.shape) != 1)
         else:
+            wrote_as_struct = False
+
             # Set the storage options such as compression, chunking,
             # filters, etc. If the data is being compressed (compression
             # is enabled and the data is bigger than the threshold),
@@ -876,10 +881,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Write the metadata using the inherited function (good enough).
         self.write_metadata(f, dsetgrp, data, type_string,
-                            options, attributes=attributes)
+                            options, attributes=attributes,
+                            wrote_as_struct=wrote_as_struct)
 
     def write_metadata(self, f, dsetgrp, data, type_string, options,
-                       attributes=None):
+                       attributes=None, wrote_as_struct=False):
+        # wote_as_struct is used to pass whether data was written like a
+        # matlab struct or not. If yes, then the field names must be put
+        # in the metadata.
+
         if attributes is None:
             attributes = dict()
         # Write the underlying numpy type if we are storing python
@@ -912,21 +922,19 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 container = 'scalar'
             attributes['Python.numpy.Container'] = ('string', container)
 
-        # If its dtype has fields and we would have written it as a
-        # Group (option is set, one of the field dtypes is object, or if
-        # data or one of its fields are empty), then we set the
+        # If it was written like a matlab struct, then we set the
         # 'Python.Fields' and 'MATLAB_fields' Attributes to the field
         # names if we are storing python metadata or doing matlab
         # compatibility and we are storing a structured ndarray as a
         # structure.
         has_obj = data.dtype.hasobject
         has_null = '\\x00' in str(data.dtype)
-        if data.dtype.fields is not None \
+        if wrote_as_struct or (data.dtype.fields is not None \
                 and (options.structured_numpy_ndarray_as_struct \
                 or (has_obj or has_null) \
                 or not all(data.shape) \
                 or not all([all(data[n].shape) \
-                for n in data.dtype.names])):
+                for n in data.dtype.names]))):
             # Grab the list of fields and escape them.
             field_names = [escape_path(c) for c in data.dtype.names]
 
