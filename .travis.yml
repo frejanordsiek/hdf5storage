@@ -7,12 +7,9 @@ notifications:
   email: false
 
 env:
-  - H5PY_VERSION="==2.3" NUMPY_VERSION="==1.11.3"
   - H5PY_VERSION="==2.4" NUMPY_VERSION="==1.11.3"
   - H5PY_VERSION="==2.5" NUMPY_VERSION="==1.11.3"
   - H5PY_VERSION="==2.6" NUMPY_VERSION="==1.11.3"
-  - H5PY_VERSION="" NUMPY_VERSION="==1.11.3"
-  - H5PY_VERSION="==2.3" NUMPY_VERSION=""
   - H5PY_VERSION="==2.4" NUMPY_VERSION=""
   - H5PY_VERSION="==2.5" NUMPY_VERSION=""
   - H5PY_VERSION="==2.6" NUMPY_VERSION=""
@@ -32,8 +29,6 @@ python:
 matrix:
   exclude:
     - python: "2.6"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION=""
-    - python: "2.6"
       env: H5PY_VERSION="==2.4" NUMPY_VERSION=""
     - python: "2.6"
       env: H5PY_VERSION="==2.5" NUMPY_VERSION=""
@@ -61,6 +56,19 @@ matrix:
       env: H5PY_VERSION="==2.6" NUMPY_VERSION=""
     - python: "3.3"
       env: H5PY_VERSION="" NUMPY_VERSION=""
+  include:
+    - python: "2.6"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION="1.11.3"
+    - python: "2.7"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION="1.11.3"
+    - python: "3.2"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION="1.11.3"
+    - python: "3.3"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION="1.11.3"
+    - python: "3.4"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION="1.11.3"
+    - python: "3.4"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION=""
 
 before_install:
   - sudo apt-get -qq update
@@ -73,15 +81,9 @@ before_install:
 # Seem to need newer Numpy as well.
 #
 # For Python 2.6 and 3.2, the version of Cython can't be too new.
-#
-# Appears that it is similar for h5py==2.3 on python >= 3.5.
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install -U Cython==0.26.1; fi
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U Cython==0.24; fi
-  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.5' ]]; then pip install Cython==0.26.1; fi
-  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.5-dev' ]]; then pip install Cython==0.26.1; fi
-  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pip install Cython==0.26.1; fi
-  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.6-dev' ]]; then pip install Cython==0.26.1; fi
   - pip install numpy$NUMPY_VERSION
   - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
