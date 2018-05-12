@@ -36,6 +36,8 @@ import h5py
 
 import hdf5storage
 
+import nose.tools
+
 
 # A test to make sure that the following are written as UTF-16
 # (uint16) if they don't contain doublets and the
@@ -57,7 +59,7 @@ def check_conv_utf16(tp):
                           store_python_metadata=False,
                           convert_numpy_str_to_utf16=True)
         with h5py.File(filename) as f:
-            assert f[name].dtype.type == np.uint16
+            nose.tools.assert_equal(f[name].dtype.type, np.uint16)
     except:
         raise
     finally:
