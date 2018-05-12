@@ -257,6 +257,12 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.15. Bugfix release that fixed the following bug.
+        * Issue #68. Fixed bug where ``str`` and ``numpy.unicode_``
+          strings (but not ndarrays of them) were saved in
+          ``uint32`` format regardless of the value of
+          ``Options.convert_numpy_bytes_to_utf16``.
+
 0.1.14. Bugfix release that also added a couple features.
         * Issue #45. Fixed syntax errors in unicode strings for Python
           3.0 to 3.2.
