@@ -78,8 +78,10 @@ before_install:
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install -U Cython==0.26.1; fi
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U Cython==0.24; fi
-  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.5' ]]; then pip install Cython=0.26.1; fi
-  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pip install Cython=0.26.1; fi
+  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.5' ]]; then pip install Cython==0.26.1; fi
+  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.5-dev' ]]; then pip install Cython==0.26.1; fi
+  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pip install Cython==0.26.1; fi
+  - if [[ $H5PY_VERSION == '==2.3' && $TRAVIS_PYTHON_VERSION == '3.6-dev' ]]; then pip install Cython==0.26.1; fi
   - pip install numpy$NUMPY_VERSION
   - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
