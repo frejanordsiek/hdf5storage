@@ -6,6 +6,18 @@ language: python
 notifications:
   email: false
 
+env:
+  - H5PY_VERSION="==2.3" NUMPY_VERSION="==1.11.3"
+  - H5PY_VERSION="==2.4" NUMPY_VERSION="==1.11.3"
+  - H5PY_VERSION="==2.5" NUMPY_VERSION="==1.11.3"
+  - H5PY_VERSION="==2.6" NUMPY_VERSION="==1.11.3"
+  - H5PY_VERSION="" NUMPY_VERSION="==1.11.3"
+  - H5PY_VERSION="==2.3" NUMPY_VERSION=""
+  - H5PY_VERSION="==2.4" NUMPY_VERSION=""
+  - H5PY_VERSION="==2.5" NUMPY_VERSION=""
+  - H5PY_VERSION="==2.6" NUMPY_VERSION=""
+  - H5PY_VERSION="" NUMPY_VERSION=""
+
 python:
   - "2.6"
   - "2.7"
@@ -17,6 +29,39 @@ python:
   - "3.6"
   - "3.6-dev" # 3.6 development branch
 
+matrix:
+  exclude:
+    - python: "2.6"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION=""
+    - python: "2.6"
+      env: H5PY_VERSION="==2.4" NUMPY_VERSION=""
+    - python: "2.6"
+      env: H5PY_VERSION="==2.5" NUMPY_VERSION=""
+    - python: "2.6"
+      env: H5PY_VERSION="==2.6" NUMPY_VERSION=""
+    - python: "2.6"
+      env: H5PY_VERSION="" NUMPY_VERSION=""
+    - python: "3.2"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION=""
+    - python: "3.2"
+      env: H5PY_VERSION="==2.4" NUMPY_VERSION=""
+    - python: "3.2"
+      env: H5PY_VERSION="==2.5" NUMPY_VERSION=""
+    - python: "3.2"
+      env: H5PY_VERSION="==2.6" NUMPY_VERSION=""
+    - python: "3.2"
+      env: H5PY_VERSION="" NUMPY_VERSION=""
+    - python: "3.3"
+      env: H5PY_VERSION="==2.3" NUMPY_VERSION=""
+    - python: "3.3"
+      env: H5PY_VERSION="==2.4" NUMPY_VERSION=""
+    - python: "3.3"
+      env: H5PY_VERSION="==2.5" NUMPY_VERSION=""
+    - python: "3.3"
+      env: H5PY_VERSION="==2.6" NUMPY_VERSION=""
+    - python: "3.3"
+      env: H5PY_VERSION="" NUMPY_VERSION=""
+
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
@@ -27,7 +72,8 @@ before_install:
 #
 # Seem to need newer Numpy as well.
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.2' || $TRAVIS_PYTHON_VERSION == '3.3' || $TRAVIS_PYTHON_VERSION == '2.6']]; then pip install -U numpy==1.11.3; else pip install -U numpy; fi
+  - pip install numpy$NUMPY_VERSION
+  - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
 
 # command to run tests
