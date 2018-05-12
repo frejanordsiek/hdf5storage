@@ -24,6 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 import os
 import os.path
 import tempfile
@@ -45,7 +46,7 @@ import hdf5storage
 
 def check_conv_utf16(tp):
     name = '/a'
-    data = tp('abcdefghijklmnopqrstuvwxyzéèçàαιωιεΑΟΩαοεαω')
+    data = tp('abcdefghijklmnopqrstuvwxyz')
     fld = None
     try:
         fld = tempfile.mkstemp()
@@ -65,5 +66,9 @@ def check_conv_utf16(tp):
 
 
 def test_conv_utf16():
-    for tp in (str, np.unicode_):
+    if sys.hexversion < 0x3000000:
+        tps = (unicode, np.unicode_)
+    else:
+        tps = (str, np.unicode_)
+    for tp in tps:
         yield check_conv_utf16, tp
