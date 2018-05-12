@@ -680,6 +680,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # converting that field to a HDF5 Reference types, it will just
         # be written as a Group instead (just have to see if ", 'O'" is
         # in str(data_to_store.dtype).
+        #
+        # A flag, wrote_as_struct, is set depending on which path is
+        # taken, which is then passed onto write_metadata.
         
         if data_to_store.dtype.fields is not None \
                 and h5py.check_dtype(ref=data_to_store.dtype) \
@@ -690,6 +693,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or not all(data_to_store.shape) \
                 or not all([all(data_to_store[n].shape) \
                 for n in data_to_store.dtype.names])):
+            wrote_as_struct = True
             # Grab the list of fields that don't have a null character
             # or a / in them since those can't be written.
             field_names = [n for n in data_to_store.dtype.names
@@ -772,6 +776,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                 - set(['H5PATH'])):
                             del_attribute(grp2[field], attribute)
         else:
+            wrote_as_struct = False
             # If it has fields and it isn't a Reference type, none of
             # them can contain a / character.
             if data_to_store.dtype.fields is not None \
@@ -848,9 +853,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Write the metadata using the inherited function (good enough).
         self.write_metadata(f, grp, name, data, type_string,
-                            options)
+                            options, wrote_as_struct=wrote_as_struct)
 
-    def write_metadata(self, f, grp, name, data, type_string, options):
+    def write_metadata(self, f, grp, name, data, type_string, options,
+                       wrote_as_struct=False):
+        # wote_as_struct is used to pass whether data was written like a
+        # matlab struct or not. If yes, then the field names must be put
+        # in the metadata.
+
         # First, call the inherited version to do most of the work.
 
         TypeMarshaller.write_metadata(self, f, grp, name, data,
@@ -889,19 +899,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             set_attribute_string(grp[name], 'Python.numpy.Container',
                                  container)
 
-        # If its dtype has fields and we would have written it as a
-        # Group (option is set, one of the field dtypes is object, or if
-        # data or one of its fields are empty), then we set the
+        # If it was written like a matlab struct, then we set the
         # 'Python.Fields' and 'MATLAB_fields' Attributes to the field
         # names if we are storing python metadata or doing matlab
         # compatibility and we are storing a structured ndarray as a
         # structure.
-        if data.dtype.fields is not None \
-                and (options.structured_numpy_ndarray_as_struct \
-                or "'O'" in str(data.dtype) \
-                or not all(data.shape) \
-                or not all([all(data[n].shape) \
-                for n in data.dtype.names])):
+        if wrote_as_struct:
             # Grab the list of fields. They need to be converted to
             # unicode in Python 2.x.
             if sys.hexversion >= 0x03000000:
@@ -911,9 +914,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                for c in list(data.dtype.names)]
 
             # Write or delete 'Python.Fields' as appropriate.
-            if options.store_python_metadata \
-                    and data.dtype.fields is not None \
-                    and options.structured_numpy_ndarray_as_struct:
+            if options.store_python_metadata:
                 set_attribute_string_array(grp[name],
                                            'Python.Fields',
                                            field_names)
