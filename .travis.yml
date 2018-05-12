@@ -16,8 +16,6 @@ python:
   - "3.5-dev" # 3.5 development branch
   - "3.6"
   - "3.6-dev" # 3.6 development branch
-  - "3.7-dev" # 3.7 development branch
-  - "nightly" # currently points to 3.6-dev
 
 before_install:
   - sudo apt-get -qq update
@@ -29,7 +27,7 @@ before_install:
 #
 # Seem to need newer Numpy as well.
 install:
-  - pip install -U numpy
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.2' || $TRAVIS_PYTHON_VERSION == '3.3' || $TRAVIS_PYTHON_VERSION == '2.6']]; then pip install -U numpy==1.11.3; else pip install -U numpy; fi
   - pip install -r requirements_tests.txt
 
 # command to run tests
