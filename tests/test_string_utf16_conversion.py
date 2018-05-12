@@ -34,13 +34,16 @@ import h5py
 import hdf5storage
 
 
-# A test to make sure that numpy.unicode_ scalars are written as UTF-16
+# A test to make sure that the following are written as UTF-16
 # (uint16) if they don't contain doublets and the
 # convert_numpy_str_to_utf16 option is set.
+#
+# * str
+# * numpy.unicode_ scalars
 
-def test_conv_utf16():
+def check_conv_utf16(tp):
     name = '/a'
-    data = np.unicode_('abcdefghijklmnopqrstuvwxyz')
+    data = tp('abcdefghijklmnopqrstuvwxyzéèçàαιωιεΑΟΩαοεαω')
     fld = None
     try:
         fld = tempfile.mkstemp()
@@ -57,3 +60,8 @@ def test_conv_utf16():
     finally:
         if fld is not None:
             os.remove(fld[1])
+
+
+def test_conv_utf16():
+    for tp in (str, np.unicode_):
+        yield check_conv_utf16, tp
