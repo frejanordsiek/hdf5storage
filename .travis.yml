@@ -7,13 +7,13 @@ notifications:
   email: false
 
 env:
-  - H5PY_VERSION="==2.4" NUMPY_VERSION="==1.11.3"
-  - H5PY_VERSION="==2.5" NUMPY_VERSION="==1.11.3"
-  - H5PY_VERSION="==2.6" NUMPY_VERSION="==1.11.3"
-  - H5PY_VERSION="==2.4" NUMPY_VERSION=""
-  - H5PY_VERSION="==2.5" NUMPY_VERSION=""
-  - H5PY_VERSION="==2.6" NUMPY_VERSION=""
-  - H5PY_VERSION="" NUMPY_VERSION=""
+  - H5PY_VER="==2.4" NUMPY_VER="==1.11.3"
+  - H5PY_VER="==2.5" NUMPY_VER="==1.11.3"
+  - H5PY_VER="==2.6" NUMPY_VER="==1.11.3"
+  - H5PY_VER="==2.4" NUMPY_VER=""
+  - H5PY_VER="==2.5" NUMPY_VER=""
+  - H5PY_VER="==2.6" NUMPY_VER=""
+  - H5PY_VER="" NUMPY_VER=""
 
 python:
   - "2.6"
@@ -29,46 +29,46 @@ python:
 matrix:
   exclude:
     - python: "2.6"
-      env: H5PY_VERSION="==2.4" NUMPY_VERSION=""
+      env: H5PY_VER="==2.4" NUMPY_VER=""
     - python: "2.6"
-      env: H5PY_VERSION="==2.5" NUMPY_VERSION=""
+      env: H5PY_VER="==2.5" NUMPY_VER=""
     - python: "2.6"
-      env: H5PY_VERSION="==2.6" NUMPY_VERSION=""
+      env: H5PY_VER="==2.6" NUMPY_VER=""
     - python: "2.6"
-      env: H5PY_VERSION="" NUMPY_VERSION=""
+      env: H5PY_VER="" NUMPY_VER=""
     - python: "3.2"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION=""
+      env: H5PY_VER="==2.3" NUMPY_VER=""
     - python: "3.2"
-      env: H5PY_VERSION="==2.4" NUMPY_VERSION=""
+      env: H5PY_VER="==2.4" NUMPY_VER=""
     - python: "3.2"
-      env: H5PY_VERSION="==2.5" NUMPY_VERSION=""
+      env: H5PY_VER="==2.5" NUMPY_VER=""
     - python: "3.2"
-      env: H5PY_VERSION="==2.6" NUMPY_VERSION=""
+      env: H5PY_VER="==2.6" NUMPY_VER=""
     - python: "3.2"
-      env: H5PY_VERSION="" NUMPY_VERSION=""
+      env: H5PY_VER="" NUMPY_VER=""
     - python: "3.3"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION=""
+      env: H5PY_VER="==2.3" NUMPY_VER=""
     - python: "3.3"
-      env: H5PY_VERSION="==2.4" NUMPY_VERSION=""
+      env: H5PY_VER="==2.4" NUMPY_VER=""
     - python: "3.3"
-      env: H5PY_VERSION="==2.5" NUMPY_VERSION=""
+      env: H5PY_VER="==2.5" NUMPY_VER=""
     - python: "3.3"
-      env: H5PY_VERSION="==2.6" NUMPY_VERSION=""
+      env: H5PY_VER="==2.6" NUMPY_VER=""
     - python: "3.3"
-      env: H5PY_VERSION="" NUMPY_VERSION=""
+      env: H5PY_VER="" NUMPY_VER=""
   include:
     - python: "2.6"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION="==1.11.3"
+      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
     - python: "2.7"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION="==1.11.3"
+      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
     - python: "3.2"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION="==1.11.3"
+      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
     - python: "3.3"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION="==1.11.3"
+      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
     - python: "3.4"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION="==1.11.3"
+      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
     - python: "3.4"
-      env: H5PY_VERSION="==2.3" NUMPY_VERSION=""
+      env: H5PY_VER="==2.3" NUMPY_VER=""
 
 before_install:
   - sudo apt-get -qq update
@@ -84,8 +84,8 @@ before_install:
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install -U Cython==0.26.1; fi
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U Cython==0.24; fi
-  - pip install numpy$NUMPY_VERSION
-  - pip install h5py$H5PY_VERSION
+  - pip install numpy$NUMPY_VER
+  - pip install h5py$H5PY_VER
   - pip install -r requirements_tests.txt
 
 # command to run tests
