@@ -1009,25 +1009,52 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Get the different attributes this marshaller uses.
 
-        type_string = get_attribute_string(grp[name], 'Python.Type')
-        underlying_type = get_attribute_string(grp[name], \
-            'Python.numpy.UnderlyingType')
-        shape = get_attribute(grp[name], 'Python.Shape')
-        container = get_attribute_string(grp[name], \
-            'Python.numpy.Container')
-        python_empty = get_attribute(grp[name], 'Python.Empty')
-        python_fields = get_attribute_string_array(grp[name], \
-            'Python.Fields')
+        if sys.hexversion >= 0x03000000:
+            defaultfactory = type(None)
+        else:
+            defaultfactory = lambda : None
+        attributes = collections.defaultdict(defaultfactory,
+                                             grp[name].attrs.items())
 
-        matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
-        matlab_empty = get_attribute(grp[name], 'MATLAB_empty')
+        str_attrs = dict()
+        for attr_name in ('Python.Type',
+                          'Python.numpy.UnderlyingType',
+                          'Python.numpy.Container',
+                          'Python.Fields',
+                          'MATLAB_class'):
+            value = attributes[attr_name]
+            if value is None:
+                str_attrs[attr_name] = value
+            elif (sys.hexversion >= 0x03000000 \
+                    and isinstance(value, str)) \
+                    or (sys.hexversion < 0x03000000 \
+                    and isinstance(value, unicode)):
+                str_attrs[attr_name] = value
+            elif isinstance(value, bytes):
+                str_attrs[attr_name] = value.decode()
+            elif isinstance(value, np.unicode_):
+                str_attrs[attr_name] = str(value)
+            elif isinstance(value, np.bytes_):
+                str_attrs[attr_name] = value.decode()
+            else:
+                str_attrs[attr_name] = None
+
+        type_string = str_attrs['Python.Type']
+        underlying_type = str_attrs['Python.numpy.UnderlyingType']
+        container = str_attrs['Python.numpy.Container']
+        python_fields = str_attrs['Python.Fields']
+        matlab_class = str_attrs['MATLAB_class']
+
+        shape = attributes['Python.Shape']
+        python_empty = attributes['Python.Empty']
+        matlab_empty = attributes['MATLAB_empty']
 
         # If we are using h5py version >= 2.3, we can actually read the
         # MATLAB_fields Attribute if it is present.
         matlab_fields = None
         if distutils.version.LooseVersion(_H5PY_VERSION) \
                 >= distutils.version.LooseVersion('2.3'):
-            matlab_fields = get_attribute(grp[name], 'MATLAB_fields')
+            matlab_fields = attributes['MATLAB_fields']
 
         # If it is a Dataset, it can simply be read and then acted upon
         # (if it is an HDF5 Reference array, it will need to be read
