@@ -1020,7 +1020,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         for attr_name in ('Python.Type',
                           'Python.numpy.UnderlyingType',
                           'Python.numpy.Container',
-                          'Python.Fields',
                           'MATLAB_class'):
             value = attributes[attr_name]
             if value is None:
@@ -1042,12 +1041,16 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         type_string = str_attrs['Python.Type']
         underlying_type = str_attrs['Python.numpy.UnderlyingType']
         container = str_attrs['Python.numpy.Container']
-        python_fields = str_attrs['Python.Fields']
         matlab_class = str_attrs['MATLAB_class']
 
         shape = attributes['Python.Shape']
         python_empty = attributes['Python.Empty']
         matlab_empty = attributes['MATLAB_empty']
+
+        python_fields = attributes['Python.Fields']
+        if python_fields is not None:
+            python_fields = [convert_to_str(x)
+                             for x in python_fields]
 
         # If we are using h5py version >= 2.3, we can actually read the
         # MATLAB_fields Attribute if it is present.
