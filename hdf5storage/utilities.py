@@ -656,10 +656,10 @@ def get_attribute(target, name):
     isn't.
 
     """
-    if name not in target.attrs:
-        return None
-    else:
+    try:
         return target.attrs[name]
+    except:
+        return None
 
 
 def get_attribute_string(target, name):
