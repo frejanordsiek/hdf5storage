@@ -79,7 +79,7 @@ To run the tests ::
 Building Documentation
 ----------------------
 
-The documentation additionally requires sphinx (>= 1.3). The
+The documentation additionally requires sphinx (>= 1.7). The
 documentation dependencies can be installed by ::
 
     pip install -r requirements_doc.txt
