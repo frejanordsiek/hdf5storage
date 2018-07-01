@@ -34,3 +34,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# autosaves
+*.py~
+*.yml~
+*.rst~
+*.txt~
