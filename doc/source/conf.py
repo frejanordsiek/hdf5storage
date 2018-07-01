@@ -22,7 +22,7 @@ import sys, os
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.3'
+needs_sphinx = '1.7'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'hdf5storage'
-copyright = '2013-2016, Freja Nordsiek'
+copyright = '2013-2018, Freja Nordsiek'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
