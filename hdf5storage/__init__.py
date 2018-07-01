@@ -543,7 +543,7 @@ class Options(object):
 
         See Also
         --------
-        numpy.bytes_
+        numpy.bytes\_
         convert_numpy_str_to_utf16
 
         """
@@ -579,7 +579,7 @@ class Options(object):
 
         See Also
         --------
-        numpy.bytes_
+        numpy.bytes\_
         convert_numpy_str_to_utf16
 
         """
