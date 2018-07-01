@@ -22,7 +22,7 @@ import sys, os
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.0'
+needs_sphinx = '1.7'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -31,8 +31,7 @@ extensions = ['sphinx.ext.autodoc',
 	      'sphinx.ext.intersphinx',
 	      'sphinx.ext.todo',
 	      'sphinx.ext.coverage',
-	      'sphinx.ext.pngmath',
-	      'sphinx.ext.mathjax',
+	      'sphinx.ext.imgmath',
 	      'sphinx.ext.ifconfig',
 	      'sphinx.ext.viewcode',
 	      'sphinx.ext.autosummary',
@@ -52,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'hdf5storage'
-copyright = '2013-2016, Freja Nordsiek'
+copyright = '2013-2018, Freja Nordsiek'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -255,7 +254,7 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 
-intersphinx_mapping = {'python': ('http://docs.python.org/3.3', None),
+intersphinx_mapping = {'python': ('http://docs.python.org/3.6', None),
 		       'numpy': ('http://docs.scipy.org/doc/numpy', None),
 		       'scipy': ('http://docs.scipy.org/doc/scipy/reference', None),
 		       'h5py': ('http://docs.h5py.org/en/latest/', None)}
