@@ -393,11 +393,14 @@ Versions
      * Issue #55. Major performance increases by reducing the overhead
        involved with reading and writing each Dataset and Group.
 
-0.1.15. Bugfix release that fixed the following bug.
+0.1.15. Bugfix release that fixed the following bugs.
         * Issue #68. Fixed bug where ``str`` and ``numpy.unicode_``
           strings (but not ndarrays of them) were saved in
           ``uint32`` format regardless of the value of
           ``Options.convert_numpy_bytes_to_utf16``.
+        * Updated ``setup.py`` and ``requirements.txt`` to specify the
+          maximum versions of numpy and h5py that can be used for specific
+          python versions (avoid version with dropped support).
 
 0.1.14. Bugfix release that also added a couple features.
         * Issue #45. Fixed syntax errors in unicode strings for Python
