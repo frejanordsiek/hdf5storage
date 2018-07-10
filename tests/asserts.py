@@ -230,7 +230,15 @@ def assert_equal_none_format(a, b, options=None):
                     warnings.simplefilter('ignore', RuntimeWarning)
                     npt.assert_equal(c, b)
         else:
-            assert_equal_nose(a.dtype, b.dtype)
+            # If the original is structued, it is possible that the
+            # fields got out of order, in which case the dtype won't
+            # quite match. It will need to be checked just to make sure
+            # all pieces are there. Otherwise, the dtypes can be
+            # directly compared.
+            if b.dtype.fields is None:
+                assert a.dtype == b.dtype
+            else:
+                assert dict(a.dtype.fields) == dict(b.dtype.fields)
             assert_equal_nose(a.shape, b.shape)
             for index, x in np.ndenumerate(a):
                 assert_equal_none_format(a[index], b[index], options)
