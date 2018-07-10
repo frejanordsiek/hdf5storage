@@ -939,10 +939,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             field_names = [escape_path(c) for c in data.dtype.names]
 
             # Write or delete 'Python.Fields' as appropriate.
-            if options.store_python_metadata \
-                    and data.dtype.fields is not None \
-                    and (options.structured_numpy_ndarray_as_struct \
-                    or (has_obj or has_null)):
+            if options.store_python_metadata:
                 attributes['Python.Fields'] = ('string_array',
                                                field_names)
 
