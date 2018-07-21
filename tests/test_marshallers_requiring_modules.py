@@ -51,7 +51,7 @@ def test_missing_required_parent():
     m = hdf5storage.Marshallers.TypeMarshaller()
     m.required_parent_modules = ['ainivieanvueaq']
     m.python_type_strings = ['vi8vaeaniea']
-    m.types = ["<type '" + s + "'>" for s in m.python_type_strings]
+    m.types = [s for s in m.python_type_strings]
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(marshallers=[m])
     assert_false(mc._has_required_modules[-1])
@@ -71,7 +71,7 @@ def test_missing_required_lazy():
     m.required_parent_modules = ['numpy']
     m.required_modules = ['ainivieanvueaq']
     m.python_type_strings = ['vi8vaeaniea']
-    m.types = ["<type '" + s + "'>" for s in m.python_type_strings]
+    m.types = [s for s in m.python_type_strings]
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(lazy_loading=True,
                                           marshallers=[m])
@@ -92,7 +92,7 @@ def test_missing_required_non_lazy():
     m.required_parent_modules = ['numpy']
     m.required_modules = ['ainivieanvueaq']
     m.python_type_strings = ['vi8vaeaniea']
-    m.types = ["<type '" + s + "'>" for s in m.python_type_strings]
+    m.types = [s for s in m.python_type_strings]
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(lazy_loading=False,
                                           marshallers=[m])
@@ -113,7 +113,7 @@ def test_has_required_lazy():
     m.required_parent_modules = ['json']
     m.required_modules = ['json']
     m.python_type_strings = ['ellipsis']
-    m.types = ["<type '" + s + "'>" for s in m.python_type_strings]
+    m.types = ['builtins.ellipsis']
     m.update_type_lookups()
     for name in m.required_modules:
         assert_not_in(name, sys.modules)
@@ -151,7 +151,7 @@ def test_has_required_non_lazy():
     m.required_parent_modules = ['csv']
     m.required_modules = ['csv']
     m.python_type_strings = ['ellipsis']
-    m.types = ["<type '" + s + "'>" for s in m.python_type_strings]
+    m.types = ['builtins.ellipsis']
     m.update_type_lookups()
     for name in m.required_modules:
         assert_not_in(name, sys.modules)
@@ -174,7 +174,7 @@ def test_marshaller_read():
     m.required_parent_modules = ['json']
     m.required_modules = ['json']
     m.python_type_strings = ['ellipsis']
-    m.types = ["<type '" + s + "'>" for s in m.python_type_strings]
+    m.types = ['builtins.ellipsis']
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(lazy_loading=True,
                                           marshallers=[m])
@@ -205,7 +205,7 @@ def test_marshaller_read_approximate_missing_parent():
     m.required_parent_modules = ['aiveneiavie']
     m.required_modules = ['json']
     m.python_type_strings = ['ellipsis']
-    m.types = ["<type '" + s + "'>" for s in m.python_type_strings]
+    m.types = ['builtins.ellipsis']
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(lazy_loading=True,
                                           marshallers=[m])
@@ -236,7 +236,7 @@ def test_marshaller_read_approximate_missing_import():
     m.required_parent_modules = ['json']
     m.required_modules = ['aiveneiavie']
     m.python_type_strings = ['ellipsis']
-    m.types = ["<type '" + s + "'>" for s in m.python_type_strings]
+    m.types = ['builtins.ellipsis']
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(lazy_loading=True,
                                           marshallers=[m])

@@ -1263,9 +1263,9 @@ class MarshallerCollection(object):
                 if isinstance(tp, str):
                     tp_as_str = tp
                 else:
-                    tp_as_str = str(tp)
+                    tp_as_str = tp.__module__ + '.' + tp.__name__
                 if tp_as_str not in types_as_str:
-                    self._types[tp] = i
+                    self._types[tp_as_str] = i
                     types_as_str.add(tp_as_str)
             # type strings
             for type_string in m.python_type_strings:
@@ -1388,8 +1388,9 @@ class MarshallerCollection(object):
 
         Parameters
         ----------
-        tp : type
-            Python object ``type``.
+        tp : type or str
+            Python object ``type`` (which would be the class reference)
+            or its string representation like ``'collections.deque'``.
 
         Returns
         -------
@@ -1405,23 +1406,21 @@ class MarshallerCollection(object):
         hdf5storage.Marshallers.TypeMarshaller.types
 
         """
-        index = None
+        if not isinstance(tp, str):
+            tp = tp.__module__ + '.' + tp.__name__
         if tp in self._types:
             index = self._types[tp]
-        elif str(tp) in self._types:
-            index = self._types[str(tp)]
-        if index is None:
-            return None, False
         else:
-            m = self._marshallers[index]
-            if self._imported_required_modules[index]:
-                return m, True
-            if not self._has_required_modules[index]:
-                return m, False
-            success = self._import_marshaller_modules(m)
-            self._has_required_modules[index] = success
-            self._imported_required_modules[index] = success
-            return m, success
+            return None, False
+        m = self._marshallers[index]
+        if self._imported_required_modules[index]:
+            return m, True
+        if not self._has_required_modules[index]:
+            return m, False
+        success = self._import_marshaller_modules(m)
+        self._has_required_modules[index] = success
+        self._imported_required_modules[index] = success
+        return m, success
 
     def get_marshaller_for_type_string(self, type_string):
         """ Gets the appropriate marshaller for a type string.

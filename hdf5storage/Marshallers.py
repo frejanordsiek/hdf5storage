@@ -66,8 +66,8 @@ class TypeMarshaller(object):
     and thus it must be approximated (say, a conversion to a dense array
     or just the fields specifying it in a ``dict``). Note that for types
     not in the main Python runtime or numpy, their types in ``types``
-    must be specified as ``str`` of the form ``"<type 'X'>"`` where X is
-    the type (includes module path).
+    must be specified in ``str`` form including module. For example,
+    ``collections.deque`` is ``'collections.deque'``.
 
     Whether the marshaller can read types accurately with ``read`` or
     approximately with ``read_approximate`` is determined by whether the
@@ -122,8 +122,8 @@ class TypeMarshaller(object):
         Attributes used for MATLAB compatibility.
     types : list of types
         Types the marshaller can work on, which can be the actual
-        classes themselves or ``str(type(x))`` where ``x`` is an object
-        of the specified type.
+        classes themselves or their ``str`` representation such as
+        ``'collections.deque'``.
     python_type_strings : list of str
         Type strings of readable types.
     matlab_classes : list of str
@@ -200,9 +200,8 @@ class TypeMarshaller(object):
         #:
         #: ``list`` of the types that the marshaller can marshall. They
         #: must all be the actual types gotten from ``type(data)``
-        #: or all be ``str`` gotten from doing ``str(type(data))`` which
-        #: look like ``"<type 'X'>"`` where X is the name of the type.
-        #: Default value is ``[]``.
+        #: or their ``str`` representation such as
+        #: ``'collections.deque'``. Default value is ``[]``.
         self.types = []
 
         #: Type strings of readable types.
@@ -299,7 +298,8 @@ class TypeMarshaller(object):
             try:
                 return self.type_to_typestring[tp]
             except KeyError:
-                return self.type_to_typestring[str(tp)]
+                return self.type_to_typestring[tp.__module__ + '.'
+                                               + tp.__name__]
 
     def write(self, f, grp, name, data, type_string, options):
         """ Writes an object's metadata to file.
