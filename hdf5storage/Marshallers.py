@@ -734,9 +734,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 and (options.structured_numpy_ndarray_as_struct \
                 or (data_to_store.dtype.hasobject \
                 or '\\x00' in str(data_to_store.dtype)) \
-                or not all(data_to_store.shape) \
-                or not all([all(data_to_store[n].shape) \
-                for n in data_to_store.dtype.names])):
+                or does_dtype_have_a_zero_shape(data_to_store.dtype)):
             wrote_as_struct = True
             # Grab the list of fields and properly escape them.
             field_names = [n for n in data_to_store.dtype.names]

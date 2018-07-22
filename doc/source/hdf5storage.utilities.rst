@@ -10,6 +10,7 @@ hdf5storage.utilities
    escape_path
    unescape_path
    process_path
+   does_dtype_have_a_zero_shape
    write_data
    read_data
    write_object_array
@@ -50,6 +51,12 @@ process_path
 ------------
 
 .. autofunction:: process_path
+
+
+does_dtype_have_a_zero_shape
+----------------------------
+
+.. autofunction:: does_dtype_have_a_zero_shape
 
 
 write_data

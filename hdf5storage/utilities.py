@@ -339,6 +339,51 @@ def process_path(pth):
     return groupname, targetname
 
 
+def does_dtype_have_a_zero_shape(dt):
+    """ Determine whether a dtype (or its fields) have zero shape.
+
+    Determines whether the given ``numpy.dtype`` has a shape with a zero
+    element or if one of its fields does, or if one of its fields'
+    fields does, and so on recursively. The following dtypes do not have
+    zero shape.
+
+    * ``'uint8'``
+    * ``[('a', 'int32'), ('blah', 'float16', (3, 3))]``
+    * ``[('a', [('b', 'complex64')], (2, 1, 3))]``
+
+    But the following do
+
+    * ``('uint8', (1, 0))``
+    * ``[('a', 'int32'), ('blah', 'float16', (3, 0))]``
+    * ``[('a', [('b', 'complex64')], (2, 0, 3))]``
+
+    Parameters
+    ----------
+    dt : numpy.dtype
+        The dtype to check.
+
+    Returns
+    -------
+    yesno : bool
+        Whether `dt` or one of its fields has a shape with at least one
+        element that is zero.
+
+    Raises
+    ------
+    TypeError
+        If `dt` is not a ``numpy.dtype``.
+
+    """
+    components = [dt]
+    while 0 != len(components):
+        c = components.pop()
+        if 0 in c.shape:
+            return True
+        if c.names is not None:
+            components.extend([v[0] for v in c.fields.values()])
+    return False
+
+
 def write_data(f, grp, name, data, type_string, options):
     """ Writes a piece of data into an open HDF5 file.
 
