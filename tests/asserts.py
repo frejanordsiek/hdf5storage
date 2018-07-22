@@ -36,11 +36,11 @@ def assert_dtypes_equal(a, b):
     # Check that two dtypes are equal, but ignorning itemsize for dtypes
     # whose shape is 0.
     assert isinstance(a, np.dtype)
-    assert_equal_nose(a.shape, b.shape)
+    assert a.shape == b.shape
     if b.names is None:
-        assert_equal_nose(a, b)
+        assert a == b
     else:
-        assert_equal_nose(a.names, b.names)
+        assert a.names == b.names
         for n in b.names:
             assert_dtypes_equal(a[n], b[n])
 
@@ -79,7 +79,7 @@ def assert_equal(a, b):
             else:
                 assert a == b or np.all(np.isnan([a, b]))
     else:
-        assert a.dtype == b.dtype
+        assert_dtypes_equal(a.dtype, b.dtype)
         assert a.shape == b.shape
         if b.dtype.name != 'object':
             with warnings.catch_warnings():
