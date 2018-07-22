@@ -265,7 +265,7 @@ class TestPythonMatlabFormat(object):
                   ('c',
                    [('a', random.choice(dtypes),
                      (3 * zero_shaped, 1)),
-                    ('b', random.choice(dtypes), (2, ))])]
+                    ('b', random.choice(dtypes), (2, ))], (2, 1))]
             data = np.zeros((2, ), dtype=dt)
             out = self.write_readback(data, random_name(),
                                       self.options)
