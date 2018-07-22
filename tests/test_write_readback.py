@@ -239,6 +239,97 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    def check_numpy_sized_dtype_nested_0(self, zero_shaped):
+        dtypes = ('uint8', 'uint16', 'uint32', 'uint64',
+                  'int8', 'int16', 'int32', 'int64',
+                  'float32', 'float64',
+                  'complex64', 'complex128')
+        for i in range(10):
+            dt = (random.choice(dtypes),
+                  (random.randrange(1, 10),
+                   zero_shaped * random.randrange(1, 8)))
+            data = np.empty((random.randrange(1, 9), ),
+                            dtype=dt)
+            out = self.write_readback(data, random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
+
+    def check_numpy_sized_dtype_nested_1(self, zero_shaped):
+        dtypes = ('uint8', 'uint16', 'uint32', 'uint64',
+                  'int8', 'int16', 'int32', 'int64',
+                  'float32', 'float64',
+                  'complex64', 'complex128')
+        for i in range(10):
+            dt = [('aaivae', random.choice(dtypes),
+                   random_numpy_shape(3, 10)),
+                  ('inbiuQi', random.choice(dtypes),
+                   (random.randrange(1, 10),
+                    random.randrange(2, 13),
+                    zero_shaped * random.randrange(1, 6))),
+                  ('aEavia',
+                   [('an34Ai', random.choice(dtypes),
+                     random_numpy_shape(2, 10)),
+                    ('Miena3', random.choice(dtypes),
+                     random_numpy_shape(3, 10))])]
+            data = np.empty((random.randrange(1, 9), ),
+                            dtype=dt)
+            out = self.write_readback(data, random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
+
+    def check_numpy_sized_dtype_nested_2(self, zero_shaped):
+        dtypes = ('uint8', 'uint16', 'uint32', 'uint64',
+                  'int8', 'int16', 'int32', 'int64',
+                  'float32', 'float64',
+                  'complex64', 'complex128')
+        for i in range(10):
+            dt = [('vie19a', random.choice(dtypes),
+                   random_numpy_shape(2, 4)),
+                  ('eianea',
+                   [('evnai', random.choice(dtypes),
+                     random_numpy_shape(2, 4)),
+                    ('aEavi3a', random.choice(dtypes),
+                     random_numpy_shape(3, 4))]),
+                  ('inbiuQi',
+                   [('h349ae#', random.choice(dtypes),
+                     (zero_shaped * random.randrange(2, 4))),
+                    ('NAviea3na', random.choice(dtypes),
+                     random_numpy_shape(1, 4))])]
+            data = np.empty((random.randrange(1, 3), ),
+                            dtype=dt)
+            out = self.write_readback(data, random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
+
+    def check_numpy_sized_dtype_nested_3(self, zero_shaped):
+        dtypes = ('uint8', 'uint16', 'uint32', 'uint64',
+                  'int8', 'int16', 'int32', 'int64',
+                  'float32', 'float64',
+                  'complex64', 'complex128')
+        for i in range(10):
+            dt = [('ai38ane', random.choice(dtypes),
+                   random_numpy_shape(2, 4)),
+                  ('ea38na',
+                   [('yaneiq',
+                     [('fhie', random.choice(dtypes))],
+                     random_numpy_shape(2, 4)),
+                    ('zn48a', random.choice(dtypes),
+                     random_numpy_shape(3, 4))]),
+                  ('an38ane',
+                   [('AENeaie',
+                     [('eia93an', random.choice(dtypes),
+                       (random.randrange(1, 3),
+                        random.randrange(2, 4),
+                        zero_shaped * random.randrange(1, 3)))],
+                     random.randrange(2, 4)),
+                    ('av83nae', random.choice(dtypes),
+                     random_numpy_shape(1, 4))])]
+            data = np.empty((1, ),
+                            dtype=dt)
+            out = self.write_readback(data, random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
+
     def check_python_collection(self, tp, same_dims):
         # Makes a random collection of the specified type, writes it and
         # reads it back, and then compares it.
@@ -637,6 +728,22 @@ class TestPythonMatlabFormat(object):
     def test_numpy_chararray_empty(self):
         for n in range(1, 10):
             yield self.check_numpy_chararray_empty, n
+
+    def test_numpy_sized_dtype_nested_0(self):
+        for zero_shaped in (False, True):
+            yield self.check_numpy_sized_dtype_nested_0, zero_shaped
+
+    def test_numpy_sized_dtype_nested_1(self):
+        for zero_shaped in (False, True):
+            yield self.check_numpy_sized_dtype_nested_1, zero_shaped
+
+    def test_numpy_sized_dtype_nested_2(self):
+        for zero_shaped in (False, True):
+            yield self.check_numpy_sized_dtype_nested_2, zero_shaped
+
+    def test_numpy_sized_dtype_nested_3(self):
+        for zero_shaped in (False, True):
+            yield self.check_numpy_sized_dtype_nested_3, zero_shaped
 
     def test_python_collection(self):
         for tp in (list, tuple, set, frozenset, collections.deque):
