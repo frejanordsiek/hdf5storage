@@ -26,12 +26,10 @@
 
 import os
 import os.path
-import subprocess
 import tempfile
 
 import pkg_resources
 
-from nose.plugins.skip import SkipTest
 from nose.tools import assert_equal as assert_equal_nose
 
 import unittest

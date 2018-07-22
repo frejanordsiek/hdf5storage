@@ -36,7 +36,6 @@ import h5py
 import hdf5storage
 from hdf5storage.utilities import escape_path
 
-from nose.tools import raises
 from nose.tools import assert_equal as assert_equal_nose
 
 from asserts import *

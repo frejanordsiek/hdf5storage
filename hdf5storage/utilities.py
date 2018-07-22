@@ -32,7 +32,6 @@ arrays, etc.
 
 import sys
 import copy
-import string
 import random
 import posixpath
 import collections

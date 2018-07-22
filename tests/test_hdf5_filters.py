@@ -33,7 +33,6 @@ import h5py
 
 import hdf5storage
 
-from nose.tools import raises
 from nose.tools import assert_equal as assert_equal_nose
 
 from asserts import *

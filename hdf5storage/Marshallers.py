@@ -30,7 +30,6 @@
 
 import sys
 import collections
-import distutils.version
 
 import numpy as np
 import h5py

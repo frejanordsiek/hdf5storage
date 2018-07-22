@@ -27,6 +27,7 @@
 
 """
 
+
 class Hdf5storageError(IOError):
     """ Base class of hdf5storage package exceptions."""
     pass

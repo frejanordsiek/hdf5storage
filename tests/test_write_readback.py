@@ -34,11 +34,8 @@ import collections
 import tempfile
 
 import numpy as np
-import numpy.random
 
 import hdf5storage
-
-from nose.tools import raises
 
 from asserts import *
 from make_randoms import *
