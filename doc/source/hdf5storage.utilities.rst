@@ -7,6 +7,7 @@ hdf5storage.utilities
 
 .. autosummary::
 
+   does_dtype_have_a_zero_shape
    next_unused_name_in_group
    convert_numpy_str_to_uint16
    convert_numpy_str_to_uint32
@@ -22,6 +23,12 @@ hdf5storage.utilities
    set_attribute_string
    set_attribute_string_array
    del_attribute
+
+
+does_dtype_have_a_zero_shape
+----------------------------
+
+.. autofunction:: does_dtype_have_a_zero_shape
 
 
 next_unused_name_in_group
