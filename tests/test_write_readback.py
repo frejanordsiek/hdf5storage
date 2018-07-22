@@ -230,11 +230,8 @@ class TestPythonMatlabFormat(object):
                   'float32', 'float64',
                   'complex64', 'complex128')
         for i in range(10):
-            dt = (random.choice(dtypes),
-                  (random.randrange(1, 10),
-                   zero_shaped * random.randrange(1, 8)))
-            data = np.empty((random.randrange(1, 9), ),
-                            dtype=dt)
+            dt = (random.choice(dtypes), (2, 2 * zero_shaped))
+            data = np.zeros((2, ), dtype=dt)
             out = self.write_readback(data, random_name(),
                                       self.options)
             self.assert_equal(out, data)
@@ -245,19 +242,12 @@ class TestPythonMatlabFormat(object):
                   'float32', 'float64',
                   'complex64', 'complex128')
         for i in range(10):
-            dt = [('aaivae', random.choice(dtypes),
-                   random_numpy_shape(3, 10)),
-                  ('inbiuQi', random.choice(dtypes),
-                   (random.randrange(1, 10),
-                    random.randrange(2, 13),
-                    zero_shaped * random.randrange(1, 6))),
-                  ('aEavia',
-                   [('an34Ai', random.choice(dtypes),
-                     random_numpy_shape(2, 10)),
-                    ('Miena3', random.choice(dtypes),
-                     random_numpy_shape(3, 10))])]
-            data = np.empty((random.randrange(1, 9), ),
-                            dtype=dt)
+            dt = [('a', random.choice(dtypes), (1, 2)),
+                  ('b', random.choice(dtypes), (1, 1, 4 * zero_shaped)),
+                  ('c',
+                   [('a', random.choice(dtypes)),
+                    ('b', random.choice(dtypes), (1, 2))])]
+            data = np.zeros((random.randrange(1, 4), ), dtype=dt)
             out = self.write_readback(data, random_name(),
                                       self.options)
             self.assert_equal(out, data)
@@ -268,20 +258,15 @@ class TestPythonMatlabFormat(object):
                   'float32', 'float64',
                   'complex64', 'complex128')
         for i in range(10):
-            dt = [('vie19a', random.choice(dtypes),
-                   random_numpy_shape(2, 4)),
-                  ('eianea',
-                   [('evnai', random.choice(dtypes),
-                     random_numpy_shape(2, 4)),
-                    ('aEavi3a', random.choice(dtypes),
-                     random_numpy_shape(3, 4))]),
-                  ('inbiuQi',
-                   [('h349ae#', random.choice(dtypes),
-                     (zero_shaped * random.randrange(2, 4))),
-                    ('NAviea3na', random.choice(dtypes),
-                     random_numpy_shape(1, 4))])]
-            data = np.empty((random.randrange(1, 3), ),
-                            dtype=dt)
+            dt = [('a', random.choice(dtypes), (1, 3)),
+                  ('b',
+                   [('a', random.choice(dtypes), (2, )),
+                    ('b', random.choice(dtypes), (1, 2, 1))]),
+                  ('c',
+                   [('a', random.choice(dtypes),
+                     (3 * zero_shaped, 1)),
+                    ('b', random.choice(dtypes), (2, ))])]
+            data = np.zeros((2, ), dtype=dt)
             out = self.write_readback(data, random_name(),
                                       self.options)
             self.assert_equal(out, data)
@@ -292,25 +277,18 @@ class TestPythonMatlabFormat(object):
                   'float32', 'float64',
                   'complex64', 'complex128')
         for i in range(10):
-            dt = [('ai38ane', random.choice(dtypes),
-                   random_numpy_shape(2, 4)),
-                  ('ea38na',
-                   [('yaneiq',
-                     [('fhie', random.choice(dtypes))],
-                     random_numpy_shape(2, 4)),
-                    ('zn48a', random.choice(dtypes),
-                     random_numpy_shape(3, 4))]),
-                  ('an38ane',
-                   [('AENeaie',
-                     [('eia93an', random.choice(dtypes),
-                       (random.randrange(1, 3),
-                        random.randrange(2, 4),
-                        zero_shaped * random.randrange(1, 3)))],
-                     random.randrange(2, 4)),
-                    ('av83nae', random.choice(dtypes),
-                     random_numpy_shape(1, 4))])]
-            data = np.empty((1, ),
-                            dtype=dt)
+            dt = [('a', random.choice(dtypes), (3, 2)),
+                  ('b',
+                   [('a',
+                     [('a', random.choice(dtypes))],
+                     (2, 2)),
+                    ('b', random.choice(dtypes), (1, 2))]),
+                  ('c',
+                   [('a',
+                     [('a', random.choice(dtypes),
+                       (2, 1, zero_shaped * 2))]),
+                    ('b', random.choice(dtypes))])]
+            data = np.zeros((1, ), dtype=dt)
             out = self.write_readback(data, random_name(),
                                       self.options)
             self.assert_equal(out, data)
