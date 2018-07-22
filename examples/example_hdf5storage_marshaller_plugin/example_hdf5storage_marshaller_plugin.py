@@ -49,7 +49,7 @@ class SubList(list):
 class SubListMarshaller(hm.PythonTupleSetDequeMarshaller):
     def __init__(self):
         hm.PythonTupleSetDequeMarshaller.__init__(self)
-        self.types = [SubList]
+        self.types = ['hdf5storage_marshallers_plugins_example.SubList']
         self.python_type_strings = ['hdf5storage_marshallers_plugins_'
                                     'example.SubList']
         # As the parent class already has MATLAB strings handled, there
