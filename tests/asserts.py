@@ -34,6 +34,19 @@ import numpy.testing as npt
 from nose.tools import assert_equal as assert_equal_nose
 
 
+def assert_dtypes_equal(a, b):
+    # Check that two dtypes are equal, but ignorning itemsize for dtypes
+    # whose shape is 0.
+    assert isinstance(a, np.dtype)
+    assert_equal_nose(a.shape, b.shape)
+    if b.names is None:
+        assert_equal_nose(a, b)
+    else:
+        assert_equal_nose(a.names, b.names)
+        for n in b.names:
+            assert_dtypes_equal(a[n], b[n])
+
+
 def assert_equal(a, b, options=None):
     # Compares a and b for equality. If they are dictionaries, they must
     # have the same set of keys, after which they values must all be
@@ -73,7 +86,7 @@ def assert_equal(a, b, options=None):
             else:
                 assert a == b or np.all(np.isnan([a, b]))
     else:
-        assert_equal_nose(a.dtype, b.dtype)
+        assert_dtypes_equal(a.dtype, b.dtype)
         assert_equal_nose(a.shape, b.shape)
         if b.dtype.name != 'object':
             with warnings.catch_warnings():
@@ -186,6 +199,9 @@ def assert_equal_none_format(a, b, options=None):
                 assert_equal_none_format(a, np.int64(b), options)
         else:
             assert_equal_none_format(a, np.array(b)[()], options)
+    elif isinstance(b, np.recarray):
+        assert_equal_none_format(a, b.view(np.ndarray),
+                                 options)
     else:
         if b.dtype.name != 'object':
             if b.dtype.char in ('U', 'S'):
@@ -207,31 +223,47 @@ def assert_equal_none_format(a, b, options=None):
                     assert_equal_nose(a.shape, b.shape)
                     npt.assert_equal(a, b)
             else:
+                # Check that the dtype's shape matches.
+                assert_equal_nose(a.dtype.shape, b.dtype.shape)
+
                 # Now, if b.shape is just all ones, then a.shape will
                 # just be (1,). Otherwise, we need to compare the shapes
                 # directly. Also, dimensions need to be squeezed before
                 # comparison in this case.
                 assert_equal_nose(np.prod(a.shape), np.prod(b.shape))
-                assert a.shape == b.shape \
-                    or (np.prod(b.shape) == 1 and a.shape == (1,))
+                if a.shape != b.shape:
+                    assert_equal_nose(np.prod(b.shape), 1)
+                    assert_equal_nose(a.shape, (1, ))
                 if np.prod(a.shape) == 1:
                     a = np.squeeze(a)
                     b = np.squeeze(b)
-                # If there was a null in the dtype, then it was written
-                # as a Group so the field order could have changed.
-                if '\\x00' in str(b.dtype):
-                    assert_equal_nose(set(a.dtype.descr),
-                                      set(b.dtype.descr))
-                    # Reorder the fields of a.
-                    c = np.empty(shape=b.shape, dtype=b.dtype)
+                # If there was a null in the dtype or the dtype of one
+                # of its fields (or subfields) has a 0 in its shape,
+                # then it was written as a Group so the field order
+                # could have changed.
+                has_zero_shape = False
+                if b.dtype.names is not None:
+                    parts = [b.dtype]
+                    while 0 != len(parts):
+                        part = parts.pop()
+                        if 0 in part.shape:
+                            has_zero_shape = True
+                        if part.names is not None:
+                            parts.extend([v[0] for v
+                                          in part.fields.values()])
+                if b.dtype.names is not None \
+                        and ('\\x00' in str(b.dtype) \
+                        or has_zero_shape):
+                    assert_equal_nose(a.shape, b.shape)
+                    assert_equal_nose(set(a.dtype.names),
+                                      set(b.dtype.names))
                     for n in b.dtype.names:
-                        c[n] = a[n]
+                        assert_equal_none_format(a[n], b[n], options)
                 else:
-                    c = a
-                assert_equal_nose(c.dtype, b.dtype)
-                with warnings.catch_warnings():
-                    warnings.simplefilter('ignore', RuntimeWarning)
-                    npt.assert_equal(c, b)
+                    assert_equal_nose(a.dtype, b.dtype)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore', RuntimeWarning)
+                        npt.assert_equal(a, b)
         else:
             # If the original is structued, it is possible that the
             # fields got out of order, in which case the dtype won't
@@ -239,9 +271,10 @@ def assert_equal_none_format(a, b, options=None):
             # all pieces are there. Otherwise, the dtypes can be
             # directly compared.
             if b.dtype.fields is None:
-                assert a.dtype == b.dtype
+                assert_equal_nose(a.dtype, b.dtype)
             else:
-                assert dict(a.dtype.fields) == dict(b.dtype.fields)
+                assert_equal_nose(dict(a.dtype.fields),
+                                  dict(b.dtype.fields))
             assert_equal_nose(a.shape, b.shape)
             for index, x in np.ndenumerate(a):
                 assert_equal_none_format(a[index], b[index], options)
