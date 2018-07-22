@@ -529,6 +529,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
                       np.bytes_, np.unicode_, np.object_]
+        self._numpy_types = list(self.types)
         # Using Python 3 type strings.
         self.python_type_strings = ['numpy.ndarray', 'numpy.matrix',
                                     'numpy.chararray',
@@ -1128,7 +1129,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # don't all have the exact same dtype and shape, then
                 # this field will just be an object field.
                 if v.size == 0 or type(v.flat[0]) \
-                        not in self.type_to_typestring:
+                        not in self._numpy_types:
                     dt_whole.append((k_name, 'object'))
                     continue
 
