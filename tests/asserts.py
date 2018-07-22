@@ -251,6 +251,8 @@ def assert_equal_none_format(a, b, options=None):
                         if part.names is not None:
                             parts.extend([v[0] for v
                                           in part.fields.values()])
+                        if part.base != part:
+                            parts.append(part.base)
                 if b.dtype.names is not None \
                         and ('\\x00' in str(b.dtype) \
                         or has_zero_shape):
