@@ -1687,7 +1687,7 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
     # can be closed if any errors happen (the error is re-raised).
     f = None
     try:
-        f = h5py.File(filename)
+        f = h5py.File(filename, mode='a')
 
         # Go through each element of towrite and write them.
         for groupname, targetname, data in towrite:
