@@ -30,7 +30,7 @@ Installation
 Dependencies
 ------------
 
-This package only supports Python >= 2.7. Python 2.6 support was dropped
+This package only supports Python >= 3.5. Python < 3.5 support was dropped
 in version 0.2.
 
 This package requires the numpy and h5py (>= 2.3) packages to run. Note
@@ -91,15 +91,11 @@ To build the documentation ::
 Python 2
 ========
 
-This package was designed and written for Python 3, and then backported
-to Python 2.x. This does mean that a few things are a little
-clunky in Python 2. For example, Python 2 ``int`` and ``long`` types are
-both mapped to the Python 3 ``int`` type. The storage format's metadata
-looks more familiar from a Python 3 standpoint as well.
-
-The documentation is written in terms of Python 3 syntax and types
-primarily. Important Python 2 information beyond direct translations of
-syntax and types will be pointed out.
+This package no longer supports Python 2.6 and 2.7. This package was
+designed and written for Python 3, then backported to Python 2.x, and
+then support dropped. But it can still read files made by version 0.1.x
+of this library with Python 2.x, and this package still tries to write
+files compatible with 0.1.x when possible.
 
 Hierarchal Data Format 5 (HDF5)
 ===============================
@@ -232,8 +228,9 @@ support writing it so MATlAB can read it.
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
        MATLAB compatiblity, or if the option is explicitly set.
-.. [2] In Python 2.x, it may be read back as a ``long`` if it can't fit
-       in the size of an ``int``.
+.. [2] In Python 2.x with the 0.1.x version of this package, it may be
+       read back as a ``long`` if it can't fit in the size of an
+       ``int``.
 .. [3] Stored as a ``np.int64`` if it is small enough to fit. Otherwise
        its decimal string representation is stored as an ``np.bytes_``
        for hdf5storage >= 0.2 (error in earlier versions).
@@ -255,10 +252,9 @@ support writing it so MATlAB can read it.
        thrown). Otherwise, it is just written as ``np.bytes_``.
 .. [7] Stored either as each key-value as their own Dataset or as two
        Datasets, one for keys and one for values. The former is used if
-       all keys can be converted to ``str`` in Python 3 or ``unicode``
-       in Python 2 and they don't have null characters (``'\x00'``) or
-       forward slashes (``'/'``) in them. Otherwise, the latter format
-       is used.
+       all keys can be converted to ``str`` and they don't have null
+       characters (``'\x00'``) or forward slashes (``'/'``) in them.
+       Otherwise, the latter format is used.
 .. [8] ``np.float16`` are not supported for h5py versions before
        ``2.2``. Version ``2.3`` or higher is required for this package
        since version ``0.2``.
@@ -321,9 +317,7 @@ Versions
 ========
 
 0.2. Feature release adding/changing the following, including some API breaking changes.
-     * Issue #50. Python 2.6 support dropped. The
-       ``pkgutil.find_loader`` function is required, and it is not
-       present in Python 2.6.
+     * Issues #50 and #84. Python < 3.5 support dropped.
      * Issue #53. h5py 2.1.x and 2.2.x  support dropped.
      * Issue #60. Platform label in the MAT file header changed to
        ``hdf5storage VERSION`` from ``CPython VERSION``.

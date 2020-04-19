@@ -15,19 +15,11 @@ env:
   - H5PY_VERSION=""
 
 python:
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
   - "3.5"
-  - "3.5-dev"
   - "3.6"
-  - "3.6-dev"
-
-matrix:
-  exclude:
-    - python: "3.2"
-    - env: H5PY_VERSION=""
+  - "3.7"
+  - "3.8"
+  - "3.9-dev"
 
 before_install:
   - sudo apt-get -qq update
@@ -37,7 +29,7 @@ before_install:
 #
 # Seem to need newer Numpy as well.
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.2' || $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -U numpy==1.11.3; else pip install -U numpy; fi
+  - pip install -U numpy
   - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
   - pip install -e examples/example_hdf5storage_marshaller_plugin
