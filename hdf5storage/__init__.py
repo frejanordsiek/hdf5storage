@@ -36,7 +36,7 @@ __version__ = "0.2"
 
 import sys
 import os
-import collections
+import collections.abc
 import posixpath
 import copy
 import inspect
@@ -1338,7 +1338,7 @@ class MarshallerCollection(object):
         hdf5storage.Marshallers.TypeMarshaller
 
         """
-        if not isinstance(marshallers, collections.Iterable):
+        if not isinstance(marshallers, collections.abc.Iterable):
             marshallers = [marshallers]
         for m in marshallers:
             if not isinstance(m, Marshallers.TypeMarshaller):
@@ -1361,7 +1361,7 @@ class MarshallerCollection(object):
             The user marshaller/s to from the user provided collection.
 
         """
-        if not isinstance(marshallers, collections.Iterable):
+        if not isinstance(marshallers, collections.abc.Iterable):
             marshallers = [marshallers]
         for m in marshallers:
             if m in self._user_marshallers:

@@ -35,6 +35,7 @@ import copy
 import random
 import posixpath
 import collections
+import collections.abc
 import re
 
 import numpy as np
@@ -261,7 +262,7 @@ def process_path(pth):
         p = pth.decode('utf-8')
     elif isinstance(pth, str):
         p = pth
-    elif not isinstance(pth, collections.Iterable):
+    elif not isinstance(pth, collections.abc.Iterable):
         raise TypeError('p must be str, bytes, or an iterable '
                         + 'solely of one of those two.')
     else:
