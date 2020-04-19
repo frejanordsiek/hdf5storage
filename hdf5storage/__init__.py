@@ -2076,7 +2076,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
             with h5py.File(filename, mode='r') as f:
                 for k in variable_names:
                     try:
-                        data[k] = lowlevel.read_data(f, f, k, options)
+                        data[k] = utilities.read_data(f, f, k, options)
                     except:
                         pass
 
