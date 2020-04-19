@@ -56,7 +56,7 @@ def check_conv_utf16(tp):
                           matlab_compatible=False,
                           store_python_metadata=False,
                           convert_numpy_str_to_utf16=True)
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             assert_equal_nose(f[name].dtype.type, np.uint16)
     except:
         raise
