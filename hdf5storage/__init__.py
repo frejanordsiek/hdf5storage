@@ -42,14 +42,7 @@ import copy
 import inspect
 import datetime
 import pkgutil
-
-# Try to import importlib, setting a flag for whether it was found or
-# not.
-try:
-    import importlib
-    _has_importlib = True
-except:
-    _has_importlib = False
+import importlib
 
 # From setuptools, despite name.
 import pkg_resources
@@ -1294,10 +1287,7 @@ class MarshallerCollection(object):
         try:
             for name in m.required_modules:
                 if name not in sys.modules:
-                    if _has_importlib:
-                        importlib.import_module(name)
-                    else:
-                        __import__(name)
+                    importlib.import_module(name)
         except ImportError:
             return False
         except:
