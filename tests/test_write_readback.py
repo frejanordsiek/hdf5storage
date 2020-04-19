@@ -24,12 +24,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import collections
 import copy
+import math
 import os
 import os.path
-import math
 import random
-import collections
 import tempfile
 
 import numpy as np

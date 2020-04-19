@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Freja Nordsiek
+# Copyright (c) 2016-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,8 +24,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import os
+import sys
 import tempfile
 
 import numpy as np

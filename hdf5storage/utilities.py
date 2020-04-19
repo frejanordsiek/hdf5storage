@@ -30,13 +30,13 @@ arrays, etc.
 
 """
 
-import sys
-import copy
-import random
-import posixpath
 import collections
 import collections.abc
+import copy
+import posixpath
+import random
 import re
+import sys
 
 import numpy as np
 import h5py

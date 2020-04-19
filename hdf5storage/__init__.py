@@ -34,15 +34,15 @@ Version 0.2
 
 __version__ = "0.2"
 
-import sys
-import os
 import collections.abc
-import posixpath
 import copy
-import inspect
 import datetime
-import pkgutil
 import importlib
+import inspect
+import os
+import pkgutil
+import posixpath
+import sys
 
 # From setuptools, despite name.
 import pkg_resources
