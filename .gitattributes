@@ -6,3 +6,4 @@
 *.py text
 *.txt text eol=crlf
 *.cfg text
+*.toml text

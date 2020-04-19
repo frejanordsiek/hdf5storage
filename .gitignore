@@ -40,3 +40,4 @@ nosetests.xml
 *.yml~
 *.rst~
 *.txt~
+*.toml~

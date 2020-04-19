@@ -319,6 +319,9 @@ Versions
 0.2. Feature release adding/changing the following, including some API breaking changes.
      * Issues #50 and #84. Python < 3.5 support dropped.
      * Issue #53. h5py 2.1.x and 2.2.x  support dropped.
+     * Issue #85. Changed to using the PEP 518 method of specifying
+       build dependencies from using the older ``ez_setup.py`` to ensure
+       ``setuptools`` was available for building.
      * Issue #60. Platform label in the MAT file header changed to
        ``hdf5storage VERSION`` from ``CPython VERSION``.
      * Issue #61. User provided marshallers must inherit from
