@@ -84,7 +84,7 @@ def check_all_valid_str_keys(tp, option_keywords):
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
 
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             for k in key_value_names:
                 assert escape_path(k) not in f[name]
             for k in data:
@@ -127,7 +127,7 @@ def check_str_key_previously_invalid_char(tp, ch, option_keywords):
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
 
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             for k in key_value_names:
                 assert escape_path(k) not in f[name]
             for k in data:
@@ -174,7 +174,7 @@ def check_string_type_non_str_key(tp, other_tp, option_keywords):
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
 
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             assert_equal_nose(set(keys), set(f[name].keys()))
 
     except:
@@ -211,7 +211,7 @@ def check_int_key(tp, option_keywords):
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
 
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             assert_equal_nose(set(key_value_names), set(f[name].keys()))
     except:
         raise

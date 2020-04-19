@@ -186,7 +186,7 @@ def test_marshaller_read():
         fld = tempfile.mkstemp()
         os.close(fld[0])
         filename = fld[1]
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='w') as f:
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
@@ -217,7 +217,7 @@ def test_marshaller_read_approximate_missing_parent():
         fld = tempfile.mkstemp()
         os.close(fld[0])
         filename = fld[1]
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='w') as f:
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
@@ -248,7 +248,7 @@ def test_marshaller_read_approximate_missing_import():
         fld = tempfile.mkstemp()
         os.close(fld[0])
         filename = fld[1]
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='w') as f:
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
