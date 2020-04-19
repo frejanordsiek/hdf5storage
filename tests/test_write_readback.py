@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import copy
 import os
 import os.path
@@ -62,11 +61,8 @@ class TestPythonMatlabFormat(object):
                        'S', 'U']
 
         # Need a list of dict-like types, which will depend on Python
-        # version. dict is in all of them, but OrderedDict is only in
-        # Python >= 2.7.
-        self.dict_like = ['dict']
-        if sys.hexversion >= 0x2070000:
-            self.dict_like += ['OrderedDict']
+        # version.
+        self.dict_like = ['dict', 'OrderedDict']
 
     def write_readback(self, data, name, options, read_options=None):
         # Write the data to the proper file with the given name, read it
@@ -158,9 +154,6 @@ class TestPythonMatlabFormat(object):
         else:
             field_names[1] = field_names[1][0] + ch + field_names[1][1:]
         field_names[1] = field_names[1][0] + ch + field_names[1][1:]
-        if sys.hexversion < 0x03000000:
-            for i in range(len(field_names)):
-                field_names[i] = field_names[i].encode('UTF-8')
         shape = random_numpy_shape(1, \
             max_structured_ndarray_axis_length)
         data = random_structured_numpy_array(shape, names=field_names)
@@ -210,9 +203,6 @@ class TestPythonMatlabFormat(object):
             field_names[1] = ch + field_names[1]
         else:
             field_names[1] = field_names[1][0] + ch + field_names[1][1:]
-        if sys.hexversion < 0x03000000:
-            for i in range(len(field_names)):
-                field_names[i] = field_names[i].encode('UTF-8')
         shape = random_numpy_shape(1, \
             max_structured_ndarray_axis_length)
         data = random_structured_numpy_array(shape, names=field_names).view(np.recarray).copy()
@@ -363,10 +353,7 @@ class TestPythonMatlabFormat(object):
 
     def check_dict_like_key_null_character(self, tp):
         data = random_dict(tp)
-        if sys.hexversion >= 0x03000000:
-            ch = '\x00'
-        else:
-            ch = unicode('\x00')
+        ch = '\x00'
         key = ch.join([random_str_ascii(max_dict_key_length)
                       for i in range(2)])
         data[key] = random_int()
@@ -376,10 +363,7 @@ class TestPythonMatlabFormat(object):
 
     def check_dict_like_key_forward_slash(self, tp):
         data = random_dict(tp)
-        if sys.hexversion >= 0x03000000:
-            ch = '/'
-        else:
-            ch = unicode('/')
+        ch = '/'
         key = ch.join([random_str_ascii(max_dict_key_length)
                       for i in range(2)])
         data[key] = random_int()
@@ -389,10 +373,7 @@ class TestPythonMatlabFormat(object):
 
     def check_dict_like_key_back_slash(self, tp):
         data = random_dict(tp)
-        if sys.hexversion >= 0x03000000:
-            ch = '\\'
-        else:
-            ch = unicode('\\')
+        ch = '\\'
         key = ch.join([random_str_ascii(max_dict_key_length)
                       for i in range(2)])
         data[key] = random_int()
@@ -402,10 +383,7 @@ class TestPythonMatlabFormat(object):
 
     def check_dict_like_key_leading_periods(self, tp):
         data = random_dict(tp)
-        if sys.hexversion >= 0x03000000:
-            prefix = '.' * random.randint(1, 10)
-        else:
-            prefix = unicode('.') * random.randint(1, 10)
+        prefix = '.' * random.randint(1, 10)
         key = prefix + random_str_ascii(max_dict_key_length)
         data[key] = random_int()
         out = self.write_readback(data, random_name(),
@@ -442,27 +420,8 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
-    # Only relevant in Python 2.x.
-    def test_long_needs_32_bits(self):
-        if sys.hexversion < 0x03000000:
-            data = long(random_int())
-            out = self.write_readback(data, random_name(),
-                                      self.options)
-            self.assert_equal(out, data)
-
-    # Only relevant in Python 2.x.
-    def test_long_needs_64_bits(self):
-        if sys.hexversion < 0x03000000:
-            data = long(2)**32 * long(random_int())
-            out = self.write_readback(data, random_name(),
-                                      self.options)
-            self.assert_equal(out, data)
-
     def test_int_or_long_too_big(self):
-        if sys.hexversion >= 0x03000000:
-            data = 2**64 * random_int()
-        else:
-            data = long(2)**64 * long(random_int())
+        data = 2**64 * random_int()
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
@@ -519,9 +478,6 @@ class TestPythonMatlabFormat(object):
     def test_str_ascii_encoded_utf8(self):
         ltrs = string.ascii_letters + string.digits
         data = 'a'
-        if sys.hexversion < 0x03000000:
-            data = unicode(data)
-            ltrs = unicode(ltrs)
         while all([(c in ltrs) for c in data]):
             data = random_str_some_unicode(random.randint(1, \
                 max_string_length))
@@ -534,10 +490,7 @@ class TestPythonMatlabFormat(object):
         strs = [random_str_ascii(
                 random.randint(1, max_string_length))
                 for i in range(2)]
-        if sys.hexversion < 0x03000000:
-            data = unicode('\x00').join(strs)
-        else:
-            data = '\x00'.join(strs)
+        data = '\x00'.join(strs)
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)
@@ -572,10 +525,7 @@ class TestPythonMatlabFormat(object):
         strs = [random_bytes(
                 random.randint(1, max_string_length))
                 for i in range(2)]
-        if sys.hexversion < 0x03000000:
-            data = '\x00'.join(strs)
-        else:
-            data = b'\x00'.join(strs)
+        data = b'\x00'.join(strs)
         out = self.write_readback(data, random_name(),
                                   self.options)
         self.assert_equal(out, data)

@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import os
 import os.path
 import tempfile
@@ -66,9 +65,6 @@ def check_conv_utf16(tp):
 
 
 def test_conv_utf16():
-    if sys.hexversion < 0x3000000:
-        tps = (unicode, np.unicode_)
-    else:
-        tps = (str, np.unicode_)
+    tps = (str, np.unicode_)
     for tp in tps:
         yield check_conv_utf16, tp

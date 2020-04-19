@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,18 +46,11 @@ random.seed()
 
 
 # Need a list of dict-like types, which will depend on Python
-# version. dict is in all of them, but OrderedDict is only in Python >=
-# 2.7.
-dict_like = ['dict']
-if sys.hexversion >= 0x2070000:
-    dict_like += ['OrderedDict']
+# version.
+dict_like = ['dict', 'OrderedDict']
 
-# Need a list of previously invalid characters, which will depend on the
-# Python version.
-if sys.hexversion >= 0x3000000:
-    invalid_characters = ('\x00', '/')
-else:
-    invalid_characters = (unicode('\x00'), unicode('/'))
+# Need a list of previously invalid characters.
+invalid_characters = ('\x00', '/')
 
 
 def check_all_valid_str_keys(tp, option_keywords):

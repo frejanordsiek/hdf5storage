@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,32 +49,18 @@ import hdf5storage.exceptions
 # conversions. Compiling the regular expressions here at initialization
 # will help performance by not having to compile new ones every time a
 # path is processed.
-if sys.hexversion >= 0x03000000:
-    _find_dots_re = re.compile('\\.+')
-    _find_invalid_escape_re = re.compile( \
-        '(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]' \
-        + '|x[0-9a-fA-F]?($|[^0-9a-fA-F])' \
-        + '|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])' \
-        + '|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))')
-    _find_fslashnull_re = re.compile('[\\\\/\x00]')
-    _find_escapes_re = re.compile( \
-        '\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})')
-    _char_escape_conversions = {'\x00': '\\x00',
-                                '/': '\\x2f',
-                                '\\': '\\\\'}
-else:
-    _find_dots_re = re.compile(unicode('\\.+'))
-    _find_invalid_escape_re = re.compile(unicode( \
-        '(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]' \
-        + '|x[0-9a-fA-F]?($|[^0-9a-fA-F])' \
-        + '|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])' \
-        + '|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))'))
-    _find_fslashnull_re = re.compile(unicode('[\\\\/\x00]'))
-    _find_escapes_re = re.compile(unicode( \
-        '\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})'))
-    _char_escape_conversions = {unicode('\x00'): unicode('\\x00'),
-                                unicode('/'): unicode('\\x2f'),
-                                unicode('\\'): unicode('\\\\')}
+_find_dots_re = re.compile('\\.+')
+_find_invalid_escape_re = re.compile( \
+    '(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]' \
+    + '|x[0-9a-fA-F]?($|[^0-9a-fA-F])' \
+    + '|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])' \
+    + '|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))')
+_find_fslashnull_re = re.compile('[\\\\/\x00]')
+_find_escapes_re = re.compile( \
+    '\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})')
+_char_escape_conversions = {'\x00': '\\x00',
+                            '/': '\\x2f',
+                            '\\': '\\\\'}
 
 
 def _replace_fun_escape(m):
@@ -127,10 +113,7 @@ def _replace_fun_unescape(m):
     if count % 2 == 0:
         return s
     else:
-        if sys.hexversion >= 0x03000000:
-            c = chr(int(s[(count + 1):], base=16))
-        else:
-            c = unichr(int(s[(count + 1):], base=16))
+        c = chr(int(s[(count + 1):], base=16))
         return slsh * (count - 1) + c
 
 
@@ -170,26 +153,15 @@ def escape_path(pth):
     """
     if isinstance(pth, bytes):
         pth = pth.decode('utf-8')
-    if sys.hexversion >= 0x03000000:
-        if not isinstance(pth, str):
-            raise TypeError('pth must be str or bytes.')
-        match = _find_dots_re.match(pth)
-        if match is None:
-            prefix = ''
-            s = pth
-        else:
-            prefix = '\\x2e' * match.end()
-            s = pth[match.end():]
+    if not isinstance(pth, str):
+        raise TypeError('pth must be str or bytes.')
+    match = _find_dots_re.match(pth)
+    if match is None:
+        prefix = ''
+        s = pth
     else:
-        if not isinstance(pth, unicode):
-            raise TypeError('pth must be unicode or str.')
-        match = _find_dots_re.match(pth)
-        if match is None:
-            prefix = unicode('')
-            s = pth
-        else:
-            prefix = unicode('\\x2e') * match.end()
-            s = pth[match.end():]
+        prefix = '\\x2e' * match.end()
+        s = pth[match.end():]
     return prefix + _find_fslashnull_re.sub(_replace_fun_escape, s)
 
 
@@ -227,12 +199,8 @@ def unescape_path(pth):
     """
     if isinstance(pth, bytes):
         pth = pth.decode('utf-8')
-    if sys.hexversion >= 0x03000000:
-        if not isinstance(pth, str):
-            raise TypeError('pth must be str or bytes.')
-    else:
-        if not isinstance(pth, unicode):
-            raise TypeError('pth must be unicode or str.')
+    if not isinstance(pth, str):
+        raise TypeError('pth must be str or bytes.')
     # Look for invalid escapes.
     if _find_invalid_escape_re.search(pth) is not None:
         raise ValueError('Invalid escape found.')
@@ -291,22 +259,15 @@ def process_path(pth):
     # Do conversions and possibly escapes.
     if isinstance(pth, bytes):
         p = pth.decode('utf-8')
-    elif (sys.hexversion >= 0x03000000 and isinstance(pth, str)) \
-            or (sys.hexversion < 0x03000000 \
-            and isinstance(pth, unicode)):
+    elif isinstance(pth, str):
         p = pth
     elif not isinstance(pth, collections.Iterable):
         raise TypeError('p must be str, bytes, or an iterable '
                         + 'solely of one of those two.')
     else:
         # Check that all elements are unicode or bytes.
-        if sys.hexversion >= 0x03000000:
-            if not all([isinstance(s, (bytes, str)) for s in pth]):
-                raise TypeError('Elements of p must be str or bytes.')
-        else:
-            if not all([isinstance(s, (str, unicode)) for s in pth]):
-                raise TypeError('Elements of p must be str or '
-                                + 'unicode.')
+        if not all([isinstance(s, (bytes, str)) for s in pth]):
+            raise TypeError('Elements of p must be str or bytes.')
 
         # Escape (and possibly convert to unicode) each element and then
         # join them all together.
@@ -491,10 +452,7 @@ def read_data(f, grp, name, options, dsetgrp=None):
                 'Could not find ' + posixpath.join(grp.name, name))
 
     # Get all attributes with values.
-    if sys.hexversion >= 0x03000000:
-        defaultfactory = type(None)
-    else:
-        defaultfactory = lambda : None
+    defaultfactory = type(None)
     attributes = collections.defaultdict(defaultfactory,
                                          dsetgrp.attrs.items())
 
@@ -838,12 +796,11 @@ def convert_numpy_str_to_uint32(data):
         return data.flatten().view(np.uint32).reshape(tuple(shape))
 
 def convert_to_str(data):
-    """ Decodes data to the Python 3.x str (Python 2.x unicode) type.
+    """ Decodes data to the ``str`` type.
 
-    Decodes `data` to a Python 3.x ``str`` (Python 2.x ``unicode``). If
-    it can't be decoded, it is returned as is. Unsigned integers, Python
-    ``bytes``, and Numpy strings (``numpy.unicode_`` and
-    ``numpy.bytes_``). Python 3.x ``bytes``, Python 2.x ``str``, and
+    Decodes `data` to a ``str``. If it can't be decoded, it is returned
+    as is. Unsigned integers, Python ``bytes``, and Numpy strings
+    (``numpy.unicode_`` and ``numpy.bytes_``). Python 3.x ``bytes`` and
     ``numpy.bytes_`` are assumed to be encoded in UTF-8.
 
     Parameters
@@ -901,8 +858,8 @@ def convert_to_numpy_str(data, length=None):
     is returned as is. Unsigned integers, Python string types (``str``,
     ``bytes``), and ``numpy.bytes_`` are supported. If it is an array of
     ``numpy.bytes_``, an array of those all converted to
-    ``numpy.unicode_`` is returned. Python 3.x ``bytes``, Python 2.x
-    ``str``, and ``numpy.bytes_`` are assumed to be encoded in UTF-8.
+    ``numpy.unicode_`` is returned. ``bytes`` and ``numpy.bytes_`` are
+    assumed to be encoded in UTF-8.
 
     For an array of unsigned integers, it may be desirable to make an
     array with strings of some specified length as opposed to an array
@@ -946,9 +903,7 @@ def convert_to_numpy_str(data, length=None):
         # It is already an np.str_ or array of them, so nothing needs to
         # be done.
         return data
-    elif (sys.hexversion >= 0x03000000 and isinstance(data, str)) \
-           or (sys.hexversion < 0x03000000 \
-           and isinstance(data, unicode)):
+    elif isinstance(data, str):
         # Easily converted through constructor.
         return np.unicode_(data)
     elif isinstance(data, (bytes, bytearray, np.bytes_)):
@@ -1087,9 +1042,7 @@ def convert_to_numpy_bytes(data, length=None):
     elif isinstance(data, (bytes, bytearray)):
         # Easily converted through constructor.
         return np.bytes_(data)
-    elif (sys.hexversion >= 0x03000000 and isinstance(data, str)) \
-            or (sys.hexversion < 0x03000000 \
-            and isinstance(data, unicode)):
+    elif isinstance(data, str):
         return np.bytes_(data.encode('UTF-8'))
     elif isinstance(data, (np.uint16, np.uint32)):
         # They are single UTF-16 or UTF-32 scalars, and are easily
@@ -1353,9 +1306,7 @@ def convert_attribute_to_string(value):
     """
     if value is None:
         return value
-    elif (sys.hexversion >= 0x03000000 and isinstance(value, str)) \
-            or (sys.hexversion < 0x03000000 \
-            and isinstance(value, unicode)):
+    elif isinstance(value, str):
         return value
     elif isinstance(value, bytes):
         return value.decode()
@@ -1526,12 +1477,8 @@ def set_attribute_string_array(target, name, string_list):
 
     """
     s_list = [convert_to_str(s) for s in string_list]
-    if sys.hexversion >= 0x03000000:
-        target.attrs.create(name, s_list,
-                            dtype=h5py.special_dtype(vlen=str))
-    else:
-        target.attrs.create(name, s_list,
-                            dtype=h5py.special_dtype(vlen=unicode))
+    target.attrs.create(name, s_list,
+                        dtype=h5py.special_dtype(vlen=str))
 
 
 def set_attributes_all(target, attributes, discard_others=True):
@@ -1571,10 +1518,7 @@ def set_attributes_all(target, attributes, discard_others=True):
     attrs = target.attrs
     existing = dict(attrs.items())
     # Generate special dtype for string arrays.
-    if sys.hexversion >= 0x03000000:
-        str_arr_dtype = h5py.special_dtype(vlen=str)
-    else:
-        str_arr_dtype = dtype=h5py.special_dtype(vlen=unicode)
+    str_arr_dtype = h5py.special_dtype(vlen=str)
     # Go through each attribute. If it is already present, modify it if
     # possible and create it otherwise (deletes old value.)
     for k, (kind, value) in attributes.items():

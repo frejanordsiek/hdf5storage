@@ -225,9 +225,6 @@ Make a ``dict`` containing many different types in it that we want to
 store to disk in an HDF5 file. The initialization method depends on
 the Python version.
 
-Python 3
-^^^^^^^^
-
 .. versionchanged:: 0.2
    The ``dict`` keys no longer have to all be ``str`` (the unicode
    string type). However, if python metadata is not included, other
@@ -256,43 +253,6 @@ Python 3
     ...           'gg': np.array(['one', 'two', 'three'], dtype='str'),
     ...           'hh': np.bytes_(b'how many?'),
     ...           'ii': np.object_(['text', np.int8([1, -3, 0])])}}
-
-Python 2
-^^^^^^^^
-
-The datatypes are translated from the Python 3 example appropriately,
-except for the keys which will be Python 2 ``str``. The rest of the
-examples on this page are run identically in Python 2 and 3, but the
-outputs are listed as is returned in Python 3.
-
-.. versionchanged:: 0.2
-   The ``dict`` keys no longer have to all be ``unicode`` like they did
-   before. However, when python metadata is not stored, non ``unicode``
-   string keys (if all keys are string type) will be converted to
-   ``unicode``, or one reads back a ``dict`` with two fields, ``keys``
-   and ``values``, holding all the keys and values if at least one key
-   is not a string type.
-
-    >>> import numpy as np
-    >>> import hdf5storage
-    >>> a = {'a': True,
-    ...      'b': None,
-    ...      'c': 2,
-    ...      'd': -3.2,
-    ...      'e': (1-2.3j),
-    ...      'f': u'hello',
-    ...      'g': 'goodbye',
-    ...      'h': [u'list', u'of', u'stuff', [30, 2.3]],
-    ...      'i': np.zeros(shape=(2,), dtype=[('bi', 'uint8')]),
-    ...      'j':{'aa': np.bool_(False),
-    ...           'bb': np.uint8(4),
-    ...           'cc': np.uint32([70, 8]),
-    ...           'dd': np.int32([]),
-    ...           'ee': np.float32([[3.3], [5.3e3]]),
-    ...           'ff': np.complex128([[3.4, 3], [9+2j, 0]]),
-    ...           'gg': np.array([u'one', u'two', u'three'], dtype='unicode'),
-    ...           'hh': np.str_('how many?'),
-    ...           'ii': np.object_([u'text', np.int8([1, -3, 0])])}}
 
 Using No Metadata
 -----------------

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import posixpath
 import string
 import random
@@ -69,39 +68,24 @@ max_structured_ndarray_subarray_axis_length = 4
 
 def random_str_ascii_letters(length):
     # Makes a random ASCII str of the specified length.
-    if sys.hexversion >= 0x03000000:
-        ltrs = string.ascii_letters
-        return ''.join([random.choice(ltrs) for i in
-                       range(0, length)])
-    else:
-        ltrs = unicode(string.ascii_letters)
-        return unicode('').join([random.choice(ltrs) for i in
-                                 range(0, length)])
+    ltrs = string.ascii_letters
+    return ''.join([random.choice(ltrs) for i in
+                   range(0, length)])
 
 
 def random_str_ascii(length):
     # Makes a random ASCII str of the specified length.
-    if sys.hexversion >= 0x03000000:
-        ltrs = string.ascii_letters + string.digits
-        return ''.join([random.choice(ltrs) for i in
-                       range(0, length)])
-    else:
-        ltrs = unicode(string.ascii_letters + string.digits)
-        return unicode('').join([random.choice(ltrs) for i in
-                                 range(0, length)])
+    ltrs = string.ascii_letters + string.digits
+    return ''.join([random.choice(ltrs) for i in
+                   range(0, length)])
 
 
 def random_str_some_unicode(length):
     # Makes a random ASCII+limited unicode str of the specified
     # length.
     ltrs = random_str_ascii(10)
-    if sys.hexversion >= 0x03000000:
-        ltrs += 'αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς'
-        c = ''
-    else:
-        ltrs += unicode('αβγδεζηθικλμνξοπρστυφχψω'
-                        + 'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς', 'utf-8')
-        c = unicode('')
+    ltrs += 'αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς'
+    c = ''
     return c.join([random.choice(ltrs) for i in range(0, length)])
 
 
@@ -247,11 +231,8 @@ def random_dict(tp='dict'):
             max_dict_value_subarray_axis_length), \
             dtype=random.choice(dtypes))
 
-    # If tp is 'dict', or tp is 'OrderedDict' and Python == 2.6 (wasn't
-    # introduced till 2.7), return as is. Otherwise, handle the
-    # different tp.
-    if tp == 'dict' or (tp == 'OrderedDict' and sys.hexversion <
-                        0x2070000):
+    # If tp is 'dict', return as is. Otherwise, randomize the order.
+    if tp == 'dict':
         return data
     elif tp == 'OrderedDict':
         # An ordered dict is made by randomizing the field order.
@@ -285,9 +266,6 @@ def random_structured_numpy_array(shape, field_shapes=None,
                  for i in range(0, random.randint(
                  min_structured_ndarray_fields,
                  max_structured_ndarray_fields))]
-        if sys.hexversion < 0x03000000:
-            for i, name in enumerate(names):
-                names[i] = name.encode('UTF-8')
     dts = [random.choice(list(set(dtypes)
            - set(('S', 'U'))))
            for i in range(len(names))]

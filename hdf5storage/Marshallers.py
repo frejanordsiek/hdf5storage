@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,6 @@
 
 """
 
-import sys
 import collections
 
 import numpy as np
@@ -1114,14 +1113,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             dt_whole = []
             for k in fields:
-                # In Python 2, the field names for a structured ndarray
-                # must be str as opposed to unicode, so k needs to be
-                # converted in the Python 2 case.
-                if sys.hexversion >= 0x03000000:
-                    k_name = k
-                else:
-                    k_name = k.encode('UTF-8')
-
                 # Read the value.
                 v = struct_data[k]
 
@@ -1130,7 +1121,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # this field will just be an object field.
                 if v.size == 0 or type(v.flat[0]) \
                         not in self._numpy_types:
-                    dt_whole.append((k_name, 'object'))
+                    dt_whole.append((k, 'object'))
                     continue
 
                 first = v.flat[0]
@@ -1148,9 +1139,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # If they are all the same, then dt and shape should be
                 # used. Otherwise, it has to be object.
                 if all_same:
-                    dt_whole.append((k_name, dt, sp))
+                    dt_whole.append((k, dt, sp))
                 else:
-                    dt_whole.append((k_name, 'object'))
+                    dt_whole.append((k, 'object'))
 
             # Make the structured ndarray with the constructed
             # dtype. The shape is simply the shape of the object arrays
@@ -1171,8 +1162,6 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 data = np.zeros(shape=v.shape, dtype=dtwhole)
 
             for k, v in struct_data.items():
-                if sys.hexversion < 0x03000000:
-                    k = k.encode('UTF-8')
                 # There is no sense iterating through the elements if
                 # the shape is an empty shape.
                 if all(data.shape) and all(v.shape):
@@ -1195,11 +1184,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                               for k in matlab_fields]
                 struct_dtype = list()
                 for k in fields:
-                    if sys.hexversion >= 0x03000000:
-                        struct_dtype.append((k, 'object'))
-                    else:
-                        struct_dtype.append((k.encode('UTF-8'),
-                                            'object'))
+                    struct_dtype.append((k, 'object'))
             else:
                 struct_dtype = None
 
@@ -1336,11 +1321,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     dt_whole = list()
                     for k in matlab_fields:
                         uk = unescape_path(k.tostring())
-                        if sys.hexversion >= 0x03000000:
-                            dt_whole.append((uk, 'object'))
-                        else:
-                            dt_whole.append((uk.encode('utf-8'),
-                                             'object'))
+                        dt_whole.append((uk, 'object'))
                     data = np.zeros(shape=tuple(np.uint64(data)),
                                     dtype=dt_whole)
 
@@ -1376,13 +1357,11 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
 
         # In Python 3, there is only a single integer type int, which is
         # variable width. In Python 2, there is the fixed width int and
-        # the variable width long. Python 2 needs to be able to save
-        # with either, but Python 3 needs to map both to int, which can
-        # be done by just putting the type int for its entry in types.
-        if sys.hexversion >= 0x03000000:
-            self.types = [bool, int, int, float, complex]
-        else:
-            self.types = [bool, int, long, float, complex]
+        # the variable width long. Python 2 with the 0.1.x version of
+        # this library would save with either, but Python 3 needs to map
+        # both to int, which can be done by just putting the type int
+        # for its entry in types.
+        self.types = [bool, int, int, float, complex]
         self.python_type_strings = ['bool', 'int', 'long', 'float',
                                     'complex']
         # As the parent class already has MATLAB strings handled, there
@@ -1394,24 +1373,20 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
 
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to the appropriate numpy
-        # type. If it is a Python 3.x int or Python 2.x long that is too
-        # big to fit in a numpy.int64, it is converted to the string
-        # representation of the integer and then converted to a
-        # numpy.bytes_. If it isn't too big and is a long, it needs to be
-        # converted to an int64 or else when it is converted to a
-        # numpy.int64, its dtype.type won't be equal to numpy.int64 for
-        # some reason (if it is a Python 3.x int, packing it into int
-        # does nothing). Otherwise, data is passed through np.array and
-        # then access [()] to get the scalar back as a scalar numpy
-        # type. After all conversions, it is then passed to the parent
-        # version of this function. The proper type_string needs to be
-        # grabbed now as the parent function will have a modified form
-        # of data to guess from if not given the right one explicitly.
-        if sys.hexversion >= 0x03000000:
-            tp = int
-        else:
-            tp = long
-        if type(data) == tp:
+        # type. If it is a Python 3.x int that is too big to fit in a
+        # numpy.int64, it is converted to the string representation of
+        # the integer and then converted to a numpy.bytes_. If it isn't
+        # too big and is a long, it needs to be converted to an int64 or
+        # else when it is converted to a numpy.int64, its dtype.type
+        # won't be equal to numpy.int64 for some reason (if it is a
+        # Python 3.x int, packing it into int does nothing). Otherwise,
+        # data is passed through np.array and then access [()] to get
+        # the scalar back as a scalar numpy type. After all conversions,
+        # it is then passed to the parent version of this function. The
+        # proper type_string needs to be grabbed now as the parent
+        # function will have a modified form of data to guess from if
+        # not given the right one explicitly.
+        if type(data) == int:
             try:
                 out = np.int64(data)
             except OverflowError:
@@ -1431,25 +1406,13 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). As it might be
         # returned as an ndarray, it needs to be run through
-        # np.asscalar. Now, since int and long are unified in Python 3.x
-        # and the size of int in Python 2.x is not always the same, if
-        # the type_string is 'int', then we need to check to see if it
-        # can fit into an int if we are in Python 2.x. If it will fit,
-        # it is returned as an int. If it would not fit, it is returned
-        # as a long.
+        # np.asscalar.
         type_string = convert_attribute_to_string( \
             attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
             sdata = np.asscalar(data)
-            if sys.hexversion >= 0x03000000 or tp != int:
-                return tp(sdata)
-            else:
-                num = long(sdata)
-                if num > sys.maxint or num < -(sys.maxint - 1):
-                    return num
-                else:
-                    return int(num)
+            return tp(sdata)
         else:
             # Must be some other type, so return it as is.
             return data
@@ -1458,14 +1421,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
 class PythonStringMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
-        # In Python 3, the unicode and bare bytes type strings are str
-        # and bytes, but before Python 3, they were unicode and str
-        # respectively. The Python 3 python_type_strings will be used,
-        # though.
-        if sys.hexversion >= 0x03000000:
-            self.types = [str, bytes, bytearray]
-        else:
-            self.types = [unicode, str, bytearray]
+        self.types = [str, bytes, bytearray]
         self.python_type_strings = ['str', 'bytes', 'bytearray']
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
@@ -1477,9 +1433,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
     def write(self, f, grp, name, data, type_string, options):
         # data just needs to be converted to a numpy string of the
         # appropriate type (str to np.str_ and the others to np.bytes_).
-        if (sys.hexversion >= 0x03000000 and isinstance(data, str)) \
-                or (sys.hexversion < 0x03000000 \
-                and isinstance(data, unicode)):
+        if isinstance(data, str):
             cdata = np.unicode_(data)
         else:
             cdata = np.bytes_(data)
@@ -1506,10 +1460,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         if type_string == 'str':
             return convert_to_str(data)
         elif type_string == 'bytes':
-            if sys.hexversion >= 0x03000000:
-                return bytes(data)
-            else:
-                return str(data)
+            return bytes(data)
         elif type_string == 'bytearray':
             return bytearray(data)
         else:
@@ -1566,16 +1517,10 @@ class PythonDictMarshaller(TypeMarshaller):
         # have characters that can't be handled. If the fields are
         # string like, a list of all of them converted to str along with
         # what they originally were needs to be generated.
-        if sys.hexversion >= 0x03000000:
-            tps = {str: b't',
-                   bytes: b'b',
-                   np.unicode_: b'U',
-                   np.bytes_: b'S'}
-        else:
-            tps = {unicode: 't',
-                   str: 'b',
-                   np.unicode_: 'U',
-                   np.bytes_: 'S'}
+        tps = {str: b't',
+               bytes: b'b',
+               np.unicode_: b'U',
+               np.bytes_: b'S'}
 
         any_non_valid_str_keys = False
         keys_as_str = []

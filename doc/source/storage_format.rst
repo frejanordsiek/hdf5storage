@@ -106,8 +106,8 @@ np.recarray               0.1      structured np.ndarray [9]_            Dataset
 .. [1] Depends on the selected options. Always ``np.uint8`` when
        ``convert_bools_to_uint8 == True`` (set implicitly when
        ``matlab_compatible == True``).
-.. [2] In Python 2.x, it may be read back as a ``long`` if it can't fit
-       in the size of an ``int``.
+.. [2] In Python 2.x with version 0.1.x of this package, it may be read
+       back as a ``long`` if it can't fit in the size of an ``int``.
 .. [3] Stored as a ``np.int64`` if it is small enough to fit. Otherwise
        its decimal string representation is stored as an ``np.bytes_``
        for hdf5storage >= 0.2 (error in earlier versions).
@@ -410,12 +410,12 @@ large values. An ``int`` is thus 32 or 64 bits depending on whether the
 python interpreter was is a 32 or 64 bit executable. In Python 3.x,
 both types are both unified into a single ``int`` type.
 
-Both an ``int`` and a ``long`` written in Python 2.x will be read as a
-``int`` in Python 3.x. Python 3.x always writes as ``int``. Due to this
-and the fact that the interpreter in Python 2.x could be using 32-bits
-``int``, it is possible that a value could be read that is too large
-to fit into ``int``. When that happens, it read as a ``long``
-instead.
+Both an ``int`` and a ``long`` written in Python 2.x with version 0.1.x
+of this package will be read as a ``int`` in Python 3.x. Python 3.x
+always writes as ``int``. Due to this and the fact that the interpreter
+in Python 2.x could be using 32-bits ``int``, it is possible that a
+value could be read that is too large to fit into ``int``. When that
+happens, it read as a ``long`` instead.
 
 .. versionchanged:: 0.2
    
@@ -450,12 +450,10 @@ dict and dict like
 ``dict`` like data (``dict`` and  ``cl.OrderedDict``) are stored either
 with each key-value as their own Dataset or as two Datasets, one for
 keys and one for values. The former is used if all keys are string
-like. Keys are converted to Python 3.x ``str`` or Python 2.x
-``unicode``. Otherwise, the latter format is used. A key is string like
-if it is a Python 3.x ``'str`` or ``'bytes'``, a Python 2.x
-``'unicode'`` or ``'str'``, a ``np.unicode_``, or a ``np.bytes_`` and it
-can be converted successfully to Python 3.x ``str`` or Python 2.x
-``unicode``.
+like. Keys are converted to ``str``. Otherwise, the latter format is
+used. A key is string like if it is a ``'str``, a ``'bytes'``, a
+``np.unicode_``, or a ``np.bytes_`` and it an be converted successfully
+to ``str``.
 
 When they can't be stored with each key-value pair as their own Dataset,
 the keys and values are stored as ``tuple`` in Datasets set by the the
@@ -480,9 +478,8 @@ are stored in the Attribute ``'Python.dict.keys_values_names'``.
    Support added for storing the keys and values as their own Datasets
    instead of each key-value pair as their own Dataset. This feature
    adds the ability to store ``dict`` like data with keys that are not
-   ``str`` in Python 3 or ``unicode`` in Python 2 or can't be converted
-   to them. If writing the values to individual datasets, the key
-   names are escaped.
+   ``str`` or can't be converted to them. If writing the values to
+   individual datasets, the key names are escaped.
 
 np.object\_
 -----------

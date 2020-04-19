@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,13 +38,8 @@ from asserts import *
 # Make two strings, one with the main ascii characters and another with
 # the same characters plus a lot of unicode characters.
 str_ascii = string.ascii_letters + string.digits
-if sys.hexversion >= 0x03000000:
-    str_unicode = str_ascii + ''.join([chr(500 + i)
-                                       for i in range(1000)])
-else:
-    str_ascii = unicode(str_ascii)
-    str_unicode = str_ascii + unicode('').join([unichr(500 + i)
-                                                for i in range(1000)])
+str_unicode = str_ascii + ''.join([chr(500 + i)
+                                   for i in range(1000)])
 
 
 def test_numpy_str_ascii_to_uint16_back():

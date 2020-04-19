@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import collections
 import warnings
 
@@ -63,8 +62,7 @@ def assert_equal(a, b, options=None):
         assert_equal_nose(set(a.keys()), set(b.keys()))
         for k in b:
             assert_equal(a[k], b[k], options)
-    elif (sys.hexversion >= 0x2070000
-          and type(b) == collections.OrderedDict):
+    elif type(b) == collections.OrderedDict:
         assert_equal_nose(list(a.keys()), list(b.keys()))
         for k in b:
             assert_equal(a[k], b[k], options)
@@ -115,8 +113,7 @@ def assert_equal_none_format(a, b, options=None):
     # elements must all be the same. If it is string_ type, we must
     # convert to uint32 and then everything can be compared. Big longs
     # and ints get written as numpy.bytes_.
-    if type(b) == dict or (sys.hexversion >= 0x2070000
-                           and type(b) == collections.OrderedDict):
+    if type(b) == dict or type(b) == collections.OrderedDict:
         assert_equal_nose(type(a), np.ndarray)
         assert a.dtype.names is not None
 
@@ -124,26 +121,15 @@ def assert_equal_none_format(a, b, options=None):
         # they all can be, then the dtype field names should be the
         # keys. Otherwise, they should be 'keys' and 'values'.
         all_str_keys = True
-        if sys.hexversion >= 0x03000000:
-            tp_str = str
-            tp_bytes = bytes
-            converters = {tp_str: lambda x: x,
-                          tp_bytes: lambda x: x.decode('UTF-8'),
-                          np.bytes_:
-                          lambda x: bytes(x).decode('UTF-8'),
-                          np.unicode_: lambda x: str(x)}
-            tp_conv = lambda x: converters[type(x)](x)
-            tp_conv_str = lambda x: tp_conv(x)
-        else:
-            tp_str = unicode
-            tp_bytes = str
-            converters = {tp_str: lambda x: x,
-                          tp_bytes: lambda x: x.decode('UTF-8'),
-                          np.bytes_:
-                          lambda x: bytes(x).decode('UTF-8'),
-                          np.unicode_: lambda x: unicode(x)}
-            tp_conv = lambda x: converters[type(x)](x)
-            tp_conv_str = lambda x: tp_conv(x).encode('UTF-8')
+        tp_str = str
+        tp_bytes = bytes
+        converters = {tp_str: lambda x: x,
+                      tp_bytes: lambda x: x.decode('UTF-8'),
+                      np.bytes_:
+                      lambda x: bytes(x).decode('UTF-8'),
+                      np.unicode_: lambda x: str(x)}
+        tp_conv = lambda x: converters[type(x)](x)
+        tp_conv_str = lambda x: tp_conv(x)
         tps = tuple(converters.keys())
         for k in b.keys():
             if type(k) not in tps:
@@ -179,20 +165,11 @@ def assert_equal_none_format(a, b, options=None):
             assert_equal_nose(type(a), np.ndarray)
             assert_equal_nose(a.dtype, np.float64([]).dtype)
             assert_equal_nose(a.shape, (0, ))
-        elif (sys.hexversion >= 0x03000000 \
-                and isinstance(b, (bytes, bytearray))) \
-                or (sys.hexversion < 0x03000000 \
-                and isinstance(b, (bytes, bytearray))):
+        elif isinstance(b, (bytes, bytearray)):
             assert_equal_nose(a, np.bytes_(b))
-        elif (sys.hexversion >= 0x03000000 \
-                and isinstance(b, str)) \
-                or (sys.hexversion < 0x03000000 \
-                and isinstance(b, unicode)):
+        elif isinstance(b, str):
             assert_equal_none_format(a, np.unicode_(b), options)
-        elif (sys.hexversion >= 0x03000000 \
-                and type(b) == int) \
-                or (sys.hexversion < 0x03000000 \
-                and type(b) == long):
+        elif type(b) == int:
             if b > 2**63 or b < -(2**63 - 1):
                 assert_equal_none_format(a, np.bytes_(b), options)
             else:
@@ -305,8 +282,7 @@ def assert_equal_matlab_format(a, b, options=None):
     #
     # In all cases, we expect things to be at least two dimensional
     # arrays.
-    if type(b) == dict or (sys.hexversion >= 0x2070000
-                           and type(b) == collections.OrderedDict):
+    if type(b) == dict or type(b) == collections.OrderedDict:
         assert_equal_nose(type(a), np.ndarray)
         assert a.dtype.names is not None
 
@@ -314,26 +290,15 @@ def assert_equal_matlab_format(a, b, options=None):
         # they all can be, then the dtype field names should be the
         # keys. Otherwise, they should be 'keys' and 'values'.
         all_str_keys = True
-        if sys.hexversion >= 0x03000000:
-            tp_str = str
-            tp_bytes = bytes
-            converters = {tp_str: lambda x: x,
-                          tp_bytes: lambda x: x.decode('UTF-8'),
-                          np.bytes_:
-                          lambda x: bytes(x).decode('UTF-8'),
-                          np.unicode_: lambda x: str(x)}
-            tp_conv = lambda x: converters[type(x)](x)
-            tp_conv_str = lambda x: tp_conv(x)
-        else:
-            tp_str = unicode
-            tp_bytes = str
-            converters = {tp_str: lambda x: x,
-                          tp_bytes: lambda x: x.decode('UTF-8'),
-                          np.bytes_:
-                          lambda x: bytes(x).decode('UTF-8'),
-                          np.unicode_: lambda x: unicode(x)}
-            tp_conv = lambda x: converters[type(x)](x)
-            tp_conv_str = lambda x: tp_conv(x).encode('UTF-8')
+        tp_str = str
+        tp_bytes = bytes
+        converters = {tp_str: lambda x: x,
+                      tp_bytes: lambda x: x.decode('UTF-8'),
+                      np.bytes_:
+                      lambda x: bytes(x).decode('UTF-8'),
+                      np.unicode_: lambda x: str(x)}
+        tp_conv = lambda x: converters[type(x)](x)
+        tp_conv_str = lambda x: tp_conv(x)
         tps = tuple(converters.keys())
         for k in b.keys():
             if type(k) not in tps:
@@ -371,10 +336,7 @@ def assert_equal_matlab_format(a, b, options=None):
             assert_equal_nose(type(a), np.ndarray)
             assert_equal_nose(a.dtype, np.dtype('float64'))
             assert_equal_nose(a.shape, (1, 0))
-        elif (sys.hexversion >= 0x03000000 \
-                and isinstance(b, (bytes, str, bytearray))) \
-                or (sys.hexversion < 0x03000000 \
-                and isinstance(b, (bytes, unicode, bytearray))):
+        elif isinstance(b, (bytes, str, bytearray)):
             if len(b) == 0:
                 assert_equal(a, np.zeros(shape=(1, 0), dtype='U'),
                              options)
@@ -386,10 +348,7 @@ def assert_equal_matlab_format(a, b, options=None):
                 assert_equal(a, np.atleast_2d(c), options)
             else:
                 assert_equal(a, np.atleast_2d(np.unicode_(b)), options)
-        elif (sys.hexversion >= 0x03000000 \
-                and type(b) == int) \
-                or (sys.hexversion < 0x03000000 \
-                and type(b) == long):
+        elif type(b) == int:
             if b > 2**63 or b < -(2**63 - 1):
                 assert_equal(a, np.atleast_2d(np.unicode_(b)), options)
             else:
@@ -456,12 +415,7 @@ def assert_equal_matlab_format(a, b, options=None):
                     # MATLAB_fields attribute could be used, which can
                     # only be done if there are no non-ascii characters
                     # in any of the field names.
-                    if sys.hexversion >= 0x03000000:
-                        allfields = ''.join(b.dtype.names)
-                    else:
-                        allfields = unicode('').join( \
-                            [nm.decode('UTF-8') \
-                            for nm in b.dtype.names])
+                    allfields = ''.join(b.dtype.names)
                     if np.all(np.array([ord(ch) < 128 \
                             for ch in allfields])):
                         assert_equal_nose(a.dtype.names, b.dtype.names)
