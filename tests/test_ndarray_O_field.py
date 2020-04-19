@@ -51,7 +51,7 @@ def test_O_field_compound():
         hdf5storage.write(data, path=name, filename=filename,
                           matlab_compatible=False,
                           structured_numpy_ndarray_as_struct=False)
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             assert isinstance(f[name], h5py.Dataset)
     except:
         raise
@@ -70,7 +70,7 @@ def test_object_field_group():
         hdf5storage.write(data, path=name, filename=filename,
                           matlab_compatible=False,
                           structured_numpy_ndarray_as_struct=False)
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             assert isinstance(f[name], h5py.Group)
     except:
         raise
@@ -89,7 +89,7 @@ def test_O_and_object_field_group():
         hdf5storage.write(data, path=name, filename=filename,
                           matlab_compatible=False,
                           structured_numpy_ndarray_as_struct=False)
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             assert isinstance(f[name], h5py.Group)
     except:
         raise

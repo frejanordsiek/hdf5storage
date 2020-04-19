@@ -257,6 +257,10 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.16. Bugfix release that fixed the following bugs.
+        * Issue #81 and #82. ``h5py.File`` will require the mode to be
+          passed explicitly in the future. All calls without passing it were
+          fixed to pass it.
 0.1.15. Bugfix release that fixed the following bugs.
         * Issue #68. Fixed bug where ``str`` and ``numpy.unicode_``
           strings (but not ndarrays of them) were saved in

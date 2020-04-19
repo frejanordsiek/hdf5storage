@@ -70,7 +70,7 @@ def check_read_filters(filters):
     if os.path.exists(filename):
         os.remove(filename)
     try:
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='w') as f:
             f.create_dataset(name, data=data, chunks=True, **filts)
         out = hdf5storage.read(path=name, filename=filename,
                                matlab_compatible=False)
@@ -119,7 +119,7 @@ def check_write_filters(filters):
             shuffle_filter=filts['shuffle'], \
             compressed_fletcher32_filter=filts['fletcher32'])
 
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             d = f[name]
             fletcher32 = d.fletcher32
             shuffle = d.shuffle
@@ -191,7 +191,7 @@ def check_uncompressed_write_filters(method,
             uncompressed_fletcher32_filter, \
             **opts)
 
-        with h5py.File(filename) as f:
+        with h5py.File(filename, mode='r') as f:
             d = f[name]
             fletcher32 = d.fletcher32
             shuffle = d.shuffle
