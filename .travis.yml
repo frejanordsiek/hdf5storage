@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 sudo: required
 
 language: python
@@ -12,6 +12,9 @@ env:
   - H5PY_VERSION="==2.4"
   - H5PY_VERSION="==2.5"
   - H5PY_VERSION="==2.6"
+  - H5PY_VERSION="==2.7"
+  - H5PY_VERSION="==2.8"
+  - H5PY_VERSION="==2.9"
   - H5PY_VERSION=""
 
 python:
