@@ -34,8 +34,6 @@ from nose.tools import assert_equal as assert_equal_nose
 
 import unittest
 
-from asserts import *
-
 import hdf5storage
 
 # Check if the example package is installed because some tests will

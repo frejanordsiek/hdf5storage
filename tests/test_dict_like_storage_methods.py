@@ -38,8 +38,8 @@ from hdf5storage.utilities import escape_path
 
 from nose.tools import assert_equal as assert_equal_nose
 
-from asserts import *
-from make_randoms import *
+from make_randoms import random_name, random_dict, random_int, \
+    random_str_ascii, random_str_some_unicode, max_dict_key_length
 
 random.seed()
 

@@ -29,7 +29,7 @@ import random
 
 from hdf5storage.utilities import escape_path, unescape_path, process_path
 
-from make_randoms import *
+from make_randoms import random_str_ascii, random_str_some_unicode
 
 from nose.tools import assert_equal
 

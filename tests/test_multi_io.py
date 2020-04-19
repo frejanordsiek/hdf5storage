@@ -32,8 +32,10 @@ import tempfile
 
 import hdf5storage
 
-from asserts import *
-from make_randoms import *
+from asserts import assert_equal
+from make_randoms import min_dict_keys, max_dict_keys, random_name, \
+    random_numpy, random_numpy_shape, dict_value_subarray_dimensions, \
+    max_dict_value_subarray_axis_length, dtypes
 
 
 random.seed()

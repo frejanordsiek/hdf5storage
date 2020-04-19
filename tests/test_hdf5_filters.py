@@ -35,8 +35,9 @@ import hdf5storage
 
 from nose.tools import assert_equal as assert_equal_nose
 
-from asserts import *
-from make_randoms import *
+from asserts import assert_equal
+from make_randoms import random_numpy, random_numpy_shape, \
+    max_array_axis_length, dtypes, random_name
 
 random.seed()
 

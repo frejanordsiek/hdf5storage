@@ -35,8 +35,9 @@ from nose.plugins.skip import SkipTest
 
 import hdf5storage
 
-from asserts import *
-from make_randoms import *
+from asserts import assert_equal_from_matlab
+from make_randoms import dtypes, random_numpy_scalar, random_numpy, \
+    random_numpy_shape, random_structured_numpy_array
 
 # Have a flag for whether julia was found and run successfully or not,
 # so tests can be skipped if not.

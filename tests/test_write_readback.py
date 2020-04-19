@@ -30,14 +30,22 @@ import math
 import os
 import os.path
 import random
+import string
 import tempfile
 
 import numpy as np
 
 import hdf5storage
 
-from asserts import *
-from make_randoms import *
+from asserts import assert_equal, assert_equal_none_format, \
+    assert_equal_matlab_format
+from make_randoms import random_numpy_scalar, random_numpy_shape, \
+    random_numpy, random_name, max_array_axis_length, \
+    max_structured_ndarray_axis_length, random_structured_numpy_array, \
+    random_str_ascii, max_dict_key_length, \
+    random_list, max_list_length, random_dict, \
+    random_str_some_unicode, random_int, random_float, \
+    max_string_length, random_bytes
 
 
 random.seed()

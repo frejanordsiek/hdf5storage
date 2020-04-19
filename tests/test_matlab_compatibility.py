@@ -32,7 +32,7 @@ from nose.plugins.skip import SkipTest
 
 import hdf5storage
 
-from asserts import *
+from asserts import assert_equal_from_matlab
 
 mat_files = ['types_v7p3.mat', 'types_v7.mat',
              'python_v7p3.mat', 'python_v7.mat']

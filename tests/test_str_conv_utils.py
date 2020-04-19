@@ -32,7 +32,7 @@ import hdf5storage.utilities as utils
 
 from nose.tools import assert_equal as assert_equal_nose
 
-from asserts import *
+from asserts import assert_equal
 
 
 # Make two strings, one with the main ascii characters and another with
