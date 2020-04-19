@@ -1695,6 +1695,11 @@ def loadmat(file_name, mdict=None, appendmat=True,
     passed on. This function is modelled after the SciPy one (arguments
     not specific to this package have the same names, etc.).
 
+    Warning
+    -------
+    Variables in `variable_names` that are missing from the file do not
+    cause an exception and will just be missing from the output.
+
     Parameters
     ----------
     file_name : str
@@ -1720,7 +1725,8 @@ def loadmat(file_name, mdict=None, appendmat=True,
     -------
     dict
         Dictionary of all the variables read from the MAT file (name
-        as the key, and content as the value).
+        as the key, and content as the value). If a variable was missing
+        from the file, it will not be present here.
 
     Raises
     ------
@@ -1780,13 +1786,16 @@ def loadmat(file_name, mdict=None, appendmat=True,
                             pass
 
         else:
-            # Extract the desired fields all together and then pack them
-            # into a dictionary one by one.
-            values = reads(paths=variable_names, filename=filename,
-                           options=options)
+            # Extract the desired fields one by one, catching any errors
+            # for missing variables (so we don't fall back to
+            # scipy.io.loadmat).
             data = dict()
-            for i, name in enumerate(variable_names):
-                data[name] = values[i]
+            with h5py.File(filename, mode='r') as f:
+                for k in variable_names:
+                    try:
+                        data[k] = lowlevel.read_data(f, f, k, options)
+                    except:
+                        pass
 
         # Read all the variables, stuff them into mdict, and return it.
         if mdict is None:

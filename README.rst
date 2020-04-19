@@ -261,6 +261,11 @@ Versions
         * Issue #81 and #82. ``h5py.File`` will require the mode to be
           passed explicitly in the future. All calls without passing it were
           fixed to pass it.
+        * Issue #73. Fixed bug where a missing variable in ``loadmat`` would
+          cause the function to think that the file is a pre v7.3 format MAT
+          file fall back to ``scipy.io.loadmat`` which won't work since the file
+          is a v7.3 format MAT file.
+
 0.1.15. Bugfix release that fixed the following bugs.
         * Issue #68. Fixed bug where ``str`` and ``numpy.unicode_``
           strings (but not ndarrays of them) were saved in
