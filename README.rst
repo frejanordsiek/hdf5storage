@@ -79,8 +79,9 @@ To run the tests ::
 Building Documentation
 ----------------------
 
-The documentation additionally requires sphinx (>= 1.7). The
-documentation dependencies can be installed by ::
+The documentation additionally requires sphinx (>= 1.7) and
+`sphinx_rtd_theme <https://pypi.org/project/sphinx-rtd-theme>`_.
+The documentation dependencies can be installed by ::
 
     pip install -r requirements_doc.txt
 
@@ -387,6 +388,7 @@ Versions
        interop with Matlab v7.3 MAT files.
      * Issue #39. Documentation now uses the napoleon extension in
        Sphinx >= 1.3 as a replacement for numpydoc package.
+     * Changed documentation theme to ``sphinx_rtd_theme``.
      * Issue #55. Major performance increases by reducing the overhead
        involved with reading and writing each Dataset and Group.
 
