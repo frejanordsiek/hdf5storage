@@ -115,21 +115,21 @@ class TypeMarshaller(object):
 
     Attributes
     ----------
-    required_parent_modules : list of str
+    required_parent_modules : tuple of str
         The parent modules required for reading types accurately.
-    required_modules: list of str
+    required_modules: tuple of str
         The modules required to be loaded for reading types accurately.
     python_attributes : set of str
         Attributes used to store type information.
     matlab_attributes : set of str
         Attributes used for MATLAB compatibility.
-    types : list of types
+    types : tuple of types
         Types the marshaller can work on, which can be the actual
         classes themselves or their ``str`` representation such as
         ``'collections.deque'``.
-    python_type_strings : list of str
+    python_type_strings : tuple of str
         Type strings of readable types.
-    matlab_classes : list of str
+    matlab_classes : tuple of str
         Readable MATLAB classes.
     type_to_typestring: dict
         Lookup using the types in ``types`` as keys and the matching
@@ -153,21 +153,21 @@ class TypeMarshaller(object):
     def __init__(self):
         #: Parent modules required to accurately read types.
         #:
-        #: list of str
+        #: tuple of str
         #:
         #: The names of the parent modules required to accurately
-        #: read the types handled by this marshaller. This list is
+        #: read the types handled by this marshaller. This tuple is
         #: used to determine whether they can be read accurately, or
         #: innaccurately due to missing the needed modules. Modules in
         #: the main Python runtime and numpy do not need to be included
         #: (they are assumed to be present). The default is ``[]``.
         #:
         #: .. versionadded:: 0.2
-        self.required_parent_modules = []
+        self.required_parent_modules = ()
 
         #: All required modules for reading the types accurately.
         #:
-        #: list of str
+        #: tuple of str
         #:
         #: The modules (and submodules) that need to be loaded, in
         #: order, to be able to read the types handled by this
@@ -178,7 +178,7 @@ class TypeMarshaller(object):
         #: ``[]``.
         #:
         #: .. versionadded:: 0.2
-        self.required_modules = []
+        self.required_modules = ()
 
         #: Attributes used to store type information.
         #:
@@ -186,7 +186,7 @@ class TypeMarshaller(object):
         #:
         #: ``set`` of attribute names the marshaller uses when
         #: an ``Option.store_python_metadata`` is ``True``.
-        self.python_attributes = set(['Python.Type'])
+        self.python_attributes = set(('Python.Type', ))
 
         #: Attributes used for MATLAB compatibility.
         #:
@@ -195,34 +195,34 @@ class TypeMarshaller(object):
         #: ``set`` of attribute names the marshaller uses when maintaing
         #: Matlab HDF5 based mat file compatibility
         #: (``Option.matlab_compatible`` is ``True``).
-        self.matlab_attributes = set(['H5PATH'])
+        self.matlab_attributes = set(('H5PATH', ))
 
-        #: List of Python types that can be marshalled.
+        #: Tuple of Python types that can be marshalled.
         #:
-        #: list of types or str
+        #: tuple of types or str
         #:
-        #: ``list`` of the types that the marshaller can marshall. They
+        #: ``tuple`` of the types that the marshaller can marshall. They
         #: must all be the actual types gotten from ``type(data)``
         #: or their ``str`` representation such as
         #: ``'collections.deque'``. Default value is ``[]``.
-        self.types = []
+        self.types = ()
 
         #: Type strings of readable types.
         #:
-        #: list of str
+        #: tuple of str
         #:
-        #: ``list`` of the ``str`` that the marshaller would put in the
+        #: ``tuple`` of the ``str`` that the marshaller would put in the
         #: HDF5 attribute 'Python.Type' to identify the Python type to be
         #: able to read it back correctly. Default value is ``[]``.
-        self.python_type_strings = []
+        self.python_type_strings = ()
 
         #: MATLAB class strings of readable types.
         #:
-        #: list of str
+        #: tuple of str
         #:
-        #: ``list`` of the MATLAB class ``str`` that the marshaller can
+        #: ``tuple`` of the MATLAB class ``str`` that the marshaller can
         #: read into Python objects. Default value is ``[]``.
-        self.matlab_classes = []
+        self.matlab_classes = ()
 
         #: Type to typestring lookup.
         #:
@@ -515,27 +515,29 @@ class TypeMarshaller(object):
 class NumpyScalarArrayMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.python_attributes |= set(['Python.Shape', 'Python.Empty',
-                                   'Python.numpy.UnderlyingType',
-                                   'Python.numpy.Container',
-                                   'Python.Fields'])
-        self.matlab_attributes |= set(['MATLAB_class', 'MATLAB_empty',
-                                      'MATLAB_int_decode',
-                                      'MATLAB_fields'])
+        self.python_attributes |= set(
+            ('Python.Shape', 'Python.Empty',
+             'Python.numpy.UnderlyingType',
+             'Python.numpy.Container',
+             'Python.Fields'))
+        self.matlab_attributes |= set(
+            ('MATLAB_class', 'MATLAB_empty',
+             'MATLAB_int_decode',
+             'MATLAB_fields'))
         # As np.str_ is the unicode type string in Python 3 and the bare
         # bytes string in Python 2, we have to use np.unicode_ which is
         # or points to the unicode one in both versions.
-        self.types = [np.ndarray, np.matrix,
+        self.types = (np.ndarray, np.matrix,
                       np.chararray, np.core.records.recarray,
                       np.bool_, np.void,
                       np.uint8, np.uint16, np.uint32, np.uint64,
                       np.int8, np.int16, np.int32, np.int64,
                       np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
-                      np.bytes_, np.unicode_, np.object_]
-        self._numpy_types = list(self.types)
+                      np.bytes_, np.unicode_, np.object_)
+        self._numpy_types = self.types
         # Using Python 3 type strings.
-        self.python_type_strings = ['numpy.ndarray', 'numpy.matrix',
+        self.python_type_strings = ('numpy.ndarray', 'numpy.matrix',
                                     'numpy.chararray',
                                     'numpy.recarray',
                                     'numpy.bool_', 'numpy.void',
@@ -548,7 +550,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                     'numpy.complex64',
                                     'numpy.complex128',
                                     'numpy.bytes_', 'numpy.str_',
-                                    'numpy.object_']
+                                    'numpy.object_')
 
         # If we are storing in MATLAB format, we will need to be able to
         # set the MATLAB_class attribute. The different numpy types just
@@ -593,7 +595,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
 
         # Set matlab_classes to the supported classes (the values).
-        self.matlab_classes = list(self.__MATLAB_classes.values())
+        self.matlab_classes = tuple(self.__MATLAB_classes.values())
 
         # Update the type lookups.
         self.update_type_lookups()
@@ -1427,11 +1429,11 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
 class PythonStringMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
-        self.types = [str, bytes, bytearray]
-        self.python_type_strings = ['str', 'bytes', 'bytearray']
+        self.types = (str, bytes, bytearray)
+        self.python_type_strings = ('str', 'bytes', 'bytearray')
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
-        self.matlab_classes = []
+        self.matlab_classes = ()
 
         # Update the type lookups.
         self.update_type_lookups()
@@ -1476,10 +1478,10 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
 class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
-        self.types = [type(None)]
-        self.python_type_strings = ['builtins.NoneType']
+        self.types = (type(None), )
+        self.python_type_strings = ('builtins.NoneType', )
         # None corresponds to no MATLAB class.
-        self.matlab_classes = []
+        self.matlab_classes = ()
         # Update the type lookups.
         self.update_type_lookups()
 
@@ -1501,19 +1503,19 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
 class PythonDictMarshaller(TypeMarshaller):
     def __init__(self):
         TypeMarshaller.__init__(self)
-        self.python_attributes |= set(['Python.Fields',
+        self.python_attributes |= set(('Python.Fields',
                                        'Python.dict.StoredAs',
                                        'Python.dict.keys_values_names',
-                                       'Python.dict.key_str_types'])
-        self.matlab_attributes |= set(['MATLAB_class', 'MATLAB_fields'])
-        self.types = [dict, collections.OrderedDict]
+                                       'Python.dict.key_str_types'))
+        self.matlab_attributes |= set(('MATLAB_class', 'MATLAB_fields'))
+        self.types = (dict, collections.OrderedDict)
 
-        self.python_type_strings = ['dict', 'collections.OrderedDict']
+        self.python_type_strings = ('dict', 'collections.OrderedDict')
         self.__MATLAB_classes = {dict: 'struct',
                                  collections.OrderedDict: 'struct'}
         # Set matlab_classes to empty since NumpyScalarArrayMarshaller
         # handles Groups by default now.
-        self.matlab_classes = list()
+        self.matlab_classes = ()
         # Update the type lookups.
         self.update_type_lookups()
 
@@ -1770,11 +1772,11 @@ class PythonDictMarshaller(TypeMarshaller):
 class PythonListMarshaller(NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
-        self.types = [list]
-        self.python_type_strings = ['list']
+        self.types = (list, )
+        self.python_type_strings = ('list', )
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
-        self.matlab_classes = []
+        self.matlab_classes = ()
         # Update the type lookups.
         self.update_type_lookups()
 
@@ -1806,12 +1808,12 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
 class PythonTupleSetDequeMarshaller(PythonListMarshaller):
     def __init__(self):
         PythonListMarshaller.__init__(self)
-        self.types = [tuple, set, frozenset, collections.deque]
-        self.python_type_strings = ['tuple', 'set', 'frozenset',
-                                    'collections.deque']
+        self.types = (tuple, set, frozenset, collections.deque)
+        self.python_type_strings = ('tuple', 'set', 'frozenset',
+                                    'collections.deque')
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
-        self.matlab_classes = []
+        self.matlab_classes = ()
         # Update the type lookups.
         self.update_type_lookups()
 

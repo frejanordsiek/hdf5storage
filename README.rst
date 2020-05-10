@@ -357,6 +357,9 @@ Versions
        if available, can either be imported immediately upon the
        creation of the ``MarshallerCollection`` or they can be imported
        only when the marshaller is needed for actual use (lazy loading).
+     * Changed the type of the ``types``, ``python_type_strings``, and
+       ``matlab_classes`` attributes of ``TypeMarshaller`` to ``tuple``
+       from ``list``.
      * Issue #52. Added the usage of a default ``MarshallerCollection``
        which is used whenever creating a new ``Options`` without
        a ``MarshallerCollection`` specified. The default can be

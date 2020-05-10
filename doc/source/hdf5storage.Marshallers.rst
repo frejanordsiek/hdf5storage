@@ -25,10 +25,10 @@ TypeMarshaller
    :show-inheritance:
 
    .. autoinstanceattribute:: TypeMarshaller.required_parent_modules
-      :annotation: = []
+      :annotation: = ()
 
    .. autoinstanceattribute:: TypeMarshaller.required_modules
-      :annotation: = []
+      :annotation: = ()
 
    .. autoinstanceattribute:: TypeMarshaller.python_attributes
       :annotation: = {'Python.Type'}
@@ -37,13 +37,13 @@ TypeMarshaller
       :annotation: = {'H5PATH'}
 
    .. autoinstanceattribute:: TypeMarshaller.types
-      :annotation: = []
+      :annotation: = ()
 
    .. autoinstanceattribute:: TypeMarshaller.python_type_strings
-      :annotation: = []
+      :annotation: = ()
 
    .. autoinstanceattribute:: TypeMarshaller.matlab_classes
-      :annotation: = []
+      :annotation: = ()
 
    .. autoinstanceattribute:: TypeMarshaller.type_to_typestring
       :annotation: = dict()
@@ -68,16 +68,16 @@ NumpyScalarArrayMarshaller
        matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
                             'MATLAB_int_decode', 'MATLAB_fields'}
 
-       types = [np.ndarray, np.matrix,
+       types = (np.ndarray, np.matrix,
                 np.chararray, np.core.records.recarray,
                 np.bool_, np.void,
                 np.uint8, np.uint16, np.uint32, np.uint64,
                 np.int8, np.int16, np.int32, np.int64,
                 np.float16, np.float32, np.float64,
                 np.complex64, np.complex128,
-                np.bytes_, np.str_, np.object_]
+                np.bytes_, np.str_, np.object_)
 
-       python_type_strings = ['numpy.ndarray', 'numpy.matrix',
+       python_type_strings = ('numpy.ndarray', 'numpy.matrix',
                               'numpy.chararray', 'numpy.recarray',
                               'numpy.bool_', 'numpy.void',
                               'numpy.uint8', 'numpy.uint16',
@@ -85,11 +85,11 @@ NumpyScalarArrayMarshaller
                               'numpy.int16', 'numpy.int32', 'numpy.int64',
                               'numpy.float16', 'numpy.float32', 'numpy.float64',
                               'numpy.complex64', 'numpy.complex128',
-                              'numpy.bytes_', 'numpy.str_', 'numpy.object_']
+                              'numpy.bytes_', 'numpy.str_', 'numpy.object_')
 
-       matlab_classes = ['logical', 'char', 'single', 'double', 'uint8',
+       matlab_classes = ('logical', 'char', 'single', 'double', 'uint8',
                          'uint16', 'uint32', 'uint64', 'int8', 'int16',
-                         'int32', 'int64', 'cell', 'canonical empty']
+                         'int32', 'int64', 'cell', 'canonical empty')
 
 
 PythonScalarMarshaller
@@ -108,11 +108,11 @@ PythonScalarMarshaller
        matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
                             'MATLAB_int_decode'}
 
-       types = [bool, int, float, complex]
+       types = (bool, int, float, complex)
 
-       python_type_strings = ['bool', 'int', 'float', 'complex']
+       python_type_strings = ('bool', 'int', 'float', 'complex')
 
-       matlab_classes = []
+       matlab_classes = ()
 
 
 PythonStringMarshaller
@@ -131,11 +131,11 @@ PythonStringMarshaller
        matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
                             'MATLAB_int_decode'}
 
-       types = [str, bytes, bytearray]
+       types = (str, bytes, bytearray)
 
-       python_type_strings = ['str', 'bytes', 'bytearray']
+       python_type_strings = ('str', 'bytes', 'bytearray')
 
-       matlab_classes = []
+       matlab_classes = ()
 
 
 PythonNoneMarshaller
@@ -154,11 +154,11 @@ PythonNoneMarshaller
        matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
                             'MATLAB_int_decode'}
 
-       types = [builtins.NoneType]
+       types = (builtins.NoneType, )
 
-       python_type_strings = ['builtins.NoneType']
+       python_type_strings = ('builtins.NoneType', )
 
-       matlab_classes = []
+       matlab_classes = ()
 
 
 PythonDictMarshaller
@@ -174,11 +174,11 @@ PythonDictMarshaller
 
        matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_fields'}
 
-       types = [dict, collections.OrderedDict]
+       types = (dict, collections.OrderedDict)
 
-       python_type_strings = ['dict', 'collections.OrderedDict']
+       python_type_strings = ('dict', 'collections.OrderedDict')
 
-       matlab_classes = []
+       matlab_classes = ()
 
 
 PythonListMarshaller
@@ -197,11 +197,11 @@ PythonListMarshaller
        matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
                             'MATLAB_int_decode'}
 
-       types = [list]
+       types = (list, )
 
-       python_type_strings = ['list']
+       python_type_strings = ('list', )
 
-       matlab_classes = []
+       matlab_classes = ()
 
 
 PythonTupleSetDequeMarshaller
@@ -220,9 +220,9 @@ PythonTupleSetDequeMarshaller
        matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
                             'MATLAB_int_decode'}
 
-       types = [tuple, set, frozenset, collections.deque]
+       types = (tuple, set, frozenset, collections.deque)
 
-       python_type_strings = ['tuple', 'set', 'frozenset', 'collections.deque']
+       python_type_strings = ('tuple', 'set', 'frozenset', 'collections.deque')
 
-       matlab_classes = []
+       matlab_classes = ()
 
