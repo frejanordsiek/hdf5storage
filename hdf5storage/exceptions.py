@@ -53,4 +53,3 @@ class TypeNotMatlabCompatibleError(Hdf5storageError):
 
     """
     pass
-
