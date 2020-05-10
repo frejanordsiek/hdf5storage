@@ -1099,11 +1099,13 @@ class MarshallerCollection(object):
 
         # Grab all the marshallers in the Marshallers module (they are
         # the classes that inherit from TypeMarshaller) by inspection.
-        self._builtin_marshallers = [m() \
-            for key, m in dict(inspect.getmembers(Marshallers, \
-            lambda x: inspect.isclass(x) \
-            and Marshallers.TypeMarshaller \
-            in inspect.getmro(x))).items()]
+        self._builtin_marshallers = [
+            m()
+            for key, m in dict(inspect.getmembers(
+                    Marshallers,
+                    lambda x: inspect.isclass(x)
+                    and Marshallers.TypeMarshaller
+                    in inspect.getmro(x))).items()]
 
         # If loading marshallers from plugins, grab all the entry points
         # by version and then go through them in version order, load the
@@ -1812,8 +1814,8 @@ def reads(paths, filename='data.h5', options=None, **keywords):
             # group. If it isn't an error needs to be thrown.
             if groupname not in f \
                     or not isinstance(f[groupname], h5py.Group):
-                raise exceptions.CantReadError( \
-                    'Could not find containing Group ' \
+                raise exceptions.CantReadError(
+                    'Could not find containing Group '
                     + groupname + '.')
 
             # Hand off everything to the low level reader.
@@ -1944,9 +1946,10 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         file_name = file_name + '.mat'
 
     # Make the options with matlab compatibility forced.
-    options = Options(store_python_metadata=store_python_metadata, \
-        matlab_compatible=True, oned_as=oned_as, \
-        action_for_matlab_incompatible=action_for_matlab_incompatible, \
+    options = Options(
+        store_python_metadata=store_python_metadata,
+        matlab_compatible=True, oned_as=oned_as,
+        action_for_matlab_incompatible=action_for_matlab_incompatible,
         marshaller_collection=marshaller_collection)
 
     # Write the variables in the dictionary to file.

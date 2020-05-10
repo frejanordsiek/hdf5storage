@@ -53,13 +53,13 @@ import hdf5storage.exceptions
 # will help performance by not having to compile new ones every time a
 # path is processed.
 _find_dots_re = re.compile('\\.+')
-_find_invalid_escape_re = re.compile( \
-    '(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]' \
-    + '|x[0-9a-fA-F]?($|[^0-9a-fA-F])' \
-    + '|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])' \
-    + '|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))')
+_find_invalid_escape_re = re.compile(
+    '(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]'
+    '|x[0-9a-fA-F]?($|[^0-9a-fA-F])'
+    '|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])'
+    '|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))')
 _find_fslashnull_re = re.compile('[\\\\/\x00]')
-_find_escapes_re = re.compile( \
+_find_escapes_re = re.compile(
     '\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})')
 _char_escape_conversions = {'\x00': '\\x00',
                             '/': '\\x2f',
@@ -402,7 +402,7 @@ def write_data(f, grp, name, data, type_string, options):
     if m is not None and has_modules:
         m.write(f, grp, name, data, type_string, options)
     else:
-        raise NotImplementedError('Can''t write data type: '+str(tp))
+        raise NotImplementedError('Can''t write data type: ' + str(tp))
 
 
 def read_data(f, grp, name, options, dsetgrp=None):
@@ -451,7 +451,7 @@ def read_data(f, grp, name, options, dsetgrp=None):
         try:
             dsetgrp = grp[name]
         except:
-            raise hdf5storage.exceptions.CantReadError( \
+            raise hdf5storage.exceptions.CantReadError(
                 'Could not find ' + posixpath.join(grp.name, name))
 
     # Get all attributes with values.
@@ -462,7 +462,7 @@ def read_data(f, grp, name, options, dsetgrp=None):
     # Get the different attributes that can be used to identify they
     # type, which are the type string and the MATLAB class.
     type_string = convert_attribute_to_string(attributes['Python.Type'])
-    matlab_class = convert_attribute_to_string( \
+    matlab_class = convert_attribute_to_string(
         attributes['MATLAB_class'])
 
     # If the type_string is present, get the marshaller for it. If it is
@@ -479,16 +479,14 @@ def read_data(f, grp, name, options, dsetgrp=None):
     if type_string is not None:
         m, has_modules = mc.get_marshaller_for_type_string(type_string)
     elif matlab_class is not None:
-        m, has_modules = \
-            mc.get_marshaller_for_matlab_class(matlab_class)
+        m, has_modules = mc.get_marshaller_for_matlab_class(
+            matlab_class)
     elif hasattr(dsetgrp, 'dtype'):
         # Numpy dataset
-        m, has_modules = \
-            mc.get_marshaller_for_type(dsetgrp.dtype.type)
+        m, has_modules = mc.get_marshaller_for_type(dsetgrp.dtype.type)
     elif isinstance(dsetgrp, (h5py.Group, h5py.File)):
         # Groups and files are like Matlab struct
         m, has_modules = mc.get_marshaller_for_matlab_class('struct')
-
     if m is None:
         # use Numpy as a fallback
         m, has_modules = mc.get_marshaller_for_type(np.uint8)
@@ -703,6 +701,7 @@ def next_unused_name_in_group(grp, length):
         name = fmt % random.getrandbits(length * 4)
     return name
 
+
 def convert_numpy_str_to_uint16(data):
     """ Converts a numpy.unicode\_ to UTF-16 in numpy.uint16 form.
 
@@ -797,6 +796,7 @@ def convert_numpy_str_to_uint32(data):
         shape = list(np.atleast_1d(data).shape)
         shape[-1] *= data.dtype.itemsize//4
         return data.flatten().view(np.uint32).reshape(tuple(shape))
+
 
 def convert_to_str(data):
     """ Decodes data to the ``str`` type.
@@ -1119,7 +1119,7 @@ def convert_to_numpy_bytes(data, length=None):
                                          dtype=new_data.dtype,
                                          buffer=chunk.tostring())[()]
             else:
-                new_data[i] = np.bytes_( \
+                new_data[i] = np.bytes_(
                     convert_to_str(chunk).encode('UTF-8'))
 
         # Only thing is left is to reshape it.
@@ -1210,7 +1210,8 @@ def decode_complex(data, complex_names=(None, None)):
     # parts. Otherwise, return what we were given because it isn't in
     # the right form.
     if cnames[0] is not None and cnames[1] is not None:
-        cdata = np.result_type(data[cnames[0]].dtype, \
+        cdata = np.result_type(
+            data[cnames[0]].dtype,
             data[cnames[1]].dtype, 'complex64').type(data[cnames[0]])
         cdata.imag = data[cnames[1]]
         return cdata

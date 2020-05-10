@@ -407,8 +407,8 @@ class TypeMarshaller(object):
         # Make sure we have a complete type_string.
         if options.store_python_metadata \
                 and 'Python.Type' not in attributes:
-            attributes['Python.Type'] = \
-                ('string', self.get_type_string(data, type_string))
+            attributes['Python.Type'] = (
+                'string', self.get_type_string(data, type_string))
         set_attributes_all(dsetgrp, attributes, discard_others=True)
 
     def read(self, f, dsetgrp, attributes, options):
@@ -611,7 +611,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 or (data.dtype.fields is not None \
                 and options.structured_numpy_ndarray_as_struct)):
             if options.action_for_matlab_incompatible == 'error':
-                raise hdf5storage.exceptions.TypeNotMatlabCompatibleError( \
+                raise hdf5storage.exceptions.TypeNotMatlabCompatibleError(
                     'Data type ' + data.dtype.name
                     + ' not supported by MATLAB.')
             elif options.action_for_matlab_incompatible == 'discard':
@@ -638,7 +638,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             if data_to_store.nbytes == 0:
                 data_to_store = np.uint16([])
             else:
-                new_data = np.uint16(np.atleast_1d( \
+                new_data = np.uint16(np.atleast_1d(
                     data_to_store).view(np.ndarray).view(np.uint8))
                 if np.all(new_data < 128):
                     data_to_store = new_data
@@ -667,7 +667,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     or (isinstance(data_to_store, np.ndarray) \
                     and new_data.shape[-1] != data_to_store.shape[-1] \
                     * (data_to_store.dtype.itemsize//4)):
-                data_to_store = convert_numpy_str_to_uint32( \
+                data_to_store = convert_numpy_str_to_uint32(
                     data_to_store)
             else:
                 data_to_store = new_data
@@ -909,9 +909,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # but in Python 2, they start with 'string' and 'unicode'
             # respectively. The Python 2 ones must be converted to the
             # Python 3 ones for writing.
-            attributes['Python.numpy.UnderlyingType'] = ('string', \
-                data.dtype.name.replace('string', 'bytes').replace( \
-                'unicode', 'str'))
+            attributes['Python.numpy.UnderlyingType'] = (
+                'string',
+                data.dtype.name.replace('string', 'bytes').replace(
+                    'unicode', 'str'))
             if isinstance(data, np.matrix):
                 container = 'matrix'
             elif isinstance(data, np.chararray):
@@ -999,8 +1000,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     if dsetgrp.dtype.type == np.bytes_:
                         attributes['MATLAB_int_decode'] = ('value', 1)
                     else:
-                        attributes['MATLAB_int_decode'] = ('value', \
-                            np.int64(dsetgrp.dtype.itemsize))
+                        attributes['MATLAB_int_decode'] = (
+                            'value', np.int64(dsetgrp.dtype.itemsize))
 
         # Now call the parent class's version to do the actual setting
         # of Attributes.
@@ -1013,18 +1014,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Get the different attributes this marshaller uses.
 
-        type_string = convert_attribute_to_string( \
+        type_string = convert_attribute_to_string(
             attributes['Python.Type'])
-        underlying_type = convert_attribute_to_string( \
+        underlying_type = convert_attribute_to_string(
             attributes['Python.numpy.UnderlyingType'])
         shape = attributes['Python.Shape']
-        container = convert_attribute_to_string( \
+        container = convert_attribute_to_string(
             attributes['Python.numpy.Container'])
         python_empty = attributes['Python.Empty']
-        python_fields = convert_attribute_to_string_array( \
+        python_fields = convert_attribute_to_string_array(
             attributes['Python.Fields'])
 
-        matlab_class = convert_attribute_to_string( \
+        matlab_class = convert_attribute_to_string(
             attributes['MATLAB_class'])
         matlab_empty = attributes['MATLAB_empty']
 
@@ -1215,8 +1216,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         nchars = 1
                     else:
                         nchars = int(int(
-                                     underlying_type[len('str'):])
-                                     / 32)
+                            underlying_type[len('str'):]) / 32)
                     data = np.zeros(tuple(shape),
                                     dtype='U' + str(nchars))
                 elif struct_dtype is not None:
@@ -1258,15 +1258,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if underlying_type == 'bytes':
                     data = np.bytes_(b'')
                 else:
-                    data = convert_to_numpy_bytes(data, \
-                        length=int(underlying_type[5:])//8)
+                    data = convert_to_numpy_bytes(
+                        data, length=int(underlying_type[5:]) // 8)
             elif underlying_type.startswith('str') \
                     or matlab_class == 'char':
                 if underlying_type == 'str':
                     data = np.unicode_('')
                 elif underlying_type.startswith('str'):
-                    data = convert_to_numpy_str(data, \
-                        length=int(underlying_type[3:])//32)
+                    data = convert_to_numpy_str(
+                        data, length=int(underlying_type[3:]) // 32)
                 else:
                     data = convert_to_numpy_str(data)
 
@@ -1319,9 +1319,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # field is set to object).
             if matlab_empty == 1:
                 if matlab_fields is None:
-                    data = np.zeros(tuple(np.uint64(data)), \
-                        dtype=self.__MATLAB_classes_reverse[ \
-                        matlab_class])
+                    data = np.zeros(
+                        tuple(np.uint64(data)),
+                        dtype=self.__MATLAB_classes_reverse[
+                            matlab_class])
                 else:
                     dt_whole = list()
                     for k in matlab_fields:
@@ -1412,7 +1413,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # type (just look up the entry in types). As it might be
         # returned as an ndarray, it needs to be run through
         # np.asscalar.
-        type_string = convert_attribute_to_string( \
+        type_string = convert_attribute_to_string(
             attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
@@ -1460,7 +1461,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). Otherwise, return it
         # as is.
-        type_string = convert_attribute_to_string( \
+        type_string = convert_attribute_to_string(
             attributes['Python.Type'])
         if type_string == 'str':
             return convert_to_str(data)
@@ -1555,9 +1556,10 @@ class PythonDictMarshaller(TypeMarshaller):
             grp2 = grp.create_group(name)
 
         # Write the metadata.
-        self.write_metadata(f, grp2, data, type_string, options, \
-            any_non_valid_str_keys=any_non_valid_str_keys, \
-            keys_as_str=keys_as_str, \
+        self.write_metadata(
+            f, grp2, data, type_string, options,
+            any_non_valid_str_keys=any_non_valid_str_keys,
+            keys_as_str=keys_as_str,
             key_str_types=b''.join(key_str_types))
 
         # Set the names (Datasets) and values (Datasets) to store the
@@ -1616,16 +1618,16 @@ class PythonDictMarshaller(TypeMarshaller):
             if any_non_valid_str_keys is True:
                 attributes['Python.dict.StoredAs'] = ('string',
                                                       'keys_values')
-                attributes['Python.dict.keys_values_names'] = \
-                    ('string_array', \
-                    [options.dict_like_keys_name, \
+                attributes['Python.dict.keys_values_names'] = (
+                    'string_array',
+                    [options.dict_like_keys_name,
                     options.dict_like_values_name])
             else:
                 attributes['Python.dict.StoredAs'] = ('string',
                                                       'individually')
                 attributes['Python.Fields'] = ('string_array', fields)
-                attributes['Python.dict.key_str_types'] = \
-                    ('string', convert_to_str(key_str_types))
+                attributes['Python.dict.key_str_types'] = (
+                    'string', convert_to_str(key_str_types))
 
         # If we are making it MATLAB compatible, then we can set the
         # MATLAB_fields Attribute as long as all keys are mappable to
@@ -1672,19 +1674,19 @@ class PythonDictMarshaller(TypeMarshaller):
 
         # Get the different attributes this marshaller uses.
 
-        type_string = convert_attribute_to_string( \
+        type_string = convert_attribute_to_string(
             attributes['Python.Type'])
-        python_fields = convert_attribute_to_string_array( \
+        python_fields = convert_attribute_to_string_array(
             attributes['Python.Fields'])
 
-        stored_as = convert_attribute_to_string( \
+        stored_as = convert_attribute_to_string(
             attributes['Python.dict.StoredAs'])
-        keys_values_names = convert_attribute_to_string_array( \
+        keys_values_names = convert_attribute_to_string_array(
             attributes['Python.dict.keys_values_names'])
         if keys_values_names is None:
             keys_values_names = (options.dict_like_keys_name,
                                  options.dict_like_values_name)
-        key_str_types = convert_attribute_to_string( \
+        key_str_types = convert_attribute_to_string(
             attributes['Python.dict.key_str_types'])
 
         # We can actually read the MATLAB_fields Attribute if it is present.
@@ -1831,7 +1833,7 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types).
-        type_string = convert_attribute_to_string( \
+        type_string = convert_attribute_to_string(
             attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
