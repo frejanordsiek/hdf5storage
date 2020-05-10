@@ -24,9 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-""" Module for the classes to marshall Python types to/from file.
-
-"""
+""" Module for the classes to marshall Python types to/from file. """
 
 import collections
 

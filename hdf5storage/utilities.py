@@ -24,8 +24,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-""" Module of functions for low level reading and writing, setting and
-delete HDF5 attributes, encoding and decoding strings and complex
+""" Module for various utility functions.
+
+There are utility functions for low level reading and writing, setting
+and delete HDF5 attributes, encoding and decoding strings and complex
 arrays, etc.
 
 """
