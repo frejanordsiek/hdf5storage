@@ -679,9 +679,10 @@ int16            0.1      np.int16
 int32            0.1      np.int32
 int64            0.1      np.int64
 char             0.1      np.str\_
-struct           0.1      structured np.ndarray
+struct           0.1      structured np.ndarray [17]_
 cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``
 ===============  =======  =================================
 
 .. [16] Depends on whether there is a complex part or not.
+.. [17] If the ``structs_as_dicts`` option is set then a dict will be used instead.

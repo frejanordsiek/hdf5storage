@@ -235,6 +235,7 @@ class Options(object):
                  convert_numpy_str_to_utf16=False,
                  convert_bools_to_uint8=False,
                  reverse_dimension_order=False,
+                 structs_as_dicts=False,
                  store_shape_for_empty=False,
                  complex_names=('r', 'i'),
                  group_for_references="/#refs#",
@@ -261,6 +262,7 @@ class Options(object):
         self._convert_numpy_str_to_utf16 = False
         self._convert_bools_to_uint8 = False
         self._reverse_dimension_order = False
+        self._structs_as_dicts = False
         self._store_shape_for_empty = False
         self._complex_names = ('r', 'i')
         self._group_for_references = "/#refs#"
@@ -291,6 +293,7 @@ class Options(object):
         self.convert_numpy_str_to_utf16 = convert_numpy_str_to_utf16
         self.convert_bools_to_uint8 = convert_bools_to_uint8
         self.reverse_dimension_order = reverse_dimension_order
+        self.structs_as_dicts = structs_as_dicts
         self.store_shape_for_empty = store_shape_for_empty
         self.complex_names = complex_names
         self.group_for_references = group_for_references
@@ -641,6 +644,24 @@ class Options(object):
             self._reverse_dimension_order = value
         if not self._reverse_dimension_order:
             self._matlab_compatible = False
+
+    @property
+    def structs_as_dicts(self):
+        """ Whether or not Matlab structures should be represented as
+        Python dicts rather than numpy structured arrays.
+
+        bool
+
+        Setting this to ``True`` can be helpful if your structures contain
+        very large arrays such that they can't be represented in the 2GB
+        maximum available to [numpy](https://github.com/numpy/numpy/issues/6235).
+        """
+        return self._structs_as_dicts
+
+    @structs_as_dicts.setter
+    def structs_as_dicts(self, value):
+        if isinstance(value, bool):
+            self._structs_as_dicts = value
 
     @property
     def store_shape_for_empty(self):
