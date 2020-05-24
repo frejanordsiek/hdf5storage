@@ -1555,6 +1555,9 @@ class File(object):
     sure that MATLAB can import data correctly (the HDF5 header is also
     set so MATLAB will recognize it).
 
+    This class is both Sized (can get its length with ``len``) and is a
+    Container (has the ``_contains__`` method).
+
     Example
     -------
 
@@ -1959,6 +1962,60 @@ class File(object):
                                                  self._options))
         # Return it all.
         return datas
+
+    def __len__(self):
+        """ Get the number of objects stored in the file root.
+
+        Returns
+        -------
+        length : int
+            The number of objects stored in the file root.
+
+        Raises
+        ------
+        IOError
+            If the file is not open.
+
+        """
+        # File operations must be synchronized.
+        with self._lock:
+            # Check that the file is open.
+            if self._file is None:
+                raise IOError('File is closed.')
+            # Get the length from the file, and then, if the Group for
+            # references is in the root group, subtract one if it is
+            # present (impossible if the length is zero).
+            length = len(self._file)
+            if length != 0 and posixpath.split( \
+                    self._options.group_for_references)[0] == '/' \
+                    and self._options.group_for_references \
+                    in self._file:
+                return length - 1
+            else:
+                return length
+
+    def __contains__(self, path):
+        """ Checks if an object exists at the specified `path`.
+
+        Parameters
+        ----------
+        path : str or bytes or Iterable
+            POSIX style path to check for the existence of an object at.
+
+        Raises
+        ------
+        IOError
+            If the file is not open.
+
+        """
+        groupname, targetname = utilities.process_path(path)
+        # File operations must be synchronized.
+        with self._lock:
+            # Check that the file is open.
+            if self._file is None:
+                raise IOError('File is closed.')
+            # Do the check.
+            return (posixpath.join(groupname, targetname) in self._file)
 
 
 def writes(mdict, **keywords):

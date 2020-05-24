@@ -73,6 +73,7 @@ File
 
 .. autoclass:: File
    :members:
+   :special-members:
    :show-inheritance:
 
 
