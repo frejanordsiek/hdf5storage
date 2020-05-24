@@ -113,7 +113,9 @@ from_julia_v7p3_to_v7p3 = dict()
 
 def julia_command(julia_file, fin, fout):
     subprocess.check_call(['julia', julia_file,
-                           fin, fout])
+                           fin, fout],
+                          stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL)
 
 
 def setup_module():
