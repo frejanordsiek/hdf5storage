@@ -72,7 +72,7 @@ File
 ----
 
 .. autoclass:: File
-   :members: close, flush, read, reads, write, writes, __contains__, __eq__, __getitem__, __iter__, __len__, __ne__, get, keys, items, values
+   :members: close, flush, read, reads, write, writes, __contains__, __delitem__, __eq__, __getitem__, __iter__, __len__, __ne__, __setitem__, clear, get, keys, items, pop, popitem, setdefault, update, values
    :show-inheritance:
 
 

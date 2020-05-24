@@ -1520,7 +1520,7 @@ class MarshallerCollection(object):
             return None, False
 
 
-class File(collections.abc.Mapping):
+class File(collections.abc.MutableMapping):
     """ Wrapper that allows writing and reading data from an HDF5 file.
 
     Opens an HDF5 file for reading (and optionally writing) Python
@@ -1556,8 +1556,9 @@ class File(collections.abc.Mapping):
     sure that MATLAB can import data correctly (the HDF5 header is also
     set so MATLAB will recognize it).
 
-    This class is a Mapping, meaning that it supports many of the
-    operations allowed on ``dict`` except for mutating operations.
+    This class is a MutableMapping, meaning that it supports many of the
+    operations allowed on ``dict``, including operations that modify
+    it.
 
     Example
     -------
@@ -2084,6 +2085,75 @@ class File(collections.abc.Mapping):
 
         """
         return self.reads((path, ))[0]
+
+    def __setitem__(self, path, data):
+        """ Writes one piece of data into the file.
+
+        A wrapper around the ``writes`` method to write a single piece
+        of data, `data`, to a single location, `path`.
+
+        Parameters
+        ----------
+        path : str or bytes or Iterable
+            The POSIX style path to write the data to. The directory
+            name is the Group to put it in and the basename is the
+            Dataset/Group name to write it to.
+        data : any
+            The python object to write.
+
+        Raises
+        ------
+        IOError
+            If the file is closed or it isn't writable.
+        TypeError
+            If `path` is an invalid type.
+        NotImplementedError
+            If writing `data` is not supported.
+        exceptions.TypeNotMatlabCompatibleError
+            If writing a type not compatible with MATLAB and the
+            ``action_for_matlab_incompatible`` option is set to
+            ``'error'``.
+
+        See Also
+        --------
+        writes
+
+        """
+        self.writes({path: data})
+
+    def __delitem__(self, path):
+        """ Deletes one path from the file.
+
+        Deletes one location from the file specified by `path`.
+
+        Parameters
+        ----------
+        path : str or bytes or Iterable
+            The POSIX style path to write the data to. The directory
+            name is the Group to put it in and the basename is the
+            Dataset/Group name to write it to.
+
+        Raises
+        ------
+        IOError
+            If the file is closed or it isn't writable.
+        TypeError
+            If `path` is an invalid type.
+        KeyError
+            If there is no object at `path` in the file.
+
+        """
+        # File had to be opened writable.
+        if not self._writable:
+            raise IOError('File is not writable.')
+        # Process the path.
+        groupname, targetname = utilities.process_path(path)
+        # File operations must be synchronized.
+        with self._lock:
+            # Check that the file is open.
+            if self._file is None:
+                raise IOError('File is closed.')
+            del self._file[posixpath.join(groupname, targetname)]
 
 
 def writes(mdict, **keywords):
