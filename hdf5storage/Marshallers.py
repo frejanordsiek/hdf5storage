@@ -1089,6 +1089,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 except:
                     pass
 
+            if matlab_class == 'struct' and options.structs_as_dicts:
+                return struct_data
+
             # If it isn't multi element, we need to pack all the values
             # in struct_array inside of numpy.object_'s so that the code
             # after this that depends on this will work.
