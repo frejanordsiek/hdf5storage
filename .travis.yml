@@ -30,9 +30,9 @@ before_install:
 
 # command to install dependencies
 #
-# Seem to need newer Numpy as well.
+# Seem to need newer Numpy and Cython as well.
 install:
-  - pip install -U numpy
+  - pip install -U numpy Cython
   - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
   - pip install -e examples/example_hdf5storage_marshaller_plugin
