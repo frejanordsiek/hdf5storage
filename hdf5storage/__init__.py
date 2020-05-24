@@ -2058,7 +2058,7 @@ class File(collections.abc.Mapping):
         Parameters
         ----------
         path : str or bytes or Iterable, optional
-            The POSIX style path to read from. The default is ``'/'``.
+            The POSIX style path to read from.
 
         Returns
         -------
