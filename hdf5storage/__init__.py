@@ -41,6 +41,7 @@ import copy
 import datetime
 import importlib
 import inspect
+import itertools
 import os
 import pkgutil
 import posixpath
@@ -1555,8 +1556,9 @@ class File(object):
     sure that MATLAB can import data correctly (the HDF5 header is also
     set so MATLAB will recognize it).
 
-    This class is both Sized (can get its length with ``len``) and is a
-    Container (has the ``_contains__`` method).
+    This class is a Collection, meaning that it can be iterated over,
+    has a length, and the presence of objects can be tested with
+    ``in``.
 
     Example
     -------
@@ -1619,6 +1621,7 @@ class File(object):
     See Also
     --------
     utilities.escape_path
+    collections.abc.Collection
 
     """
 
@@ -2016,6 +2019,36 @@ class File(object):
                 raise IOError('File is closed.')
             # Do the check.
             return (posixpath.join(groupname, targetname) in self._file)
+
+    def __iter__(self):
+        """ Get an Iterator over the names in the file root.
+
+        Returns
+        -------
+        it : Iterator
+            Iterator over the names of the objects in the file root.
+
+        Raises
+        ------
+        IOError
+            If the file is not open.
+
+        """
+        # File operations must be synchronized.
+        with self._lock:
+            # Check that the file is open.
+            if self._file is None:
+                raise IOError('File is closed.')
+            # We will use the output of the __iter__ method of the file,
+            # but if the Group for references is in the root Group, we
+            # will need to filter it out.
+            refgrp = self._options.group_for_references
+            it = self._file.__iter__()
+            if posixpath.split(refgrp)[0] == '/':
+                refgrp = refgrp[1:]
+                return itertools.dropwhile(lambda k: k == refgrp, it)
+            else:
+                return it
 
 
 def writes(mdict, **keywords):
