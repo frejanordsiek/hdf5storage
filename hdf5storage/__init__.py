@@ -1520,7 +1520,7 @@ class MarshallerCollection(object):
             return None, False
 
 
-class File(object):
+class File(collections.abc.Mapping):
     """ Wrapper that allows writing and reading data from an HDF5 file.
 
     Opens an HDF5 file for reading (and optionally writing) Python
@@ -1556,9 +1556,8 @@ class File(object):
     sure that MATLAB can import data correctly (the HDF5 header is also
     set so MATLAB will recognize it).
 
-    This class is a Collection, meaning that it can be iterated over,
-    has a length, and the presence of objects can be tested with
-    ``in``.
+    This class is a Mapping, meaning that it supports many of the
+    operations allowed on ``dict`` except for mutating operations.
 
     Example
     -------
@@ -2049,6 +2048,36 @@ class File(object):
                 return itertools.dropwhile(lambda k: k == refgrp, it)
             else:
                 return it
+
+    def __getitem__(self, path):
+        """ Reads the object at the specified `path` from the file.
+
+        A wrapper around the ``reads`` method to read a single piece of
+        data at the single location `path`.
+
+        Parameters
+        ----------
+        path : str or bytes or Iterable, optional
+            The POSIX style path to read from. The default is ``'/'``.
+
+        Returns
+        -------
+        data : any
+            The data that is read.
+
+        Raises
+        ------
+        IOError
+            If the file is closed.
+        exceptions.CantReadError
+            If reading the data can't be done.
+
+        See Also
+        --------
+        reads
+
+        """
+        return self.reads((path, ))[0]
 
 
 def writes(mdict, **keywords):
