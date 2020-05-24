@@ -647,14 +647,14 @@ class Options(object):
 
     @property
     def structs_as_dicts(self):
-        """ Whether or not Matlab structures should be represented as
-        Python dicts rather than numpy structured arrays.
+        """ Whether Matlab structs should be read as dicts.
 
         bool
 
         Setting this to ``True`` can be helpful if your structures contain
-        very large arrays such that they can't be represented in the 2GB
-        maximum available to [numpy](https://github.com/numpy/numpy/issues/6235).
+        very large arrays such that their dtypes, if converted to
+        ``np.ndarray``, would exceed the 2GB maximum allowed by
+        `NumPy <https://github.com/numpy/numpy/issues/6235>`_.
         """
         return self._structs_as_dicts
 
