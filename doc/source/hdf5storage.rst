@@ -6,7 +6,7 @@ hdf5storage
 .. automodule:: hdf5storage
 
 .. autosummary::
-   
+
    write
    writes
    read
@@ -15,6 +15,7 @@ hdf5storage
    loadmat
    get_default_MarshallerCollection
    make_new_default_MarshallerCollection
+   File
    Options
    MarshallerCollection
 
@@ -65,6 +66,14 @@ make_new_default_MarshallerCollection
 -------------------------------------
 
 .. autofunction:: make_new_default_MarshallerCollection
+
+
+File
+----
+
+.. autoclass:: File
+   :members:
+   :show-inheritance:
 
 
 Options

@@ -45,6 +45,7 @@ import os
 import pkgutil
 import posixpath
 import sys
+import threading
 
 # From setuptools, despite name.
 import pkg_resources
@@ -1518,41 +1519,430 @@ class MarshallerCollection(object):
             return None, False
 
 
-def writes(mdict, filename='data.h5', truncate_existing=False,
-           truncate_invalid_matlab=False, options=None, **keywords):
-    """ Writes data into an HDF5 file (high level).
+class File(object):
+    """ Wrapper that allows writing and reading data from an HDF5 file.
 
-    High level function to store one or more Python types (data) to
-    specified pathes in an HDF5 file. The paths are specified as POSIX
-    style paths where the directory name is the Group to put it in and
-    the basename is the name to write it to.
+    Opens an HDF5 file for reading (and optionally writing) Python
+    objects from/to. The ``close`` method must be called to close the
+    file. This class supports context handling with the ``with``
+    statement.
+
+    Python objects are read and written from/to paths. Paths are POSIX
+    style and can either be given directly as ``str`` or ``bytes``, or
+    the separated path can be given as an iterable of ``str`` and
+    ``bytes``. Each part of a separated path is escaped using
+    ``utilities.escape_path``. Otherwise, the path is assumed to be
+    already escaped. Escaping is done so that targets with a part that
+    starts with one or more periods, contain slashes, and/or contain
+    nulls can be used without causing the wrong Group to be looked in or
+    the wrong target to be looked at. It essentially allows one to make
+    a Dataset named ``'..'`` or ``'a/a'`` instead of moving around in
+    the Dataset hierarchy.
 
     There are various options that can be used to influence how the data
-    is written. They can be passed as an already constructed ``Options``
-    into `options` or as additional keywords that will be used to make
-    one by ``options = Options(**keywords)``.
+    is read and written. They can be passed as an already constructed
+    ``Options`` into `options` or as additional keywords that will be
+    used to make one by ``options = Options(**keywords)``.
 
     Two very important options are ``store_python_metadata`` and
     ``matlab_compatible``, which are ``bool``. The first makes it so
-    that enough metadata (HDF5 Attributes) are written that `data` can
-    be read back accurately without it (or its contents if it is a
+    that enough metadata (HDF5 Attributes) are written that data can be
+    read back accurately without it (or its contents if it is a
     container type) ending up different types, transposed in the case of
     numpy arrays, etc. The latter makes it so that the appropriate
     metadata is written, string and bool and complex types are converted
     properly, and numpy arrays are transposed; which is needed to make
-    sure that MATLAB can import `data` correctly (the HDF5 header is
-    also set so MATLAB will recognize it).
+    sure that MATLAB can import data correctly (the HDF5 header is also
+    set so MATLAB will recognize it).
 
-    Paths are POSIX style and can either be given directly as ``str`` or
-    ``bytes``, or the separated path can be given as an iterable of
-    ``str`` and ``bytes``. Each part of a separated path is escaped
-    using ``utilities.escape_path``. Otherwise, the path is assumed to
-    be already escaped. Escaping is done so that targets with a part
-    that starts with one or more periods, contain slashes, and/or
-    contain nulls can be used without causing the wrong Group to be
-    looked in or the wrong target to be looked at. It essentially allows
-    one to make a Dataset named ``'..'`` or ``'a/a'`` instead of moving
-    around in the Dataset hierarchy.
+    Example
+    -------
+
+       >>> import hdf5storage
+       >>> with hdf5storage.File('data.h5', writable=True) as f:
+       >>>     f.write(4, '/a')
+       >>>     a = f.read('/a')
+       >>> a
+       4
+
+    Note
+    ----
+    This class is threadsafe to the ``threading`` module, but not the
+    ``multiprocessing`` module.
+
+    Warning
+    -------
+    A passed ``Options`` object should not be changed after creating an
+    instance of this class until it is closed.
+
+    Parameters
+    ----------
+    filename : str, optional
+        The path to the HDF5 file to open. The default is ``'data.h5'``.
+    writable : bool, optional
+        Whether the writing should be allowed or not. The default is
+        ``False`` (readonly).
+    truncate_existing : bool, optional
+        If `writable` is ``True``, whether to truncate the file if it
+        already exists before writing to it.
+    truncate_invalid_matlab : bool, optional
+        If `writable` is ``True``, whether to truncate a file if
+        matlab_compatibility is being done and the file doesn't have the
+        proper header (userblock in HDF5 terms) setup for MATLAB
+        metadata to be placed.
+    options : Options or None, optional
+        The options to use when reading and/or writing. Is mutually
+        exclusive with any additional keyword arguments given (set to
+        ``None`` or don't provide the argument at all to use them).
+    **keywords :
+        If `options` was not provided or was ``None``, these are used as
+        arguments to make a ``Options``.
+
+    Raises
+    ------
+    TypeError
+        If an argument has an invalid type.
+    ValueError
+        If an argument has an invalid value.
+    IOError
+        If the file cannot be opened or some other file operation
+        failed.
+
+    Attributes
+    ----------
+    closed : bool
+        Whether the file is closed or not.
+
+    See Also
+    --------
+    utilities.escape_path
+
+    """
+
+    def __init__(self, filename='data.h5', writable=False,
+                 truncate_existing=False, truncate_invalid_matlab=False,
+                 options=None, **keywords):
+        # Before we do anything else, we need to make the attributes for
+        # the file handle, the options, and a lock. This way, these
+        # attributes are available in __del__ even if there is an
+        # exception in the constructor.
+        self._file = None
+        self._options = None
+        self._lock = threading.Lock()
+        # Check the types of the arguments.
+        if not isinstance(filename, str):
+            raise TypeError('filename must be str.')
+        if not isinstance(writable, bool):
+            raise TypeError('writable must be bool.')
+        if not isinstance(truncate_existing, bool):
+            raise TypeError('truncate_existing must be bool.')
+        if not isinstance(truncate_invalid_matlab, bool):
+            raise TypeError('truncate_invalid_matlab must be bool.')
+        # Make the Options if we weren't given it.
+        if options is None:
+            options = Options(**keywords)
+        elif not isinstance(options, Options):
+            raise TypeError('options must be an Options or None.')
+        elif len(keywords) != 0:
+            raise ValueError('Extra keyword arguments cannot be passed '
+                             'if options is not None.')
+        # Store the required arguments.
+        self._writable = True
+        self._options = options
+        # Open the file. If writable is False, we can just open it. If
+        # it is True, the process is longer.
+        if not writable:
+            self._file = h5py.File(filename, mode='r')
+        else:
+            # If the file doesn't already exist or the option is set to
+            # truncate it if it does, just open it truncating whatever
+            # is there. Otherwise, open it for read/write access without
+            # truncating. Now, if we are doing matlab compatibility and
+            # it doesn't have a big enough userblock (for metadata for
+            # MATLAB to be able to tell it is a valid .mat file) and the
+            # truncate_invalid_matlab is set, then it needs to be closed
+            # and re-opened with truncation. Whenever we create the file
+            # from scratch, even if matlab compatibility isn't being
+            # done, a sufficiently sized userblock is going to be
+            # allocated (smallest size is 512) for future use (after
+            # all, someone might want to turn it to a .mat file later
+            # and need it and it is only 512 bytes).
+            if truncate_existing or not os.path.isfile(filename):
+                self._file = h5py.File(filename, mode='w',
+                                       userblock_size=512)
+            else:
+                self._file = h5py.File(filename, mode='a')
+                if options.matlab_compatible \
+                        and truncate_invalid_matlab \
+                        and self._file.userblock_size < 128:
+                    self._file.close()
+                    self._file = None
+                    self._file = h5py.File(filename, mode='w',
+                                           userblock_size=512)
+            # If matlab_compatible is set and we have a big enough
+            # userblock, get the userblock size, close  the file, set
+            # the userblock, and then reopen the file.
+            if options.matlab_compatible \
+                    and self._file.userblock_size >= 128:
+                self._file.close()
+                self._file = None
+                # Get the time.
+                now = datetime.datetime.now()
+                # Construct the leading string. The MATLAB one looks
+                # like
+                #
+                # s = 'MATLAB 7.3 MAT-file, Platform: GLNXA64, ' \
+                #     'Created on: ' \
+                #     + now.strftime('%a %b %d %H:%M:%S %Y') \
+                #     + ' HDF5 schema 1.00 .'
+                #
+                # Platform is going to be changed to hdf5storage
+                # version.
+                s = 'MATLAB 7.3 MAT-file, Platform: hdf5storage ' \
+                    + __version__ + ', Created on: ' \
+                    + now.strftime('%a %b %d %H:%M:%S %Y') \
+                    + ' HDF5 schema 1.00 .'
+
+                # Make the bytearray while padding with spaces up to
+                # 128-12 (the minus 12 is there since the last 12 bytes
+                # are special).
+                b = bytearray(s + (128-12-len(s))*' ', encoding='utf-8')
+                # Add 8 nulls (0) and the magic number (or something)
+                # that MATLAB uses.
+                b.extend(bytearray.fromhex('00000000 00000000 0002494D'))
+                # Now, write it to the beginning of the file.
+                with open(filename, 'r+b') as f:
+                    f.write(b)
+                # Done writing the userblock, so we can re-open the
+                # file.
+                self._file = h5py.File(filename, mode='a')
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, tp, value, traceback):
+        self.close()
+
+    def __del__(self):
+        try:
+            self.close()
+        except:
+            pass
+
+    @property
+    def closed(self):
+        return (self._file is None)
+
+    def close(self):
+        """ Closes the file. """
+        with self._lock:
+            self._file.close()
+            self._file = None
+
+    def flush(self):
+        """ Flush contents to disk.
+
+        Raises
+        ------
+        IOError
+            If the file is closed.
+
+        """
+        with self._lock:
+            if self._file is None:
+                raise IOError('File is closed.')
+            if self._writable:
+                self._file.flush()
+
+    def write(self, data, path='/'):
+        """ Writes one piece of data into the file.
+
+        A wrapper around the ``writes`` method to write a single piece
+        of data, `data`, to a single location, `path`.
+
+        Parameters
+        ----------
+        data : any
+            The python object to write.
+        path : str or bytes or Iterable, optional
+            The POSIX style path to write the data to. The directory
+            name is the Group to put it in and the basename is the
+            Dataset/Group name to write it to. The default is ``'/'``.
+
+        Raises
+        ------
+        IOError
+            If the file is closed or it isn't writable.
+        TypeError
+            If `path` is an invalid type.
+        NotImplementedError
+            If writing `data` is not supported.
+        exceptions.TypeNotMatlabCompatibleError
+            If writing a type not compatible with MATLAB and the
+            ``action_for_matlab_incompatible`` option is set to
+            ``'error'``.
+
+        See Also
+        --------
+        writes
+
+        """
+        self.writes({path: data})
+
+    def writes(self, mdict):
+        """ Write one or more pieces of data to the file.
+
+        Stores one or more python objects in `mdict` to the specified
+        locations in the HDF5. The paths are specified as POSIX style
+        paths where the directory name is the Group to put it in and the
+        basename is the Dataset/Group name to write to.
+
+        Parameters
+        ----------
+        mdict : Mapping
+            A ``dict`` or similar Mapping type of paths and the data to
+            write to the file. The paths, the keys, must be POSIX style
+            paths where the directory name is the Group to put it in and
+            the basename is the name to write it to. The values are the
+            data to write.
+
+        Raises
+        ------
+        IOError
+            If the file is closed or it isn't writable.
+        TypeError
+            If a path in `mdict` is an invalid type.
+        NotImplementedError
+            If writing an object in `mdict` is not supported.
+        exceptions.TypeNotMatlabCompatibleError
+            If writing a type not compatible with MATLAB and the
+            ``action_for_matlab_incompatible`` option is set to
+            ``'error'``.
+
+        """
+        # Check the type of mdict. Technically a check of Mapping is
+        # sufficient for dict but it is slow, so we check for dict
+        # explicitly first.
+        if not isinstance(mdict, (dict, collections.abc.Mapping)):
+            raise TypeError('mdict must be a Mapping.')
+        # File had to be opened writable.
+        if not self._writable:
+            raise IOError('File is not writable.')
+        # Go through mdict, extract the paths and data, and process the
+        # paths. A list of tulpes for each piece of data to write will
+        # be constructed where he first element is the group name, the
+        # second the target name (name of the Dataset/Group holding the
+        # data), and the third element the data to write.
+        towrite = []
+        for p, v in mdict.items():
+            groupname, targetname = utilities.process_path(p)
+            towrite.append((groupname, targetname, v))
+        # File operations must be synchronized.
+        with self._lock:
+            # Check that the file is open.
+            if self._file is None:
+                raise IOError('File is closed.')
+            # Go through each element of towrite and write them with the
+            # low level write function.
+            for groupname, targetname, data in towrite:
+                utilities.write_data(
+                    self._file,
+                    self._file.require_group(groupname),
+                    targetname, data,
+                    None, self._options)
+
+    def read(self, path='/'):
+        """ Reads one piece of data from the file.
+
+        A wrapper around the ``reads`` method to read a single piece of
+        data at the   single location `path`.
+
+        Parameters
+        ----------
+        path : str or bytes or Iterable, optional
+            The POSIX style path to read from. The default is ``'/'``.
+
+        Returns
+        -------
+        data : any
+            The data that is read.
+
+        Raises
+        ------
+        IOError
+            If the file is closed.
+        exceptions.CantReadError
+            If reading the data can't be done.
+
+        See Also
+        --------
+        reads
+
+        """
+        return self.reads((path, ))[0]
+
+    def reads(self, paths):
+        """ Read pieces of data from the file.
+
+        Parameters
+        ----------
+        paths : Iterable
+            An iterable of paths to read data from. Each must be a POSIX
+            style path.
+
+        Returns
+        -------
+        datas : Iterable
+            An Iterable holding the piece of data for each path in
+            `paths` in the same order.
+
+        Raises
+        ------
+        IOError
+            If the file is closed.
+        exceptions.CantReadError
+            If reading the data can't be done.
+
+        """
+        if not isinstance(paths, collections.abc.Iterable):
+            raise TypeError('paths must be an Iterable.')
+        # Process the paths and stuff the group names and target names
+        # as tuples into toread.
+        toread = [utilities.process_path(p) for p in paths]
+        # File operations must be synchronized.
+        with self._lock:
+            # Check that the file is open.
+            if self._file is None:
+                raise IOError('File is closed.')
+            # Read the data item by item
+            datas = []
+            for groupname, targetname in toread:
+                # Check that the containing group is in the file and is
+                # indeed a group. If it isn't an error needs to be
+                # thrown.
+                if groupname not in self._file \
+                        or not isinstance(self._file[groupname],
+                                          h5py.Group):
+                    raise exceptions.CantReadError(
+                        'Could not find containing Group '
+                        + groupname + '.')
+                # Hand off everything to the low level reader.
+                datas.append(utilities.read_data(self._file,
+                                                 self._file[groupname],
+                                                 targetname,
+                                                 self._options))
+        # Return it all.
+        return datas
+
+
+def writes(mdict, **keywords):
+    """ Writes data into an HDF5 file.
+
+    Wrapper around ``File`` and ``File.writes``. Specifically, this
+    function is
+
+        >>> with File(writable=True, **keywords) as f:
+        >>>     f.writes(mdict)
 
     Parameters
     ----------
@@ -1562,223 +1952,107 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
         POSIX style paths where the directory name is the Group to put
         it in and the basename is the name to write it to. The values
         are the data to write.
-    filename : str, optional
-        The name of the HDF5 file to write `data` to.
-    truncate_existing : bool, optional
-        Whether to truncate the file if it already exists before writing
-        to it.
-    truncate_invalid_matlab : bool, optional
-        Whether to truncate a file if matlab_compatibility is being
-        done and the file doesn't have the proper header (userblock in
-        HDF5 terms) setup for MATLAB metadata to be placed.
-    options : Options, optional
-        The options to use when writing. Is mutually exclusive with any
-        additional keyword arguments given (set to ``None`` or don't
-        provide to use them).
     **keywords :
-        If `options` was not provided or was ``None``, these are used as
-        arguments to make a ``Options``.
+        Extra keyword arguments to pass to ``File``.
 
     Raises
     ------
     TypeError
-        If a path is of an invalid type.
+        If an argument has an invalid type.
+    ValueError
+        If an argument has an invalid value.
+    IOError
+        If the file cannot be opened or some other file operation
+        failed.
     NotImplementedError
-        If writing `data` is not supported.
+        If writing anything in `mdict` is not supported.
     exceptions.TypeNotMatlabCompatibleError
-        If writing a type not compatible with MATLAB and
-        `options.action_for_matlab_incompatible` is set to ``'error'``.
+        If writing a type not compatible with MATLAB and the
+        ``action_for_matlab_incompatible`` option is set to
+        ``'error'``.
 
     See Also
     --------
-    utilities.process_path
-    utilities.escape_path
-    write : Writes just a single piece of data
-    reads
-    read
-    Options
-    utilities.write_data : Low level version
+    File
+    File.writes
 
     """
-    # Pack the different options into an Options class if an Options was
-    # not given.
-    if not isinstance(options, Options):
-        options = Options(**keywords)
-
-    # Go through mdict, extract the paths and data, and process the
-    # paths. A list of tulpes for each piece of data to write will be
-    # constructed where he first element is the group name, the second
-    # the target name (name of the Dataset/Group holding the data), and
-    # the third element the data to write.
-    towrite = []
-    for p, v in mdict.items():
-        groupname, targetname = utilities.process_path(p)
-
-        # Pack into towrite.
-        towrite.append((groupname, targetname, v))
-
-    # Open/create the hdf5 file but don't write the data yet since the
-    # userblock still needs to be set. This is all wrapped in a try
-    # block, so that the file can be closed if any errors happen (the
-    # error is re-raised).
-    f = None
-    try:
-
-        # If the file doesn't already exist or the option is set to
-        # truncate it if it does, just open it truncating whatever is
-        # there. Otherwise, open it for read/write access without
-        # truncating. Now, if we are doing matlab compatibility and it
-        # doesn't have a big enough userblock (for metadata for MATLAB
-        # to be able to tell it is a valid .mat file) and the
-        # truncate_invalid_matlab is set, then it needs to be closed and
-        # re-opened with truncation. Whenever we create the file from
-        # scratch, even if matlab compatibility isn't being done, a
-        # sufficiently sized userblock is going to be allocated
-        # (smallest size is 512) for future use (after all, someone
-        # might want to turn it to a .mat file later and need it and it
-        # is only 512 bytes).
-
-        if truncate_existing or not os.path.isfile(filename):
-            f = h5py.File(filename, mode='w', userblock_size=512)
-        else:
-            f = h5py.File(filename, mode='a')
-            if options.matlab_compatible and truncate_invalid_matlab \
-                    and f.userblock_size < 128:
-                f.close()
-                f = h5py.File(filename, mode='w', userblock_size=512)
-    except:
-        raise
-    finally:
-        # If the hdf5 file was opened at all, get the userblock size and
-        # close it since we need to set the userblock.
-        if isinstance(f, h5py.File):
-            userblock_size = f.userblock_size
-            f.close()
-        else:
-            raise IOError('Unable to create or open file.')
-
-    # If we are doing MATLAB formatting and there is a sufficiently
-    # large userblock, write the new userblock. The same sort of error
-    # handling is used.
-    if options.matlab_compatible and userblock_size >= 128:
-        # Get the time.
-        now = datetime.datetime.now()
-
-        # Construct the leading string. The MATLAB one looks like
-        #
-        # s = 'MATLAB 7.3 MAT-file, Platform: GLNXA64, Created on: ' \
-        #     + now.strftime('%a %b %d %H:%M:%S %Y') \
-        #     + ' HDF5 schema 1.00 .'
-        #
-        # Platform is going to be changed to hdf5storage version.
-
-        s = 'MATLAB 7.3 MAT-file, Platform: hdf5storage ' \
-            + __version__ + ', Created on: ' \
-            + now.strftime('%a %b %d %H:%M:%S %Y') \
-            + ' HDF5 schema 1.00 .'
-
-        # Make the bytearray while padding with spaces up to 128-12
-        # (the minus 12 is there since the last 12 bytes are special.
-
-        b = bytearray(s + (128-12-len(s))*' ', encoding='utf-8')
-
-        # Add 8 nulls (0) and the magic number (or something) that
-        # MATLAB uses.
-
-        b.extend(bytearray.fromhex('00000000 00000000 0002494D'))
-
-        # Now, write it to the beginning of the file.
-
-        try:
-            fd = open(filename, 'r+b')
-            fd.write(b)
-        except:
-            raise
-        finally:
-            fd.close()
-
-    # Open the hdf5 file again and write the data, making the Group if
-    # necessary. This is all wrapped in a try block, so that the file
-    # can be closed if any errors happen (the error is re-raised).
-    f = None
-    try:
-        f = h5py.File(filename, mode='a')
-
-        # Go through each element of towrite and write them.
-        for groupname, targetname, data in towrite:
-            # Need to make sure groupname is a valid group in f and grab its
-            # handle to pass on to the low level function.
-            if groupname not in f:
-                grp = f.require_group(groupname)
-            else:
-                grp = f[groupname]
-
-            # Hand off to the low level function.
-            utilities.write_data(f, grp, targetname, data,
-                                 None, options)
-    except:
-        raise
-    finally:
-        if isinstance(f, h5py.File):
-            f.close()
+    with File(writable=True, **keywords) as f:
+        f.writes(mdict)
 
 
 def write(data, path='/', **keywords):
-    """ Writes one piece of data into an HDF5 file (high level).
+    """ Writes one piece of data into an HDF5 file.
 
-    A wrapper around ``writes`` to write a single piece of data,
-    `data`, to a single location, `path`. It does the following
+    Wrapper around ``File`` and ``File.write``. Specifically, this
+    function is
 
-    ``writes(mdict={path: data}, **keywords)``
-
-    See Also
-    --------
-    writes : Writes more than one piece of data at once
-
-    """
-    writes(mdict={path: data}, **keywords)
-
-
-def reads(paths, filename='data.h5', options=None, **keywords):
-    """ Reads data from an HDF5 file (high level).
-
-    High level function to read one or more pieces of data from an HDF5
-    file located at the paths specified in `paths` into Python
-    types. Each path is specified as a POSIX style path where the data
-    to read is located.
-
-    There are various options that can be used to influence how the data
-    is read. They can be passed as an already constructed ``Options``
-    into `options` or as additional keywords that will be used to make
-    one by ``options = Options(**keywords)``.
-
-    Paths are POSIX style and can either be given directly as ``str`` or
-    ``bytes``, or the separated path can be given as an iterable of
-    ``str`` and ``bytes``. Each part of a separated path is escaped
-    using ``utilities.escape_path``. Otherwise, the path is assumed to
-    be already escaped. Escaping is done so that targets with a part
-    that starts with one or more periods, contain slashes, and/or
-    contain nulls can be used without causing the wrong Group to be
-    looked in or the wrong target to be looked at. It essentially allows
-    one to make a Dataset named ``'..'`` or ``'a/a'`` instead of moving
-    around in the Dataset hierarchy.
+        >>> with File(writable=True, **keywords) as f:
+        >>>     f.write(data, path)
 
     Parameters
     ----------
-    paths : iterable of paths
-        An iterable of paths to read data from. Each must be a POSIX
-        style path where the directory name is the Group to put it in
-        and the basename is the name to write it to. The format of
-        paths is described in the paragraph above.
-    filename : str, optional
-        The name of the HDF5 file to read data from.
-    options : Options, optional
-        The options to use when reading. Is mutually exclusive with any
-        additional keyword arguments given (set to ``None`` or don't
-        provide to use them).
+    data : any
+        The python object to write.
+    path : str or bytes or Iterable, optional
+        The POSIX style path to write the data to. The directory name is
+        the Group to put it in and the basename is the Dataset name to
+        write it to. The default is ``'/'``.
     **keywords :
-        If `options` was not provided or was ``None``, these are used as
-        arguments to make a ``Options``.
+        Extra keyword arguments to pass to ``File``.
+
+    Returns
+    -------
+    data : any
+        The data that is read.
+
+    Raises
+    ------
+    TypeError
+        If an argument has an invalid type.
+    ValueError
+        If an argument has an invalid value.
+    IOError
+        If the file cannot be opened or some other file operation
+        failed.
+    NotImplementedError
+        If writing `data` is not supported.
+    exceptions.TypeNotMatlabCompatibleError
+        If writing a type not compatible with MATLAB and the
+        ``action_for_matlab_incompatible`` option is set to
+        ``'error'``.
+
+    See Also
+    --------
+    File
+    File.write
+
+    """
+    with File(writable=True, **keywords) as f:
+        f.write(data, path)
+
+
+def reads(paths, **keywords):
+    """ Reads pieces of data from an HDF5 file.
+
+    Wrapper around ``File`` and ``File.reads`` with the exception that
+    the ``matlab_compatible`` option is set to ``False`` if it isn't
+    given explicitly. Specifically, this function does
+
+        >>> if 'matlab_compatible' in keywords:
+        >>>     extra_kws = dict()
+        >>> else:
+        >>>     extra_kws = {'matlab_compatible': False}
+        >>> with File(writable=False, **extra_kws, **keywords) as f:
+        >>>     f.reads(paths)
+
+    Parameters
+    ----------
+    paths : Iterable
+        An iterable of paths to read data from. Each must be a POSIX
+        style path.
+    **keywords :
+        Extra keyword arguments to pass to ``File``.
 
     Returns
     -------
@@ -1788,83 +2062,79 @@ def reads(paths, filename='data.h5', options=None, **keywords):
 
     Raises
     ------
+    TypeError
+        If an argument has an invalid type.
+    ValueError
+        If an argument has an invalid value.
+    IOError
+        If the file cannot be opened or some other file operation
+        failed.
+    IOError
+        If the file is closed.
     exceptions.CantReadError
         If reading the data can't be done.
 
     See Also
     --------
-    utilities.process_path
-    utilities.escape_path
-    read : Reads just a single piece of data
-    writes
-    write
-    Options
-    utilities.read_data : Low level version.
+    File
+    File.read
 
     """
-    # Pack the different options into an Options class if an Options was
-    # not given. By default, the matlab_compatible option is set to
-    # False. So, if it wasn't passed in the keywords, this needs to be
-    # added to override the default value (True) for a new Options.
-    if not isinstance(options, Options):
-        kw = copy.deepcopy(keywords)
-        if 'matlab_compatible' not in kw:
-            kw['matlab_compatible'] = False
-        options = Options(**kw)
-
-    # Process the paths and stuff the group names and target names as
-    # tuples into toread.
-    toread = []
-    for p in paths:
-        groupname, targetname = utilities.process_path(p)
-
-        # Pack them into toread
-        toread.append((groupname, targetname))
-
-    # Open the hdf5 file and start reading the data. This is all wrapped
-    # in a try block, so that the file can be closed if any errors
-    # happen (the error is re-raised).
-    try:
-        f = None
-        f = h5py.File(filename, mode='r')
-
-        # Read the data item by item
-        datas = []
-        for groupname, targetname in toread:
-            # Check that the containing group is in f and is indeed a
-            # group. If it isn't an error needs to be thrown.
-            if groupname not in f \
-                    or not isinstance(f[groupname], h5py.Group):
-                raise exceptions.CantReadError(
-                    'Could not find containing Group '
-                    + groupname + '.')
-
-            # Hand off everything to the low level reader.
-            datas.append(utilities.read_data(f, f[groupname],
-                                             targetname, options))
-    except:
-        raise
-    finally:
-        if f is not None:
-            f.close()
-
-    return datas
+    if 'matlab_compatible' in keywords:
+        extra_kws = dict()
+    else:
+        extra_kws = {'matlab_compatible': False}
+    with File(writable=False, **extra_kws, **keywords) as f:
+        return f.reads(paths)
 
 
 def read(path='/', **keywords):
-    """ Reads one piece of data from an HDF5 file (high level).
+    """ Reads one piece of data from an HDF5 file.
 
-    A wrapper around ``reads`` to read a single piece of data at the
-    single location `path`. It does the following
+    Wrapper around ``File`` and ``File.reads`` with the exception that
+    the ``matlab_compatible`` option is set to ``False`` if it isn't
+    given explicitly. Specifically, this function does
 
-    ``return reads(paths=(path,), **keywords)[0]``
+        >>> if 'matlab_compatible' in keywords:
+        >>>     extra_kws = dict()
+        >>> else:
+        >>>     extra_kws = {'matlab_compatible': False}
+        >>> with File(writable=False, **extra_kws, **keywords) as f:
+        >>>     f.read(path)
+
+    Parameters
+    ----------
+    path : str or bytes or Iterable, optional
+        The POSIX style path to read from. The default is ``'/'``.
+    **keywords :
+        Extra keyword arguments to pass to ``File``.
+
+    Raises
+    ------
+    TypeError
+        If an argument has an invalid type.
+    ValueError
+        If an argument has an invalid value.
+    IOError
+        If the file cannot be opened or some other file operation
+        failed.
+    IOError
+        If the file is closed.
+    exceptions.CantReadError
+        If reading the data can't be done.
 
     See Also
     --------
-    reads : Reads more than one piece of data at once
+    File
+    File.reads
 
     """
-    return reads(paths=(path,), **keywords)[0]
+    if 'matlab_compatible' in keywords:
+        extra_kws = dict()
+    else:
+        extra_kws = {'matlab_compatible': False}
+    with File(writable=False, **extra_kws, **keywords) as f:
+        return f.read(path)
 
 
 def savemat(file_name, mdict, appendmat=True, format='7.3',
