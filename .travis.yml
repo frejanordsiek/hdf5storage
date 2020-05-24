@@ -8,8 +8,6 @@ notifications:
   email: false
 
 env:
-  - H5PY_VERSION="==2.3"
-  - H5PY_VERSION="==2.4"
   - H5PY_VERSION="==2.5"
   - H5PY_VERSION="==2.6"
   - H5PY_VERSION="==2.7"
