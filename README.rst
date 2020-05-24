@@ -327,6 +327,9 @@ Versions
      * Added a file object class :py:class:`hdf5storage.File` for
        opening a file and doing multiple read and/or write calls on the
        same file.
+     * ``reads``, ``read``, and ``loadmat`` now raise a ``KeyError`` if
+       an object can't be found as opposed to a
+       ``hdf5storage.exceptions.CantReadError``.
      * Issue #88. Made it so that objects inside the Group specified by
        ``Options.group_for_references`` cannot be read from or written
        to directly by the external API.

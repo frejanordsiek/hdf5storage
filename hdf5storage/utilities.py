@@ -436,6 +436,8 @@ def read_data(f, grp, name, options, dsetgrp=None):
 
     Raises
     ------
+    KeyError
+        If the data cannot be found.
     CantReadError
         If the data cannot be read successfully.
 
@@ -451,8 +453,8 @@ def read_data(f, grp, name, options, dsetgrp=None):
         try:
             dsetgrp = grp[name]
         except:
-            raise hdf5storage.exceptions.CantReadError(
-                'Could not find ' + posixpath.join(grp.name, name))
+            raise KeyError('Could not find '
+                           + posixpath.join(grp.name, name))
 
     # Get all attributes with values.
     defaultfactory = type(None)

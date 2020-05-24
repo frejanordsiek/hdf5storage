@@ -1888,6 +1888,8 @@ class File(collections.abc.Mapping):
         ------
         IOError
             If the file is closed.
+        KeyError
+            If the `path` cannot be found.
         exceptions.CantReadError
             If reading the data can't be done.
 
@@ -1917,6 +1919,8 @@ class File(collections.abc.Mapping):
         ------
         IOError
             If the file is closed.
+        KeyError
+            If a path cannot be found.
         exceptions.CantReadError
             If reading the data can't be done.
 
@@ -1954,7 +1958,7 @@ class File(collections.abc.Mapping):
                 if groupname not in self._file \
                         or not isinstance(self._file[groupname],
                                           h5py.Group):
-                    raise exceptions.CantReadError(
+                    raise KeyError(
                         'Could not find containing Group '
                         + groupname + '.')
                 # Hand off everything to the low level reader.
@@ -2069,6 +2073,8 @@ class File(collections.abc.Mapping):
         ------
         IOError
             If the file is closed.
+        KeyError
+            If the `path` cannot be found.
         exceptions.CantReadError
             If reading the data can't be done.
 
@@ -2213,6 +2219,8 @@ def reads(paths, **keywords):
         If an argument has an invalid type.
     ValueError
         If an argument has an invalid value.
+    KeyError
+        If a path cannot be found.
     IOError
         If the file cannot be opened or some other file operation
         failed.
@@ -2266,6 +2274,8 @@ def read(path='/', **keywords):
         If an argument has an invalid type.
     ValueError
         If an argument has an invalid value.
+    KeyError
+        If the `path` cannot be found.
     IOError
         If the file cannot be opened or some other file operation
         failed.
@@ -2455,6 +2465,8 @@ def loadmat(file_name, mdict=None, appendmat=True,
     ImportError
         If it is not a version 7.3 .mat file and the ``scipy`` module
         can't be found when dispatching to SciPy.
+    KeyError
+        If a variable cannot be found.
     exceptions.CantReadError
         If reading the data can't be done.
 
