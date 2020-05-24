@@ -327,6 +327,9 @@ Versions
      * Added a file object class :py:class:`hdf5storage.File` for
        opening a file and doing multiple read and/or write calls on the
        same file.
+     * Issue #88. Made it so that objects inside the Group specified by
+       ``Options.group_for_references`` cannot be read from or written
+       to directly by the external API.
      * Issue #64 and PR #87. Added ``structs_as_dicts`` that will cause MATLAB structs
        to be read as ``dict`` instead of structured ``np.dnarray``.
      * Issue #60. Platform label in the MAT file header changed to

@@ -1832,10 +1832,22 @@ class File(object):
         # paths. A list of tulpes for each piece of data to write will
         # be constructed where he first element is the group name, the
         # second the target name (name of the Dataset/Group holding the
-        # data), and the third element the data to write.
+        # data), and the third element the data to write. We do not
+        # allow any paths inside the Group specified by
+        # options.group_for_references.
         towrite = []
         for p, v in mdict.items():
             groupname, targetname = utilities.process_path(p)
+            if posixpath.isabs(groupname):
+                prefix = ''
+            else:
+                prefix = '/'
+            if '/' != posixpath.commonpath(
+                    (self._options.group_for_references,
+                     posixpath.join(prefix, groupname, targetname))):
+                raise ValueError('Cannot write to paths inside the the '
+                                 'Group specified by the '
+                                 'group_for_references option.')
             towrite.append((groupname, targetname, v))
         # File operations must be synchronized.
         with self._lock:
@@ -1907,8 +1919,22 @@ class File(object):
         if not isinstance(paths, collections.abc.Iterable):
             raise TypeError('paths must be an Iterable.')
         # Process the paths and stuff the group names and target names
-        # as tuples into toread.
-        toread = [utilities.process_path(p) for p in paths]
+        # as tuples into toread. We do not allow any paths inside the
+        # Group specified by options.group_for_references.
+        toread = []
+        for p in paths:
+            groupname, targetname = utilities.process_path(p)
+            if posixpath.isabs(groupname):
+                prefix = ''
+            else:
+                prefix = '/'
+            if '/' != posixpath.commonpath(
+                    (self._options.group_for_references,
+                     posixpath.join(prefix, groupname, targetname))):
+                raise ValueError('Cannot read from paths inside the the '
+                                 'Group specified by the '
+                                 'group_for_references option.')
+            toread.append((groupname, targetname))
         # File operations must be synchronized.
         with self._lock:
             # Check that the file is open.
