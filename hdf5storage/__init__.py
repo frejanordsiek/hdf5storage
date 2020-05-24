@@ -2065,7 +2065,9 @@ def reads(paths, **keywords):
     the ``matlab_compatible`` option is set to ``False`` if it isn't
     given explicitly. Specifically, this function does
 
-        >>> if 'matlab_compatible' in keywords:
+        >>> if 'matlab_compatible' in keywords or (
+        ...         'options' in keywords
+        ...          and keywords['options'] is not None):
         >>>     extra_kws = dict()
         >>> else:
         >>>     extra_kws = {'matlab_compatible': False}
@@ -2106,7 +2108,9 @@ def reads(paths, **keywords):
     File.read
 
     """
-    if 'matlab_compatible' in keywords:
+    if 'matlab_compatible' in keywords or (
+            'options' in keywords
+            and keywords['options'] is not None):
         extra_kws = dict()
     else:
         extra_kws = {'matlab_compatible': False}
@@ -2121,7 +2125,9 @@ def read(path='/', **keywords):
     the ``matlab_compatible`` option is set to ``False`` if it isn't
     given explicitly. Specifically, this function does
 
-        >>> if 'matlab_compatible' in keywords:
+        >>> if 'matlab_compatible' in keywords or (
+        ...         'options' in keywords
+        ...          and keywords['options'] is not None):
         >>>     extra_kws = dict()
         >>> else:
         >>>     extra_kws = {'matlab_compatible': False}
@@ -2155,7 +2161,9 @@ def read(path='/', **keywords):
     File.reads
 
     """
-    if 'matlab_compatible' in keywords:
+    if 'matlab_compatible' in keywords or (
+            'options' in keywords
+            and keywords['options'] is not None):
         extra_kws = dict()
     else:
         extra_kws = {'matlab_compatible': False}
