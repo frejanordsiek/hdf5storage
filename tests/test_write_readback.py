@@ -29,6 +29,8 @@ import copy
 import math
 import os
 import os.path
+import pathlib
+import posixpath
 import random
 import string
 import tempfile
@@ -73,6 +75,34 @@ class TestPythonMatlabFormat(object):
         self.dict_like = ['dict', 'OrderedDict']
 
     def write_readback(self, data, name, options, read_options=None):
+        # Randomly convert the name to other path types.
+        path_choices = (str, bytes,
+                        pathlib.PurePath,
+                        pathlib.PurePosixPath,
+                        pathlib.PureWindowsPath,
+                        pathlib.Path)
+        name_type_w = random.choice(path_choices)
+        name_type_r = random.choice(path_choices)
+        # Name to write with.
+        if name_type_w == bytes:
+            name_w = name.encode('utf-8')
+        elif name_type_w in (pathlib.PurePath, pathlib.PurePosixPath,
+                             pathlib.PosixPath):
+            name_w = name_type_w(name)
+        elif name_type_w != str:
+            name_w = name_type_w(name[posixpath.isabs(name):])
+        else:
+            name_w = name
+        # Name to read with.
+        if name_type_r == bytes:
+            name_r = name.encode('utf-8')
+        elif name_type_r in (pathlib.PurePath, pathlib.PurePosixPath,
+                             pathlib.PosixPath):
+            name_r = name_type_r(name)
+        elif name_type_r != str:
+            name_r = name_type_r(name[posixpath.isabs(name):])
+        else:
+            name_r = name
         # Write the data to the proper file with the given name, read it
         # back, and return the result. The file needs to be deleted
         # after to keep junk from building up. Different options can be
@@ -82,9 +112,9 @@ class TestPythonMatlabFormat(object):
             f = tempfile.mkstemp()
             os.close(f[0])
             filename = f[1]
-            hdf5storage.write(data, path=name, filename=filename,
+            hdf5storage.write(data, path=name_w, filename=filename,
                               options=options)
-            out = hdf5storage.read(path=name, filename=filename,
+            out = hdf5storage.read(path=name_r, filename=filename,
                                    options=read_options)
         except:
             raise
