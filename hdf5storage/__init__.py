@@ -53,9 +53,7 @@ import pkg_resources
 
 import h5py
 
-from .exceptions import Hdf5storageError, CantReadError, \
-    TypeNotMatlabCompatibleError
-from .utilities import process_path, escape_path, unescape_path
+from . import exceptions
 from . import utilities
 from . import Marshallers
 
@@ -437,7 +435,7 @@ class Options(object):
         See Also
         --------
         matlab_compatible
-        TypeNotMatlabCompatibleError
+        exceptions.TypeNotMatlabCompatibleError
 
         """
         return self._action_for_matlab_incompatible
@@ -742,7 +740,7 @@ class Options(object):
 
         See Also
         --------
-        escape_path
+        utilities.escape_path
 
         """
         return self._group_for_references
@@ -1534,7 +1532,7 @@ class File(collections.abc.MutableMapping):
     style and can either be given directly as ``str`` or ``bytes``, or
     the separated path can be given as an iterable of ``str`` and
     ``bytes``. Each part of a separated path is escaped using
-    ``escape_path``. Otherwise, the path is assumed to be
+    ``utilities.escape_path``. Otherwise, the path is assumed to be
     already escaped. Escaping is done so that targets with a part that
     starts with one or more periods, contain slashes, and/or contain
     nulls can be used without causing the wrong Group to be looked in or
@@ -1622,7 +1620,7 @@ class File(collections.abc.MutableMapping):
 
     See Also
     --------
-    escape_path
+    utilities.escape_path
     collections.abc.Collection
 
     """
@@ -1785,7 +1783,7 @@ class File(collections.abc.MutableMapping):
             If `path` is an invalid type.
         NotImplementedError
             If writing `data` is not supported.
-        TypeNotMatlabCompatibleError
+        exceptions.TypeNotMatlabCompatibleError
             If writing a type not compatible with MATLAB and the
             ``action_for_matlab_incompatible`` option is set to
             ``'error'``.
@@ -1822,7 +1820,7 @@ class File(collections.abc.MutableMapping):
             If a path in `mdict` is an invalid type.
         NotImplementedError
             If writing an object in `mdict` is not supported.
-        TypeNotMatlabCompatibleError
+        exceptions.TypeNotMatlabCompatibleError
             If writing a type not compatible with MATLAB and the
             ``action_for_matlab_incompatible`` option is set to
             ``'error'``.
@@ -1845,7 +1843,7 @@ class File(collections.abc.MutableMapping):
         # options.group_for_references.
         towrite = []
         for p, v in mdict.items():
-            groupname, targetname = process_path(p)
+            groupname, targetname = utilities.process_path(p)
             if posixpath.isabs(groupname):
                 prefix = ''
             else:
@@ -1893,7 +1891,7 @@ class File(collections.abc.MutableMapping):
             If the file is closed.
         KeyError
             If the `path` cannot be found.
-        CantReadError
+        exceptions.CantReadError
             If reading the data can't be done.
 
         See Also
@@ -1924,7 +1922,7 @@ class File(collections.abc.MutableMapping):
             If the file is closed.
         KeyError
             If a path cannot be found.
-        CantReadError
+        exceptions.CantReadError
             If reading the data can't be done.
 
         """
@@ -1935,7 +1933,7 @@ class File(collections.abc.MutableMapping):
         # Group specified by options.group_for_references.
         toread = []
         for p in paths:
-            groupname, targetname = process_path(p)
+            groupname, targetname = utilities.process_path(p)
             if posixpath.isabs(groupname):
                 prefix = ''
             else:
@@ -2017,7 +2015,7 @@ class File(collections.abc.MutableMapping):
             If the file is not open.
 
         """
-        groupname, targetname = process_path(path)
+        groupname, targetname = utilities.process_path(path)
         # File operations must be synchronized.
         with self._lock:
             # Check that the file is open.
@@ -2078,7 +2076,7 @@ class File(collections.abc.MutableMapping):
             If the file is closed.
         KeyError
             If the `path` cannot be found.
-        CantReadError
+        exceptions.CantReadError
             If reading the data can't be done.
 
         See Also
@@ -2111,7 +2109,7 @@ class File(collections.abc.MutableMapping):
             If `path` is an invalid type.
         NotImplementedError
             If writing `data` is not supported.
-        TypeNotMatlabCompatibleError
+        exceptions.TypeNotMatlabCompatibleError
             If writing a type not compatible with MATLAB and the
             ``action_for_matlab_incompatible`` option is set to
             ``'error'``.
@@ -2149,7 +2147,7 @@ class File(collections.abc.MutableMapping):
         if not self._writable:
             raise IOError('File is not writable.')
         # Process the path.
-        groupname, targetname = process_path(path)
+        groupname, targetname = utilities.process_path(path)
         # File operations must be synchronized.
         with self._lock:
             # Check that the file is open.
@@ -2189,7 +2187,7 @@ def writes(mdict, **keywords):
         failed.
     NotImplementedError
         If writing anything in `mdict` is not supported.
-    TypeNotMatlabCompatibleError
+    exceptions.TypeNotMatlabCompatibleError
         If writing a type not compatible with MATLAB and the
         ``action_for_matlab_incompatible`` option is set to
         ``'error'``.
@@ -2240,7 +2238,7 @@ def write(data, path='/', **keywords):
         failed.
     NotImplementedError
         If writing `data` is not supported.
-    TypeNotMatlabCompatibleError
+    exceptions.TypeNotMatlabCompatibleError
         If writing a type not compatible with MATLAB and the
         ``action_for_matlab_incompatible`` option is set to
         ``'error'``.
@@ -2298,7 +2296,7 @@ def reads(paths, **keywords):
         failed.
     IOError
         If the file is closed.
-    CantReadError
+    exceptions.CantReadError
         If reading the data can't be done.
 
     See Also
@@ -2353,7 +2351,7 @@ def read(path='/', **keywords):
         failed.
     IOError
         If the file is closed.
-    CantReadError
+    exceptions.CantReadError
         If reading the data can't be done.
 
     See Also
@@ -2436,7 +2434,7 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
         If `format` < 7.3 and the ``scipy`` module can't be found.
     NotImplementedError
         If writing a variable in `mdict` is not supported.
-    TypeNotMatlabCompatibleError
+    exceptions.TypeNotMatlabCompatibleError
         If writing a type not compatible with MATLAB and
         `action_for_matlab_incompatible` is set to ``'error'``.
 
@@ -2539,7 +2537,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
         can't be found when dispatching to SciPy.
     KeyError
         If a variable cannot be found.
-    CantReadError
+    exceptions.CantReadError
         If reading the data can't be done.
 
     Notes
@@ -2586,7 +2584,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
                     # file).
                     if f[k].name != options.group_for_references:
                         try:
-                            data[unescape_path(k)] = \
+                            data[utilities.unescape_path(k)] = \
                                 utilities.read_data(f, f, k, options)
                         except:
                             pass

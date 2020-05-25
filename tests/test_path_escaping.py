@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2020, Freja Nordsiek
+# Copyright (c) 2016, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 import posixpath
 import random
 
-from hdf5storage import escape_path, unescape_path, process_path
+from hdf5storage.utilities import escape_path, unescape_path, process_path
 
 from make_randoms import random_str_ascii, random_str_some_unicode
 
