@@ -18,7 +18,8 @@ Contents:
    storage_format
    development
    thanks
-   api
+   api_for_users
+   api_for_plugins_developers
 
 Indices and tables
 ==================
