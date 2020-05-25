@@ -1521,8 +1521,12 @@ class File(collections.abc.MutableMapping):
 
     Warning
     -------
-    A passed ``Options`` object should not be changed after creating an
-    instance of this class until it is closed.
+    The passed ``Options`` object is shallow copied, meaning that
+    changes to the original will not affect an instance of this class
+    with the exception of changes within the ``marshaller_collection``
+    option which is not deep copied. The ``marshallers_collection``
+    option should not bechanged while a method of an instance of this
+    class is running.
 
     Parameters
     ----------
@@ -1588,7 +1592,8 @@ class File(collections.abc.MutableMapping):
             raise TypeError('truncate_existing must be bool.')
         if not isinstance(truncate_invalid_matlab, bool):
             raise TypeError('truncate_invalid_matlab must be bool.')
-        # Make the Options if we weren't given it.
+        # Make the Options if we weren't given it, and shallow copy it
+        # if it was given.
         if options is None:
             options = Options(**keywords)
         elif not isinstance(options, Options):
@@ -1596,6 +1601,8 @@ class File(collections.abc.MutableMapping):
         elif len(keywords) != 0:
             raise ValueError('Extra keyword arguments cannot be passed '
                              'if options is not None.')
+        else:
+            options = copy.copy(options)
         # Store the required arguments.
         self._writable = True
         self._options = options
