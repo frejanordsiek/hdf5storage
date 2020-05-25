@@ -31,8 +31,9 @@ import collections
 import numpy as np
 import h5py
 
-from .utilities import escape_path, unescape_path, \
-    does_dtype_have_a_zero_shape, write_data, read_data, \
+from .pathesc import escape_path, unescape_path
+from .utilities import does_dtype_have_a_zero_shape, \
+    write_data, read_data, \
     write_object_array, read_object_array, \
     convert_numpy_str_to_uint16, convert_numpy_str_to_uint32, \
     convert_to_str, convert_to_numpy_str, convert_to_numpy_bytes, \

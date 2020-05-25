@@ -8,3 +8,4 @@ The external API meant for users of this package.
 
    hdf5storage
    hdf5storage.exceptions
+   hdf5storage.pathesc

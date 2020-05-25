@@ -94,12 +94,12 @@ Escaping/Unescaping Functions
    
    The functions described here.
 
-:py:func:`utilities.escape_path` is the function to escape an individual
+:py:func:`pathesc.escape_path` is the function to escape an individual
 part of a path with.
 
-:py:func:`utilities.unescape_path` is the function to unescape a path.
+:py:func:`pathesc.unescape_path` is the function to unescape a path.
 
-:py:func:`utilities.process_path` is a function that will take a path of
+:py:func:`pathesc.process_path` is a function that will take a path of
 any form, escape it if it is meant to be escaped, and get the Group that
 the target of the path is in as well as the name of the target inside
 that Group the path is pointing at.

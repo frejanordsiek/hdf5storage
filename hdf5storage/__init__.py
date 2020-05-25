@@ -50,6 +50,7 @@ import threading
 
 import h5py
 
+from . import pathesc
 from . import plugins
 from . import utilities
 from . import Marshallers
@@ -683,7 +684,7 @@ class Options(object):
 
         See Also
         --------
-        utilities.escape_path
+        pathesc.escape_path
 
         """
         return self._group_for_references
@@ -1475,7 +1476,7 @@ class File(collections.abc.MutableMapping):
     style and can either be given directly as ``str`` or ``bytes``, or
     the separated path can be given as an iterable of ``str`` and
     ``bytes``. Each part of a separated path is escaped using
-    ``utilities.escape_path``. Otherwise, the path is assumed to be
+    ``pathesc.escape_path``. Otherwise, the path is assumed to be
     already escaped. Escaping is done so that targets with a part that
     starts with one or more periods, contain slashes, and/or contain
     nulls can be used without causing the wrong Group to be looked in or
@@ -1563,7 +1564,7 @@ class File(collections.abc.MutableMapping):
 
     See Also
     --------
-    utilities.escape_path
+    pathesc.escape_path
     collections.abc.Collection
 
     """
@@ -1786,7 +1787,7 @@ class File(collections.abc.MutableMapping):
         # options.group_for_references.
         towrite = []
         for p, v in mdict.items():
-            groupname, targetname = utilities.process_path(p)
+            groupname, targetname = pathesc.process_path(p)
             if posixpath.isabs(groupname):
                 prefix = ''
             else:
@@ -1876,7 +1877,7 @@ class File(collections.abc.MutableMapping):
         # Group specified by options.group_for_references.
         toread = []
         for p in paths:
-            groupname, targetname = utilities.process_path(p)
+            groupname, targetname = pathesc.process_path(p)
             if posixpath.isabs(groupname):
                 prefix = ''
             else:
@@ -1958,7 +1959,7 @@ class File(collections.abc.MutableMapping):
             If the file is not open.
 
         """
-        groupname, targetname = utilities.process_path(path)
+        groupname, targetname = pathesc.process_path(path)
         # File operations must be synchronized.
         with self._lock:
             # Check that the file is open.
@@ -2090,7 +2091,7 @@ class File(collections.abc.MutableMapping):
         if not self._writable:
             raise IOError('File is not writable.')
         # Process the path.
-        groupname, targetname = utilities.process_path(path)
+        groupname, targetname = pathesc.process_path(path)
         # File operations must be synchronized.
         with self._lock:
             # Check that the file is open.
@@ -2527,7 +2528,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
                     # file).
                     if f[k].name != options.group_for_references:
                         try:
-                            data[utilities.unescape_path(k)] = \
+                            data[pathesc.unescape_path(k)] = \
                                 utilities.read_data(f, f, k, options)
                         except:
                             pass

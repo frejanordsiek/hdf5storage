@@ -34,7 +34,7 @@ import numpy as np
 import h5py
 
 import hdf5storage
-from hdf5storage.utilities import escape_path
+from hdf5storage.pathesc import escape_path
 
 from nose.tools import assert_equal as assert_equal_nose
 

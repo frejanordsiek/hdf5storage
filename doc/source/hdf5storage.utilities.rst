@@ -7,9 +7,6 @@ hdf5storage.utilities
 
 .. autosummary::
 
-   escape_path
-   unescape_path
-   process_path
    does_dtype_have_a_zero_shape
    write_data
    read_data
@@ -33,24 +30,6 @@ hdf5storage.utilities
    set_attribute_string_array
    set_attributes_all
    del_attribute
-
-
-escape_path
------------
-
-.. autofunction:: escape_path
-
-
-unescape_path
--------------
-
-.. autofunction:: unescape_path
-
-
-process_path
-------------
-
-.. autofunction:: process_path
 
 
 does_dtype_have_a_zero_shape
