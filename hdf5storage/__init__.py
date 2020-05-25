@@ -1472,10 +1472,11 @@ class File(collections.abc.MutableMapping):
     file. This class supports context handling with the ``with``
     statement.
 
-    Python objects are read and written from/to paths. Paths are POSIX
-    style and can either be given directly as ``str`` or ``bytes``, or
-    the separated path can be given as an iterable of ``str`` and
-    ``bytes``. Each part of a separated path is escaped using
+    Python objects are read and written from/to paths. Paths can be
+    given directly as POSIX style ``str`` or ``bytes``, as
+    ``pathlib.PurePath``, or the separated path can be given as an
+    iterable of ``str``, ``bytes``, and ``pathlib.PurePath``. Each part
+    of a separated path is escaped using
     ``pathesc.escape_path``. Otherwise, the path is assumed to be
     already escaped. Escaping is done so that targets with a part that
     starts with one or more periods, contain slashes, and/or contain
@@ -1721,10 +1722,11 @@ class File(collections.abc.MutableMapping):
         ----------
         data : any
             The python object to write.
-        path : str or bytes or Iterable, optional
-            The POSIX style path to write the data to. The directory
-            name is the Group to put it in and the basename is the
-            Dataset/Group name to write it to. The default is ``'/'``.
+        path : str or bytes pathlib.PurePath or Iterable, optional
+            The path to write the data to.  ``str`` and ``bytes`` paths
+            must be POSIX style. The directory name is the Group to put
+            it in and the basename is the Dataset/Group name to write it
+            to. The default is ``'/'``.
 
         Raises
         ------
@@ -1758,10 +1760,10 @@ class File(collections.abc.MutableMapping):
         ----------
         mdict : Mapping
             A ``dict`` or similar Mapping type of paths and the data to
-            write to the file. The paths, the keys, must be POSIX style
-            paths where the directory name is the Group to put it in and
-            the basename is the name to write it to. The values are the
-            data to write.
+            write to the file. The paths are the keys ( ``str`` and
+            ``bytes`` paths must be POSIX style) where the directory
+            name is the Group to put it in and the basename is the name
+            to write it to. The values are the data to write.
 
         Raises
         ------
@@ -1828,8 +1830,9 @@ class File(collections.abc.MutableMapping):
 
         Parameters
         ----------
-        path : str or bytes or Iterable, optional
-            The POSIX style path to read from. The default is ``'/'``.
+        path : str or bytes or pathlib.PurePath or Iterable, optional
+            The path to read from. ``str`` and ``bytes`` paths must be
+            POSIX style. The default is ``'/'``.
 
         Returns
         -------
@@ -1858,8 +1861,8 @@ class File(collections.abc.MutableMapping):
         Parameters
         ----------
         paths : Iterable
-            An iterable of paths to read data from. Each must be a POSIX
-            style path.
+            An iterable of paths to read data from. ``str`` and
+            ``bytes`` paths must be POSIX style.
 
         Returns
         -------
@@ -1957,8 +1960,9 @@ class File(collections.abc.MutableMapping):
 
         Parameters
         ----------
-        path : str or bytes or Iterable
-            POSIX style path to check for the existence of an object at.
+        path : str or bytes or pathlib.PurePath Iterable
+            The path to check for the existence of an object at. ``str``
+            and ``bytes`` paths must be POSIX style.
 
         Raises
         ------
@@ -2013,8 +2017,9 @@ class File(collections.abc.MutableMapping):
 
         Parameters
         ----------
-        path : str or bytes or Iterable, optional
-            The POSIX style path to read from.
+        path : str or bytes or pathlib.PurePath or Iterable, optional
+            The path to read from. ``str`` and ``bytes`` paths must be
+            POSIX style.
 
         Returns
         -------
@@ -2045,10 +2050,11 @@ class File(collections.abc.MutableMapping):
 
         Parameters
         ----------
-        path : str or bytes or Iterable
-            The POSIX style path to write the data to. The directory
-            name is the Group to put it in and the basename is the
-            Dataset/Group name to write it to.
+        path : str or bytes or pathlib.PurePath or Iterable
+            The path to write the data to. ``str`` and ``bytes`` paths
+            must be POSIX style. The directory name is the Group to put
+            it in and the basename is the Dataset/Group name to write it
+            to.
         data : any
             The python object to write.
 
@@ -2079,10 +2085,11 @@ class File(collections.abc.MutableMapping):
 
         Parameters
         ----------
-        path : str or bytes or Iterable
-            The POSIX style path to write the data to. The directory
-            name is the Group to put it in and the basename is the
-            Dataset/Group name to write it to.
+        path : str or bytes or pathlib.PurePath or Iterable
+            The path to write the data to. ``str`` and ``bytes`` paths
+            must be POSIX style. The directory name is the Group to put
+            it in and the basename is the Dataset/Group name to write it
+            to.
 
         Raises
         ------
@@ -2118,12 +2125,12 @@ def writes(mdict, **keywords):
 
     Parameters
     ----------
-    mdict : dict, dict like
+    mdict : Mapping
         The ``dict`` or other dictionary type object of paths
-        and data to write to the file. The paths, the keys, must be
-        POSIX style paths where the directory name is the Group to put
-        it in and the basename is the name to write it to. The values
-        are the data to write.
+        and data to write to the file. The paths are the keys (``str``
+        and ``bytes`` paths must be POSIX style) where the directory
+        name is the Group to put it in and the basename is the name to
+        write it to. The values are the data to write.
     **keywords :
         Extra keyword arguments to pass to ``File``.
 
@@ -2166,10 +2173,11 @@ def write(data, path='/', **keywords):
     ----------
     data : any
         The python object to write.
-    path : str or bytes or Iterable, optional
-        The POSIX style path to write the data to. The directory name is
-        the Group to put it in and the basename is the Dataset name to
-        write it to. The default is ``'/'``.
+    path : str or bytes or pathlib.PurePath or Iterable, optional
+        The path to write the data to. ``str`` and ``bytes`` paths must
+        be POSIX style. The directory name is the Group to put it in and
+        the basename is the Dataset name to write it to. The default is
+        ``'/'``.
     **keywords :
         Extra keyword arguments to pass to ``File``.
 
@@ -2223,8 +2231,8 @@ def reads(paths, **keywords):
     Parameters
     ----------
     paths : Iterable
-        An iterable of paths to read data from. Each must be a POSIX
-        style path.
+        An iterable of paths to read data from. ``str`` and ``bytes``
+        paths must be POSIX style.
     **keywords :
         Extra keyword arguments to pass to ``File``.
 
@@ -2284,8 +2292,9 @@ def read(path='/', **keywords):
 
     Parameters
     ----------
-    path : str or bytes or Iterable, optional
-        The POSIX style path to read from. The default is ``'/'``.
+    path : str or bytes or pathlib.PurePath or Iterable, optional
+        The path to read from. ``str`` and ``bytes`` paths must be POSIX
+        style. The default is ``'/'``.
     **keywords :
         Extra keyword arguments to pass to ``File``.
 

@@ -75,17 +75,17 @@ Paths can be given in a number of ways.
 No Escaping
 -----------
 
-The path is given as a ``str`` or ``bytes``. It is the responsibility of
-the caller to make sure all escaping has been done. Forward slashes are
-interpreted as path separators.
+The path is given as a ``str``, ``bytes``, or :py:class:`pathlib.PurePath`.
+It is the responsibility of the caller to make sure all escaping has been done.
+Forward slashes are interpreted as path separators.
 
 Escaping
 --------
 
 The path is given as an iterable (e.g. ``list``, ``tuple``, etc.) of
 separated parts of the path (split at the separators) which must each be
-``str`` and ``bytes``. These parts will each be escaped before being
-joined.
+``str``, ``bytes``, and :py:class:`pathlib.PurePath`. These parts will each
+be escaped before being joined.
 
 Escaping/Unescaping Functions
 =============================

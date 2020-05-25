@@ -28,6 +28,7 @@
 
 
 import collections.abc
+import pathlib
 import posixpath
 import re
 
@@ -220,11 +221,11 @@ def process_path(pth):
 
     Parameters
     ----------
-    pth : str or bytes or iterable of str or bytes
+    pth : str or bytes or pathlib.PurePath or Iterable
         The POSIX style path as a ``str`` or ``bytes`` or the
-        separated path in an iterable with the elements being ``str``
-        and ``bytes``. For separated paths, escaping will be done
-        on each part.
+        separated path in an Iterable with the elements being ``str``,
+        ``bytes``, and ``pathlib.PurePath``. For separated paths,
+        escaping will be done on each part.
 
     Returns
     -------
@@ -250,20 +251,30 @@ def process_path(pth):
         p = pth.decode('utf-8')
     elif isinstance(pth, str):
         p = pth
+    elif isinstance(pth, pathlib.PurePath):
+        parts = pth.parts
+        if pth.root not in ('', '/'):
+            p = posixpath.join(*parts[1:])
+        else:
+            p = posixpath.join(*parts)
     elif not isinstance(pth, collections.abc.Iterable):
-        raise TypeError('p must be str, bytes, or an iterable '
-                        + 'solely of one of those two.')
+        raise TypeError('p must be str, bytes, pathlib.PurePath, or '
+                        'an Iterable solely of one of those three.')
     else:
         # Check that all elements are unicode or bytes.
-        if not all([isinstance(s, (bytes, str)) for s in pth]):
-            raise TypeError('Elements of p must be str or bytes.')
+        if not all([isinstance(s, (bytes, str, pathlib.PurePath))
+                    for s in pth]):
+            raise TypeError('Elements of p must be str, bytes, or '
+                            'pathlib.PurePath.')
 
-        # Escape (and possibly convert to unicode) each element and then
+        # Escape (and possibly convert to str) each element and then
         # join them all together.
         parts = [None] * len(pth)
         for i, s in enumerate(pth):
             if isinstance(s, bytes):
                 s = s.decode('utf-8')
+            elif isinstance(s, pathlib.PurePath):
+                s = str(s)
             parts[i] = escape_path(s)
         parts = tuple(parts)
         p = posixpath.join(*parts)

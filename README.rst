@@ -340,6 +340,8 @@ Versions
      * Issue #61. User provided marshallers must inherit from
        ``Marshallers.TypeMarshaller``. Before, they just had to provide
        the same interface.
+     * Issue #78. Added the ability to pass object paths as
+       ``pathlib.PurePath`` (and descendants) objects.
      * Issue #62. The priority ordering between builtin, plugin, and
        user provided marshallers can be selected. The default is now
        builtin, plugin, user; as opposed to user, builtin in the 0.1.x
