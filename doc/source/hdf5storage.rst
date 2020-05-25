@@ -15,6 +15,7 @@ hdf5storage
    loadmat
    get_default_MarshallerCollection
    make_new_default_MarshallerCollection
+   supported_marshaller_api_versions
    File
    Options
    MarshallerCollection
@@ -66,6 +67,12 @@ make_new_default_MarshallerCollection
 -------------------------------------
 
 .. autofunction:: make_new_default_MarshallerCollection
+
+
+supported_marshaller_api_versions
+---------------------------------
+
+.. autofunction:: supported_marshaller_api_versions
 
 
 File

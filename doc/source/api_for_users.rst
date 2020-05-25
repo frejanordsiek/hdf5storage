@@ -7,3 +7,4 @@ The external API meant for users of this package.
    :maxdepth: 2
 
    hdf5storage
+   hdf5storage.exceptions
