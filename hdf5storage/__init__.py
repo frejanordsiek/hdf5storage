@@ -48,68 +48,11 @@ import posixpath
 import sys
 import threading
 
-# From setuptools, despite name.
-import pkg_resources
-
 import h5py
 
-from . import exceptions
+from . import plugins
 from . import utilities
 from . import Marshallers
-
-
-def supported_marshaller_api_versions():
-    """ Get the Marshaller API versions that are supported.
-
-    Gets the different Marshaller API versions that this version of
-    ``hdf5storage`` supports.
-
-    .. versionadded:: 0.3
-
-    Returns
-    -------
-    versions : tuple
-        The different versions of marshallers that are supported. Each
-        element is a version that is supported. The versions are
-        specified in standard major, minor, etc. format as ``str``
-        (e.g. ``'1.0'``). They are in descending order (highest version
-        first, lowest version last).
-
-    """
-    return ('1.0', )
-
-
-def find_thirdparty_marshaller_plugins():
-    """ Find, but don't load, all third party marshaller plugins.
-
-    Third party marshaller plugins declare the entry point
-    ``'hdf5storage.marshallers.plugins'`` with the name being the
-    Marshaller API version and the target being a function that returns
-    a ``tuple`` or ``list`` of all the marshallers provided by that
-    plugin when given the hdf5storage version (``str``) as its only
-    argument.
-
-    .. versionadded:: 0.2
-
-    Returns
-    -------
-    plugins : dict
-        The marshaller obtaining entry points from third party
-        plugins. The keys are the Marshaller API versions (``str``) and
-        the values are ``dict`` of the entry points, with the module
-        names as the keys (``str``) and the values being the entry
-        points (``pkg_resources.EntryPoint``).
-
-    See Also
-    --------
-    supported_marshaller_api_versions
-
-    """
-    all_plugins = tuple(pkg_resources.iter_entry_points(
-        'hdf5storage.marshallers.plugins'))
-    return {ver: {p.module_name: p
-                  for p in all_plugins if p.name == ver}
-            for ver in supported_marshaller_api_versions()}
 
 
 class Options(object):
@@ -1137,9 +1080,9 @@ class MarshallerCollection(object):
         # list of marshallers.
         self._plugin_marshallers = []
         if load_plugins:
-            plugins = find_thirdparty_marshaller_plugins()
-            for ver in supported_marshaller_api_versions():
-                for module, p in plugins[ver].items():
+            plgs = plugins.find_thirdparty_marshaller_plugins()
+            for ver in plugins.supported_marshaller_api_versions():
+                for module, p in plgs[ver].items():
                     try:
                         fun = p.load()
                         # Check that it is a routine before getting the

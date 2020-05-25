@@ -35,6 +35,7 @@ from nose.tools import assert_equal as assert_equal_nose
 import unittest
 
 import hdf5storage
+import hdf5storage.plugins
 
 # Check if the example package is installed because some tests will
 # depend on it.
@@ -46,14 +47,15 @@ except:
 
 
 def test_marshaller_api_versions():
-    assert_equal_nose(('1.0', ),
-                      hdf5storage.supported_marshaller_api_versions())
+    assert_equal_nose(
+        ('1.0', ),
+        hdf5storage.plugins.supported_marshaller_api_versions())
 
 
 def test_find_thirdparty_marshaller_plugins():
     found_example = False
-    apivs = hdf5storage.supported_marshaller_api_versions()
-    plugins = hdf5storage.find_thirdparty_marshaller_plugins()
+    apivs = hdf5storage.plugins.supported_marshaller_api_versions()
+    plugins = hdf5storage.plugins.find_thirdparty_marshaller_plugins()
     assert isinstance(plugins, dict)
     assert_equal_nose(set(apivs), set(plugins))
     for k, v in plugins.items():

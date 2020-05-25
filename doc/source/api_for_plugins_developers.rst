@@ -17,6 +17,7 @@ Marshaller API Version 1.0
 
    hdf5storage.exceptions
    hdf5storage.Marshallers
+   hdf5storage.plugins
    hdf5storage.utilities
 
 
