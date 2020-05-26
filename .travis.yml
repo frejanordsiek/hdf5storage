@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 sudo: required
 
 language: python
@@ -7,83 +7,29 @@ notifications:
   email: false
 
 env:
-  - H5PY_VER="==2.4" NUMPY_VER="==1.11.3"
   - H5PY_VER="==2.5" NUMPY_VER="==1.11.3"
   - H5PY_VER="==2.6" NUMPY_VER="==1.11.3"
-  - H5PY_VER="==2.4" NUMPY_VER=""
   - H5PY_VER="==2.5" NUMPY_VER=""
   - H5PY_VER="==2.6" NUMPY_VER=""
+  - H5PY_VER="==2.7" NUMPY_VER=""
+  - H5PY_VER="==2.8" NUMPY_VER=""
+  - H5PY_VER="==2.9" NUMPY_VER=""
   - H5PY_VER="" NUMPY_VER=""
 
 python:
-  - "2.6"
   - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
   - "3.5"
-  - "3.5-dev" # 3.5 development branch
   - "3.6"
-  - "3.6-dev" # 3.6 development branch
-
-matrix:
-  exclude:
-    - python: "2.6"
-      env: H5PY_VER="==2.4" NUMPY_VER=""
-    - python: "2.6"
-      env: H5PY_VER="==2.5" NUMPY_VER=""
-    - python: "2.6"
-      env: H5PY_VER="==2.6" NUMPY_VER=""
-    - python: "2.6"
-      env: H5PY_VER="" NUMPY_VER=""
-    - python: "3.2"
-      env: H5PY_VER="==2.3" NUMPY_VER=""
-    - python: "3.2"
-      env: H5PY_VER="==2.4" NUMPY_VER=""
-    - python: "3.2"
-      env: H5PY_VER="==2.5" NUMPY_VER=""
-    - python: "3.2"
-      env: H5PY_VER="==2.6" NUMPY_VER=""
-    - python: "3.2"
-      env: H5PY_VER="" NUMPY_VER=""
-    - python: "3.3"
-      env: H5PY_VER="==2.3" NUMPY_VER=""
-    - python: "3.3"
-      env: H5PY_VER="==2.4" NUMPY_VER=""
-    - python: "3.3"
-      env: H5PY_VER="==2.5" NUMPY_VER=""
-    - python: "3.3"
-      env: H5PY_VER="==2.6" NUMPY_VER=""
-    - python: "3.3"
-      env: H5PY_VER="" NUMPY_VER=""
-  include:
-    - python: "2.6"
-      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
-    - python: "2.7"
-      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
-    - python: "3.2"
-      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
-    - python: "3.3"
-      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
-    - python: "3.4"
-      env: H5PY_VER="==2.3" NUMPY_VER="==1.11.3"
-    - python: "3.4"
-      env: H5PY_VER="==2.3" NUMPY_VER=""
+  - "3.7"
+  - "3.8"
+  - "3.9-dev"
 
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
 
 # command to install dependencies
-#
-# Need unittest2 on Python 2.6.
-#
-# Seem to need newer Numpy as well.
-#
-# For Python 2.6 and 3.2, the version of Cython can't be too new.
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install -U Cython==0.26.1; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U Cython==0.24; fi
   - pip install numpy$NUMPY_VER
   - pip install h5py$H5PY_VER
   - pip install -r requirements_tests.txt
