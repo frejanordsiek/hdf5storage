@@ -13,12 +13,12 @@ notifications:
   email: false
 
 env:
-  - H5PY_VERSION="==2.5"
-  - H5PY_VERSION="==2.6"
-  - H5PY_VERSION="==2.7"
-  - H5PY_VERSION="==2.8"
-  - H5PY_VERSION="==2.9"
-  - H5PY_VERSION=""
+  - H5PY_VERSION="==2.5" EXTRA_PACKAGES="libquadmath0"
+  - H5PY_VERSION="==2.6" EXTRA_PACKAGES="libquadmath0"
+  - H5PY_VERSION="==2.7" EXTRA_PACKAGES="libquadmath0"
+  - H5PY_VERSION="==2.8" EXTRA_PACKAGES="libquadmath0"
+  - H5PY_VERSION="==2.9" EXTRA_PACKAGES="libquadmath0"
+  - H5PY_VERSION="" EXTRA_PACKAGES="libquadmath0"
 
 python:
   - "3.5"
@@ -27,9 +27,21 @@ python:
   - "3.8"
   - "3.9-dev"
 
+jobs:
+  include:
+    - python: "3.8"
+      env: H5PY_VERSION="" EXTRA_PACKAGES=""
+      arch: arm64
+    - python: "3.8"
+      env: H5PY_VERSION="" EXTRA_PACKAGES=""
+      arch: ppc64le
+    - python: "3.8"
+      env: H5PY_VERSION="" EXTRA_PACKAGES=""
+      arch: s390x
+
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
+  - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev $EXTRA_PACKAGES
 
 # command to install dependencies
 #
