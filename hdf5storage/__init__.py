@@ -2426,8 +2426,13 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
 
     # Append .mat if it isn't on the end of the file name and we are
     # supposed to.
-    if appendmat and not file_name.endswith('.mat'):
-        file_name = file_name + '.mat'
+    if appendmat:
+        if isinstance(file_name, str) \
+                and not file_name.endswith('.mat'):
+            file_name = file_name + '.mat'
+        elif isinstance(file_name, bytes) \
+                and not file_name.endswith(b'.mat'):
+            file_name = file_name + b'.mat'
 
     # Make the options with matlab compatibility forced.
     options = Options(
@@ -2526,8 +2531,15 @@ def loadmat(file_name, mdict=None, appendmat=True,
 
         # Append .mat if it isn't on the end of the file name and we are
         # supposed to.
-        if appendmat and not file_name.endswith('.mat'):
-            filename = file_name + '.mat'
+        if appendmat:
+            if isinstance(file_name, str) \
+                    and not file_name.endswith('.mat'):
+                filename = file_name + '.mat'
+            elif isinstance(file_name, bytes) \
+                    and not file_name.endswith(b'.mat'):
+                filename = file_name + b'.mat'
+            else:
+                filename = file_name
         else:
             filename = file_name
 

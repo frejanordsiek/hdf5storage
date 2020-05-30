@@ -358,6 +358,8 @@ Versions
        to do extensive checking of the ``hdf5storage`` package version.
        The Marshaller API version will advance separately from the
        package version. The initial version is ``'1.0'``.
+     * Fixed bugs in ``savemat`` and ``loadmat`` with appening the file
+       extension to filenames that are ``bytes``.
      * Issue #27. Added of paths with null characters and slashes. It
        is used for the field names of structured numpy ndarrays as well
        as the keys of ``dict`` like objects when writing their values
