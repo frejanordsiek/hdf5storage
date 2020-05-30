@@ -186,6 +186,10 @@ support writing it so MATlAB can read it.
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | cl.OrderedDict | 0.2     |                         | struct      | 0.2     | [7]_              |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
+| slice          | 0.2     |                         | struct      | 0.2     |                   |
++----------------+---------+-------------------------+-------------+---------+-------------------+
+| range          | 0.2     |                         | struct      | 0.2     |                   |
++----------------+---------+-------------------------+-------------+---------+-------------------+
 | np.bool\_      | 0.1     |                         | logical     | 0.1     |                   |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | np.void        | 0.1     |                         |             |         |                   |
@@ -411,6 +415,8 @@ Versions
        characters.
      * Issue #38. Added support for ``cl.OrderedDict``. It was added to
        the ``Marshallers.PythonDictMarshaller``.
+     * Issue #80. Added a support for ``slice`` and ``range`` with the new
+       marshaller ``Marshallers.PythonSliceRangeMarshaller``.
      * Issue #40. Made it so that tests use tempfiles instead of
        using hardcoded filenames in the local directory.
      * Issue #41. Added tests using the Julia MAT package to check

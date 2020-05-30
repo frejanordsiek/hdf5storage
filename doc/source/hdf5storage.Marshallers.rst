@@ -21,6 +21,7 @@ The marshallers have the following inheritance diagram
    PythonStringMarshaller
    PythonNoneEllipsisNotImplementedMarshaller
    PythonDictMarshaller
+   PythonSliceRangeMarshaller
    PythonListMarshaller
    PythonTupleSetDequeMarshaller
 
@@ -187,6 +188,26 @@ PythonDictMarshaller
        types = (dict, collections.OrderedDict)
 
        python_type_strings = ('dict', 'collections.OrderedDict')
+
+       matlab_classes = ()
+
+
+PythonSliceRangeMarshaller
+--------------------------
+
+.. autoclass:: PythonSliceRangeMarshaller
+   :members: read, write
+   :show-inheritance:
+
+   Handles the following ::
+
+       python_attributes = {'Python.Type', 'Python.Fields'}
+
+       matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_fields'}
+
+       types = (slice, range)
+
+       python_type_strings = ('slice', 'range')
 
        matlab_classes = ()
 

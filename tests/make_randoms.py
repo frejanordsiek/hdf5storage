@@ -217,6 +217,35 @@ def random_list(N, python_or_numpy='numpy'):
         return data
 
 
+def random_slice():
+    # Make a random slice, whose parts could be None or int.
+    parts = []
+    for i in range(3):
+        if random.choice((True, False)):
+            parts.append(None)
+        elif random.choice((True, False)):
+            parts.append(random.randint(-2**30, 2**30))
+        else:
+            parts.append(random.randint(-2**128, 2**128))
+    return slice(*parts)
+
+
+def random_range():
+    # Make a random range. The last element must not be zero.
+    parts = []
+    for i in range(3):
+        if random.choice((True, False)):
+            parts.append(random.randint(-2**30, 2**30))
+        else:
+            parts.append(random.randint(-2**128, 2**128))
+    while parts[-1] == 0:
+        if random.choice((True, False)):
+            parts[-1] = random.randint(-2**30, 2**30)
+        else:
+            parts[-1] = random.randint(-2**128, 2**128)
+    return range(*parts)
+
+
 def random_dict(tp='dict'):
     # Makes a random dict or dict-like object tp (random number of
     # randomized keys with random numpy arrays as values). The only

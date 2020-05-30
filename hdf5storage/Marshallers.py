@@ -1787,12 +1787,53 @@ class PythonDictMarshaller(TypeMarshaller):
                 except:
                     pass
 
-        # Construct the dict like from the items.
-        if type_string in self.typestring_to_type:
-            tp = self.typestring_to_type[type_string]
+        # Construct a dict like from the items. If it is supposed to
+        # be an OrderedDict, it should be that. Otherwise, it will be a
+        # dict (inheriting classes are responsible for converting it).
+        if type_string == 'collections.OrderedDict':
+            tp = collections.OrderedDict
         else:
             tp = dict
         return tp(items)
+
+
+class PythonSliceRangeMarshaller(PythonDictMarshaller):
+    def __init__(self):
+        PythonDictMarshaller.__init__(self)
+        self.types = (slice, range)
+        self.python_type_strings = ('slice', 'range')
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = ()
+        # Update the type lookups.
+        self.update_type_lookups()
+
+    def write(self, f, grp, name, data, type_string, options):
+        # data just needs to be converted to a dict and then pass it to
+        # the parent version of this function. The proper type_string
+        # needs to be grabbed now as the parent function will have a
+        # modified form of data to guess from if not given the right one
+        # explicitly.
+        return PythonDictMarshaller.write(
+            self, f, grp, name,
+            {'start': data.start, 'stop': data.stop, 'step': data.step},
+            self.get_type_string(data, type_string), options)
+
+    def read(self, f, dsetgrp, attributes, options):
+        # Use the parent class version to read it and do most of the
+        # work.
+        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes,
+                                         options)
+        # The type string determines how to convert it back to a Python
+        # type (just look up the entry in types).
+        type_string = convert_attribute_to_string(
+            attributes['Python.Type'])
+        if type_string in self.typestring_to_type:
+            tp = self.typestring_to_type[type_string]
+            return tp(data['start'], data['stop'], data['step'])
+        else:
+            # Must be some other type, so return it as is.
+            return data
 
 
 class PythonListMarshaller(NumpyScalarArrayMarshaller):

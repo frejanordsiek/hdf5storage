@@ -66,6 +66,8 @@ def assert_equal(a, b, options=None):
         assert_equal_nose(list(a.keys()), list(b.keys()))
         for k in b:
             assert_equal(a[k], b[k], options)
+    elif type(b) in (slice, range):
+        assert_equal_nose(a, b)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         assert_equal_nose(len(a), len(b))
         if type(b) in (set, frozenset):
@@ -154,6 +156,12 @@ def assert_equal_none_format(a, b, options=None):
             values = a[names[1]]
             assert_equal_none_format(keys, tuple(b.keys()), options)
             assert_equal_none_format(values, tuple(b.values()), options)
+    elif type(b) in (slice, range):
+        # For slices and ranges, we won't get it back exactly but it
+        # will match what we get back for them turned into a dict.
+        assert_equal_none_format(a, {'start': b.start,
+                                     'stop': b.stop,
+                                     'step': b.step}, options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         b_conv = np.zeros(dtype='object', shape=(len(b), ))
         for i, v in enumerate(b):
@@ -325,6 +333,12 @@ def assert_equal_matlab_format(a, b, options=None):
             assert_equal_matlab_format(keys, tuple(b.keys()), options)
             assert_equal_matlab_format(values, tuple(b.values()),
                                        options)
+    elif type(b) in (slice, range):
+        # For slices and ranges, we won't get it back exactly but it
+        # will match what we get back for them turned into a dict.
+        assert_equal_matlab_format(a, {'start': b.start,
+                                       'stop': b.stop,
+                                       'step': b.step}, options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         b_conv = np.zeros(dtype='object', shape=(len(b), ))
         for i, v in enumerate(b):

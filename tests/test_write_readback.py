@@ -47,7 +47,7 @@ from make_randoms import random_numpy_scalar, random_numpy_shape, \
     random_str_ascii, max_dict_key_length, \
     random_list, max_list_length, random_dict, \
     random_str_some_unicode, random_int, random_float, \
-    max_string_length, random_bytes
+    max_string_length, random_bytes, random_slice, random_range
 
 
 random.seed()
@@ -755,6 +755,20 @@ class TestPythonMatlabFormat(object):
     def test_dict_like_key_leading_periods(self):
         for tp in self.dict_like:
             yield self.check_dict_like_key_leading_periods, tp
+
+    def test_slice(self):
+        for _ in range(10):
+            data = random_slice()
+            out = self.write_readback(data, random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
+
+    def test_range(self):
+        for _ in range(10):
+            data = random_range()
+            out = self.write_readback(data, random_name(),
+                                      self.options)
+            self.assert_equal(out, data)
 
 
 class TestPythonFormat(TestPythonMatlabFormat):

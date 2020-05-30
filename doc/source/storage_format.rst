@@ -81,6 +81,8 @@ frozenset                 0.1      np.object\_                           Dataset
 cl.deque                  0.1      np.object\_                           Dataset
 dict [7]_                 0.1                                            Group
 cl.OrderedDict [7]_       0.2                                            Group
+slice                     0.2                                            Group
+range                     0.2                                            Group
 np.bool\_                 0.1      not or np.uint8 [1]_                  Dataset
 np.void                   0.1                                            Dataset
 np.uint8                  0.1                                            Dataset
@@ -187,6 +189,8 @@ frozenset       'frozenset'                    'object'                         
 cl.deque        'collections.deque'            'object'                         'cell'
 dict            'dict'                                                          'struct'
 cl.OrderedDict  'collections.OrderedDict'                                       'struct'
+slice           'slice'                                                         'struct'
+range           'range'                                                         'struct'
 np.bool\_       'numpy.bool'                   'bool'                           'logical'           1
 np.void         'numpy.void'                   'void#' [11]_    
 np.uint8        'numpy.uint8'                  'uint8'                          'uint8'
@@ -537,6 +541,14 @@ an HDF5 COMPOUND type.
    :py:attr:`Options.structured_numpy_ndarray_as_struct` is set, it
    can't be read back from the file accurately. The dtype for all the
    fields will become 'object' instead of what they originally were.
+
+
+slice and range
+---------------
+
+Stored like a ``dict`` with the start, stop, and step in entries having those
+names. For example, ``slice(3, None, 1)`` is stored the same way as
+``{'start': 3, 'stop': None, 'step': 1}``
 
 
 Optional Data Transformations
