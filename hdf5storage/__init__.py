@@ -1329,8 +1329,8 @@ class MarshallerCollection(object):
         """ Clears the list of user provided marshallers.
 
         Removes all user provided marshallers, but not the builtin ones
-        from the ``hdf5storage.Marshallers`` module, from the list of
-        marshallers used.
+        from the ``hdf5storage.Marshallers`` module or those from
+        plugins, from the list of marshallers used.
 
         """
         self._user_marshallers.clear()
