@@ -2579,8 +2579,8 @@ def loadmat(file_name, mdict=None, appendmat=True,
 def get_default_MarshallerCollection():
     """ Gets the default MarshallerCollection.
 
-    It only includes the builtin marshallers in the ``Marshallers``
-    submodule.
+    The initial default only includes the builtin marshallers in the
+    ``Marshallers`` submodule.
 
     Returns
     -------
