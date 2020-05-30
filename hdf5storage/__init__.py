@@ -1090,7 +1090,7 @@ class MarshallerCollection(object):
                         fun = p.load()
                         # Check that it is a routine before getting the
                         # marshallers.
-                        if not inspect.isroutine(fun):
+                        if not callable(fun):
                             continue
                         ms = [m for m in fun(__version__)
                               if isinstance(m,

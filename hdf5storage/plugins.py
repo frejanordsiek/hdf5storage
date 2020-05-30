@@ -58,7 +58,7 @@ def find_thirdparty_marshaller_plugins():
 
     Third party marshaller plugins declare the entry point
     ``'hdf5storage.marshallers.plugins'`` with the name being the
-    Marshaller API version and the target being a function that returns
+    Marshaller API version and the target being a callable that returns
     a ``tuple`` or ``list`` of all the marshallers provided by that
     plugin when given the hdf5storage version (``str``) as its only
     argument.
