@@ -28,9 +28,6 @@ jobs:
   include:
     - python: "3.8"
       env: H5PY_VERSION="" EXTRA_PACKAGES=""
-      arch: arm64
-    - python: "3.8"
-      env: H5PY_VERSION="" EXTRA_PACKAGES=""
       arch: ppc64le
     - python: "3.8"
       env: H5PY_VERSION="" EXTRA_PACKAGES=""
