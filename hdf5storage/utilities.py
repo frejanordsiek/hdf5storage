@@ -537,7 +537,7 @@ def convert_numpy_str_to_uint32(data):
         # and then reshaping it.
         shape = list(np.atleast_1d(data).shape)
         shape[-1] *= data.dtype.itemsize//4
-        return data.flatten().view(np.uint32).reshape(tuple(shape))
+        return data.ravel().view(np.uint32).reshape(tuple(shape))
 
 
 def convert_to_str(data):
