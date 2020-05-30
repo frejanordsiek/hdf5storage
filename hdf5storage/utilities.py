@@ -798,8 +798,8 @@ def convert_to_numpy_bytes(data, length=None):
         # It is just the uint8 version of the character, so it just
         # needs to be have the dtype essentially changed by having its
         # bytes read into ndarray.
-        return np.ndarray(shape=tuple(), dtype='S1',
-                          buffer=data.flatten().tostring())[()]
+        return np.ndarray(shape=(), dtype='S1',
+                          buffer=data)[()]
     elif isinstance(data, np.ndarray) and data.dtype.char == 'U':
         # We just need to convert it elementwise.
         new_data = np.zeros(shape=data.shape,
@@ -842,6 +842,12 @@ def convert_to_numpy_bytes(data, length=None):
             new_shape = copy.deepcopy(shape)
             new_shape[-1] //= length2
 
+        # If it is uint8, we can just use the object directly as the
+        # buffer for the new data.
+        if data.dtype.name == 'uint8':
+            return np.ndarray(shape=new_shape, dtype='S'+str(length2),
+                              buffer=data)
+
         # The new array can be made as all zeros (nulls) with enough
         # padding to hold everything (dtype='UL' where 'L' is the
         # length). It will start out as a 1d array and be reshaped into
@@ -853,16 +859,11 @@ def convert_to_numpy_bytes(data, length=None):
         # length sized chunks, convert them (if they are uint8 or 16,
         # then decode to str first, if they are uint32, put them as an
         # input buffer for an ndarray of type 'U').
-        data = data.flatten()
+        data = data.ravel()
         for i in range(0, new_data.shape[0]):
             chunk = data[(i*length2):((i+1)*length2)]
-            if data.dtype.name == 'uint8':
-                new_data[i] = np.ndarray(shape=tuple(),
-                                         dtype=new_data.dtype,
-                                         buffer=chunk.tostring())[()]
-            else:
-                new_data[i] = np.bytes_(
-                    convert_to_str(chunk).encode('UTF-8'))
+            new_data[i] = np.bytes_(
+                convert_to_str(chunk).encode('UTF-8'))
 
         # Only thing is left is to reshape it.
         return new_data.reshape(tuple(new_shape))
