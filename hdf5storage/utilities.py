@@ -333,19 +333,20 @@ def write_object_array(f, data, options):
     # to the canonical empty will be used for the reference array to
     # point to.
     grp2name = grp2.name
-    for index, x in np.ndenumerate(data):
+    data_refs_flat = data_refs.reshape(-1)
+    for index, x in enumerate(data.flat):
         name_for_ref = next_unused_name_in_group(grp2, 16)
         write_data(f, grp2, name_for_ref, x, None, options)
         try:
             dset = grp2[name_for_ref]
-            data_refs[index] = dset.ref
+            data_refs_flat[index] = dset.ref
             if options.matlab_compatible:
                 set_attribute_string(dset,
                                      'H5PATH', grp2name)
             else:
                 del_attribute(dset, 'H5PATH')
         except:
-            data_refs[index] = dset_a.ref
+            data_refs_flat[index] = dset_a.ref
 
     # Now, the dtype needs to be changed to the reference type and the
     # whole thing copied over to data_to_store.
