@@ -1190,7 +1190,7 @@ class MarshallerCollection(object):
                 continue
 
             # Check if all modules are loaded or not, and load them if
-            # doing lazy loading.
+            # not doing lazy loading.
             try:
                 for name in m.required_modules:
                     if name not in sys.modules:
