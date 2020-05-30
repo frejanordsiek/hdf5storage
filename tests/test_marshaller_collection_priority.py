@@ -49,13 +49,13 @@ class JunkMarshaller(hdf5storage.Marshallers.TypeMarshaller):
 
 
 @raises(TypeError)
-def check_error_non_tuplelist(obj):
+def check_error_non_sequence(obj):
     hdf5storage.MarshallerCollection(priority=obj)
 
 
 def test_error_non_tuplelist():
-    for v in (None, True, 1, 2.3, '39va', b'391', set(), dict()):
-        yield check_error_non_tuplelist, v
+    for v in (None, True, 1, 2.3, set(), dict()):
+        yield check_error_non_sequence, v
 
 
 @raises(ValueError)
