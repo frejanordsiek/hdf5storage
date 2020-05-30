@@ -286,8 +286,8 @@ def write_object_array(f, data, options):
     """
     # We need to grab the special reference dtype and make an empty
     # array to store all the references in.
-    ref_dtype = h5py.special_dtype(ref=h5py.Reference)
-    data_refs = np.zeros(shape=data.shape, dtype='object')
+    data_refs = np.zeros(shape=data.shape,
+                         dtype=h5py.special_dtype(ref=h5py.Reference))
 
     # We need to make sure that the group to hold references is present,
     # and create it if it isn't.
@@ -350,7 +350,7 @@ def write_object_array(f, data, options):
 
     # Now, the dtype needs to be changed to the reference type, which
     # will incidentally copy it.
-    return data_refs.astype(ref_dtype)
+    return data_refs
 
 
 def read_object_array(f, data, options):
