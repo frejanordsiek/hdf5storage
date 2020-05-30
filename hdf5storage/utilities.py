@@ -664,7 +664,7 @@ def convert_to_numpy_str(data, length=None):
         # needs to be have the dtype essentially changed by having its
         # bytes read into ndarray.
         return np.ndarray(shape=tuple(), dtype='U1',
-                          buffer=data.tostring())[()]
+                          buffer=data)[()]
     elif isinstance(data, np.ndarray) and data.dtype.char == 'S':
         return np.char.encode(data, 'UTF-32')
     elif isinstance(data, np.ndarray) \
