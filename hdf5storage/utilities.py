@@ -391,10 +391,12 @@ def read_object_array(f, data, options):
     # Go through all the elements of data and read them using their
     # references, and the putting the output in new object array.
     data_derefed = np.zeros(shape=data.shape, dtype='object')
-    for index, x in np.ndenumerate(data):
-        data_derefed[index] = read_data(f, None, None,
-                                        options,
-                                        dsetgrp=f[x])
+    data_derefed_flat = data_derefed.reshape(-1)
+    data_flat = data[...].ravel()
+    for index, x in enumerate(data_flat):
+        data_derefed_flat[index] = read_data(f, None, None,
+                                             options,
+                                             dsetgrp=f[x])
     return data_derefed
 
 
