@@ -1017,14 +1017,14 @@ class MarshallerCollection(object):
         Whether to attempt to load the required modules for each
         marshaller right away when added/given or to only do so when
         required (when marshaller is needed). Default is ``True``.
-    priority : tuple or list of str, optional
-        3-element ``tuple`` or ``list`` specifying the priority ordering
-        (first has highest priority). The three elements must be
-        ``'builtin'`` for the builtin marshallers included in this
-        package, ``'plugin'`` for marshallers provided by other python
-        packages via plugin, and ``'user'`` for marshallers provided to
-        this class explicityly during creation. The default priority
-        order is builtin, plugin, user.
+    priority : Sequence, optional
+        3-element Sequence specifying the priority ordering (first has
+        highest priority). The three elements must be ``'builtin'`` for
+        the builtin marshallers included in this package, ``'plugin'``
+        for marshallers provided by other python packages via plugin,
+        and ``'user'`` for marshallers provided to this class
+        explicityly during creation. The default priority order is
+        builtin, plugin, user.
     marshallers : marshaller or Iterable of marshallers, optional
         The user marshaller/s to add to the collection. Must inherit
         from ``hdf5storage.Marshallers.TypeMarshaller``.
@@ -1053,8 +1053,8 @@ class MarshallerCollection(object):
             raise TypeError('load_plugins must be bool.')
         if not isinstance(lazy_loading, bool):
             raise TypeError('lazy_loading must be bool.')
-        if not isinstance(priority, (tuple, list)):
-            raise TypeError('priority must be a tuple or list.')
+        if not isinstance(priority, collections.abc.Sequence):
+            raise TypeError('priority must be a Sequence.')
         if sorted(priority) != sorted(('builtin', 'plugin', 'user')):
             raise ValueError('priority has a missing or invalid '
                              'element.')
