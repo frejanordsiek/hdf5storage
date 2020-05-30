@@ -983,8 +983,8 @@ class MarshallerCollection(object):
     installed third party plugins, as well as any user supplied or
     added marshallers. While the builtin list cannot be changed; user
     ones can be added or removed. Also has functions to get the
-    marshaller appropriate for ``type`` or type_string for a python data
-    type.
+    marshaller appropriate for the ``type`` or type_string for a python
+    data type.
 
     User marshallers must inherit from
     ``hdf5storage.Marshallers.TypeMarshaller`` and provide its
@@ -1025,7 +1025,7 @@ class MarshallerCollection(object):
         packages via plugin, and ``'user'`` for marshallers provided to
         this class explicityly during creation. The default priority
         order is builtin, plugin, user.
-    marshallers : marshaller or iterable of marshallers, optional
+    marshallers : marshaller or Iterable of marshallers, optional
         The user marshaller/s to add to the collection. Must inherit
         from ``hdf5storage.Marshallers.TypeMarshaller``.
 
@@ -1037,6 +1037,8 @@ class MarshallerCollection(object):
     ------
     TypeError
         If one of the arguments is the wrong type.
+    ValueError
+        If one of the arguments has an invalid value.
 
     See Also
     --------
