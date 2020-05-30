@@ -2344,7 +2344,7 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
             action_for_matlab_incompatible='error',
             marshaller_collection=None, truncate_existing=False,
             truncate_invalid_matlab=False, **keywords):
-    """ Save a dictionary of python types to a MATLAB MAT file.
+    """ Save a dictionary of python objects to a MATLAB MAT file.
 
     Saves the data provided in the dictionary `mdict` to a MATLAB MAT
     file. `format` determines which kind/vesion of file to use. The
@@ -2462,7 +2462,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
             marshaller_collection=None, **keywords):
     """ Loads data to a MATLAB MAT file.
 
-    Reads data from the specified variables (or all) in a  MATLAB MAT
+    Reads data from the specified variables (or all) in a MATLAB MAT
     file. There are many different formats of MAT files. This package
     can only handle the HDF5 based ones (the version 7.3 and later).
     As SciPy's ``scipy.io.loadmat`` function can handle the earlier
@@ -2499,7 +2499,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
 
     Returns
     -------
-    dict
+    mdict : dict
         Dictionary of all the variables read from the MAT file (name
         as the key, and content as the value). If a variable was missing
         from the file, it will not be present here.
