@@ -272,7 +272,11 @@ class Options(object):
 
         The ``MarshallerCollection`` (collection of marshallers to disk)
         to use. The default is to use the default one from
-        ``get_default_MarshallerCollection``. Only copies are returned.
+        ``get_default_MarshallerCollection``.
+
+        Warning
+        -------
+        This property does **NOT** return a copy.
 
         See Also
         --------
