@@ -1982,6 +1982,11 @@ class File(collections.abc.MutableMapping):
     def __iter__(self):
         """ Get an Iterator over the names in the file root.
 
+        Warning
+        -------
+        The names are returned as is, rather than unescaped. Use
+        ``pathesc.unescape_path`` to unescape them.
+
         Returns
         -------
         it : Iterator
@@ -1991,6 +1996,10 @@ class File(collections.abc.MutableMapping):
         ------
         IOError
             If the file is not open.
+
+        See Also
+        --------
+        pathesc.unescape_path
 
         """
         # File operations must be synchronized.
