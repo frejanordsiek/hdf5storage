@@ -726,7 +726,7 @@ def convert_to_numpy_str(data, length=None):
             return np.char.decode(data.copy().byteswap().view(dt),
                                   encoding)
         else:
-            return np.char.decode(data.copy().view(dt), encoding)
+            return np.char.decode(data.view(dt), encoding)
     else:
         # Couldn't figure out what it is, so nothing can be done but
         # return it as is.
