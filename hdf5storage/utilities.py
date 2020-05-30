@@ -348,9 +348,9 @@ def write_object_array(f, data, options):
         except:
             data_refs_flat[index] = dset_a.ref
 
-    # Now, the dtype needs to be changed to the reference type and the
-    # whole thing copied over to data_to_store.
-    return data_refs.astype(ref_dtype).copy()
+    # Now, the dtype needs to be changed to the reference type, which
+    # will incidentally copy it.
+    return data_refs.astype(ref_dtype)
 
 
 def read_object_array(f, data, options):
