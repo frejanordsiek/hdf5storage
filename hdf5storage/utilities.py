@@ -356,9 +356,9 @@ def write_object_array(f, data, options):
 def read_object_array(f, data, options):
     """ Reads an array of objects recursively.
 
-    Read the elements of the given HDF5 Reference array recursively
-    in the and constructs a ``numpy.object_`` array from its elements,
-    which is returned.
+    Reads the elements of the given HDF5 Reference array recursively
+    and constructs a ``numpy.object_`` array from its elements, which is
+    returned.
 
     Parameters
     ----------
