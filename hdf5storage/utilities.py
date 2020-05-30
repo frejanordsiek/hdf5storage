@@ -298,7 +298,7 @@ def write_object_array(f, data, options):
         grp2 = f.create_group(options.group_for_references)
 
     # The Dataset 'a' needs to be present as the canonical empty. It is
-    # just and np.uint32/64([0, 0]) with its a MATLAB_class of
+    # just a np.uint32/64([0, 0]) with its a MATLAB_class of
     # 'canonical empty' and the 'MATLAB_empty' attribute set. If it
     # isn't present or is incorrectly formatted, it is created
     # truncating anything previously there.
