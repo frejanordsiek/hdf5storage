@@ -291,16 +291,11 @@ def write_object_array(f, data, options):
 
     # We need to make sure that the group to hold references is present,
     # and create it if it isn't.
-
-    if options.group_for_references not in f:
-        f.create_group(options.group_for_references)
-
-    grp2 = f[options.group_for_references]
+    grp2 = f.require_group(options.group_for_references)
 
     if not isinstance(grp2, h5py.Group):
         del f[options.group_for_references]
-        f.create_group(options.group_for_references)
-        grp2 = f[options.group_for_references]
+        grp2 = f.create_group(options.group_for_references)
 
     # The Dataset 'a' needs to be present as the canonical empty. It is
     # just and np.uint32/64([0, 0]) with its a MATLAB_class of
