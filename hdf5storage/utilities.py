@@ -999,10 +999,9 @@ def encode_complex(data, complex_names):
 
     # Create the new version of the data with the right field names for
     # the real and complex parts. This is easy to do with putting the
-    # right detype in the view function.
-    dt = np.dtype([(complex_names[0], dtype_name),
-                   (complex_names[1], dtype_name)])
-    return data.view(dt).copy()
+    # right dtype in the view function.
+    return data.view([(complex_names[0], dtype_name),
+                      (complex_names[1], dtype_name)])
 
 
 def get_attribute(target, name):
