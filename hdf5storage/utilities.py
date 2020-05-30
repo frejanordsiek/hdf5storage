@@ -451,7 +451,7 @@ def convert_numpy_str_to_uint16(data):
     strings) to UTF-16 in the equivalent array of ``numpy.uint16``. The
     conversion will throw an exception if any characters cannot be
     converted to UTF-16. Strings are expanded along rows (across columns)
-    so a 2x3x4 array of 10 element strings will get turned into a 2x30x4
+    so a 2x3x4 array of 10 element strings will get turned into a 2x2x40
     array of uint16's if every UTF-32 character converts easily to a
     UTF-16 singlet, as opposed to a UTF-16 doublet.
 
@@ -505,7 +505,7 @@ def convert_numpy_str_to_uint32(data):
     Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
     strings) into the equivalent array of ``numpy.uint32`` that is byte
     for byte identical. Strings are expanded along rows (across columns)
-    so a 2x3x4 array of 10 element strings will get turned into a 2x30x4
+    so a 2x3x4 array of 10 element strings will get turned into a 2x3x40
     array of uint32's.
 
     Parameters
