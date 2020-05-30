@@ -496,7 +496,7 @@ def convert_numpy_str_to_uint16(data):
     shape = list(cdata.shape)
     shape[-1] *= (cdata.dtype.itemsize // 2)
     return np.ndarray(shape=shape, dtype='uint16',
-                      buffer=cdata.tostring())
+                      buffer=cdata)
 
 
 def convert_numpy_str_to_uint32(data):
