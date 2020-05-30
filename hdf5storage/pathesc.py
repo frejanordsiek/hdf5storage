@@ -60,9 +60,6 @@ def _replace_fun_escape(m):
     ``'\\uYYYY'``, and ``'\\UYYYYYYYY'`` where Y is a hex digit and
     converting single backslashes to double backslashes.
 
-    Only supports forward slash, backward slash, and null for now,
-    which are done by lookup.
-
     .. versionadded:: 0.2
 
     Parameters
@@ -74,8 +71,31 @@ def _replace_fun_escape(m):
     s : str
         The hex excaped version of the character.
 
+    Raises
+    ------
+    NotImplementedError
+        If the character is not in the supported character code range.
+
     """
-    return _char_escape_conversions[m.group(0)]
+    c = m.group(0)
+    # If it is one of the characters that we use a particular escape
+    # for, return it.
+    if c in _char_escape_conversions:
+        return _char_escape_conversions[c]
+    # We need to make the \\xYY, \\uYYYY, or \\UYYYYYYYY encoding. To do
+    # that, we get the character code and do different things depending
+    # on its size.
+    value = ord(c)
+    if value <= 0xFF:
+        return '\\x{0:02x}'.format(value)
+    elif value <= 0xFFFF:
+        return '\\u{0:04x}'.format(value)
+    elif value <= 0xFFFFFFFF:
+        return '\\U{0:08x}'.format(value)
+    else:
+        raise NotImplementedError('Cannot escape a character whose '
+                                  'code it outside of the range '
+                                  '0 - 0xFFFFFFFF.')
 
 
 def _replace_fun_unescape(m):
