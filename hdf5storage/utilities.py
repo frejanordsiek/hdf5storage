@@ -614,8 +614,8 @@ def convert_to_numpy_str(data, length=None):
     parameter specifies how many to group together into a string
     (desired string length). For 1d arrays, this is along its only
     dimension. For higher dimensional arrays, it is done along each row
-    (across columns). So, for a 3x10x5 input array of uints and a
-    `length` of 5, the output array would be a 3x2x5 of 5 element
+    (across columns). So, for a 3x5x10 input array of uints and a
+    `length` of 5, the output array would be a 3x5x2 of 5 element
     strings.
 
     Parameters
@@ -750,8 +750,8 @@ def convert_to_numpy_bytes(data, length=None):
     parameter specifies how many to group together into a string
     (desired string length). For 1d arrays, this is along its only
     dimension. For higher dimensional arrays, it is done along each row
-    (across columns). So, for a 3x10x5 input array of uints and a
-    `length` of 5, the output array would be a 3x2x5 of 5 element
+    (across columns). So, for a 3x5x10 input array of uints and a
+    `length` of 5, the output array would be a 3x5x2 of 5 element
     strings.
 
     Parameters
