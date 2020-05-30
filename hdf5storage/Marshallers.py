@@ -788,6 +788,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # Dataset as opposed to a HDF5 Reference array). The H5PATH
             # attribute needs to be set appropriately, while all other
             # attributes need to be deleted.
+            if options.matlab_compatible:
+                dsetgrpname = dsetgrp.name
             for i, field in enumerate(field_names):
                 esc_field = escaped_field_names[i]
                 new_data = np.zeros(shape=data_to_store.shape,
@@ -816,7 +818,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if field_obj is not None:
                     esc_attrs = dict()
                     if options.matlab_compatible:
-                        esc_attrs['H5PATH'] = ('string', dsetgrp.name)
+                        esc_attrs['H5PATH'] = ('string', dsetgrpname)
 
                     # In the case that we wrote a Reference array (not a
                     # single element), then all other attributes need to
@@ -1601,12 +1603,14 @@ class PythonDictMarshaller(TypeMarshaller):
         # needs to be set as the path of grp2 on all of them if we are
         # doing MATLAB compatibility (otherwise, the attribute needs to
         # be deleted).
+        if options.matlab_compatible:
+            grp2name = grp2.name
         for i, k in enumerate(names):
             obj = write_data(f, grp2, k, values[i], None,
                              options)
             if obj is not None:
                 if options.matlab_compatible:
-                    set_attribute_string(obj, 'H5PATH', grp2.name)
+                    set_attribute_string(obj, 'H5PATH', grp2name)
                 else:
                     del_attribute(obj, 'H5PATH')
         # Done
