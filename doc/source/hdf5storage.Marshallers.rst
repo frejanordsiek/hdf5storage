@@ -19,7 +19,7 @@ The marshallers have the following inheritance diagram
    NumpyScalarArrayMarshaller
    PythonScalarMarshaller
    PythonStringMarshaller
-   PythonNoneMarshaller
+   PythonNoneEllipsisNotImplementedMarshaller
    PythonDictMarshaller
    PythonListMarshaller
    PythonTupleSetDequeMarshaller
@@ -146,10 +146,10 @@ PythonStringMarshaller
        matlab_classes = ()
 
 
-PythonNoneMarshaller
---------------------
+PythonNoneEllipsisNotImplementedMarshaller
+------------------------------------------
 
-.. autoclass:: PythonNoneMarshaller
+.. autoclass:: PythonNoneEllipsisNotImplementedMarshaller
    :members: read, write
    :show-inheritance:
 
@@ -162,9 +162,11 @@ PythonNoneMarshaller
        matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
                             'MATLAB_int_decode'}
 
-       types = (builtins.NoneType, )
+       types = (builtins.NoneType, builtins.ellipsis,
+                builtins.NotImplementedType)
 
-       python_type_strings = ('builtins.NoneType', )
+       python_type_strings = ('builtins.NoneType', 'builtins.ellipsis',
+                              'builtins.NotImplementedType')
 
        matlab_classes = ()
 

@@ -160,7 +160,7 @@ def assert_equal_none_format(a, b, options=None):
             b_conv[i] = v
         assert_equal_none_format(a, b_conv, options)
     elif not isinstance(b, (np.generic, np.ndarray)):
-        if b is None:
+        if b is None or b is Ellipsis or b is NotImplemented:
             # It should be np.float64([])
             assert_equal_nose(type(a), np.ndarray)
             assert_equal_nose(a.dtype, np.float64([]).dtype)
@@ -331,7 +331,7 @@ def assert_equal_matlab_format(a, b, options=None):
             b_conv[i] = v
         assert_equal_matlab_format(a, b_conv, options)
     elif not isinstance(b, (np.generic, np.ndarray)):
-        if b is None:
+        if b is None or b is Ellipsis or b is NotImplemented:
             # It should be np.zeros(shape=(0, 1), dtype='float64'))
             assert_equal_nose(type(a), np.ndarray)
             assert_equal_nose(a.dtype, np.dtype('float64'))

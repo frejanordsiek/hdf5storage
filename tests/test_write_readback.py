@@ -434,6 +434,18 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    def test_Ellipsis(self):
+        data = Ellipsis
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
+    def test_NotImplemented(self):
+        data = NotImplemented
+        out = self.write_readback(data, random_name(),
+                                  self.options)
+        self.assert_equal(out, data)
+
     def test_bool_True(self):
         data = True
         out = self.write_readback(data, random_name(),

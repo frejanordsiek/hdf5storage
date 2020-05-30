@@ -154,6 +154,10 @@ support writing it so MATlAB can read it.
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | None           | 0.1     | ``np.float64([])``      | ``[]``      | 0.1     |                   |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
+| Ellipsis       | 0.2     | ``np.float64([])``      | ``[]``      | 0.2     |                   |
++----------------+---------+-------------------------+-------------+---------+-------------------+
+| NotImplemented | 0.2     | ``np.float64([])``      | ``[]``      | 0.2     |                   |
++----------------+---------+-------------------------+-------------+---------+-------------------+
 | int            | 0.1     | np.int64 or np.bytes\_  | int64       | 0.1     | [2]_ [3]_         |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | long           | 0.1     | np.int64 or np.bytes\_  | int64       | 0.1     | [3]_ [4]_         |
@@ -364,6 +368,9 @@ Versions
        and leading periods. It is used for the field names of structured
        numpy ndarrays as well as the keys of ``dict`` like objects when
        writing their values to individual Datasets.
+     * Issue #89. ``Marshallers.PythonNoneMarshaller`` was renamed to
+       ``Marshallers.PythonNoneEllipsisNotImplementedMarshaller`` and
+       support added for the ``Ellipsis`` and ``NotImplemented`` types.
      * The ``write`` method of all marshallers now must return the written
        HDF5 Group or Dataset (or ``None`` if unsuccessful).
        ``utilities.write_data`` now returns this as well.

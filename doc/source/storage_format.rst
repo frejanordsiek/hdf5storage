@@ -65,6 +65,8 @@ Type                      Version  Converted to                          Group o
 ========================  =======  ====================================  ======================
 bool                      0.1      np.bool\_ or np.uint8 [1]_            Dataset
 None                      0.1      ``np.float64([])``                    Dataset
+Ellipsis                  0.2      ``np.float64([])``                    Dataset
+NotImplemented            0.2      ``np.float64([])``                    Dataset
 int [2]_ [3]_             0.1      np.int64 or np.bytes\_ [2]_ [3]_      Dataset
 long [3]_ [4]_            0.1      np.int64 or np.bytes\_ [3]_ [4]_      Dataset
 float                     0.1      np.float64                            Dataset
@@ -162,50 +164,52 @@ stored. Then, the other attributes are detailed individually.
    all ``np.bytes_``. 'MATLAB_int_decode' is a ``np.int64``.
    'Python.Fields' is a ``np.object_`` array of ``str``.
 
-==============  =========================  ===============================  ==================  =====================
-                Python Attributes                                           MATLAB Attributes
-                ----------------------------------------------------------  -----------------------------------------
-Type            Python.Type                Python.numpy.UnderlyingType      MATLAB_class        MATLAB_int_decode
-==============  =========================  ===============================  ==================  =====================
-bool            'bool'                     'bool'                           'logical'           1
-None            'builtins.NoneType'        'float64'                        'double'
-int             'int'                      'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
-long            'long'                     'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
-float           'float'                    'float64'                        'double'
-complex         'complex'                  'complex128'                     'double'
-str             'str'                      'str#' [11]_                     'char'              2
-bytes           'bytes'                    'bytes#' [11]_                   'char'              2
-bytearray       'bytearray'                'bytes#' [11]_                   'char'              2
-list            'list'                     'object'                         'cell'
-tuple           'tuple'                    'object'                         'cell'
-set             'set'                      'object'                         'cell'
-frozenset       'frozenset'                'object'                         'cell'
-cl.deque        'collections.deque'        'object'                         'cell'
-dict            'dict'                                                      'struct'
-cl.OrderedDict  'collections.OrderedDict'                                   'struct'
-np.bool\_       'numpy.bool'               'bool'                           'logical'           1
-np.void         'numpy.void'               'void#' [11]_    
-np.uint8        'numpy.uint8'              'uint8'                          'uint8'
-np.uint16       'numpy.uint16'             'uint16'                         'uint16'
-np.uint32       'numpy.uint32'             'uint32'                         'uint32'
-np.uint64       'numpy.uint64'             'uint64'                         'uint64'
-np.uint8        'numpy.int8'               'int8'                           'int8'
-np.int16        'numpy.int16'              'int16'                          'int16'
-np.int32        'numpy.int32'              'int32'                          'int32'
-np.int64        'numpy.int64'              'int64'                          'int64'
-np.float16      'numpy.float16'            'float16'
-np.float32      'numpy.float32'            'float32'                        'single'
-np.float64      'numpy.float64'            'float64'                        'double'
-np.complex64    'numpy.complex64'          'complex64'                      'single'
-np.complex128   'numpy.complex128'         'complex128'                     'double'
-np.str\_        'numpy.str\_'              'str#' [11]_                     'char' or 'uint32'  2 or 4 [12]_
-np.bytes\_      'numpy.bytes\_'            'bytes#' [11]_                   'char'              2
-np.object\_     'numpy.object\_'           'object'                         'cell'
-np.ndarray      'numpy.ndarray'            [13]_                            [13]_ [14]_
-np.matrix       'numpy.matrix'             [13]_                            [13]_
-np.chararray    'numpy.chararray'          [13]_                            'char' [13]_
-np.recarray     'numpy.recarray'           [13]_                            [13]_ [14]_
-==============  =========================  ===============================  ==================  =====================
+==============  =============================  ===============================  ==================  =====================
+                Python Attributes                                               MATLAB Attributes
+                --------------------------------------------------------------  -----------------------------------------
+Type            Python.Type                    Python.numpy.UnderlyingType      MATLAB_class        MATLAB_int_decode
+==============  =============================  ===============================  ==================  =====================
+bool            'bool'                         'bool'                           'logical'           1
+None            'builtins.NoneType'            'float64'                        'double'
+Ellipsis        'builtins.ellipsis'            'float64'                        'double'
+NotImplemented  'builtins.NotImplementedType'  'float64'                        'double'
+int             'int'                          'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
+long            'long'                         'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
+float           'float'                        'float64'                        'double'
+complex         'complex'                      'complex128'                     'double'
+str             'str'                          'str#' [11]_                     'char'              2
+bytes           'bytes'                        'bytes#' [11]_                   'char'              2
+bytearray       'bytearray'                    'bytes#' [11]_                   'char'              2
+list            'list'                         'object'                         'cell'
+tuple           'tuple'                        'object'                         'cell'
+set             'set'                          'object'                         'cell'
+frozenset       'frozenset'                    'object'                         'cell'
+cl.deque        'collections.deque'            'object'                         'cell'
+dict            'dict'                                                          'struct'
+cl.OrderedDict  'collections.OrderedDict'                                       'struct'
+np.bool\_       'numpy.bool'                   'bool'                           'logical'           1
+np.void         'numpy.void'                   'void#' [11]_    
+np.uint8        'numpy.uint8'                  'uint8'                          'uint8'
+np.uint16       'numpy.uint16'                 'uint16'                         'uint16'
+np.uint32       'numpy.uint32'                 'uint32'                         'uint32'
+np.uint64       'numpy.uint64'                 'uint64'                         'uint64'
+np.uint8        'numpy.int8'                   'int8'                           'int8'
+np.int16        'numpy.int16'                  'int16'                          'int16'
+np.int32        'numpy.int32'                  'int32'                          'int32'
+np.int64        'numpy.int64'                  'int64'                          'int64'
+np.float16      'numpy.float16'                'float16'
+np.float32      'numpy.float32'                'float32'                        'single'
+np.float64      'numpy.float64'                'float64'                        'double'
+np.complex64    'numpy.complex64'              'complex64'                      'single'
+np.complex128   'numpy.complex128'             'complex128'                     'double'
+np.str\_        'numpy.str\_'                  'str#' [11]_                     'char' or 'uint32'  2 or 4 [12]_
+np.bytes\_      'numpy.bytes\_'                'bytes#' [11]_                   'char'              2
+np.object\_     'numpy.object\_'               'object'                         'cell'
+np.ndarray      'numpy.ndarray'                [13]_                            [13]_ [14]_
+np.matrix       'numpy.matrix'                 [13]_                            [13]_
+np.chararray    'numpy.chararray'              [13]_                            'char' [13]_
+np.recarray     'numpy.recarray'               [13]_                            [13]_ [14]_
+==============  =============================  ===============================  ==================  =====================
 
 .. [10] The former if it can fit in a ``np.int64`` and the latter if
 	not.

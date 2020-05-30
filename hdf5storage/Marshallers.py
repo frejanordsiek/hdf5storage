@@ -1492,11 +1492,14 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
             return data
 
 
-class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
+class PythonNoneEllipsisNotImplementedMarshaller(
+        NumpyScalarArrayMarshaller):
     def __init__(self):
         NumpyScalarArrayMarshaller.__init__(self)
-        self.types = (type(None), )
-        self.python_type_strings = ('builtins.NoneType', )
+        self.types = (type(None), type(...), type(NotImplemented))
+        self.python_type_strings = ('builtins.NoneType',
+                                    'builtins.ellipsis',
+                                    'builtins.NotImplementedType')
         # None corresponds to no MATLAB class.
         self.matlab_classes = ()
         # Update the type lookups.
@@ -1512,8 +1515,11 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
             self.get_type_string(data, type_string), options)
 
     def read(self, f, dsetgrp, attributes, options):
-        # There is only one value, so return it.
-        return None
+        # The type string can be used to look up the type, which can be
+        # called to produce an instance.
+        type_string = convert_attribute_to_string(
+            attributes['Python.Type'])
+        return self.typestring_to_type[type_string]()
 
 
 class PythonDictMarshaller(TypeMarshaller):
