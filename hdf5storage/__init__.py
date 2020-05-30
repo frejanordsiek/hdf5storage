@@ -2557,7 +2557,12 @@ def loadmat(file_name, mdict=None, appendmat=True,
             if variable_names is None:
                 data = {pathesc.unescape_path(k): v for k, v in f.items()}
             else:
-                data = {k: f.read(k) for k in variable_names}
+                data = dict()
+                for k in variable_names:
+                    try:
+                        data[k] = f.read(k)
+                    except:
+                        pass
         # Read all the variables, stuff them into mdict, and return it.
         if mdict is None:
             mdict = data
