@@ -519,7 +519,7 @@ class Options(object):
         doing so would lead to a loss of data (character can't be
         translated to UTF-16) or would change the shape of an array of
         ``numpy.unicode_`` due to a character being converted into a
-        pair 2-bytes, the conversion will not be made and the string
+        pair of 2-bytes, the conversion will not be made and the string
         will be stored in UTF-32 form as a ``numpy.uint32``.
 
         Must be ``True`` if doing MATLAB compatibility. MATLAB uses
@@ -605,6 +605,7 @@ class Options(object):
         very large arrays such that their dtypes, if converted to
         ``np.ndarray``, would exceed the 2GB maximum allowed by
         `NumPy <https://github.com/numpy/numpy/issues/6235>`_.
+
         """
         return self._structs_as_dicts
 
@@ -735,8 +736,8 @@ class Options(object):
         str
 
         When a ``dict`` like object has at least one key that isn't an
-        ``str`` or is an ``str`` with invalid characters, the object's
-        is stored as an array of keys and an array of values. This
+        ``str`` or is an ``str`` with invalid characters, the objects
+        are stored as an array of keys and an array of values. This
         option sets the name of the Dataset for the keys.
 
         .. versionadded:: 0.2
@@ -761,8 +762,8 @@ class Options(object):
         str
 
         When a ``dict`` like object has at least one key that isn't an
-        ``str`` or is an ``str`` with invalid characters, the object's
-        is stored as an array of keys and an array of values. This
+        ``str`` or is an ``str`` with invalid characters, the objects
+        are stored as an array of keys and an array of values. This
         option sets the name of the Dataset for the values.
 
         .. versionadded:: 0.2
