@@ -360,10 +360,10 @@ Versions
        package version. The initial version is ``'1.0'``.
      * Fixed bugs in ``savemat`` and ``loadmat`` with appening the file
        extension to filenames that are ``bytes``.
-     * Issue #27. Added of paths with null characters and slashes. It
-       is used for the field names of structured numpy ndarrays as well
-       as the keys of ``dict`` like objects when writing their values
-       to individual Datasets.
+     * Issue #27. Added support for paths with null characters, slashes,
+       and leading periods. It is used for the field names of structured
+       numpy ndarrays as well as the keys of ``dict`` like objects when
+       writing their values to individual Datasets.
      * Issue #49. Changed marshaller types and their handling code to
        support marshallers that handle types in modules that may not be
        available or should not be imported until needed. If the the
