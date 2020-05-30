@@ -2544,38 +2544,14 @@ def loadmat(file_name, mdict=None, appendmat=True,
             filename = file_name
 
         # Read everything if we were instructed.
-
-        if variable_names is None:
-            data = dict()
-            with h5py.File(filename, mode='r') as f:
-                for k in f:
-                    # Read if not group_for_references. Data that
-                    # produces errors when read is dicarded (the OSError
-                    # that would happen if this is not an HDF5 file
-                    # would already have happened when opening the
-                    # file).
-                    if f[k].name != options.group_for_references:
-                        try:
-                            data[pathesc.unescape_path(k)] = \
-                                utilities.read_data(f, f, k, options)
-                        except:
-                            pass
-
-        else:
-            # Extract the desired fields one by one, catching any errors
-            # for missing variables (so we don't fall back to
-            # scipy.io.loadmat).
-            data = dict()
-            with h5py.File(filename, mode='r') as f:
-                for k in variable_names:
-                    try:
-                        data[k] = utilities.read_data(f, f, k, options)
-                    except:
-                        pass
-
+        with File(filename, writable=False, options=options) as f:
+            if variable_names is None:
+                data = {pathesc.unescape_path(k): v for k, v in f.items()}
+            else:
+                data = {k: f.read(k) for k in variable_names}
         # Read all the variables, stuff them into mdict, and return it.
         if mdict is None:
-            mdict = dict()
+            mdict = data
         for k, v in data.items():
             mdict[k] = v
         return mdict
