@@ -293,11 +293,6 @@ def write_object_array(f, data, options):
     h5py.Reference
 
     """
-    # We need to grab the special reference dtype and make an empty
-    # array to store all the references in.
-    data_refs = np.zeros(shape=data.shape,
-                         dtype=h5py.special_dtype(ref=h5py.Reference))
-
     # We need to make sure that the group to hold references is present,
     # and create it if it isn't.
     grp2 = f.require_group(options.group_for_references)
@@ -332,6 +327,11 @@ def write_object_array(f, data, options):
         set_attribute(dset_a, 'MATLAB_empty',
                       np.uint8(1))
 
+    # We need to grab the special reference dtype and make an empty
+    # array to store all the references in.
+    data_refs = np.full(data.shape, dset_a.ref,
+                        dtype=h5py.special_dtype(ref=h5py.Reference))
+
     # Go through all the elements of data and write them, gabbing their
     # references and putting them in data_refs. They will be put in
     # group_for_references, which is also what the H5PATH needs to be
@@ -346,9 +346,7 @@ def write_object_array(f, data, options):
     for index, x in enumerate(data.flat):
         name_for_ref = next_unused_name_in_group(grp2, 16)
         obj = write_data(f, grp2, name_for_ref, x, None, options)
-        if obj is None:
-            data_refs_flat[index] = dset_a.ref
-        else:
+        if obj is not None:
             data_refs_flat[index] = obj.ref
             if options.matlab_compatible:
                 set_attribute_string(obj,
