@@ -235,7 +235,7 @@ def read_data(f, grp, name, options, dsetgrp=None):
         # use Numpy as a fallback
         m, has_modules = mc.get_marshaller_for_type(np.uint8)
 
-    # If a marshaller was found, use it to write the data. Otherwise,
+    # If a marshaller was found, use it to read the data. Otherwise,
     # return an error.
 
     if m is not None:
