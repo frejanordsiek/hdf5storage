@@ -447,7 +447,7 @@ def next_unused_name_in_group(grp, length):
 
 
 def convert_numpy_str_to_uint16(data):
-    """ Converts a numpy.unicode\_ to UTF-16 in numpy.uint16 form.
+    """ Converts a ``numpy.unicode_`` to UTF-16 in numpy.uint16 form.
 
     Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
     strings) to UTF-16 in the equivalent array of ``numpy.uint16``. The
@@ -502,7 +502,7 @@ def convert_numpy_str_to_uint16(data):
 
 
 def convert_numpy_str_to_uint32(data):
-    """ Converts a numpy.unicode\_ to its numpy.uint32 representation.
+    """ Converts ``numpy.unicode_`` to its numpy.uint32 representation.
 
     Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
     strings) into the equivalent array of ``numpy.uint32`` that is byte
@@ -598,7 +598,7 @@ def convert_to_str(data):
 
 
 def convert_to_numpy_str(data, length=None):
-    """ Decodes data to Numpy unicode string (numpy.unicode\_).
+    """ Decodes data to Numpy unicode string (``numpy.unicode_``).
 
     Decodes `data` to Numpy unicode string (UTF-32), which is
     ``numpy.unicode_``, or an array of them. If it can't be decoded, it
@@ -641,7 +641,7 @@ def convert_to_numpy_str(data, length=None):
     --------
     convert_to_str
     convert_to_numpy_bytes
-    numpy.unicode\_
+    numpy.unicode_
 
     """
     # The method of conversion depends on its type.
@@ -736,7 +736,7 @@ def convert_to_numpy_str(data, length=None):
 
 
 def convert_to_numpy_bytes(data, length=None):
-    """ Decodes data to Numpy UTF-8 econded string (bytes\_).
+    """ Decodes data to Numpy UTF-8 econded string (``numpy.bytes_``).
 
     Decodes `data` to a Numpy UTF-8 encoded string, which is
     ``numpy.bytes_``, or an array of them in which case it will be ASCII
@@ -777,7 +777,7 @@ def convert_to_numpy_bytes(data, length=None):
     --------
     convert_to_str
     convert_to_numpy_str
-    numpy.bytes\_
+    numpy.bytes_
 
     """
     # The method of conversion depends on its type.

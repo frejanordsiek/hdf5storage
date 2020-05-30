@@ -477,7 +477,7 @@ class Options(object):
 
     @property
     def convert_numpy_bytes_to_utf16(self):
-        """ Whether or not to convert numpy.bytes\_ to UTF-16.
+        """ Whether or not to convert ``numpy.bytes_`` to UTF-16.
 
         bool
 
@@ -491,7 +491,7 @@ class Options(object):
 
         See Also
         --------
-        numpy.bytes\_
+        numpy.bytes_
         convert_numpy_str_to_utf16
 
         """
@@ -508,7 +508,7 @@ class Options(object):
 
     @property
     def convert_numpy_str_to_utf16(self):
-        """ Whether or not to convert numpy.unicode\_ to UTF-16.
+        """ Whether or not to convert ``numpy.unicode_`` to UTF-16.
 
         bool
 
@@ -527,7 +527,7 @@ class Options(object):
 
         See Also
         --------
-        numpy.bytes\_
+        numpy.bytes_
         convert_numpy_str_to_utf16
 
         """
