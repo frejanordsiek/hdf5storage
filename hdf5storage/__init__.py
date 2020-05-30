@@ -2429,9 +2429,9 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
     # dispatched to the scipy version, if it is available, with all the
     # relevant and extra keywords options provided.
     if float(format) < 7.3:
-        import scipy.io
-        scipy.io.savemat(file_name, mdict, appendmat=appendmat,
-                         format=format, oned_as=oned_as, **keywords)
+        importlib.import_module('scipy.io').savemat(
+            file_name, mdict, appendmat=appendmat,
+            format=format, oned_as=oned_as, **keywords)
         return
 
     # Append .mat if it isn't on the end of the file name and we are
@@ -2571,10 +2571,10 @@ def loadmat(file_name, mdict=None, appendmat=True,
             mdict[k] = v
         return mdict
     except OSError:
-        import scipy.io
-        return scipy.io.loadmat(file_name, mdict, appendmat=appendmat,
-                                variable_names=variable_names,
-                                **keywords)
+        return importlib.import_module('scipy.io').loadmat(
+            file_name, mdict, appendmat=appendmat,
+            variable_names=variable_names,
+            **keywords)
 
 
 def get_default_MarshallerCollection():
