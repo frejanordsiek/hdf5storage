@@ -81,6 +81,7 @@ frozenset                 0.1      np.object\_                           Dataset
 cl.deque                  0.1      np.object\_                           Dataset
 dict [7]_                 0.1                                            Group
 cl.OrderedDict [7]_       0.2                                            Group
+cl.Counter [7]_           0.2                                            Group
 slice                     0.2                                            Group
 range                     0.2                                            Group
 np.bool\_                 0.1      not or np.uint8 [1]_                  Dataset
@@ -189,6 +190,7 @@ frozenset       'frozenset'                    'object'                         
 cl.deque        'collections.deque'            'object'                         'cell'
 dict            'dict'                                                          'struct'
 cl.OrderedDict  'collections.OrderedDict'                                       'struct'
+cl.Counter      'collections.Counter'                                           'struct'
 slice           'slice'                                                         'struct'
 range           'range'                                                         'struct'
 np.bool\_       'numpy.bool'                   'bool'                           'logical'           1
@@ -455,13 +457,13 @@ expected field names to find complex types.
 dict and dict like
 ------------------
 
-``dict`` like data (``dict`` and  ``cl.OrderedDict``) are stored either
-with each key-value as their own Dataset or as two Datasets, one for
-keys and one for values. The former is used if all keys are string
-like. Keys are converted to ``str``. Otherwise, the latter format is
-used. A key is string like if it is a ``'str``, a ``'bytes'``, a
-``np.unicode_``, or a ``np.bytes_`` and it an be converted successfully
-to ``str``.
+``dict`` like data (``dict``, ``cl.OrderedDict``, and ``cl.Counter``)
+are stored either with each key-value as their own Dataset or as two
+Datasets, one for keys and one for values. The former is used if all
+keys are string like. Keys are converted to ``str``. Otherwise, the
+latter format is used. A key is string like if it is a ``'str``, a
+``'bytes'``, a ``np.unicode_``, or a ``np.bytes_`` and it an be
+converted successfully to ``str``.
 
 When they can't be stored with each key-value pair as their own Dataset,
 the keys and values are stored as ``tuple`` in Datasets set by the the

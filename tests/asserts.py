@@ -58,7 +58,7 @@ def assert_equal(a, b, options=None):
     # numpy.testing.assert_equal will compare them elementwise. For
     # object arrays, each element must be iterated over to be compared.
     assert_equal_nose(type(a), type(b))
-    if type(b) == dict:
+    if type(b) in (dict, collections.Counter):
         assert_equal_nose(set(a.keys()), set(b.keys()))
         for k in b:
             assert_equal(a[k], b[k], options)
@@ -115,7 +115,7 @@ def assert_equal_none_format(a, b, options=None):
     # elements must all be the same. If it is string_ type, we must
     # convert to uint32 and then everything can be compared. Big longs
     # and ints get written as numpy.bytes_.
-    if type(b) == dict or type(b) == collections.OrderedDict:
+    if type(b) in (dict, collections.Counter, collections.OrderedDict):
         assert_equal_nose(type(a), np.ndarray)
         assert a.dtype.names is not None
 
@@ -290,7 +290,7 @@ def assert_equal_matlab_format(a, b, options=None):
     #
     # In all cases, we expect things to be at least two dimensional
     # arrays.
-    if type(b) == dict or type(b) == collections.OrderedDict:
+    if type(b) in (dict, collections.Counter, collections.OrderedDict):
         assert_equal_nose(type(a), np.ndarray)
         assert a.dtype.names is not None
 

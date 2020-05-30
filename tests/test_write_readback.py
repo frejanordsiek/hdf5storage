@@ -72,7 +72,7 @@ class TestPythonMatlabFormat(object):
 
         # Need a list of dict-like types, which will depend on Python
         # version.
-        self.dict_like = ['dict', 'OrderedDict']
+        self.dict_like = ['dict', 'OrderedDict', 'Counter']
 
     def write_readback(self, data, name, options, read_options=None):
         # Randomly convert the name to other path types.

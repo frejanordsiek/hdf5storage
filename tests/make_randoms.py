@@ -249,20 +249,26 @@ def random_range():
 def random_dict(tp='dict'):
     # Makes a random dict or dict-like object tp (random number of
     # randomized keys with random numpy arrays as values). The only
-    # supported values of tp are 'dict' and 'OrderedDict'.
+    # supported values of tp are 'dict', 'OrderedDict', and 'Counter'.
     data = dict()
     for i in range(0, random.randint(min_dict_keys, \
             max_dict_keys)):
         name = random_str_ascii(max_dict_key_length)
-        data[name] = \
-            random_numpy(random_numpy_shape( \
-            dict_value_subarray_dimensions, \
-            max_dict_value_subarray_axis_length), \
-            dtype=random.choice(dtypes))
+        if tp == 'Counter':
+            data[name] = random.randint(-2**65, 2**65)
+        else:
+            data[name] = \
+                random_numpy(random_numpy_shape( \
+                dict_value_subarray_dimensions, \
+                max_dict_value_subarray_axis_length), \
+                dtype=random.choice(dtypes))
 
-    # If tp is 'dict', return as is. Otherwise, randomize the order.
+    # If tp is 'dict', return as is. If it is a Counter, we need to
+    # convert it. If it is an OrderedDict, we need to randomize the order.
     if tp == 'dict':
         return data
+    elif tp == 'Counter':
+        return collections.Counter(data)
     elif tp == 'OrderedDict':
         # An ordered dict is made by randomizing the field order.
         itms = list(data.items())

@@ -1797,6 +1797,34 @@ class PythonDictMarshaller(TypeMarshaller):
         return tp(items)
 
 
+class PythonCounterMarshaller(PythonDictMarshaller):
+    def __init__(self):
+        PythonDictMarshaller.__init__(self)
+        self.types = (collections.Counter, )
+        self.python_type_strings = ('collections.Counter', )
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = ()
+        # Update the type lookups.
+        self.update_type_lookups()
+
+    def read(self, f, dsetgrp, attributes, options):
+        # Use the parent class version to read it and do most of the
+        # work.
+        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes,
+                                         options)
+        # The type string determines how to convert it back to a Python
+        # type, which is just passing the data dict into its constructor.
+        type_string = convert_attribute_to_string(
+            attributes['Python.Type'])
+        if type_string in self.typestring_to_type:
+            tp = self.typestring_to_type[type_string]
+            return tp(data)
+        else:
+            # Must be some other type, so return it as is.
+            return data
+
+
 class PythonSliceRangeMarshaller(PythonDictMarshaller):
     def __init__(self):
         PythonDictMarshaller.__init__(self)

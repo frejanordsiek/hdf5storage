@@ -186,6 +186,8 @@ support writing it so MATlAB can read it.
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | cl.OrderedDict | 0.2     |                         | struct      | 0.2     | [7]_              |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
+| cl.Counter     | 0.2     |                         | struct      | 0.2     | [7]_              |
++----------------+---------+-------------------------+-------------+---------+-------------------+
 | slice          | 0.2     |                         | struct      | 0.2     |                   |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | range          | 0.2     |                         | struct      | 0.2     |                   |
@@ -413,8 +415,10 @@ Versions
        keys are not string like, can't be converted to Python 3.x
        ``str`` or Python 2.x ``unicode``, or have null or ``'/'``
        characters.
-     * Issue #38. Added support for ``cl.OrderedDict``. It was added to
-       the ``Marshallers.PythonDictMarshaller``.
+     * Issues #38 and #91. Added support for ``cl.OrderedDict`` and
+       ``cl.Counter``. The were added added to
+       ``Marshallers.PythonDictMarshaller`` and the new
+       ``Marshallers.PythonCounterMarshaller`` respectively.
      * Issue #80. Added a support for ``slice`` and ``range`` with the new
        marshaller ``Marshallers.PythonSliceRangeMarshaller``.
      * Issue #40. Made it so that tests use tempfiles instead of
