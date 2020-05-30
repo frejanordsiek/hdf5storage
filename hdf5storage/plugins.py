@@ -38,7 +38,7 @@ def supported_marshaller_api_versions():
     Gets the different Marshaller API versions that this version of
     ``hdf5storage`` supports.
 
-    .. versionadded:: 0.3
+    .. versionadded:: 0.2
 
     Returns
     -------
