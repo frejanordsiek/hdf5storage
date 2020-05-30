@@ -98,6 +98,9 @@ def write_data(f, grp, name, data, type_string, options):
     Low level function to store a Python type (`data`) into the
     specified Group.
 
+    .. versionchanged:: 0.2
+       Added return value `obj`.
+
     Parameters
     ----------
     f : h5py.File
@@ -113,6 +116,12 @@ def write_data(f, grp, name, data, type_string, options):
         automatically.
     options : hdf5storage.core.Options
         The options to use when writing.
+
+    Returns
+    -------
+    obj : h5py.Dataset or h5py.Group or None
+        The base Dataset or Group having the name `name` in `grp` that
+        was made, or ``None`` if nothing was written.
 
     Raises
     ------
@@ -142,7 +151,7 @@ def write_data(f, grp, name, data, type_string, options):
     # the containing group.
 
     if m is not None and has_modules:
-        m.write(f, grp, name, data, type_string, options)
+        return m.write(f, grp, name, data, type_string, options)
     else:
         raise NotImplementedError('Can''t write data type: ' + str(tp))
 
@@ -336,17 +345,16 @@ def write_object_array(f, data, options):
     data_refs_flat = data_refs.reshape(-1)
     for index, x in enumerate(data.flat):
         name_for_ref = next_unused_name_in_group(grp2, 16)
-        write_data(f, grp2, name_for_ref, x, None, options)
-        try:
-            dset = grp2[name_for_ref]
-            data_refs_flat[index] = dset.ref
+        obj = write_data(f, grp2, name_for_ref, x, None, options)
+        if obj is None:
+            data_refs_flat[index] = dset_a.ref
+        else:
+            data_refs_flat[index] = obj.ref
             if options.matlab_compatible:
-                set_attribute_string(dset,
+                set_attribute_string(obj,
                                      'H5PATH', grp2name)
             else:
-                del_attribute(dset, 'H5PATH')
-        except:
-            data_refs_flat[index] = dset_a.ref
+                del_attribute(obj, 'H5PATH')
 
     # Now, the dtype needs to be changed to the reference type, which
     # will incidentally copy it.

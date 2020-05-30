@@ -313,6 +313,9 @@ class TypeMarshaller(object):
         .. versionchanged:: 0.2
            Arguements changed.
 
+        .. versionchanged:: 0.2
+           Added return value `obj`.
+
         Parameters
         ----------
         f : h5py.File
@@ -329,6 +332,12 @@ class TypeMarshaller(object):
             to be gotten by ``get_type_string``.
         options : hdf5storage.core.Options
             hdf5storage options object.
+
+        Returns
+        -------
+        obj : h5py.Dataset or h5py.Group or None
+            The base Dataset or Group having the name `name` in `grp`
+            that was made, or ``None`` if nothing was written.
 
         Raises
         ------
@@ -618,7 +627,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     'Data type ' + data.dtype.name
                     + ' not supported by MATLAB.')
             elif options.action_for_matlab_incompatible == 'discard':
-                return
+                return None
 
         # Need to make a set of data that will be stored. It will start
         # out as a copy of data and then be steadily manipulated.
@@ -797,13 +806,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # (don't need to use a Reference array in this
                 # case). Otherwise, write the whole thing.
                 if np.prod(new_data.shape) == 1:
-                    write_data(f, dsetgrp, esc_field,
-                               new_data.flat[0], None, options)
+                    field_obj = write_data(f, dsetgrp, esc_field,
+                                           new_data.flat[0], None,
+                                           options)
                 else:
-                    write_data(f, dsetgrp, esc_field, new_data, None,
-                               options)
+                    field_obj = write_data(f, dsetgrp, esc_field,
+                                           new_data, None, options)
 
-                if esc_field in dsetgrp:
+                if field_obj is not None:
                     esc_attrs = dict()
                     if options.matlab_compatible:
                         esc_attrs['H5PATH'] = ('string', dsetgrp.name)
@@ -811,7 +821,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     # In the case that we wrote a Reference array (not a
                     # single element), then all other attributes need to
                     # be removed.
-                    set_attributes_all(dsetgrp[esc_field],
+                    set_attributes_all(field_obj,
                                        esc_attrs,
                                        np.prod(new_data.shape) != 1)
         else:
@@ -888,6 +898,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.write_metadata(f, dsetgrp, data, type_string,
                             options, attributes=attributes,
                             wrote_as_struct=wrote_as_struct)
+        return dsetgrp
 
     def write_metadata(self, f, dsetgrp, data, type_string, options,
                        attributes=None, wrote_as_struct=False):
@@ -1405,9 +1416,9 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
                 out = np.bytes_(data)
         else:
             out = np.array(data)[()]
-        NumpyScalarArrayMarshaller.write(self, f, grp, name, out,
-                                         self.get_type_string(data,
-                                         type_string), options)
+        return NumpyScalarArrayMarshaller.write(
+            self, f, grp, name, out,
+            self.get_type_string(data, type_string), options)
 
     def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the
@@ -1454,9 +1465,9 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # it. The proper type_string needs to be grabbed now as the
         # parent function will have a modified form of data to guess
         # from if not given the right one explicitly.
-        NumpyScalarArrayMarshaller.write(self, f, grp, name, cdata,
-                                         self.get_type_string(data,
-                                         type_string), options)
+        return NumpyScalarArrayMarshaller.write(
+            self, f, grp, name, cdata,
+            self.get_type_string(data, type_string), options)
 
     def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the
@@ -1494,10 +1505,9 @@ class PythonNoneMarshaller(NumpyScalarArrayMarshaller):
         # (two dimensional so that MATLAB will import it as a []) as the
         # data and the right type_string set (parent can't guess right
         # from the modified form).
-        NumpyScalarArrayMarshaller.write(self, f, grp, name,
-                                         np.float64([]),
-                                         self.get_type_string(data,
-                                         type_string), options)
+        return NumpyScalarArrayMarshaller.write(
+            self, f, grp, name, np.float64([]),
+            self.get_type_string(data, type_string), options)
 
     def read(self, f, dsetgrp, attributes, options):
         # There is only one value, so return it.
@@ -1592,13 +1602,15 @@ class PythonDictMarshaller(TypeMarshaller):
         # doing MATLAB compatibility (otherwise, the attribute needs to
         # be deleted).
         for i, k in enumerate(names):
-            write_data(f, grp2, k, values[i], None,
-                       options)
-            if k in grp2:
+            obj = write_data(f, grp2, k, values[i], None,
+                             options)
+            if obj is not None:
                 if options.matlab_compatible:
-                    set_attribute_string(grp2[k], 'H5PATH', grp2.name)
+                    set_attribute_string(obj, 'H5PATH', grp2.name)
                 else:
-                    del_attribute(grp2[k], 'H5PATH')
+                    del_attribute(obj, 'H5PATH')
+        # Done
+        return grp2
 
     def write_metadata(self, f, dsetgrp, data, type_string, options,
                        attributes=None,
@@ -1793,10 +1805,9 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
         # explicitly.
         out = np.zeros(dtype='object', shape=(len(data), ))
         out[:] = data
-        NumpyScalarArrayMarshaller.write(self, f, grp, name,
-                                         out,
-                                         self.get_type_string(data,
-                                         type_string), options)
+        return NumpyScalarArrayMarshaller.write(
+            self, f, grp, name, out,
+            self.get_type_string(data, type_string), options)
 
     def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the
@@ -1827,9 +1838,9 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
         # needs to be grabbed now as the parent function will have a
         # modified form of data to guess from if not given the right one
         # explicitly.
-        PythonListMarshaller.write(self, f, grp, name, list(data),
-                                   self.get_type_string(data,
-                                   type_string), options)
+        return PythonListMarshaller.write(
+            self, f, grp, name, list(data),
+            self.get_type_string(data, type_string), options)
 
     def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the

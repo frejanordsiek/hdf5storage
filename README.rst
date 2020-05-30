@@ -364,6 +364,9 @@ Versions
        and leading periods. It is used for the field names of structured
        numpy ndarrays as well as the keys of ``dict`` like objects when
        writing their values to individual Datasets.
+     * The ``write`` method of all marshallers now must return the written
+       HDF5 Group or Dataset (or ``None`` if unsuccessful).
+       ``utilities.write_data`` now returns this as well.
      * Issue #49. Changed marshaller types and their handling code to
        support marshallers that handle types in modules that may not be
        available or should not be imported until needed. If the the
