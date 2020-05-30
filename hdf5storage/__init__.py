@@ -1271,22 +1271,16 @@ class MarshallerCollection(object):
     def add_marshaller(self, marshallers):
         """ Add a marshaller/s to the user provided list.
 
-        Adds a marshaller or a list of them to the user provided set of
-        marshallers.
-
-        Note that the builtin marshallers take priority when choosing
-        the right marshaller.
+        Adds a marshaller or an Iterable of them to the user provided
+        set of marshallers.
 
         .. versionchanged:: 0.2
            All marshallers must now inherit from
            ``hdf5storage.Marshallers.TypeMarshaller``.
 
-        .. versionchanged:: 0.2
-           Builtin marshallers take priority over user provided ones.
-
         Parameters
         ----------
-        marshallers : marshaller or iterable of marshallers
+        marshallers : marshaller or Iterable
             The user marshaller/s to add to the user provided
             collection. Must inherit from
             ``hdf5storage.Marshallers.TypeMarshaller``.
@@ -1315,12 +1309,12 @@ class MarshallerCollection(object):
     def remove_marshaller(self, marshallers):
         """ Removes a marshaller/s from the user provided list.
 
-        Removes a marshaller or a list of them from the user provided set
-        of marshallers.
+        Removes a marshaller or an Iterable of them from the user
+        provided set of marshallers.
 
         Parameters
         ----------
-        marshallers : marshaller or list of marshallers
+        marshallers : marshaller or Iterable
             The user marshaller/s to from the user provided collection.
 
         """
