@@ -187,7 +187,7 @@ def unescape_path(pth):
 
     Parameters
     ----------
-    pth : str
+    pth : str or bytes
         The path to unescape.
 
     Returns
