@@ -5,6 +5,14 @@ hdf5storage.Marshallers
 
 .. automodule:: hdf5storage.Marshallers
 
+
+The marshallers have the following inheritance diagram
+
+
+.. inheritance-diagram:: hdf5storage.Marshallers
+   :parts: 1
+
+
 .. autosummary::
 
    TypeMarshaller
