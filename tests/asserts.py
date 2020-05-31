@@ -75,7 +75,7 @@ def assert_equal(a, b, options=None):
         assert_equal_nose(a, b)
     elif type(b) == collections.ChainMap:
         assert_is_instance(a, collections.ChainMap)
-        assert_equal(a.maps, b.maps)
+        assert_equal(a.maps, b.maps, options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         assert_equal_nose(len(a), len(b))
         if type(b) in (set, frozenset):
