@@ -169,7 +169,7 @@ def assert_equal_none_format(a, b, options=None):
     elif type(b) == collections.ChainMap:
         # We won't get back a chainmap, but instead a list of the maps
         # which can be compared.
-        assert_equal_none_format(a, b.maps)
+        assert_equal_none_format(a, b.maps, options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         b_conv = np.zeros(dtype='object', shape=(len(b), ))
         for i, v in enumerate(b):
@@ -350,7 +350,7 @@ def assert_equal_matlab_format(a, b, options=None):
     elif type(b) == collections.ChainMap:
         # We won't get back a chainmap, but instead a list of the maps
         # which can be compared.
-        assert_equal_matlab_format(a, b.maps)
+        assert_equal_matlab_format(a, b.maps, options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         b_conv = np.zeros(dtype='object', shape=(len(b), ))
         for i, v in enumerate(b):
