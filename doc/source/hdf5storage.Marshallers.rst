@@ -67,7 +67,7 @@ NumpyScalarArrayMarshaller
 --------------------------
 
 .. autoclass:: NumpyScalarArrayMarshaller
-   :members: read, write, write_metadata
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -107,7 +107,7 @@ PythonScalarMarshaller
 ----------------------
 
 .. autoclass:: PythonScalarMarshaller
-   :members: read, write
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -130,7 +130,7 @@ PythonStringMarshaller
 ----------------------
 
 .. autoclass:: PythonStringMarshaller
-   :members: read, write
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -153,7 +153,7 @@ PythonNoneEllipsisNotImplementedMarshaller
 ------------------------------------------
 
 .. autoclass:: PythonNoneEllipsisNotImplementedMarshaller
-   :members: read, write
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -178,7 +178,7 @@ PythonDictMarshaller
 --------------------
 
 .. autoclass:: PythonDictMarshaller
-   :members: read, write, write_metadata
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -198,7 +198,7 @@ PythonCounterMarshaller
 ------------------------
 
 .. autoclass:: PythonCounterMarshaller
-   :members: read
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -218,7 +218,7 @@ PythonSliceRangeMarshaller
 --------------------------
 
 .. autoclass:: PythonSliceRangeMarshaller
-   :members: read, write
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -238,7 +238,7 @@ PythonListMarshaller
 --------------------
 
 .. autoclass:: PythonListMarshaller
-   :members: read, write
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -261,7 +261,7 @@ PythonTupleSetDequeMarshaller
 -----------------------------
 
 .. autoclass:: PythonTupleSetDequeMarshaller
-   :members: read, write
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
@@ -284,7 +284,7 @@ PythonChainMapMarshaller
 ------------------------
 
 .. autoclass:: PythonChainMapMarshaller
-   :members: read, write
+   :no-members:
    :show-inheritance:
 
    Handles the following ::
