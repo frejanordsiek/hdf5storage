@@ -25,6 +25,7 @@ The marshallers have the following inheritance diagram
    PythonSliceRangeMarshaller
    PythonListMarshaller
    PythonTupleSetDequeMarshaller
+   PythonChainMapMarshaller
 
 
 TypeMarshaller
@@ -278,3 +279,25 @@ PythonTupleSetDequeMarshaller
 
        matlab_classes = ()
 
+
+PythonChainMapMarshaller
+------------------------
+
+.. autoclass:: PythonChainMapMarshaller
+   :members: read, write
+   :show-inheritance:
+
+   Handles the following ::
+
+       python_attributes = {'Python.Type', 'Python.Shape', 'Python.Empty',
+                            'Python.numpy.UnderlyingType',
+                            'Python.numpy.Container', 'Python.Fields'}
+
+       matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
+                            'MATLAB_int_decode'}
+
+       types = (collections.ChainMap, )
+
+       python_type_strings = ('collections.ChainMap', )
+
+       matlab_classes = ()

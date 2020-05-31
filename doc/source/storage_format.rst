@@ -79,6 +79,7 @@ tuple                     0.1      np.object\_                           Dataset
 set                       0.1      np.object\_                           Dataset
 frozenset                 0.1      np.object\_                           Dataset
 cl.deque                  0.1      np.object\_                           Dataset
+cl.ChainMap               0.2      np.object\_                           Dataset
 dict [7]_                 0.1                                            Group
 cl.OrderedDict [7]_       0.2                                            Group
 cl.Counter [7]_           0.2                                            Group
@@ -188,6 +189,7 @@ tuple           'tuple'                        'object'                         
 set             'set'                          'object'                         'cell'
 frozenset       'frozenset'                    'object'                         'cell'
 cl.deque        'collections.deque'            'object'                         'cell'
+cl.ChainMap     'collections.ChainMap'         'object'                         'cell'
 dict            'dict'                                                          'struct'
 cl.OrderedDict  'collections.OrderedDict'                                       'struct'
 cl.Counter      'collections.Counter'                                           'struct'
@@ -551,6 +553,13 @@ slice and range
 Stored like a ``dict`` with the start, stop, and step in entries having those
 names. For example, ``slice(3, None, 1)`` is stored the same way as
 ``{'start': 3, 'stop': None, 'step': 1}``
+
+
+collections.ChainMap
+--------------------
+
+Stored by storings it :py:meth:`collections.ChainMap.maps` attribute as a
+``list``.
 
 
 Optional Data Transformations

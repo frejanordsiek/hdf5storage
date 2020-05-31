@@ -31,6 +31,7 @@ import numpy as np
 import numpy.testing as npt
 
 from nose.tools import assert_equal as assert_equal_nose
+from nose.tools import assert_is_instance
 
 
 def assert_dtypes_equal(a, b):
@@ -68,6 +69,9 @@ def assert_equal(a, b, options=None):
             assert_equal(a[k], b[k], options)
     elif type(b) in (slice, range):
         assert_equal_nose(a, b)
+    elif type(b) == collections.ChainMap:
+        assert_is_instance(a, collections.ChainMap)
+        assert_equal(a.maps, b.maps)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         assert_equal_nose(len(a), len(b))
         if type(b) in (set, frozenset):
@@ -162,6 +166,10 @@ def assert_equal_none_format(a, b, options=None):
         assert_equal_none_format(a, {'start': b.start,
                                      'stop': b.stop,
                                      'step': b.step}, options=options)
+    elif type(b) == collections.ChainMap:
+        # We won't get back a chainmap, but instead a list of the maps
+        # which can be compared.
+        assert_equal_none_format(a, b.maps)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         b_conv = np.zeros(dtype='object', shape=(len(b), ))
         for i, v in enumerate(b):
@@ -339,6 +347,10 @@ def assert_equal_matlab_format(a, b, options=None):
         assert_equal_matlab_format(a, {'start': b.start,
                                        'stop': b.stop,
                                        'step': b.step}, options=options)
+    elif type(b) == collections.ChainMap:
+        # We won't get back a chainmap, but instead a list of the maps
+        # which can be compared.
+        assert_equal_matlab_format(a, b.maps)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         b_conv = np.zeros(dtype='object', shape=(len(b), ))
         for i, v in enumerate(b):

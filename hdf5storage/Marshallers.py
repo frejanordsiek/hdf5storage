@@ -1937,3 +1937,34 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
         else:
             # Must be some other type, so return it as is.
             return data
+
+
+class PythonChainMapMarshaller(PythonListMarshaller):
+    def __init__(self):
+        PythonListMarshaller.__init__(self)
+        self.types = (collections.ChainMap, )
+        self.python_type_strings = ('collections.ChainMap', )
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = ()
+        # Update the type lookups.
+        self.update_type_lookups()
+
+    def write(self, f, grp, name, data, type_string, options):
+        # We just pass the maps attribute along. The proper type_string
+        # needs to be grabbed now as the parent function will have a
+        # modified form of data to guess from if not given the right one
+        # explicitly.
+        return PythonListMarshaller.write(
+            self, f, grp, name, data.maps,
+            self.get_type_string(data, type_string), options)
+
+    def read(self, f, dsetgrp, attributes, options):
+        # Use the parent class version to read it and do most of the
+        # work.
+        data = PythonListMarshaller.read(self, f, dsetgrp, attributes,
+                                         options)
+
+        # Passing it through ChainMap does all the work of making it a
+        # ChainMap again.
+        return collections.ChainMap(*data)

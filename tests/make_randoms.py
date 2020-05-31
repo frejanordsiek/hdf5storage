@@ -278,6 +278,13 @@ def random_dict(tp='dict'):
         return data
 
 
+def random_chainmap():
+    # Make list of random dicts and pass them.
+    return collections.ChainMap(
+        *[random_dict(random.choice(('dict', 'OrderedDict', 'Counter')))
+          for i in range(random.randint(3, 8))])
+
+
 def random_structured_numpy_array(shape, field_shapes=None,
                                   nonascii_fields=False,
                                   nondigits_fields=False,

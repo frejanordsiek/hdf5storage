@@ -47,7 +47,8 @@ from make_randoms import random_numpy_scalar, random_numpy_shape, \
     random_str_ascii, max_dict_key_length, \
     random_list, max_list_length, random_dict, \
     random_str_some_unicode, random_int, random_float, \
-    max_string_length, random_bytes, random_slice, random_range
+    max_string_length, random_bytes, random_slice, random_range, \
+    random_chainmap
 
 
 random.seed()
@@ -769,6 +770,11 @@ class TestPythonMatlabFormat(object):
             out = self.write_readback(data, random_name(),
                                       self.options)
             self.assert_equal(out, data)
+
+    def test_chainmap(self):
+        data = random_chainmap()
+        out = self.write_readback(data, random_name(), self.options)
+        self.assert_equal(out, data)
 
 
 class TestPythonFormat(TestPythonMatlabFormat):

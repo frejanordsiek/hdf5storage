@@ -182,6 +182,8 @@ support writing it so MATlAB can read it.
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | cl.deque       | 0.1     | np.object\_             | cell        | 0.1     |                   |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
+| cl.ChainMap    | 0.2     | np.object\_             | cell        | 0.2     |                   |
++----------------+---------+-------------------------+-------------+---------+-------------------+
 | dict           | 0.1     |                         | struct      | 0.1     | [7]_              |
 +----------------+---------+-------------------------+-------------+---------+-------------------+
 | cl.OrderedDict | 0.2     |                         | struct      | 0.2     | [7]_              |
@@ -421,6 +423,8 @@ Versions
        ``Marshallers.PythonCounterMarshaller`` respectively.
      * Issue #80. Added a support for ``slice`` and ``range`` with the new
        marshaller ``Marshallers.PythonSliceRangeMarshaller``.
+     * Issue #92. Added support for ``collections.ChainMap`` with the new
+       marshaller ``Marshallers.PythonChainMap``.
      * Issue #40. Made it so that tests use tempfiles instead of
        using hardcoded filenames in the local directory.
      * Issue #41. Added tests using the Julia MAT package to check
