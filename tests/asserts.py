@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import collections
+import fractions
 import warnings
 
 import numpy as np
@@ -68,6 +69,9 @@ def assert_equal(a, b, options=None):
         for k in b:
             assert_equal(a[k], b[k], options)
     elif type(b) in (slice, range):
+        assert_equal_nose(a, b)
+    elif type(b) == fractions.Fraction:
+        assert_is_instance(a, fractions.Fraction)
         assert_equal_nose(a, b)
     elif type(b) == collections.ChainMap:
         assert_is_instance(a, collections.ChainMap)
@@ -166,6 +170,13 @@ def assert_equal_none_format(a, b, options=None):
         assert_equal_none_format(a, {'start': b.start,
                                      'stop': b.stop,
                                      'step': b.step}, options=options)
+    elif type(b) == fractions.Fraction:
+        # We won't get a fraction back, but we can check if we get back
+        # something equivalent dict equivalent.
+        assert_equal_none_format(a,
+                                 {'numerator': b.numerator,
+                                  'denominator': b.denominator},
+                                 options=options)
     elif type(b) == collections.ChainMap:
         # We won't get back a chainmap, but instead a list of the maps
         # which can be compared.
@@ -347,6 +358,13 @@ def assert_equal_matlab_format(a, b, options=None):
         assert_equal_matlab_format(a, {'start': b.start,
                                        'stop': b.stop,
                                        'step': b.step}, options=options)
+    elif type(b) == fractions.Fraction:
+        # We won't get a fraction back, but we can check if we get back
+        # something equivalent dict equivalent.
+        assert_equal_matlab_format(a,
+                                 {'numerator': b.numerator,
+                                  'denominator': b.denominator},
+                                 options=options)
     elif type(b) == collections.ChainMap:
         # We won't get back a chainmap, but instead a list of the maps
         # which can be compared.

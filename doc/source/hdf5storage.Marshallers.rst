@@ -23,6 +23,7 @@ The marshallers have the following inheritance diagram
    PythonDictMarshaller
    PythonCounterMarshaller
    PythonSliceRangeMarshaller
+   PythonFractionMarshaller
    PythonListMarshaller
    PythonTupleSetDequeMarshaller
    PythonChainMapMarshaller
@@ -230,6 +231,30 @@ PythonSliceRangeMarshaller
        types = (slice, range)
 
        python_type_strings = ('slice', 'range')
+
+       matlab_classes = ()
+
+
+PythonFractionMarshaller
+------------------------
+
+.. autoclass:: PythonFractionMarshaller
+   :no-members:
+   :show-inheritance:
+
+   Handles the following ::
+
+       required_parent_modules = ('fractions', )
+
+       required_modules = ('fractions', )
+
+       python_attributes = {'Python.Type', 'Python.Fields'}
+
+       matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_fields'}
+
+       types = ('fractions.Fraction', )
+
+       python_type_strings = ('fractions.Fraction', )
 
        matlab_classes = ()
 

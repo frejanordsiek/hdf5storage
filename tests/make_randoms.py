@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import collections
+import fractions
 import posixpath
 import random
 import string
@@ -244,6 +245,11 @@ def random_range():
         else:
             parts[-1] = random.randint(-2**128, 2**128)
     return range(*parts)
+
+
+def random_fraction():
+    return fractions.Fraction(numerator=random.randint(-2**65, 2**65),
+                              denominator=random.randint(-2**65, 2**65))
 
 
 def random_dict(tp='dict'):

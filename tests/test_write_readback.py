@@ -48,7 +48,7 @@ from make_randoms import random_numpy_scalar, random_numpy_shape, \
     random_list, max_list_length, random_dict, \
     random_str_some_unicode, random_int, random_float, \
     max_string_length, random_bytes, random_slice, random_range, \
-    random_chainmap
+    random_chainmap, random_fraction
 
 
 random.seed()
@@ -773,6 +773,11 @@ class TestPythonMatlabFormat(object):
 
     def test_chainmap(self):
         data = random_chainmap()
+        out = self.write_readback(data, random_name(), self.options)
+        self.assert_equal(out, data)
+
+    def test_fraction(self):
+        data = random_fraction()
         out = self.write_readback(data, random_name(), self.options)
         self.assert_equal(out, data)
 

@@ -27,6 +27,7 @@
 """ Module for the classes to marshall Python types to/from file. """
 
 import collections
+import importlib
 
 import numpy as np
 import h5py
@@ -1862,6 +1863,51 @@ class PythonSliceRangeMarshaller(PythonDictMarshaller):
         else:
             # Must be some other type, so return it as is.
             return data
+
+
+class PythonFractionMarshaller(PythonDictMarshaller):
+    def __init__(self):
+        PythonDictMarshaller.__init__(self)
+        # We will not import fractions right away and instead let the
+        # rest of the API import it if needed. That way it is not
+        # imported unless needed since none of the rest of this package
+        # uses it.
+        self.required_parent_modules = ('fractions', )
+        self.required_modules = ('fractions', )
+        self.types = ('fractions.Fraction', )
+        self.python_type_strings = ('fractions.Fraction', )
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = ()
+        # Update the type lookups.
+        self.update_type_lookups()
+
+    def write(self, f, grp, name, data, type_string, options):
+        # data just needs to be converted to a dict and then pass it to
+        # the parent version of this function. The proper type_string
+        # needs to be grabbed now as the parent function will have a
+        # modified form of data to guess from if not given the right one
+        # explicitly.
+        return PythonDictMarshaller.write(
+            self, f, grp, name,
+            {'numerator': data.numerator,
+             'denominator': data.denominator},
+            self.get_type_string(data, type_string), options)
+
+    def read(self, f, dsetgrp, attributes, options):
+        # Use the parent class version to read it and do most of the
+        # work, and then pass the result through the contructor of
+        # Fraction.
+        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes,
+                                         options)
+        return importlib.import_module('fractions').Fraction(**data)
+
+    def read_approximate(self, f, dsetgrp, attributes, options):
+        # Use the parent class version to read it and then there is
+        # nothing we can do about it except return it since this is a
+        # reasonable approximation.
+        return PythonDictMarshaller.read(self, f, dsetgrp, attributes,
+                                         options)
 
 
 class PythonListMarshaller(NumpyScalarArrayMarshaller):
