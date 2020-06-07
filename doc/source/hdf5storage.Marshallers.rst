@@ -17,6 +17,7 @@ The marshallers have the following inheritance diagram
 
    TypeMarshaller
    NumpyScalarArrayMarshaller
+   NumpyDtypeMarshaller
    PythonScalarMarshaller
    PythonStringMarshaller
    PythonNoneEllipsisNotImplementedMarshaller
@@ -102,6 +103,29 @@ NumpyScalarArrayMarshaller
        matlab_classes = ('logical', 'char', 'single', 'double', 'uint8',
                          'uint16', 'uint32', 'uint64', 'int8', 'int16',
                          'int32', 'int64', 'cell', 'canonical empty')
+
+
+NumpyDtypeMarshaller
+--------------------
+
+.. autoclass:: NumpyDtypeMarshaller
+   :no-members:
+   :show-inheritance:
+
+   Handles the following ::
+
+       python_attributes = {'Python.Type', 'Python.Shape', 'Python.Empty',
+                            'Python.numpy.UnderlyingType',
+                            'Python.numpy.Container', 'Python.Fields'}
+
+       matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_empty',
+                            'MATLAB_int_decode'}
+
+       types = (np.dtype, )
+
+       python_type_strings = ('numpy.dtype', )
+
+       matlab_classes = ()
 
 
 PythonScalarMarshaller

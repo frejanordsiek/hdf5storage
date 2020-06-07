@@ -108,6 +108,7 @@ np.ndarray                0.1      not or Group of contents [9]_         Dataset
 np.matrix                 0.1      np.ndarray                            Dataset
 np.chararray              0.1      np.bytes\_ or np.uint16/32 [5]_ [6]_  Dataset
 np.recarray               0.1      structured np.ndarray [9]_            Dataset or Group [9]_
+np.dtype [10]_            0.2      np.bytes\_ or np.uint16 [6]_          Dataset
 ========================  =======  ====================================  ======================
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when
@@ -149,6 +150,7 @@ np.recarray               0.1      structured np.ndarray [9]_            Dataset
        is written as a Group with its the contents of its individual
        fields written as Datasets within the Group having the fields as
        names.
+.. [10] Stored as its string representation converted to ``np.bytes_``.
 
 
 Attributes
@@ -178,13 +180,13 @@ bool                'bool'                         'bool'                       
 None                'builtins.NoneType'            'float64'                        'double'
 Ellipsis            'builtins.ellipsis'            'float64'                        'double'
 NotImplemented      'builtins.NotImplementedType'  'float64'                        'double'
-int                 'int'                          'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
-long                'long'                         'int64' or 'bytes#' [10]_ [11]_  'int64' or 'char'   *not used* or 2 [10]_
+int                 'int'                          'int64' or 'bytes#' [11]_ [12]_  'int64' or 'char'   *not used* or 2 [11]_
+long                'long'                         'int64' or 'bytes#' [11]_ [12]_  'int64' or 'char'   *not used* or 2 [11]_
 float               'float'                        'float64'                        'double'
 complex             'complex'                      'complex128'                     'double'
-str                 'str'                          'str#' [11]_                     'char'              2
-bytes               'bytes'                        'bytes#' [11]_                   'char'              2
-bytearray           'bytearray'                    'bytes#' [11]_                   'char'              2
+str                 'str'                          'str#' [12]_                     'char'              2
+bytes               'bytes'                        'bytes#' [12]_                   'char'              2
+bytearray           'bytearray'                    'bytes#' [12]_                   'char'              2
 list                'list'                         'object'                         'cell'
 tuple               'tuple'                        'object'                         'cell'
 set                 'set'                          'object'                         'cell'
@@ -198,7 +200,7 @@ slice               'slice'                                                     
 range               'range'                                                         'struct'
 fractions.Fraction  'fractions.Fraction'                                            'struct'
 np.bool\_           'numpy.bool'                   'bool'                           'logical'           1
-np.void             'numpy.void'                   'void#' [11]_    
+np.void             'numpy.void'                   'void#' [12]_
 np.uint8            'numpy.uint8'                  'uint8'                          'uint8'
 np.uint16           'numpy.uint16'                 'uint16'                         'uint16'
 np.uint32           'numpy.uint32'                 'uint32'                         'uint32'
@@ -212,25 +214,24 @@ np.float32          'numpy.float32'                'float32'                    
 np.float64          'numpy.float64'                'float64'                        'double'
 np.complex64        'numpy.complex64'              'complex64'                      'single'
 np.complex128       'numpy.complex128'             'complex128'                     'double'
-np.str\_            'numpy.str\_'                  'str#' [11]_                     'char' or 'uint32'  2 or 4 [12]_
-np.bytes\_          'numpy.bytes\_'                'bytes#' [11]_                   'char'              2
+np.str\_            'numpy.str\_'                  'str#' [12]_                     'char' or 'uint32'  2 or 4 [13]_
+np.bytes\_          'numpy.bytes\_'                'bytes#' [12]_                   'char'              2
 np.object\_         'numpy.object\_'               'object'                         'cell'
-np.ndarray          'numpy.ndarray'                [13]_                            [13]_ [14]_
-np.matrix           'numpy.matrix'                 [13]_                            [13]_
-np.chararray        'numpy.chararray'              [13]_                            'char' [13]_
-np.recarray         'numpy.recarray'               [13]_                            [13]_ [14]_
+np.ndarray          'numpy.ndarray'                [14]_                            [14]_ [15]_
+np.matrix           'numpy.matrix'                 [14]_                            [14]_
+np.chararray        'numpy.chararray'              [14]_                            'char' [14]_
+np.recarray         'numpy.recarray'               [14]_                            [14]_ [15]_
 ==================  =============================  ===============================  ==================  =====================
 
-.. [10] The former if it can fit in a ``np.int64`` and the latter if
-	not.
-.. [11] '#' is replaced by the number of bits taken up by the string, or
+.. [11] The former if it can fit in a ``np.int64`` and the latter if not.
+.. [12] '#' is replaced by the number of bits taken up by the string, or
         each string in the case that it is an array of strings. This is 8
         and 32 bits per character for ``np.bytes_`` and ``np.str_``
         respectively.
-.. [12] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
-.. [13] The value that would be put in for a scalar of the same dtype is
+.. [13] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
+.. [14] The value that would be put in for a scalar of the same dtype is
        used.
-.. [14] If it is structured (its dtype has fields),
+.. [15] If it is structured (its dtype has fields),
         :py:attr:`Options.structured_numpy_ndarray_as_struct` is set,
         and none of its fields are of dtype ``'object'``; it is set to
         ``'struct'`` overriding anything else.
@@ -568,6 +569,21 @@ collections.ChainMap
 
 Stored by storings it :py:meth:`collections.ChainMap.maps` attribute as a
 ``list``.
+
+
+np.dtype
+--------
+
+Stored in a string representation encoded as UTF-8 in ``np.bytes_``. It
+is read back by converting to ``str``, passing through
+:py:func:`ast.literal_eval`, and then passing through the constructor of
+``np.dtype``. The conversion to the string representation is generally
+just a matter of passing it through ``repr`` and removing the leading
+``'dtype('`` and trailing ``')'``. However, aligned dtypes either have
+to have align added to their dict representation as a string manually;
+or if the representation is as a list, pass through ``str`` instead.
+
+.. versionadded:: 0.2
 
 
 Optional Data Transformations

@@ -26,6 +26,7 @@
 
 import collections
 import copy
+import itertools
 import math
 import os
 import os.path
@@ -429,6 +430,10 @@ class TestPythonMatlabFormat(object):
                                   self.options)
         self.assert_equal(out, data)
 
+    def check_dtype(self, dt):
+        out = self.write_readback(dt, random_name(), self.options)
+        self.assert_equal(out, dt)
+
     def test_None(self):
         data = None
         out = self.write_readback(data, random_name(),
@@ -780,6 +785,92 @@ class TestPythonMatlabFormat(object):
         data = random_fraction()
         out = self.write_readback(data, random_name(), self.options)
         self.assert_equal(out, data)
+
+    def test_dtype(self):
+        for dt in {np.dtype(v) for v
+                   in itertools.chain(np.sctypeDict,
+                                      np.sctypeDict.values(),
+                                      np.sctypeNA,
+                                      np.sctypeNA.values())
+                   if not isinstance(v, int)
+                   and v not in ('V', 'void', 'void0', 'Void0',
+                                 np.void)}:
+            # Do the test for all endiannesses.
+            if dt.byteorder != '|':
+                yield self.check_dtype, dt
+            else:
+                yield self.check_dtype, dt.newbyteorder('<')
+                yield self.check_dtype, dt.newbyteorder('>')
+
+    def test_dtype_flexible(self):
+        for c in 'SVU':
+            for i in range(10):
+                if c == 'V' and i == 0:
+                    continue
+                s = c + str(i)
+                self.check_dtype(np.dtype('<' + s))
+                self.check_dtype(np.dtype('>' + s))
+
+    def test_dtype_shaped(self):
+        base_dtypes = tuple((set(self.dtypes) | {'U2', 'S3'})
+                            - {'U', 'S'})
+        for i in range(10):
+            desc = (random.choice(base_dtypes),
+                    random_numpy_shape(random.randint(1, 4), 10))
+            self.check_dtype(np.dtype(desc))
+
+    def test_dtype_structured(self):
+        base_dtypes = tuple((set(self.dtypes) | {'U2', 'S3'})
+                            - {'U', 'S'})
+        for i in range(10):
+            names = []
+            for _ in range(random.randint(1, 5)):
+                s = random_str_ascii(random.randint(1, 10))
+                while s in names and s[0].isdigit():
+                    s = random_str_ascii(random.randint(1, 10))
+                names.append(s)
+            desc = [(v, random.choice(base_dtypes),
+                     random_numpy_shape(random.randint(1, 4), 10))
+                    for v in names]
+            self.check_dtype(np.dtype(desc))
+            self.check_dtype(np.dtype(desc, align=True))
+
+    def test_dtype_structured_with_offsets_titles(self):
+        base_dtypes = tuple((set(self.dtypes) | {'U2', 'S3'})
+                            - {'U', 'S'})
+        for i in range(10):
+            names = []
+            for _ in range(random.randint(1, 5)):
+                s = random_str_ascii(random.randint(1, 10))
+                while s in names and s[0].isdigit():
+                    s = random_str_ascii(random.randint(1, 10))
+                names.append(s)
+            formats = [(random.choice(base_dtypes),
+                        random_numpy_shape(random.randint(1, 4), 10))
+                       for _ in range(len(names))]
+            titles = [random_str_some_unicode(random.randint(1, 10))
+                      for _ in range(len(names))]
+            offsets = [random.randint(0, 100)
+                       for _ in range(len(names))]
+            desc = {'names': names,
+                    'formats': formats,
+                    'titles': titles,
+                    'offsets': offsets}
+            desc_with_itemsize = desc.copy()
+            desc_with_itemsize['itemsize'] = \
+                np.dtype(desc).itemsize + random.randint(1, 100)
+            # Make the dtypes in all combinations of the description and
+            # align. Note that if the type isn't valid at all, it is not
+            # tested.
+            dts = []
+            for d in (desc, desc_with_itemsize):
+                for align in (False, True):
+                    try:
+                        dts.append(np.dtype(d, align=align))
+                    except:
+                        pass
+            for dt in dts:
+                self.check_dtype(dt)
 
 
 class TestPythonFormat(TestPythonMatlabFormat):

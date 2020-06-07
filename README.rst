@@ -240,6 +240,8 @@ support writing it so MATlAB can read it.
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
 | np.recarray        | 0.1     | structured np.ndarray   | *see notes* | 0.1     | [9]_ [10]_        |
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
+| np.dtype           | 0.2     | np.bytes\_ or np.uint16 | char        | 0.2     | [6]_ [12]_        |
++--------------------+---------+-------------------------+-------------+---------+-------------------+
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
        MATLAB compatiblity, or if the option is explicitly set.
@@ -286,6 +288,7 @@ support writing it so MATlAB can read it.
 .. [11] Structured ``np.ndarray`` s with no elements, when written like a
         structure, will not be read back with the right dtypes for their
         fields (will all become 'object').
+.. [12] Stored in their string representation.
 
 This table gives the MATLAB classes that can be read from a MAT file,
 the first version of this package that can read them, and the Python
@@ -296,9 +299,9 @@ type they are read as.
 +=================+=========+=====================================+
 | logical         | 0.1     | np.bool\_                           |
 +-----------------+---------+-------------------------------------+
-| single          | 0.1     | np.float32 or np.complex64 [12]_    |
+| single          | 0.1     | np.float32 or np.complex64 [13]_    |
 +-----------------+---------+-------------------------------------+
-| double          | 0.1     | np.float64 or np.complex128 [12]_   |
+| double          | 0.1     | np.float64 or np.complex128 [13]_   |
 +-----------------+---------+-------------------------------------+
 | uint8           | 0.1     | np.uint8                            |
 +-----------------+---------+-------------------------------------+
@@ -318,15 +321,15 @@ type they are read as.
 +-----------------+---------+-------------------------------------+
 | char            | 0.1     | np.str\_                            |
 +-----------------+---------+-------------------------------------+
-| struct          | 0.1     | structured np.ndarray or dict [13]_ |
+| struct          | 0.1     | structured np.ndarray or dict [14]_ |
 +-----------------+---------+-------------------------------------+
 | cell            | 0.1     | np.object\_                         |
 +-----------------+---------+-------------------------------------+
 | canonical empty | 0.1     | ``np.float64([])``                  |
 +-----------------+---------+-------------------------------------+
 
-.. [12] Depends on whether there is a complex part or not.
-.. [13] Controlled by an option.
+.. [13] Depends on whether there is a complex part or not.
+.. [14] Controlled by an option.
 
 
 Versions
@@ -429,6 +432,8 @@ Versions
        marshaller ``Marshallers.PythonChainMap``.
      * Issue #93. Added support for ``fractions.Fraction`` with the new
        marshaller ``Marshallers.PythonFractionMarshaller``.
+     * Issue #99. Added support for ``np.dtype`` with the new marshaller
+       ``Marshallers.NumpyDtypeMarshaller``.
      * Issue #40. Made it so that tests use tempfiles instead of
        using hardcoded filenames in the local directory.
      * Issue #41. Added tests using the Julia MAT package to check

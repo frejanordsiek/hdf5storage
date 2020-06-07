@@ -68,7 +68,7 @@ def assert_equal(a, b, options=None):
         assert_equal_nose(list(a.keys()), list(b.keys()))
         for k in b:
             assert_equal(a[k], b[k], options)
-    elif type(b) in (slice, range):
+    elif type(b) in (slice, range, np.dtype):
         assert_equal_nose(a, b)
     elif type(b) == fractions.Fraction:
         assert_is_instance(a, fractions.Fraction)
@@ -181,6 +181,15 @@ def assert_equal_none_format(a, b, options=None):
         # We won't get back a chainmap, but instead a list of the maps
         # which can be compared.
         assert_equal_none_format(a, b.maps, options=options)
+    elif type(b) == np.dtype:
+        cb = repr(b)[6:-1]
+        if cb.endswith('align=True'):
+            if cb.endswith('}, align=True'):
+                cb = cb[:-13] + ", 'align': True}"
+            else:
+                cb = str(b)
+        assert_equal_none_format(a, np.bytes_(cb, 'utf-8'),
+                                 options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         b_conv = np.zeros(dtype='object', shape=(len(b), ))
         for i, v in enumerate(b):
@@ -369,6 +378,15 @@ def assert_equal_matlab_format(a, b, options=None):
         # We won't get back a chainmap, but instead a list of the maps
         # which can be compared.
         assert_equal_matlab_format(a, b.maps, options=options)
+    elif type(b) == np.dtype:
+        cb = repr(b)[6:-1]
+        if cb.endswith('align=True'):
+            if cb.endswith('}, align=True'):
+                cb = cb[:-13] + ", 'align': True}"
+            else:
+                cb = str(b)
+        assert_equal_matlab_format(a, np.bytes_(cb, 'utf-8'),
+                                   options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
         b_conv = np.zeros(dtype='object', shape=(len(b), ))
         for i, v in enumerate(b):

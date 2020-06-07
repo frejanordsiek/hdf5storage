@@ -26,6 +26,7 @@
 
 """ Module for the classes to marshall Python types to/from file. """
 
+import ast
 import collections
 import importlib
 
@@ -1375,6 +1376,46 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Done adjusting data, so it can be returned.
         return data
+
+
+class NumpyDtypeMarshaller(NumpyScalarArrayMarshaller):
+    def __init__(self):
+        NumpyScalarArrayMarshaller.__init__(self)
+        self.types = (np.dtype, )
+        self.python_type_strings = ('numpy.dtype', )
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = ()
+
+        # Update the type lookups.
+        self.update_type_lookups()
+
+    def write(self, f, grp, name, data, type_string, options):
+        # Convert to string representation. repr with the leading
+        # "dtype(" and end ")". However, if align=True, we will need to
+        # add that to the dict representation.
+        cdata = repr(data)[6:-1]
+        if cdata.endswith('align=True'):
+            if cdata.endswith('}, align=True'):
+                cdata = cdata[:-13] + ", 'align': True}"
+            else:
+                cdata = str(data)
+        # Pass it to the parent version of this function to write
+        # it. The proper type_string needs to be grabbed now as the
+        # parent function will have a modified form of data to guess
+        # from if not given the right one explicitly.
+        return NumpyScalarArrayMarshaller.write(
+            self, f, grp, name, np.bytes_(cdata, 'utf-8'),
+            self.get_type_string(data, type_string), options)
+
+    def read(self, f, dsetgrp, attributes, options):
+        # Use the parent class version to read it and do most of the
+        # work, convert to str, evaluate the literal (using
+        # ast.literal_eval instead of the dangerous eval), and passing
+        # to the constructor of dtype.
+        data = convert_to_str(NumpyScalarArrayMarshaller.read(
+            self, f, dsetgrp, attributes, options))
+        return np.dtype(ast.literal_eval(data))
 
 
 class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
