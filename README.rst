@@ -194,6 +194,16 @@ support writing it so MATlAB can read it.
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
 | range              | 0.2     |                         | struct      | 0.2     |                   |
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
+| datetime.timedelta | 0.2     |                         | struct      | 0.2     |                   |
++--------------------+---------+-------------------------+-------------+---------+-------------------+
+| datetime.timezone  | 0.2     |                         | struct      | 0.2     |                   |
++--------------------+---------+-------------------------+-------------+---------+-------------------+
+| datetime.date      | 0.2     |                         | struct      | 0.2     |                   |
++--------------------+---------+-------------------------+-------------+---------+-------------------+
+| datetime.time      | 0.2     |                         | struct      | 0.2     |                   |
++--------------------+---------+-------------------------+-------------+---------+-------------------+
+| datetime.datetime  | 0.2     |                         | struct      | 0.2     |                   |
++--------------------+---------+-------------------------+-------------+---------+-------------------+
 | fractions.Fraction | 0.2     |                         | struct      | 0.2     |                   |
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
 | np.bool\_          | 0.1     |                         | logical     | 0.1     |                   |
@@ -434,6 +444,10 @@ Versions
        marshaller ``Marshallers.PythonFractionMarshaller``.
      * Issue #99. Added support for ``np.dtype`` with the new marshaller
        ``Marshallers.NumpyDtypeMarshaller``.
+     * Issue #95. Added support for objects in the ``datetime`` module
+       (only ``datetime.tzinfo`` class implemented is
+       ``datetime.timezone``) in the new marshaller
+       ``Marshallers.PythonDatetimeObjsMarshaller``.
      * Issue #40. Made it so that tests use tempfiles instead of
        using hardcoded filenames in the local directory.
      * Issue #41. Added tests using the Julia MAT package to check

@@ -26,6 +26,7 @@
 
 import collections
 import copy
+import datetime
 import itertools
 import math
 import os
@@ -49,7 +50,7 @@ from make_randoms import random_numpy_scalar, random_numpy_shape, \
     random_list, max_list_length, random_dict, \
     random_str_some_unicode, random_int, random_float, \
     max_string_length, random_bytes, random_slice, random_range, \
-    random_chainmap, random_fraction
+    random_chainmap, random_fraction, random_datetime_timezone
 
 
 random.seed()
@@ -871,6 +872,55 @@ class TestPythonMatlabFormat(object):
                         pass
             for dt in dts:
                 self.check_dtype(dt)
+
+    def test_datetime_timedelta(self):
+        for _ in range(10):
+            data = datetime.timedelta(days=random.randint(-20, 20),
+                                      seconds=random.randint(-1000,
+                                                             1000),
+                                      microseconds=random.randint(
+                                          -1000**3, 1000**3))
+            out = self.write_readback(data, random_name(), self.options)
+            self.assert_equal(out, data)
+
+    def test_datetime_timezone(self):
+        for _ in range(10):
+            data = random_datetime_timezone()
+            out = self.write_readback(data, random_name(), self.options)
+            self.assert_equal(out, data)
+
+    def test_datetime_date(self):
+        for _ in range(10):
+            data = datetime.date(year=random.randint(datetime.MINYEAR,
+                                                     datetime.MAXYEAR),
+                                 month=random.randint(1, 12),
+                                 day=random.randint(1, 28))
+            out = self.write_readback(data, random_name(), self.options)
+            self.assert_equal(out, data)
+
+    def test_datetime_time(self):
+        for _ in range(10):
+            data = datetime.time(hour=random.randint(0, 23),
+                                 minute=random.randint(0, 59),
+                                 second=random.randint(0, 59),
+                                 microsecond=random.randint(0, 999999),
+                                 tzinfo=random_datetime_timezone())
+            out = self.write_readback(data, random_name(), self.options)
+            self.assert_equal(out, data)
+
+    def test_datetime_datetime(self):
+        for _ in range(10):
+            data = datetime.datetime(
+                year=random.randint(datetime.MINYEAR, datetime.MAXYEAR),
+                month=random.randint(1, 12),
+                day=random.randint(1, 28),
+                hour=random.randint(0, 23),
+                minute=random.randint(0, 59),
+                second=random.randint(0, 59),
+                microsecond=random.randint(0, 999999),
+                tzinfo=random_datetime_timezone())
+            out = self.write_readback(data, random_name(), self.options)
+            self.assert_equal(out, data)
 
 
 class TestPythonFormat(TestPythonMatlabFormat):

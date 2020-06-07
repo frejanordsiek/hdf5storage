@@ -28,6 +28,7 @@
 
 import ast
 import collections
+import datetime
 import importlib
 
 import numpy as np
@@ -1901,6 +1902,76 @@ class PythonSliceRangeMarshaller(PythonDictMarshaller):
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
             return tp(data['start'], data['stop'], data['step'])
+        else:
+            # Must be some other type, so return it as is.
+            return data
+
+
+class PythonDatetimeObjsMarshaller(PythonDictMarshaller):
+    def __init__(self):
+        PythonDictMarshaller.__init__(self)
+        # We will not import fractions right away and instead let the
+        # rest of the API import it if needed. That way it is not
+        # imported unless needed since none of the rest of this package
+        # uses it.
+        self.types = (datetime.timedelta, datetime.timezone,
+                      datetime.date, datetime.time,
+                      datetime.datetime)
+        self.python_type_strings = ('datetime.timedelta',
+                                    'datetime.timezone',
+                                    'datetime.date',
+                                    'datetime.time',
+                                    'datetime.datetime')
+        # As the parent class already has MATLAB strings handled, there
+        # are no MATLAB classes that this marshaller should be used for.
+        self.matlab_classes = ()
+        # Update the type lookups.
+        self.update_type_lookups()
+
+    def write(self, f, grp, name, data, type_string, options):
+        # data just needs to be converted to a dict and then pass it to
+        # the parent version of this function. We build a dict of the
+        # keyword arguments to pass to the constructors to rebuild the
+        # types. For all but timezone, it is just a matter of reading
+        # the right attributes and using their names as the
+        # keys. timezone, unfortunately, does not have attributes for
+        # the two arguments. While the offset can be gotten reliably,
+        # the name cannot (if name is set to None, then calling tzname
+        # will cause a name to be generated based on the offset).
+        attrs = {datetime.timedelta: ('days', 'seconds',
+                                      'microseconds'),
+                 datetime.date: ('year', 'month', 'day'),
+                 datetime.time: ('hour', 'minute', 'second',
+                                 'microsecond', 'tzinfo'),
+                 datetime.datetime: ('year', 'month', 'day',
+                                     'hour', 'minute', 'second',
+                                     'microsecond', 'tzinfo')}
+        if type(data) in attrs:
+            cdata = {k: getattr(data, k) for k in attrs[type(data)]}
+        elif type(data) == datetime.timezone:
+            parts = data.__reduce__()[1]
+            if len(parts) == 1:
+                cdata = {'offset': parts[0]}
+            else:
+                cdata = {'offset': parts[0],
+                         'name': parts[1]}
+        return PythonDictMarshaller.write(
+            self, f, grp, name, cdata,
+            self.get_type_string(data, type_string), options)
+
+    def read(self, f, dsetgrp, attributes, options):
+        # Use the parent class version to read it and do most of the
+        # work to get the dict of the arguments to pass to the
+        # constructor.
+        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes,
+                                         options)
+        # The type string determines how to convert it back to a Python
+        # type (just look up the entry in types).
+        type_string = convert_attribute_to_string(
+            attributes['Python.Type'])
+        if type_string in self.typestring_to_type:
+            tp = self.typestring_to_type[type_string]
+            return tp(**data)
         else:
             # Must be some other type, so return it as is.
             return data

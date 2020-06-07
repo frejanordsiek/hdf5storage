@@ -27,10 +27,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import collections
+import datetime
 import fractions
 import posixpath
 import random
 import string
+import sys
 import warnings
 
 import numpy as np
@@ -340,6 +342,25 @@ def random_structured_numpy_array(shape, field_shapes=None,
                 data[name][index] = random_numpy(shapes[i], \
                     dts[i], allow_nan=False)
         return data
+
+
+def random_datetime_timezone():
+    # Timezones must be a round number of minutes before python 3.7.
+    if sys.hexversion < 0x3070000:
+        mult = 60
+        bound = 24 * 60
+    else:
+        mult = 1
+        bound = 24 * 60**2
+    if random.choice((True, False)):
+        return datetime.timezone(
+            datetime.timedelta(
+                seconds=mult * random.randint(-bound, bound)),
+            name=random_str_some_unicode(10))
+    else:
+        return datetime.timezone(
+            datetime.timedelta(
+                seconds=mult * random.randint(-bound, bound)))
 
 
 def random_name():

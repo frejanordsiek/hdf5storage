@@ -85,6 +85,11 @@ cl.OrderedDict [7]_       0.2                                            Group
 cl.Counter [7]_           0.2                                            Group
 slice                     0.2                                            Group
 range                     0.2                                            Group
+datetime.timedelta        0.2                                            Group
+datetime.timezone         0.2                                            Group
+datetime.date             0.2                                            Group
+datetime.time             0.2                                            Group
+datetime.datetime         0.2                                            Group
 fractions.Fraction        0.2                                            Group
 np.bool\_                 0.1      not or np.uint8 [1]_                  Dataset
 np.void                   0.1                                            Dataset
@@ -198,6 +203,11 @@ cl.OrderedDict      'collections.OrderedDict'                                   
 cl.Counter          'collections.Counter'                                           'struct'
 slice               'slice'                                                         'struct'
 range               'range'                                                         'struct'
+datetime.timedelta  'datetime.timedelta'                                            'struct'
+datetime.timezone   'datetime.timezone'                                             'struct'
+datetime.date       'datetime.date'                                                 'struct'
+datetime.time       'datetime.time'                                                 'struct'
+datetime.datetime   'datetime.datetime'                                             'struct'
 fractions.Fraction  'fractions.Fraction'                                            'struct'
 np.bool\_           'numpy.bool'                   'bool'                           'logical'           1
 np.void             'numpy.void'                   'void#' [12]_
@@ -550,8 +560,8 @@ an HDF5 COMPOUND type.
    fields will become 'object' instead of what they originally were.
 
 
-Stored as dict (slice, range, fractions.Fraction)
--------------------------------------------------
+Stored as dict (slice, range, fractions.Fraction, datetime objects)
+-------------------------------------------------------------------
 
 Stored like a ``dict`` of their relevant attributes or keyword arguments.
 
@@ -562,6 +572,11 @@ For ``slice`` and ``range``; this is start, stop, and step. For example,
 For :py:class:`fractions.Fraction`, this is numerator and denominator. For
 example, ``fractions.Fraction(1, 3)`` is stored the same way as
 ``{'numerator': 1, 'denominator': 3}``.
+
+For :py:class:`datetime.timedelta`, :py:class:`datetime.timezone`,
+:py:class:`datetime.date`, :py:class:`datetime.time`, and
+:py:class:`datetime.datetime`; this is a the keyword arguments
+required to build them.
 
 
 collections.ChainMap

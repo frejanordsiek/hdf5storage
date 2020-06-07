@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import collections
+import datetime
 import fractions
 import warnings
 
@@ -68,7 +69,9 @@ def assert_equal(a, b, options=None):
         assert_equal_nose(list(a.keys()), list(b.keys()))
         for k in b:
             assert_equal(a[k], b[k], options)
-    elif type(b) in (slice, range, np.dtype):
+    elif type(b) in (slice, range, np.dtype,
+                     datetime.timedelta, datetime.timezone,
+                     datetime.date, datetime.time, datetime.datetime):
         assert_equal_nose(a, b)
     elif type(b) == fractions.Fraction:
         assert_is_instance(a, fractions.Fraction)
@@ -170,6 +173,39 @@ def assert_equal_none_format(a, b, options=None):
         assert_equal_none_format(a, {'start': b.start,
                                      'stop': b.stop,
                                      'step': b.step}, options=options)
+    elif type(b) == datetime.timezone:
+        cb = {'offset': b.utcoffset(None)}
+        if len(b.__reduce__()[1]) == 2:
+            cb['name'] = b.tzname(None)
+        assert_equal_none_format(a, cb,
+                                 options=options)
+    elif type(b) == datetime.timedelta:
+        assert_equal_none_format(a, {'days': b.days,
+                                     'seconds': b.seconds,
+                                     'microseconds': b.microseconds},
+                                 options=options)
+    elif type(b) == datetime.date:
+        assert_equal_none_format(a, {'year': b.year,
+                                     'month': b.month,
+                                     'day': b.day},
+                                 options=options)
+    elif type(b) == datetime.time:
+        assert_equal_none_format(a, {'hour': b.hour,
+                                     'minute': b.minute,
+                                     'second': b.second,
+                                     'microsecond': b.microsecond,
+                                     'tzinfo': b.tzinfo},
+                                 options=options)
+    elif type(b) == datetime.datetime:
+        assert_equal_none_format(a, {'year': b.year,
+                                     'month': b.month,
+                                     'day': b.day,
+                                     'hour': b.hour,
+                                     'minute': b.minute,
+                                     'second': b.second,
+                                     'microsecond': b.microsecond,
+                                     'tzinfo': b.tzinfo},
+                                 options=options)
     elif type(b) == fractions.Fraction:
         # We won't get a fraction back, but we can check if we get back
         # something equivalent dict equivalent.
@@ -367,6 +403,39 @@ def assert_equal_matlab_format(a, b, options=None):
         assert_equal_matlab_format(a, {'start': b.start,
                                        'stop': b.stop,
                                        'step': b.step}, options=options)
+    elif type(b) == datetime.timezone:
+        cb = {'offset': b.utcoffset(None)}
+        if len(b.__reduce__()[1]) == 2:
+            cb['name'] = b.tzname(None)
+        assert_equal_matlab_format(a, cb,
+                                   options=options)
+    elif type(b) == datetime.timedelta:
+        assert_equal_matlab_format(a, {'days': b.days,
+                                       'seconds': b.seconds,
+                                       'microseconds': b.microseconds},
+                                   options=options)
+    elif type(b) == datetime.date:
+        assert_equal_matlab_format(a, {'year': b.year,
+                                       'month': b.month,
+                                       'day': b.day},
+                                   options=options)
+    elif type(b) == datetime.time:
+        assert_equal_matlab_format(a, {'hour': b.hour,
+                                       'minute': b.minute,
+                                       'second': b.second,
+                                       'microsecond': b.microsecond,
+                                       'tzinfo': b.tzinfo},
+                                   options=options)
+    elif type(b) == datetime.datetime:
+        assert_equal_matlab_format(a, {'year': b.year,
+                                       'month': b.month,
+                                       'day': b.day,
+                                       'hour': b.hour,
+                                       'minute': b.minute,
+                                       'second': b.second,
+                                       'microsecond': b.microsecond,
+                                       'tzinfo': b.tzinfo},
+                                   options=options)
     elif type(b) == fractions.Fraction:
         # We won't get a fraction back, but we can check if we get back
         # something equivalent dict equivalent.

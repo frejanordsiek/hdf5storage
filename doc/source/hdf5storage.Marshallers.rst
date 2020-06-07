@@ -24,6 +24,7 @@ The marshallers have the following inheritance diagram
    PythonDictMarshaller
    PythonCounterMarshaller
    PythonSliceRangeMarshaller
+   PythonDatetimeObjsMarshaller
    PythonFractionMarshaller
    PythonListMarshaller
    PythonTupleSetDequeMarshaller
@@ -255,6 +256,29 @@ PythonSliceRangeMarshaller
        types = (slice, range)
 
        python_type_strings = ('slice', 'range')
+
+       matlab_classes = ()
+
+
+PythonDatetimeObjsMarshaller
+----------------------------
+
+.. autoclass:: PythonDatetimeObjsMarshaller
+   :no-members:
+   :show-inheritance:
+
+   Handles the following ::
+
+       python_attributes = {'Python.Type', 'Python.Fields'}
+
+       matlab_attributes = {'H5PATH', 'MATLAB_class', 'MATLAB_fields'}
+
+       types = (datetime.timedelta, datetime.timezone,
+                datetime.date, datetime.time, datetime.datetime)
+
+       python_type_strings = ('datetime.timedelta', 'datetime.timezone',
+                              'datetime.date', 'datetime.time',
+                              'datetime.datetime')
 
        matlab_classes = ()
 
