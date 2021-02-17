@@ -1675,6 +1675,9 @@ class File(collections.abc.MutableMapping):
                 # Done writing the userblock, so we can re-open the
                 # file.
                 self._file = h5py.File(filename, mode='a')
+        # Make the lowlevel file wrapper which will be used for the
+        # actual reading and writing
+        self._file_wrapper = utilities.LowLevelFile(self._file, options)
 
     def __enter__(self):
         return self
@@ -1817,11 +1820,10 @@ class File(collections.abc.MutableMapping):
             # Go through each element of towrite and write them with the
             # low level write function.
             for groupname, targetname, data in towrite:
-                utilities.write_data(
-                    self._file,
+                self._file_wrapper.write_data(
                     self._file.require_group(groupname),
                     targetname, data,
-                    None, self._options)
+                    None)
 
     def read(self, path='/'):
         """ Reads one piece of data from the file.
@@ -1918,10 +1920,8 @@ class File(collections.abc.MutableMapping):
                         'Could not find containing Group '
                         + groupname + '.')
                 # Hand off everything to the low level reader.
-                datas.append(utilities.read_data(self._file,
-                                                 self._file[groupname],
-                                                 targetname,
-                                                 self._options))
+                datas.append(self._file_wrapper.read_data(
+                    self._file[groupname], targetname))
         # Return it all.
         return datas
 

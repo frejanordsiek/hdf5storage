@@ -36,8 +36,6 @@ import h5py
 
 from .pathesc import escape_path, unescape_path
 from .utilities import does_dtype_have_a_zero_shape, \
-    write_data, read_data, \
-    write_object_array, read_object_array, \
     convert_numpy_str_to_uint16, convert_numpy_str_to_uint32, \
     convert_to_str, convert_to_numpy_str, convert_to_numpy_bytes, \
     decode_complex, encode_complex, convert_attribute_to_string, \
@@ -101,8 +99,8 @@ class TypeMarshaller(object):
     numpy.
 
     For marshalling types that are containers of other data, one will
-    need to appropriate read/write them with the lowlevel functions
-    ``utilities.read_data`` and ``utilities.write_data``.
+    need to use use the appropriate reading/writing methods of the
+    ``utilities.LowLevelFile`` passsed in the call to each method.
 
     .. versionchanged:: 0.2
        All marshallers must now inherit from this class.
@@ -111,6 +109,10 @@ class TypeMarshaller(object):
        Attributes were added, ``read_approximate`` was added, call
        signatures of the methods, and the initialization procedure were
        changed.
+
+    .. versionchanged:: 0.2
+       Instead of the file and options being passed to each method, a
+       ``utilities.LowLevelFile`` is now passed instead.
 
     Warning
     -------
@@ -150,8 +152,9 @@ class TypeMarshaller(object):
     h5py.Dataset
     h5py.Group
     h5py.AttributeManager
-    hdf5storage.utilities.read_data
-    hdf5storage.utilities.write_data
+    hdf5storage.utilities.LowLevelFile
+    hdf5storage.utilities.LowLevelFile.read_data
+    hdf5storage.utilities.LowLevelFile.write_data
 
     """
     def __init__(self):
@@ -301,14 +304,17 @@ class TypeMarshaller(object):
         if type_string is not None:
             return type_string
         else:
-            tp = type(data)
+            if isinstance(data, np.dtype):
+                tp = np.dtype
+            else:
+                tp = type(data)
             try:
                 return self.type_to_typestring[tp]
             except KeyError:
                 return self.type_to_typestring[tp.__module__ + '.'
                                                + tp.__name__]
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         """ Writes an object's metadata to file.
 
         Writes the Python object 'data' to 'name' in h5py.Group 'grp'.
@@ -321,8 +327,8 @@ class TypeMarshaller(object):
 
         Parameters
         ----------
-        f : h5py.File
-            The HDF5 file handle that is open.
+        f : hdf5storage.utilities.LowLevelFile
+            The file.
         grp : h5py.Group or h5py.File
             The parent HDF5 Group (or File if at '/') that contains the
             object with the specified name.
@@ -333,8 +339,6 @@ class TypeMarshaller(object):
         type_string : str or None
             The type string for `data`. If it is ``None``, one will have
             to be gotten by ``get_type_string``.
-        options : hdf5storage.core.Options
-            hdf5storage options object.
 
         Returns
         -------
@@ -358,13 +362,13 @@ class TypeMarshaller(object):
 
         See Also
         --------
-        hdf5storage.utilities.write_data
+        hdf5storage.utilities.LowLevelFile.write_data
 
         """
         raise NotImplementedError('Can''t write data type: '
                                   + str(type(data)))
 
-    def write_metadata(self, f, dsetgrp, data, type_string, options,
+    def write_metadata(self, f, dsetgrp, data, type_string,
                        attributes=None):
         """ Writes an object to file.
 
@@ -378,8 +382,8 @@ class TypeMarshaller(object):
 
         Parameters
         ----------
-        f : h5py.File
-            The HDF5 file handle that is open.
+        f : hdf5storage.utilities.LowLevelFile
+            The file.
         dsetgrp : h5py.Dataset or h5py.Group
             The Dataset or Group object to add metadata to.
         data
@@ -387,8 +391,6 @@ class TypeMarshaller(object):
         type_string : str or None
             The type string for `data`. If it is ``None``, one will have
             to be gotten by ``get_type_string``.
-        options : hdf5storage.core.Options
-            hdf5storage options object.
         attributes : dict or None, optional
             The Attributes to set. The keys (``str``) are the names. The
             values are ``tuple`` of the Attribute kind and the value to
@@ -418,13 +420,13 @@ class TypeMarshaller(object):
         if attributes is None:
             attributes = dict()
         # Make sure we have a complete type_string.
-        if options.store_python_metadata \
+        if f.options.store_python_metadata \
                 and 'Python.Type' not in attributes:
             attributes['Python.Type'] = (
                 'string', self.get_type_string(data, type_string))
         set_attributes_all(dsetgrp, attributes, discard_others=True)
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         """ Read a Python object from file.
 
         Reads the data at `dsetgrp` and converts it to a Python object
@@ -439,15 +441,13 @@ class TypeMarshaller(object):
 
         Parameters
         ----------
-        f : h5py.File
-            The HDF5 file handle that is open.
+        f : hdf5storage.utilities.LowLevelFile
+            The file.
         dsetgrp : h5py.Dataset or h5py.Group
             The Dataset or Group object to read.
         attributes : collections.defaultdict
             All the Attributes of `dsetgrp` with their names as keys and
             their values as values.
-        options : hdf5storage.core.Options
-            hdf5storage options object.
 
         Raises
         ------
@@ -469,12 +469,12 @@ class TypeMarshaller(object):
         read_approximate
         required_parent_modules
         required_modules
-        hdf5storage.utilities.read_data
+        hdf5storage.utilities.LowLevelFile.read_data
 
         """
         raise NotImplementedError('Can''t read data: ' + dsetgrp.name)
 
-    def read_approximate(self, f, dsetgrp, attributes, options):
+    def read_approximate(self, f, dsetgrp, attributes):
         """ Read a Python object approximately from file.
 
         Reads the data at `dsetgrp` and returns an approximation of it
@@ -489,15 +489,13 @@ class TypeMarshaller(object):
 
         Parameters
         ----------
-        f : h5py.File
-            The HDF5 file handle that is open.
+        f : hdf5storage.utilities.LowLevelFile
+            The file.
         dsetgrp : h5py.Dataset or h5py.Group
             The Dataset or Group object to read.
         attributes : collections.defaultdict
             All the Attributes of `dsetgrp` with their names as keys and
             their values as values.
-        options : hdf5storage.core.Options
-            hdf5storage options object.
 
         Raises
         ------
@@ -519,7 +517,7 @@ class TypeMarshaller(object):
         read
         required_parent_modules
         required_modules
-        hdf5storage.utilities.read_data
+        hdf5storage.utilities.LowLevelFile.read_data
 
         """
         raise NotImplementedError('Can''t read data: ' + dsetgrp.name)
@@ -613,7 +611,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # Start with an emtpy attributes.
         attributes = dict()
         # If we are doing matlab compatibility and the data type is not
@@ -621,15 +619,15 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # data or throw an error if appropriate. structured ndarrays and
         # recarrays are compatible if the
         # structured_numpy_ndarray_as_struct option is set.
-        if options.matlab_compatible \
+        if f.options.matlab_compatible \
                 and not (data.dtype.type in self.__MATLAB_classes \
                 or (data.dtype.fields is not None \
-                and options.structured_numpy_ndarray_as_struct)):
-            if options.action_for_matlab_incompatible == 'error':
+                and f.options.structured_numpy_ndarray_as_struct)):
+            if f.options.action_for_matlab_incompatible == 'error':
                 raise hdf5storage.exceptions.TypeNotMatlabCompatibleError(
                     'Data type ' + data.dtype.name
                     + ' not supported by MATLAB.')
-            elif options.action_for_matlab_incompatible == 'discard':
+            elif f.options.action_for_matlab_incompatible == 'discard':
                 return None
 
         # Need to make a set of data that will be stored. It will start
@@ -649,7 +647,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # making them at least 1 dimensional. If it fails, they must be
         # stored as is.
         if data.dtype.type == np.bytes_ \
-                and options.convert_numpy_bytes_to_utf16:
+                and f.options.convert_numpy_bytes_to_utf16:
             if data_to_store.nbytes == 0:
                 data_to_store = np.uint16([])
             else:
@@ -671,7 +669,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         if data.dtype.type == np.unicode_:
             new_data = None
-            if options.convert_numpy_str_to_utf16:
+            if f.options.convert_numpy_str_to_utf16:
                 try:
                     new_data = convert_numpy_str_to_uint16( \
                         data_to_store)
@@ -691,27 +689,27 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # arrays, an option determines whether they become row or column
         # vectors.
 
-        if options.make_atleast_2d:
+        if f.options.make_atleast_2d:
             new_data = np.atleast_2d(data_to_store)
             if len(data_to_store.shape) == 1 \
-                    and options.oned_as == 'column':
+                    and f.options.oned_as == 'column':
                 new_data = new_data.T
             data_to_store = new_data
 
         # Reverse the dimension order if that option is set.
 
-        if options.reverse_dimension_order:
+        if f.options.reverse_dimension_order:
             data_to_store = data_to_store.T
 
         # Bools need to be converted to uint8 if the option is given.
         if data_to_store.dtype.name == 'bool' \
-                and options.convert_bools_to_uint8:
+                and f.options.convert_bools_to_uint8:
             data_to_store = np.uint8(data_to_store)
 
         # If data is empty, we instead need to store the shape of the
         # array if the appropriate option is set.
 
-        if options.store_shape_for_empty and (data.size == 0 \
+        if f.options.store_shape_for_empty and (data.size == 0 \
                 or ((data.dtype.type == np.bytes_ \
                 or data.dtype.type == np.str_) \
                 and data.nbytes == 0)):
@@ -721,15 +719,14 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # the proper complex field names.
         if np.iscomplexobj(data_to_store):
             data_to_store = encode_complex(data_to_store,
-                                           options.complex_names)
+                                           f.options.complex_names)
 
         # If we are storing an object type and it isn't empty
         # (data_to_store is still an object), then we must recursively
         # write what each element points to and make an array of the
         # references to them.
         if data_to_store.dtype.name == 'object':
-            data_to_store = write_object_array(f, data_to_store,
-                                               options)
+            data_to_store = f.write_object_array(data_to_store)
 
         # If it an ndarray with fields and we are writing such things as
         # a Group/struct or if its shape is zero (h5py can't write it
@@ -751,7 +748,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 and h5py.check_dtype(ref=data_to_store.dtype) \
                 is not h5py.Reference \
                 and not np.iscomplexobj(data) \
-                and (options.structured_numpy_ndarray_as_struct \
+                and (f.options.structured_numpy_ndarray_as_struct \
                 or (data_to_store.dtype.hasobject \
                 or '\\x00' in str(data_to_store.dtype)) \
                 or does_dtype_have_a_zero_shape(data_to_store.dtype)):
@@ -773,13 +770,13 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
             # Write the metadata, and set the MATLAB_class to 'struct'
             # explicitly.
-            if options.matlab_compatible:
+            if f.options.matlab_compatible:
                 attributes['MATLAB_class'] = ('value', 'struct')
 
             # Delete any Datasets/Groups not corresponding to a field
             # name in data if that option is set.
 
-            if options.delete_unused_variables:
+            if f.options.delete_unused_variables:
                 for field in set([i for i in dsetgrp]).difference( \
                         set(escaped_field_names)):
                     del dsetgrp[field]
@@ -791,7 +788,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # Dataset as opposed to a HDF5 Reference array). The H5PATH
             # attribute needs to be set appropriately, while all other
             # attributes need to be deleted.
-            if options.matlab_compatible:
+            if f.options.matlab_compatible:
                 dsetgrpname = dsetgrp.name
             for i, field in enumerate(field_names):
                 esc_field = escaped_field_names[i]
@@ -804,23 +801,22 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # already been done, but write_data expects that it
                 # hasn't, so it needs to be reversed again before
                 # passing it on.
-                if options.reverse_dimension_order:
+                if f.options.reverse_dimension_order:
                     new_data = new_data.T
 
                 # If there is only a single element, write it extracted
                 # (don't need to use a Reference array in this
                 # case). Otherwise, write the whole thing.
                 if np.prod(new_data.shape) == 1:
-                    field_obj = write_data(f, dsetgrp, esc_field,
-                                           new_data.flat[0], None,
-                                           options)
+                    field_obj = f.write_data(dsetgrp, esc_field,
+                                             new_data.flat[0], None)
                 else:
-                    field_obj = write_data(f, dsetgrp, esc_field,
-                                           new_data, None, options)
+                    field_obj = f.write_data(dsetgrp, esc_field,
+                                             new_data, None)
 
                 if field_obj is not None:
                     esc_attrs = dict()
-                    if options.matlab_compatible:
+                    if f.options.matlab_compatible:
                         esc_attrs['H5PATH'] = ('string', dsetgrpname)
 
                     # In the case that we wrote a Reference array (not a
@@ -842,24 +838,24 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # indicated. Compression should not be done for scalars.
             filters = dict()
             is_scalar = (data_to_store.shape != tuple())
-            if is_scalar and options.compress \
+            if is_scalar and f.options.compress \
                     and data_to_store.nbytes \
-                    >= options.compress_size_threshold:
+                    >= f.options.compress_size_threshold:
                 filters['compression'] = \
-                    options.compression_algorithm
+                    f.options.compression_algorithm
                 if filters['compression'] == 'gzip':
                     filters['compression_opts'] = \
-                        options.gzip_compression_level
-                filters['shuffle'] = options.shuffle_filter
+                        f.options.gzip_compression_level
+                filters['shuffle'] = f.options.shuffle_filter
                 filters['fletcher32'] = \
-                    options.compressed_fletcher32_filter
+                    f.options.compressed_fletcher32_filter
             else:
                 filters['compression'] = None
                 filters['shuffle'] = False
                 filters['compression_opts'] = None
                 if is_scalar:
                     filters['fletcher32'] = \
-                        options.uncompressed_fletcher32_filter
+                        f.options.uncompressed_fletcher32_filter
                 else:
                     filters['fletcher32'] = False
 
@@ -901,11 +897,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         # Write the metadata using the inherited function (good enough).
         self.write_metadata(f, dsetgrp, data, type_string,
-                            options, attributes=attributes,
+                            attributes=attributes,
                             wrote_as_struct=wrote_as_struct)
         return dsetgrp
 
-    def write_metadata(self, f, dsetgrp, data, type_string, options,
+    def write_metadata(self, f, dsetgrp, data, type_string,
                        attributes=None, wrote_as_struct=False):
         # wote_as_struct is used to pass whether data was written like a
         # matlab struct or not. If yes, then the field names must be put
@@ -920,7 +916,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # numpy type, and its type of container ('scalar', 'ndarray',
         # 'matrix', or 'chararray') need to be stored.
 
-        if options.store_python_metadata:
+        if f.options.store_python_metadata:
             attributes['Python.Shape'] = ('value', np.uint64(data.shape))
 
             # Now, in Python 3, the dtype names for bare bytes and
@@ -952,7 +948,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         has_obj = data.dtype.hasobject
         has_null = '\\x00' in str(data.dtype)
         if wrote_as_struct or (data.dtype.fields is not None \
-                and (options.structured_numpy_ndarray_as_struct \
+                and (f.options.structured_numpy_ndarray_as_struct \
                 or (has_obj or has_null) \
                 or not all(data.shape) \
                 or not all([all(data[n].shape) \
@@ -961,7 +957,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             field_names = [escape_path(c) for c in data.dtype.names]
 
             # Write or delete 'Python.Fields' as appropriate.
-            if options.store_python_metadata:
+            if f.options.store_python_metadata:
                 attributes['Python.Fields'] = ('string_array',
                                                field_names)
 
@@ -970,7 +966,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # to ASCII. Otherwise, the attribute should be deleted. It
             # is written as a vlen='S1' array of bytes_ arrays of the
             # individual characters.
-            if options.matlab_compatible:
+            if f.options.matlab_compatible:
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
                     fs = np.empty(shape=(len(field_names),), dtype=dt)
@@ -990,10 +986,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if data.size == 0  or ((data.dtype.type == np.bytes_ \
                 or data.dtype.type == np.str_)
                 and data.nbytes == 0):
-            if options.store_python_metadata:
+            if f.options.store_python_metadata:
                 attributes['Python.Empty'] = ('value',
                                               np.uint8(1))
-            if options.matlab_compatible:
+            if f.options.matlab_compatible:
                 attributes['MATLAB_empty'] = ('value',
                                               np.uint8(1))
 
@@ -1008,9 +1004,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # deleted.
 
         tp = data.dtype.type
-        if options.matlab_compatible:
+        if f.options.matlab_compatible:
             if data.dtype.fields is not None \
-                    and options.structured_numpy_ndarray_as_struct:
+                    and f.options.structured_numpy_ndarray_as_struct:
                 attributes['MATLAB_class'] = ('string', 'struct')
             elif tp in self.__MATLAB_classes:
                 attributes['MATLAB_class'] = ('string',
@@ -1025,10 +1021,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # Now call the parent class's version to do the actual setting
         # of Attributes.
         TypeMarshaller.write_metadata(self, f, dsetgrp, data,
-                                      type_string, options,
+                                      type_string,
                                       attributes=attributes)
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         dset = dsetgrp
 
         # Get the different attributes this marshaller uses.
@@ -1066,7 +1062,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # pointing to in their elements instead of just the
             # references.
             if h5py.check_dtype(ref=dset.dtype) is not None:
-                data = read_object_array(f, data, options)
+                data = f.read_object_array(data)
         else:
             # Starting with an empty dict, all that has to be done is
             # iterate through all the Datasets and Groups in dset
@@ -1089,7 +1085,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 # Unescape the name.
                 unescaped_k = unescape_path(k)
                 # We must exclude group_for_references
-                if dset[k].name == options.group_for_references:
+                if dset[k].name == f.options.group_for_references:
                     continue
                 fld = dset[k]
                 if isinstance(fld, h5py.Group) \
@@ -1101,12 +1097,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         'Python.Empty']))) != 0:
                     is_multi_element = False
                 try:
-                    struct_data[unescaped_k] = read_data(f, dset,
-                                                         k, options)
+                    struct_data[unescaped_k] = f.read_data(dset, k)
                 except:
                     pass
 
-            if matlab_class == 'struct' and options.structs_as_dicts:
+            if matlab_class == 'struct' and f.options.structs_as_dicts:
                 return struct_data
 
             # If it isn't multi element, we need to pack all the values
@@ -1248,7 +1243,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     data = np.zeros(tuple(shape),
                                     dtype=underlying_type)
                 if matlab_class is not None or \
-                        options.reverse_dimension_order:
+                        f.options.reverse_dimension_order:
                     data = data.T
 
             # If it is a complex type, then it needs to be decoded
@@ -1267,7 +1262,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # reversed. This needs to be done before any reshaping as
             # the shape was stored before any dimensional reordering.
             if matlab_class is not None or \
-                    options.reverse_dimension_order:
+                    f.options.reverse_dimension_order:
                 data = data.T
 
             # String types might have to be decoded depending on the
@@ -1391,7 +1386,7 @@ class NumpyDtypeMarshaller(NumpyScalarArrayMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # Convert to string representation. repr with the leading
         # "dtype(" and end ")". However, if align=True, we will need to
         # add that to the dict representation.
@@ -1407,15 +1402,15 @@ class NumpyDtypeMarshaller(NumpyScalarArrayMarshaller):
         # from if not given the right one explicitly.
         return NumpyScalarArrayMarshaller.write(
             self, f, grp, name, np.bytes_(cdata, 'utf-8'),
-            'numpy.dtype', options)
+            'numpy.dtype')
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work, convert to str, evaluate the literal (using
         # ast.literal_eval instead of the dangerous eval), and passing
         # to the constructor of dtype.
         data = convert_to_str(NumpyScalarArrayMarshaller.read(
-            self, f, dsetgrp, attributes, options))
+            self, f, dsetgrp, attributes))
         return np.dtype(ast.literal_eval(data))
 
 
@@ -1439,7 +1434,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # data just needs to be converted to the appropriate numpy
         # type. If it is a Python 3.x int that is too big to fit in a
         # numpy.int64, it is converted to the string representation of
@@ -1463,13 +1458,13 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
             out = np.array(data)[()]
         return NumpyScalarArrayMarshaller.write(
             self, f, grp, name, out,
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work.
         data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
-                                               attributes, options)
+                                               attributes)
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). As it might be
@@ -1498,7 +1493,7 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # data just needs to be converted to a numpy string of the
         # appropriate type (str to np.str_ and the others to np.bytes_).
         if isinstance(data, str):
@@ -1512,13 +1507,13 @@ class PythonStringMarshaller(NumpyScalarArrayMarshaller):
         # from if not given the right one explicitly.
         return NumpyScalarArrayMarshaller.write(
             self, f, grp, name, cdata,
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work.
         data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
-                                               attributes, options)
+                                               attributes)
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). Otherwise, return it
@@ -1548,16 +1543,16 @@ class PythonNoneEllipsisNotImplementedMarshaller(
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # Just going to use the parent function with an empty double
         # (two dimensional so that MATLAB will import it as a []) as the
         # data and the right type_string set (parent can't guess right
         # from the modified form).
         return NumpyScalarArrayMarshaller.write(
             self, f, grp, name, np.float64([]),
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # The type string can be used to look up the type, which can be
         # called to produce an instance.
         type_string = convert_attribute_to_string(
@@ -1584,7 +1579,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # Check to see if any fields are not string like, or if they are
         # string like, if they cannot be converted to unicode and not
         # have characters that can't be handled. If the fields are
@@ -1624,7 +1619,7 @@ class PythonDictMarshaller(TypeMarshaller):
 
         # Write the metadata.
         self.write_metadata(
-            f, grp2, data, type_string, options,
+            f, grp2, data, type_string,
             any_non_valid_str_keys=any_non_valid_str_keys,
             keys_as_str=keys_as_str,
             key_str_types=b''.join(key_str_types))
@@ -1634,8 +1629,8 @@ class PythonDictMarshaller(TypeMarshaller):
         # if storing individually. If storing as values and keys, this
         # will be done as the keys and values in bulk as tuples.
         if any_non_valid_str_keys:
-            names = (options.dict_like_keys_name,
-                     options.dict_like_values_name)
+            names = (f.options.dict_like_keys_name,
+                     f.options.dict_like_values_name)
             values = (tuple(data), tuple(data.values()))
         else:
             names = tuple(keys_as_str)
@@ -1644,7 +1639,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # Delete any Datasets/Groups not in names if that option is set
         # or if we are not storing the keys and values individually
 
-        if any_non_valid_str_keys or options.delete_unused_variables:
+        if any_non_valid_str_keys or f.options.delete_unused_variables:
             for field in set([i for i in grp2]).difference(set(names)):
                 del grp2[field]
 
@@ -1652,20 +1647,19 @@ class PythonDictMarshaller(TypeMarshaller):
         # needs to be set as the path of grp2 on all of them if we are
         # doing MATLAB compatibility (otherwise, the attribute needs to
         # be deleted).
-        if options.matlab_compatible:
+        if f.options.matlab_compatible:
             grp2name = grp2.name
         for i, k in enumerate(names):
-            obj = write_data(f, grp2, k, values[i], None,
-                             options)
+            obj = f.write_data(grp2, k, values[i], None)
             if obj is not None:
-                if options.matlab_compatible:
+                if f.options.matlab_compatible:
                     set_attribute_string(obj, 'H5PATH', grp2name)
                 else:
                     del_attribute(obj, 'H5PATH')
         # Done
         return grp2
 
-    def write_metadata(self, f, dsetgrp, data, type_string, options,
+    def write_metadata(self, f, dsetgrp, data, type_string,
                        attributes=None,
                        any_non_valid_str_keys=None,
                        keys_as_str=None,
@@ -1685,14 +1679,14 @@ class PythonDictMarshaller(TypeMarshaller):
         # 'Python.dict.StoredAs' and 'Python.Fields' Attributes
         # appropriately. 'Python.Fields' is only used if the fields are
         # being stored individually.
-        if options.store_python_metadata:
+        if f.options.store_python_metadata:
             if any_non_valid_str_keys is True:
                 attributes['Python.dict.StoredAs'] = ('string',
                                                       'keys_values')
                 attributes['Python.dict.keys_values_names'] = (
                     'string_array',
-                    [options.dict_like_keys_name,
-                    options.dict_like_values_name])
+                    [f.options.dict_like_keys_name,
+                    f.options.dict_like_values_name])
             else:
                 attributes['Python.dict.StoredAs'] = ('string',
                                                       'individually')
@@ -1705,7 +1699,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # ASCII. Otherwise, the attribute should be deleted. It is
         # written as a vlen='S1' array of bytes_ arrays of the
         # individual characters.
-        if options.matlab_compatible \
+        if f.options.matlab_compatible \
                 and any_non_valid_str_keys is False:
             try:
                 dt = h5py.special_dtype(vlen=np.dtype('S1'))
@@ -1726,17 +1720,17 @@ class PythonDictMarshaller(TypeMarshaller):
         # the attributes need to be deleted.
 
         tp = type(data)
-        if options.matlab_compatible and tp in self.__MATLAB_classes:
+        if f.options.matlab_compatible and tp in self.__MATLAB_classes:
             attributes['MATLAB_class'] = ('string',
                                           self.__MATLAB_classes[tp])
 
         # Now call the parent class's version to do the actual setting
         # of Attributes.
         TypeMarshaller.write_metadata(self, f, dsetgrp, data,
-                                      type_string, options,
+                                      type_string,
                                       attributes=attributes)
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         grp2 = dsetgrp
         # If name is not present or is not a Group, then we can't read
         # it and have to throw an error.
@@ -1755,8 +1749,8 @@ class PythonDictMarshaller(TypeMarshaller):
         keys_values_names = convert_attribute_to_string_array(
             attributes['Python.dict.keys_values_names'])
         if keys_values_names is None:
-            keys_values_names = (options.dict_like_keys_name,
-                                 options.dict_like_values_name)
+            keys_values_names = (f.options.dict_like_keys_name,
+                                 f.options.dict_like_values_name)
         key_str_types = convert_attribute_to_string(
             attributes['Python.dict.key_str_types'])
 
@@ -1771,7 +1765,7 @@ class PythonDictMarshaller(TypeMarshaller):
         if stored_as == 'keys_values' \
                 and escape_path(keys_values_names[0]) in grp2 \
                 and escape_path(keys_values_names[1]) in grp2:
-            d = tuple([read_data(f, grp2, escape_path(k), options)
+            d = tuple([f.read_data(grp2, escape_path(k))
                        for k in keys_values_names])
             items = zip(*d)
         else:
@@ -1810,9 +1804,9 @@ class PythonDictMarshaller(TypeMarshaller):
                     uk = unescape_path(k)
                     # We must exclude group_for_references
                     if grp2[k].name \
-                            == options.group_for_references:
+                            == f.options.group_for_references:
                         continue
-                    v = read_data(f, grp2, k, options)
+                    v = f.read_data(grp2, k)
 
                     # Now, if python_fields and key_str_types are both
                     # present and we haven't gotten past the
@@ -1851,11 +1845,10 @@ class PythonCounterMarshaller(PythonDictMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work.
-        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes,
-                                         options)
+        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes)
         # The type string determines how to convert it back to a Python
         # type, which is just passing the data dict into its constructor.
         type_string = convert_attribute_to_string(
@@ -1879,7 +1872,7 @@ class PythonSliceRangeMarshaller(PythonDictMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # data just needs to be converted to a dict and then pass it to
         # the parent version of this function. The proper type_string
         # needs to be grabbed now as the parent function will have a
@@ -1888,13 +1881,12 @@ class PythonSliceRangeMarshaller(PythonDictMarshaller):
         return PythonDictMarshaller.write(
             self, f, grp, name,
             {'start': data.start, 'stop': data.stop, 'step': data.step},
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work.
-        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes,
-                                         options)
+        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes)
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types).
         type_string = convert_attribute_to_string(
@@ -1928,7 +1920,7 @@ class PythonDatetimeObjsMarshaller(PythonDictMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # data just needs to be converted to a dict and then pass it to
         # the parent version of this function. We build a dict of the
         # keyword arguments to pass to the constructors to rebuild the
@@ -1957,14 +1949,13 @@ class PythonDatetimeObjsMarshaller(PythonDictMarshaller):
                          'name': parts[1]}
         return PythonDictMarshaller.write(
             self, f, grp, name, cdata,
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work to get the dict of the arguments to pass to the
         # constructor.
-        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes,
-                                         options)
+        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes)
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types).
         type_string = convert_attribute_to_string(
@@ -1994,7 +1985,7 @@ class PythonFractionMarshaller(PythonDictMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # data just needs to be converted to a dict and then pass it to
         # the parent version of this function. The proper type_string
         # needs to be grabbed now as the parent function will have a
@@ -2004,22 +1995,20 @@ class PythonFractionMarshaller(PythonDictMarshaller):
             self, f, grp, name,
             {'numerator': data.numerator,
              'denominator': data.denominator},
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work, and then pass the result through the contructor of
         # Fraction.
-        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes,
-                                         options)
+        data = PythonDictMarshaller.read(self, f, dsetgrp, attributes)
         return importlib.import_module('fractions').Fraction(**data)
 
-    def read_approximate(self, f, dsetgrp, attributes, options):
+    def read_approximate(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and then there is
         # nothing we can do about it except return it since this is a
         # reasonable approximation.
-        return PythonDictMarshaller.read(self, f, dsetgrp, attributes,
-                                         options)
+        return PythonDictMarshaller.read(self, f, dsetgrp, attributes)
 
 
 class PythonListMarshaller(NumpyScalarArrayMarshaller):
@@ -2033,7 +2022,7 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # data just needs to be converted to the appropriate numpy type
         # (pass it through np.object_ to get the and then pass it to the
         # parent version of this function. The proper type_string needs
@@ -2044,13 +2033,13 @@ class PythonListMarshaller(NumpyScalarArrayMarshaller):
         out[:] = data
         return NumpyScalarArrayMarshaller.write(
             self, f, grp, name, out,
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work.
         data = NumpyScalarArrayMarshaller.read(self, f, dsetgrp,
-                                               attributes, options)
+                                               attributes)
 
         # Passing it through list does all the work of making it a list
         # again.
@@ -2069,7 +2058,7 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # data just needs to be converted to a list and then pass it to
         # the parent version of this function. The proper type_string
         # needs to be grabbed now as the parent function will have a
@@ -2077,13 +2066,12 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
         # explicitly.
         return PythonListMarshaller.write(
             self, f, grp, name, list(data),
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work.
-        data = PythonListMarshaller.read(self, f, dsetgrp, attributes,
-                                         options)
+        data = PythonListMarshaller.read(self, f, dsetgrp, attributes)
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types).
@@ -2108,20 +2096,19 @@ class PythonChainMapMarshaller(PythonListMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def write(self, f, grp, name, data, type_string, options):
+    def write(self, f, grp, name, data, type_string):
         # We just pass the maps attribute along. The proper type_string
         # needs to be grabbed now as the parent function will have a
         # modified form of data to guess from if not given the right one
         # explicitly.
         return PythonListMarshaller.write(
             self, f, grp, name, data.maps,
-            self.get_type_string(data, type_string), options)
+            self.get_type_string(data, type_string))
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the parent class version to read it and do most of the
         # work.
-        data = PythonListMarshaller.read(self, f, dsetgrp, attributes,
-                                         options)
+        data = PythonListMarshaller.read(self, f, dsetgrp, attributes)
 
         # Passing it through ChainMap does all the work of making it a
         # ChainMap again.

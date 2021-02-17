@@ -92,366 +92,446 @@ def does_dtype_have_a_zero_shape(dt):
     return False
 
 
-def write_data(f, grp, name, data, type_string, options):
-    """ Writes a piece of data into an open HDF5 file.
+class LowLevelFile(object):
+    """ Low level wrapper for the HDF5 file object with utilities.
 
-    Low level function to store a Python type (`data`) into the
-    specified Group.
+    Wraps a ``h5py.File`` and provides numerous utilities to help with
+    writing and reading Python objects to the file, providing the
+    options, etc.
 
-    .. versionchanged:: 0.2
-       Added return value `obj`.
-
-    Parameters
-    ----------
-    f : h5py.File
-        The open HDF5 file.
-    grp : h5py.Group or h5py.File
-        The Group to place the data in.
-    name : str
-        The name to write the data to.
-    data : any
-        The data to write.
-    type_string : str or None
-        The type string of the data, or ``None`` to deduce
-        automatically.
-    options : hdf5storage.core.Options
-        The options to use when writing.
-
-    Returns
-    -------
-    obj : h5py.Dataset or h5py.Group or None
-        The base Dataset or Group having the name `name` in `grp` that
-        was made, or ``None`` if nothing was written.
-
-    Raises
-    ------
-    NotImplementedError
-        If writing `data` is not supported.
-    TypeNotMatlabCompatibleError
-        If writing a type not compatible with MATLAB and
-        `options.action_for_matlab_incompatible` is set to ``'error'``.
-
-    See Also
-    --------
-    hdf5storage.write : Higher level version.
-    read_data
-    hdf5storage.Options
-
-    """
-    # Get the marshaller for type(data). The required modules should be
-    # here and imported. A workaround must be when data is a dtype since
-    # dtypes are no longer type numpy.dtype in numpy 1.21.
-    if isinstance(data, np.dtype):
-        tp = np.dtype
-    else:
-        tp = type(data)
-    m, has_modules = \
-        options.marshaller_collection.get_marshaller_for_type(tp)
-
-    # If a marshaller was found and we have the required modules, use it
-    # to write the data. Otherwise, return an error. If we get something
-    # other than None back, then we must recurse through the
-    # entries. Also, we must set the H5PATH attribute to be the path to
-    # the containing group.
-
-    if m is not None and has_modules:
-        return m.write(f, grp, name, data, type_string, options)
-    else:
-        raise NotImplementedError('Can''t write data type: ' + str(tp))
-
-
-def read_data(f, grp, name, options, dsetgrp=None):
-    """ Writes a piece of data into an open HDF5 file.
-
-    Low level function to read a Python type of the specified name from
-    specified Group.
-
-    .. versionchanged:: 0.2
-       Added argument `dsetgrp`.
+    .. versionadded:: 0.2
 
     Parameters
     ----------
     f : h5py.File
-        The open HDF5 file.
-    grp : h5py.Group or h5py.File
-        The Group to read the data from.
-    name : str
-        The name of the data to read.
-    options : hdf5storage.core.Options
-        The options to use when reading.
-    dsetgrp : h5py.Dataset or h5py.Group or None, optional
-        The Dataset or Group object to read if that has already been
-        obtained and thus should not be re-obtained (``None``
-        otherwise). If given, overrides `grp` and `name`.
-
-    Returns
-    -------
-    data
-        The data named `name` in Group `grp`.
+        The raw file handle.
+    options : hdf5storage.Options
+        The options used for reading and writing.
 
     Raises
     ------
-    KeyError
-        If the data cannot be found.
-    CantReadError
-        If the data cannot be read successfully.
+    TypeError
+        If an argument has an invalid type.
 
-    See Also
-    --------
-    hdf5storage.read : Higher level version.
-    write_data
-    hdf5storage.Options
+    Attributes
+    ----------
+    f : h5py.File
+        The raw file handle.
+    options : hdf5storage.Options
+        The options used for reading and writing.
 
     """
-    if dsetgrp is None:
-        # If name isn't found, return error.
-        try:
-            dsetgrp = grp[name]
-        except:
-            raise KeyError('Could not find '
-                           + posixpath.join(grp.name, name))
+    def __init__(self, f, options):
+        # Check the types of the arguments real quick to be on the safe
+        # side. options has to be checked using the __module__ and
+        # __name__ attributes since we can't import the main hdf5storage
+        # module since that would lead to a circular import.
+        if not isinstance(f, h5py.File):
+            raise TypeError('f must be a h5py.File.')
+        if options.__class__.__module__ != 'hdf5storage' \
+                or options.__class__.__name__ != 'Options':
+            raise TypeError('options must be a hdf5storage.Options.')
+        self._f = f
+        self._options = options
 
-    # Get all attributes with values.
-    defaultfactory = type(None)
-    attributes = collections.defaultdict(defaultfactory,
-                                         dsetgrp.attrs.items())
+        # We need to keep track of the references group after we first
+        # use it, whether we created it or not, and a reference to the
+        # canonical empty. They will initially be None to indicate that
+        # we don't know yet (accessed lazily). We will also store the
+        # name of the references group.
+        self._refs_group = None
+        self._created_refs_group = None
+        self._canonical_empty = None
+        self._refs_group_name = None
+        # When we are creating names for the references group, we don't
+        # have to worry about checking for a name already being present
+        # if we created the Group. Instead, we can just use a counter
+        # that we increment by one each time a name is needed. We start
+        # it at 0xB since 'a' is the name of the canonical empty and we
+        # want to skip past it in hexidecimal.
+        self._refs_group_counter = 0xB
+        # Length in characters we will use for random names in the
+        # references Group.
+        self._refs_group_name_length = 16
 
-    # Get the different attributes that can be used to identify they
-    # type, which are the type string and the MATLAB class.
-    type_string = convert_attribute_to_string(attributes['Python.Type'])
-    matlab_class = convert_attribute_to_string(
-        attributes['MATLAB_class'])
+    @property
+    def f(self):
+        return self._f
 
-    # If the type_string is present, get the marshaller for it. If it is
-    # not, use the one for the matlab class if it is given. Otherwise,
-    # use the fallback (NumpyScalarArrayMarshaller for both Datasets and
-    # Groups). If calls to the marshaller collection to get the right
-    # marshaller don't return one (return None), we also go to the
-    # default). Also get whether we have the modules required to read it
-    # accurately or not (approximately)
+    @property
+    def options(self):
+        return self._options
 
-    m = None
-    has_modules = False
-    mc = options.marshaller_collection
-    if type_string is not None:
-        m, has_modules = mc.get_marshaller_for_type_string(type_string)
-    elif matlab_class is not None:
-        m, has_modules = mc.get_marshaller_for_matlab_class(
-            matlab_class)
-    elif hasattr(dsetgrp, 'dtype'):
-        # Numpy dataset
-        m, has_modules = mc.get_marshaller_for_type(dsetgrp.dtype.type)
-    elif isinstance(dsetgrp, (h5py.Group, h5py.File)):
-        # Groups and files are like Matlab struct
-        m, has_modules = mc.get_marshaller_for_matlab_class('struct')
-    if m is None:
-        # use Numpy as a fallback
-        m, has_modules = mc.get_marshaller_for_type(np.uint8)
+    def write_data(self, grp, name, data, type_string):
+        """ Writes a piece of data into the file in the given group.
 
-    # If a marshaller was found, use it to read the data. Otherwise,
-    # return an error.
+        Low level method to store a Python type (`data`) into the
+        specified Group.
 
-    if m is not None:
-        if has_modules:
-            return m.read(f, dsetgrp, attributes, options)
+        Parameters
+        ----------
+        grp : h5py.Group or h5py.File
+            The Group to place the data in.
+        name : str
+            The name to write the data to.
+        data : any
+            The data to write.
+        type_string : str or None
+            The type string of the data, or ``None`` to deduce
+            automatically.
+
+        Returns
+        -------
+        obj : h5py.Dataset or h5py.Group or None
+            The base Dataset or Group having the name `name` in `grp`
+            that was made, or ``None`` if nothing was written.
+
+        Raises
+        ------
+        NotImplementedError
+            If writing `data` is not supported.
+        TypeNotMatlabCompatibleError
+            If writing a type not compatible with MATLAB and
+            ``self.options.action_for_matlab_incompatible`` is set to
+            ``'error'``.
+
+        See Also
+        --------
+        read_data
+        hdf5storage.Options
+
+        """
+        # Get the marshaller for type(data). The required modules should
+        # be here and imported. A workaround must be when data is a
+        # dtype since dtypes are no longer type numpy.dtype in numpy
+        # 1.20.
+        if isinstance(data, np.dtype):
+            tp = np.dtype
         else:
-            return m.read_approximate(f, dsetgrp, attributes, options)
-    else:
-        raise hdf5storage.exceptions.CantReadError('Could not read '
-                                                   + dsetgrp.name)
+            tp = type(data)
+        m, has_modules = \
+            self._options.marshaller_collection.get_marshaller_for_type(tp)
 
+        # If a marshaller was found and we have the required modules,
+        # use it to write the data. Otherwise, return an error. If we
+        # get something other than None back, then we must recurse
+        # through the entries. Also, we must set the H5PATH attribute to
+        # be the path to the containing group.
 
-def write_object_array(f, data, options):
-    """ Writes an array of objects recursively.
+        if m is not None and has_modules:
+            return m.write(self, grp, name, data, type_string)
+        else:
+            raise NotImplementedError('Can''t write data type: '
+                                      + str(tp))
 
-    Writes the elements of the given object array recursively in the
-    HDF5 Group ``options.group_for_references`` and returns an
-    ``h5py.Reference`` array to all the elements.
+    def read_data(self, grp, name, dsetgrp=None):
+        """ Writes a piece of data into the file.
 
-    Parameters
-    ----------
-    f : h5py.File
-        The HDF5 file handle that is open.
-    data : numpy.ndarray of objects
-        Numpy object array to write the elements of.
-    options : hdf5storage.core.Options
-        hdf5storage options object.
+        Low level method to read a Python type of the specified name
+        from specified Group.
 
-    Returns
-    -------
-    obj_array : numpy.ndarray of h5py.Reference
-        A reference array pointing to all the elements written to the
-        HDF5 file. For those that couldn't be written, the respective
-        element points to the canonical empty.
+        Parameters
+        ----------
+        grp : h5py.Group or h5py.File
+            The Group to read the data from.
+        name : str
+            The name of the data to read.
+        dsetgrp : h5py.Dataset or h5py.Group or None, optional
+            The Dataset or Group object to read if that has already been
+            obtained and thus should not be re-obtained (``None``
+            otherwise). If given, overrides `grp` and `name`.
 
-    Raises
-    ------
-    TypeNotMatlabCompatibleError
-        If writing a type not compatible with MATLAB and
-        `options.action_for_matlab_incompatible` is set to ``'error'``.
+        Returns
+        -------
+        data
+            The data named `name` in Group `grp`.
 
-    See Also
-    --------
-    read_object_array
-    hdf5storage.Options.group_for_references
-    h5py.Reference
+        Raises
+        ------
+        KeyError
+            If the data cannot be found.
+        CantReadError
+            If the data cannot be read successfully.
 
-    """
-    # We need to make sure that the group to hold references is present,
-    # and create it if it isn't.
-    grp2 = f.require_group(options.group_for_references)
+        See Also
+        --------
+        write_data
+        hdf5storage.Options
 
-    if not isinstance(grp2, h5py.Group):
-        del f[options.group_for_references]
-        grp2 = f.create_group(options.group_for_references)
+        """
+        if dsetgrp is None:
+            # If name isn't found, return error.
+            try:
+                dsetgrp = grp[name]
+            except:
+                raise KeyError('Could not find '
+                               + posixpath.join(grp.name, name))
 
-    # The Dataset 'a' needs to be present as the canonical empty. It is
-    # just a np.uint32/64([0, 0]) with its a MATLAB_class of
-    # 'canonical empty' and the 'MATLAB_empty' attribute set. If it
-    # isn't present or is incorrectly formatted, it is created
-    # truncating anything previously there.
-    try:
-        dset_a = grp2['a']
-        if dset_a.shape != (2,) \
-                or not dset_a.dtype.name.startswith('uint') \
-                or np.any(dset_a[...] != np.uint64([0, 0])) \
-                or get_attribute_string(dset_a, 'MATLAB_class') != \
-                'canonical empty' \
-                or get_attribute(dset_a, 'MATLAB_empty') != 1:
-            del grp2['a']
-            dset_a = grp2.create_dataset('a', data=np.uint64([0, 0]))
-            set_attribute_string(dset_a, 'MATLAB_class',
-                                 'canonical empty')
-            set_attribute(dset_a, 'MATLAB_empty',
-                          np.uint8(1))
-    except:
-        dset_a = grp2.create_dataset('a', data=np.uint64([0, 0]))
-        set_attribute_string(dset_a, 'MATLAB_class',
-                             'canonical empty')
-        set_attribute(dset_a, 'MATLAB_empty',
-                      np.uint8(1))
+        # Get all attributes with values.
+        defaultfactory = type(None)
+        attributes = collections.defaultdict(defaultfactory,
+                                             dsetgrp.attrs.items())
 
-    # We need to grab the special reference dtype and make an empty
-    # array to store all the references in.
-    data_refs = np.full(data.shape, dset_a.ref,
-                        dtype=h5py.special_dtype(ref=h5py.Reference))
+        # Get the different attributes that can be used to identify they
+        # type, which are the type string and the MATLAB class.
+        type_string = convert_attribute_to_string(
+            attributes['Python.Type'])
+        matlab_class = convert_attribute_to_string(
+            attributes['MATLAB_class'])
 
-    # Go through all the elements of data and write them, gabbing their
-    # references and putting them in data_refs. They will be put in
-    # group_for_references, which is also what the H5PATH needs to be
-    # set to if we are doing MATLAB compatibility (otherwise, the
-    # attribute needs to be deleted). If an element can't be written
-    # (doing matlab compatibility, but it isn't compatible with matlab
-    # and action_for_matlab_incompatible option is True), the reference
-    # to the canonical empty will be used for the reference array to
-    # point to.
-    grp2name = grp2.name
-    data_refs_flat = data_refs.reshape(-1)
-    for index, x in enumerate(data.flat):
-        name_for_ref = next_unused_name_in_group(grp2, 16)
-        obj = write_data(f, grp2, name_for_ref, x, None, options)
-        if obj is not None:
-            data_refs_flat[index] = obj.ref
-            if options.matlab_compatible:
-                set_attribute_string(obj,
-                                     'H5PATH', grp2name)
+        # If the type_string is present, get the marshaller for it. If
+        # it is not, use the one for the matlab class if it is
+        # given. Otherwise, use the fallback (NumpyScalarArrayMarshaller
+        # for both Datasets and Groups). If calls to the marshaller
+        # collection to get the right marshaller don't return one
+        # (return None), we also go to the default). Also get whether we
+        # have the modules required to read it accurately or not
+        # (approximately)
+
+        m = None
+        has_modules = False
+        mc = self._options.marshaller_collection
+        if type_string is not None:
+            m, has_modules = mc.get_marshaller_for_type_string(
+                type_string)
+        elif matlab_class is not None:
+            m, has_modules = mc.get_marshaller_for_matlab_class(
+                matlab_class)
+        elif hasattr(dsetgrp, 'dtype'):
+            # Numpy dataset
+            m, has_modules = mc.get_marshaller_for_type(
+                dsetgrp.dtype.type)
+        elif isinstance(dsetgrp, (h5py.Group, h5py.File)):
+            # Groups and files are like Matlab struct
+            m, has_modules = mc.get_marshaller_for_matlab_class(
+                'struct')
+        if m is None:
+            # use Numpy as a fallback
+            m, has_modules = mc.get_marshaller_for_type(np.uint8)
+
+        # If a marshaller was found, use it to read the data. Otherwise,
+        # return an error.
+
+        if m is not None:
+            if has_modules:
+                return m.read(self, dsetgrp, attributes)
             else:
-                del_attribute(obj, 'H5PATH')
+                return m.read_approximate(self, dsetgrp, attributes)
+        else:
+            raise hdf5storage.exceptions.CantReadError('Could not read '
+                                                       + dsetgrp.name)
 
-    # Now, the dtype needs to be changed to the reference type, which
-    # will incidentally copy it.
-    return data_refs
+    def write_object_array(self, data):
+        """ Writes an array of objects recursively.
 
+        Writes the elements of the given object array recursively in the
+        HDF5 Group ``self.options.group_for_references`` and returns an
+        ``h5py.Reference`` array to all the elements.
 
-def read_object_array(f, data, options):
-    """ Reads an array of objects recursively.
+        Parameters
+        ----------
+        data : numpy.ndarray of objects
+            Numpy object array to write the elements of.
 
-    Reads the elements of the given HDF5 Reference array recursively
-    and constructs a ``numpy.object_`` array from its elements, which is
-    returned.
+        Returns
+        -------
+        obj_array : numpy.ndarray of h5py.Reference
+            A reference array pointing to all the elements written to
+            the HDF5 file. For those that couldn't be written, the
+            respective element points to the canonical empty.
 
-    Parameters
-    ----------
-    f : h5py.File
-        The HDF5 file handle that is open.
-    data : numpy.ndarray of h5py.Reference
-        The array of HDF5 References to read and make an object array
-        from.
-    options : hdf5storage.core.Options
-        hdf5storage options object.
+        Raises
+        ------
+        TypeNotMatlabCompatibleError
+            If writing a type not compatible with MATLAB and
+            ``self.options.action_for_matlab_incompatible`` is set to
+            ``'error'``.
 
-    Raises
-    ------
-    NotImplementedError
-        If reading the object from file is currently not supported.
+        See Also
+        --------
+        read_object_array
+        hdf5storage.Options.group_for_references
+        h5py.Reference
 
-    Returns
-    -------
-    obj_array : numpy.ndarray of numpy.object\_
-        The Python object array containing the items pointed to by
-        `data`.
+        """
+        # We need the Group to hold references. We might already have
+        # it. If not, we need to create the Group if it isn't present
+        # and get its handle, while storing the handle and noting
+        # whether we created it or not.
+        if self._refs_group is None:
+            self._refs_group = self._f.get(
+                self._options.group_for_references,
+                default=None)
+            if self._refs_group is None or not isinstance(
+                    self._refs_group, h5py.Group):
+                # It doesn't exist yet or isn't a Group, so it needs to
+                # be created (and deleted if it is something else).
+                if self._refs_group is not None:
+                    del self._f[self._options.group_for_references]
+                self._refs_group = self._f.create_group(
+                    self._options.group_for_references)
+                self._created_refs_group = True
+            else:
+                # Was already present, which means we didn't create it.
+                self._created_refs_group = False
+            # Get the name if we don't have it.
+            if self._refs_group_name is None:
+                self._refs_group_name = self._refs_group.name
 
-    See Also
-    --------
-    write_object_array
-    hdf5storage.Options.group_for_references
-    h5py.Reference
+        # The Dataset 'a' needs to be present as the canonical empty. It
+        # is just a np.uint32/64([0, 0]) with its a MATLAB_class of
+        # 'canonical empty' and the 'MATLAB_empty' attribute set. If it
+        # isn't present or is incorrectly formatted, it is created
+        # truncating anything previously there.
+        if self._canonical_empty is None:
+            self._canonical_empty = self._refs_group.get(
+                'a', default=None)
+            if self._canonical_empty is not None and (
+                    not isinstance(self._canonical_empty, h5py.Dataset)
+                    or self._canonical_empty.shape != (2,)
+                    or not self._canonical_empty.dtype.name.startswith(
+                        'uint')
+                    or np.any(self._canonical_empty[...]
+                              != np.uint64([0, 0]))
+                    or get_attribute_string(self._canonical_empty,
+                                            'MATLAB_class')
+                    != 'canonical empty'
+                    or get_attribute(self._canonical_empty,
+                                     'MATLAB_empty') != 1):
+                del self._refs_group['a']
+                self._canonical_empty = None
+            if self._canonical_empty is None:
+                self._canonical_empty = self._refs_group.create_dataset(
+                    'a', data=np.uint64([0, 0]))
+                set_attribute_string(self._canonical_empty,
+                                     'MATLAB_class',
+                                     'canonical empty')
+                set_attribute(self._canonical_empty, 'MATLAB_empty',
+                              np.uint8(1))
 
-    """
-    # Go through all the elements of data and read them using their
-    # references, and the putting the output in new object array.
-    data_derefed = np.zeros(shape=data.shape, dtype='object')
-    data_derefed_flat = data_derefed.reshape(-1)
-    data_flat = data[...].ravel()
-    for index, x in enumerate(data_flat):
-        data_derefed_flat[index] = read_data(f, None, None,
-                                             options,
-                                             dsetgrp=f[x])
-    return data_derefed
+        # We need to grab the special reference dtype and make an empty
+        # array to store all the references in.
+        data_refs = np.full(data.shape, self._canonical_empty.ref,
+                            dtype=h5py.special_dtype(
+                                ref=h5py.Reference))
 
+        # Go through all the elements of data and write them, gabbing
+        # their references and putting them in data_refs. They will be
+        # put in group_for_references, which is also what the H5PATH
+        # needs to be set to if we are doing MATLAB compatibility
+        # (otherwise, the attribute needs to be deleted). If an element
+        # can't be written (doing matlab compatibility, but it isn't
+        # compatible with matlab and action_for_matlab_incompatible
+        # option is True), the reference to the canonical empty will be
+        # used for the reference array to point to.
+        data_refs_flat = data_refs.reshape(-1)
+        for index, x in enumerate(data.flat):
+            name_for_ref = self.next_unused_ref_group_name()
+            obj = self.write_data(self._refs_group, name_for_ref, x,
+                                  None)
+            if obj is not None:
+                data_refs_flat[index] = obj.ref
+                if self._options.matlab_compatible:
+                    set_attribute_string(obj,
+                                         'H5PATH',
+                                         self._refs_group_name)
+                else:
+                    del_attribute(obj, 'H5PATH')
 
-def next_unused_name_in_group(grp, length):
-    """ Gives a name that isn't used in a Group.
+        # Now, the dtype needs to be changed to the reference type,
+        # which will incidentally copy it.
+        return data_refs
 
-    Generates a name of the desired length that is not a Dataset or
-    Group in the given group. Note, if length is not large enough and
-    `grp` is full enough, there may be no available names meaning that
-    this function will hang.
+    def read_object_array(self, data):
+        """ Reads an array of objects recursively.
 
-    Parameters
-    ----------
-    grp : h5py.Group or h5py.File
-        The HDF5 Group (or File if at '/') to generate an unused name
-        in.
-    length : int
-        Number of characters the name should be.
+        Reads the elements of the given HDF5 Reference array recursively
+        and constructs a ``numpy.object_`` array from its elements,
+        which is returned.
 
-    Returns
-    -------
-    name : str
-        A name that isn't already an existing Dataset or Group in
-        `grp`.
+        Parameters
+        ----------
+        data : numpy.ndarray of h5py.Reference
+            The array of HDF5 References to read and make an object
+            array from.
 
-    """
-    # While
-    #
-    # ltrs = string.ascii_letters + string.digits
-    # name = ''.join([random.choice(ltrs) for i in range(length)])
-    #
-    # seems intuitive, its performance is abysmal compared to
-    #
-    # '%0{0}x'.format(length) % random.getrandbits(length * 4)
-    #
-    # The difference is a factor of 20. Idea from
-    #
-    # https://stackoverflow.com/questions/2782229/most-lightweight-way-
-    #   to-create-a-random-string-and-a-random-hexadecimal-number/
-    #   35161595#35161595
-    fmt = '%0{0}x'.format(length)
-    name = fmt % random.getrandbits(length * 4)
-    while name in grp:
-        name = fmt % random.getrandbits(length * 4)
-    return name
+        Raises
+        ------
+        NotImplementedError
+            If reading the object from file is currently not supported.
+
+        Returns
+        -------
+        obj_array : numpy.ndarray of numpy.object\_
+            The Python object array containing the items pointed to by
+            `data`.
+
+        See Also
+        --------
+        write_object_array
+        hdf5storage.Options.group_for_references
+        h5py.Reference
+
+        """
+        # Go through all the elements of data and read them using their
+        # references, and the putting the output in new object array.
+        data_derefed = np.zeros(shape=data.shape, dtype='object')
+        data_derefed_flat = data_derefed.reshape(-1)
+        data_flat = data[...].ravel()
+        for index, x in enumerate(data_flat):
+            data_derefed_flat[index] = self.read_data(
+                None, None, dsetgrp=self._f[x])
+        return data_derefed
+
+    def next_unused_ref_group_name(self):
+        """ Gives the next unused name that the references Group.
+
+        Generates the next unused name for use in the references
+        Group. If the Group is full enough, there may be no available
+        names meaning that this function will hang.
+
+        Returns
+        -------
+        name : str
+            A name that isn't already an existing Dataset or Group in
+            the references Group.
+
+        See Also
+        --------
+        hdf5storage.Options.group_for_references
+
+        """
+        # If we created the references group, we can just use the
+        # counter to generate the name and not check for collisions and
+        # increment the counter afterwards.
+        if self._created_refs_group:
+            name = '%x' % self._refs_group_counter
+            self._refs_group_counter += 1
+            return name
+        # We need to make a random name and check for collisions.
+        #
+        # While
+        #
+        # ltrs = string.ascii_letters + string.digits
+        # name = ''.join([random.choice(ltrs)
+        #                 for i in range(self._refs_group_name_length)])
+        #
+        # seems intuitive, its performance is abysmal compared to
+        #
+        # '%0{0}x'.format(self._refs_group_name_length) \
+        #     % random.getrandbits(self._refs_group_name_length * 4)
+        #
+        # The difference is a factor of 20. Idea from
+        #
+        # https://stackoverflow.com/questions/2782229/most-lightweight-way-
+        #   to-create-a-random-string-and-a-random-hexadecimal-number/
+        #   35161595#35161595
+        fmt = '%0{0}x'.format(self._refs_group_name_length)
+        bits = self._refs_group_name_length * 4
+        name = fmt % random.getrandbits(bits)
+        while name in self._refs_group:
+            name = fmt % random.getrandbits(bits)
+        return name
 
 
 def convert_numpy_str_to_uint16(data):

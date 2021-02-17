@@ -396,7 +396,6 @@ Versions
        support added for the ``Ellipsis`` and ``NotImplemented`` types.
      * The ``write`` method of all marshallers now must return the written
        HDF5 Group or Dataset (or ``None`` if unsuccessful).
-       ``utilities.write_data`` now returns this as well.
      * Issue #49. Changed marshaller types and their handling code to
        support marshallers that handle types in modules that may not be
        available or should not be imported until needed. If the the
@@ -416,10 +415,15 @@ Versions
        default can be generated using
        ``make_new_default_MarshallerCollection``. This is useful if
        one wants to override the default lazy loading behavior.
-     * Issue #42. read and write functions moved from the ``lowlevel``
+     * Issues #42 and #106. read and write functions moved from the ``lowlevel``
        and ``Marshallers`` modules to the ``utilities`` module and
        the ``lowlevel`` module renamed to ``exceptions`` since that is
-       all that remains in it.
+       all that remains in it. The functions to read/write Datasets and Groups
+       were replaced with a wrapper class ``LowLevelFile`` with methods
+       that are similar.
+     * Issue #106. Marshallers are passed a ``utilities.LowLevelFile`` object
+       as the first argument (``f``) instead of the file handle (``h5py.File``)
+       with the ``Options`` as the keyword argument ``options``.
      * Ability to write Python 3.x ``int`` and Python 2.x ``long`` that
        are too large to fit into ``np.int64``. Doing so no longer
        raises an exception.

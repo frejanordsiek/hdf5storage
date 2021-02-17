@@ -58,11 +58,11 @@ class SubListMarshaller(hm.PythonTupleSetDequeMarshaller):
         # Update the type lookups.
         self.update_type_lookups()
 
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         # Use the grand-parent class version to read it and do most of
         # the work.
         data = hm.PythonListMarshaller.read(self, f, dsetgrp,
-                                            attributes, options)
+                                            attributes)
         return SubList(data)
 
 

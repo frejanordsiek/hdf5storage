@@ -40,10 +40,10 @@ from nose.tools import assert_is_not_none, assert_is_none, \
 
 
 class Tmarshaller(hdf5storage.Marshallers.TypeMarshaller):
-    def read(self, f, dsetgrp, attributes, options):
+    def read(self, f, dsetgrp, attributes):
         return 'read'
 
-    def read_approximate(self, f, dsetgrp, attributes, options):
+    def read_approximate(self, f, dsetgrp, attributes):
         return 'read_approximate'
 
 
@@ -190,7 +190,8 @@ def test_marshaller_read():
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
-            out = hdf5storage.utilities.read_data(f, f, name, options)
+            out = hdf5storage.utilities.LowLevelFile(
+                f, options).read_data(f, name)
     except:
         raise
     finally:
@@ -221,7 +222,8 @@ def test_marshaller_read_approximate_missing_parent():
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
-            out = hdf5storage.utilities.read_data(f, f, name, options)
+            out = hdf5storage.utilities.LowLevelFile(
+                f, options).read_data(f, name)
     except:
         raise
     finally:
@@ -252,7 +254,8 @@ def test_marshaller_read_approximate_missing_import():
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
-            out = hdf5storage.utilities.read_data(f, f, name, options)
+            out = hdf5storage.utilities.LowLevelFile(
+                f, options).read_data(f, name)
     except:
         raise
     finally:
