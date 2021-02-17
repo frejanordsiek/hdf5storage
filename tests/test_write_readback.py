@@ -844,11 +844,15 @@ class TestPythonMatlabFormat(object):
                 while s in names and s[0].isdigit():
                     s = random_str_ascii(random.randint(1, 10))
                 names.append(s)
+            titles = []
+            for _ in range(len(names)):
+                s = random_str_some_unicode(random.randint(1, 10))
+                while s in titles:
+                    s = random_str_some_unicode(random.randint(1, 10))
+                titles.append(s)
             formats = [(random.choice(base_dtypes),
                         random_numpy_shape(random.randint(1, 4), 10))
                        for _ in range(len(names))]
-            titles = [random_str_some_unicode(random.randint(1, 10))
-                      for _ in range(len(names))]
             offsets = [random.randint(0, 100)
                        for _ in range(len(names))]
             desc = {'names': names,
