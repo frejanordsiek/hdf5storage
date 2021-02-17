@@ -790,9 +790,7 @@ class TestPythonMatlabFormat(object):
     def test_dtype(self):
         for dt in {np.dtype(v) for v
                    in itertools.chain(np.sctypeDict,
-                                      np.sctypeDict.values(),
-                                      np.sctypeNA,
-                                      np.sctypeNA.values())
+                                      np.sctypeDict.values())
                    if not isinstance(v, int)
                    and v not in ('V', 'void', 'void0', 'Void0',
                                  np.void)}:
