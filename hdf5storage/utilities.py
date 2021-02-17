@@ -139,8 +139,12 @@ def write_data(f, grp, name, data, type_string, options):
 
     """
     # Get the marshaller for type(data). The required modules should be
-    # here and imported.
-    tp = type(data)
+    # here and imported. A workaround must be when data is a dtype since
+    # dtypes are no longer type numpy.dtype in numpy 1.21.
+    if isinstance(data, np.dtype):
+        tp = np.dtype
+    else:
+        tp = type(data)
     m, has_modules = \
         options.marshaller_collection.get_marshaller_for_type(tp)
 

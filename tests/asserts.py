@@ -217,7 +217,7 @@ def assert_equal_none_format(a, b, options=None):
         # We won't get back a chainmap, but instead a list of the maps
         # which can be compared.
         assert_equal_none_format(a, b.maps, options=options)
-    elif type(b) == np.dtype:
+    elif isinstance(b, np.dtype):
         cb = repr(b)[6:-1]
         if cb.endswith('align=True'):
             if cb.endswith('}, align=True'):
@@ -447,7 +447,7 @@ def assert_equal_matlab_format(a, b, options=None):
         # We won't get back a chainmap, but instead a list of the maps
         # which can be compared.
         assert_equal_matlab_format(a, b.maps, options=options)
-    elif type(b) == np.dtype:
+    elif isinstance(b, np.dtype):
         cb = repr(b)[6:-1]
         if cb.endswith('align=True'):
             if cb.endswith('}, align=True'):

@@ -1407,7 +1407,7 @@ class NumpyDtypeMarshaller(NumpyScalarArrayMarshaller):
         # from if not given the right one explicitly.
         return NumpyScalarArrayMarshaller.write(
             self, f, grp, name, np.bytes_(cdata, 'utf-8'),
-            self.get_type_string(data, type_string), options)
+            'numpy.dtype', options)
 
     def read(self, f, dsetgrp, attributes, options):
         # Use the parent class version to read it and do most of the
