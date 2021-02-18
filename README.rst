@@ -40,7 +40,7 @@ An optional dependency is the scipy package.
 Installing by pip
 -----------------
 
-This package is on `PyPI <https://pypi.python.org/pypi/hdf5storage>`_.
+This package is on `PyPI <https://pypi.org/project/hdf5storage>`_.
 To install hdf5storage using pip, run the command::
 
     pip install hdf5storage
