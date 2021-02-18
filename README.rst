@@ -60,9 +60,10 @@ Then to install the package, run the command with Python ::
 Running Tests
 -------------
 
-For testing, the package nose (>= 1.0) is additionally required. There
-are some tests that require Matlab and scipy to be installed and be in
-the executable path. In addition, there are some tests that require
+For testing, the package `pytest <https://pypi.org/project/pytest>`_
+(>= 5.0) is additionally required. There are some tests that require
+Matlab and scipy to be installed and be in the executable path
+respectively. In addition, there are some tests that require
 `Julia <http://julialang.org/>`_ with the
 `MAT <https://github.com/simonster/MAT.jl>`_ package. Not having them
 means that those tests cannot be run (they will be skipped) but all
@@ -73,7 +74,7 @@ than scipy, Julia, Matlab run ::
 
 To run the tests ::
 
-    python setup.py nosetests
+    pytest
 
 
 Building Documentation
@@ -461,6 +462,9 @@ Versions
      * Changed documentation theme to ``sphinx_rtd_theme``.
      * Issue #55. Major performance increases by reducing the overhead
        involved with reading and writing each Dataset and Group.
+     * Issue #96. Changed unit testing to use
+       `pytest <https://pypi.org/project/pytest>`_ instead of
+       `nose <https://pypi.org/project/nose>`_.
 
 0.1.16. Bugfix release that fixed the following bugs.
         * Issue #81 and #82. ``h5py.File`` will require the mode to be

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016, Freja Nordsiek
+# Copyright (c) 2014-2021, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,7 @@ import tempfile
 
 import pkg_resources
 
-from nose.tools import assert_equal as assert_equal_nose
-
-import unittest
+import pytest
 
 import hdf5storage
 import hdf5storage.plugins
@@ -47,9 +45,8 @@ except:
 
 
 def test_marshaller_api_versions():
-    assert_equal_nose(
-        ('1.0', ),
-        hdf5storage.plugins.supported_marshaller_api_versions())
+    assert ('1.0', ) == \
+        hdf5storage.plugins.supported_marshaller_api_versions()
 
 
 def test_find_thirdparty_marshaller_plugins():
@@ -57,7 +54,7 @@ def test_find_thirdparty_marshaller_plugins():
     apivs = hdf5storage.plugins.supported_marshaller_api_versions()
     plugins = hdf5storage.plugins.find_thirdparty_marshaller_plugins()
     assert isinstance(plugins, dict)
-    assert_equal_nose(set(apivs), set(plugins))
+    assert set(apivs) == set(plugins)
     for k, v in plugins.items():
         assert isinstance(k, str)
         assert isinstance(v, dict)
@@ -66,12 +63,12 @@ def test_find_thirdparty_marshaller_plugins():
             assert isinstance(v2, pkg_resources.EntryPoint)
             if k2 == 'example_hdf5storage_marshaller_plugin':
                 found_example = True
-    assert_equal_nose(has_example_hdf5storage_marshaller_plugin,
-                      found_example)
+    assert has_example_hdf5storage_marshaller_plugin == found_example
 
 
-@unittest.skipUnless(has_example_hdf5storage_marshaller_plugin,
-                     'requires example_hdf5storage_marshaller_plugin')
+@pytest.mark.skipif(has_example_hdf5storage_marshaller_plugin,
+                    reason='requires example_hdf5storage_marshaller_'
+                    'plugin')
 def test_plugin_marshaller_SubList():
     mc = hdf5storage.MarshallerCollection(load_plugins=True,
                                           lazy_loading=True)
@@ -95,6 +92,5 @@ def test_plugin_marshaller_SubList():
     finally:
         if f is not None:
             os.remove(f[1])
-    assert_equal_nose(ell, list(out))
-    assert_equal_nose(type(out),
-                      example_hdf5storage_marshaller_plugin.SubList)
+    assert ell == list(out)
+    assert type(out) == example_hdf5storage_marshaller_plugin.SubList

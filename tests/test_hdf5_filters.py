@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016, Freja Nordsiek
+# Copyright (c) 2013-2021, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@ import tempfile
 
 import h5py
 
-import hdf5storage
+import pytest
 
-from nose.tools import assert_equal as assert_equal_nose
+import hdf5storage
 
 from asserts import assert_equal
 from make_randoms import random_numpy, random_numpy_shape, \
@@ -42,19 +42,22 @@ from make_randoms import random_numpy, random_numpy_shape, \
 random.seed()
 
 
+@pytest.mark.parametrize(
+    'compression,shuffle,fletcher32,gzip_level',
+    [(compression, shuffle, fletcher32, level)
+     for compression in ('gzip', 'lzf')
+     for shuffle in (True, False)
+     for fletcher32 in (True, False)
+     for level in range(10)])
+def test_read_filtered_data(compression, shuffle, fletcher32,
+                            gzip_level):
+    # Make the filters dict.
+    filts = {'compression': compression,
+             'shuffle': shuffle,
+             'fletcher32': fletcher32}
+    if compression == 'gzip':
+        filts['compression_opts'] = gzip_level
 
-def check_read_filters(filters):
-    # Read out the filter arguments.
-    filts = {'compression': 'gzip',
-             'shuffle': True,
-             'fletcher32': True,
-             'gzip_level': 7}
-    for k, v in filters.items():
-        filts[k] = v
-    if filts['compression'] == 'gzip':
-        filts['compression_opts'] = filts['gzip_level']
-    del filts['gzip_level']
-    
     # Make some random data.
     dims = random.randint(1, 4)
     data = random_numpy(shape=random_numpy_shape(dims,
@@ -86,14 +89,15 @@ def check_read_filters(filters):
     assert_equal(out, data)
 
 
-def check_write_filters(filters):
-    # Read out the filter arguments.
-    filts = {'compression': 'gzip',
-             'shuffle': True,
-             'fletcher32': True,
-             'gzip_level': 7}
-    for k, v in filters.items():
-        filts[k] = v
+@pytest.mark.parametrize(
+    'compression,shuffle,fletcher32,gzip_level',
+    [(compression, shuffle, fletcher32, level)
+     for compression in ('gzip', 'lzf')
+     for shuffle in (True, False)
+     for fletcher32 in (True, False)
+     for level in range(10)])
+def test_write_filtered_data(compression, shuffle, fletcher32,
+                             gzip_level):
 
     # Make some random data. The dtype must be restricted so that it can
     # be read back reliably.
@@ -115,20 +119,21 @@ def check_write_filters(filters):
         fld = tempfile.mkstemp()
         os.close(fld[0])
         filename = fld[1]
-        hdf5storage.write(data, path=name, filename=filename, \
-            store_python_metadata=False, matlab_compatible=False, \
-            compress=True, compress_size_threshold=0, \
-            compression_algorithm=filts['compression'], \
-            gzip_compression_level=filts['gzip_level'], \
-            shuffle_filter=filts['shuffle'], \
-            compressed_fletcher32_filter=filts['fletcher32'])
+        hdf5storage.write(data, path=name, filename=filename,
+                          store_python_metadata=False,
+                          matlab_compatible=False,
+                          compress=True, compress_size_threshold=0,
+                          compression_algorithm=compression,
+                          gzip_compression_level=gzip_level,
+                          shuffle_filter=shuffle,
+                          compressed_fletcher32_filter=fletcher32)
 
         with h5py.File(filename, mode='r') as f:
             d = f[name]
-            fletcher32 = d.fletcher32
-            shuffle = d.shuffle
-            compression = d.compression
-            gzip_level = d.compression_opts
+            filts = {'fletcher32': d.fletcher32,
+                     'shuffle': d.shuffle,
+                     'compression': d.compression,
+                     'gzip_level': d.compression_opts}
             out = d[...]
     except:
         raise
@@ -137,26 +142,34 @@ def check_write_filters(filters):
             os.remove(fld[1])
 
     # Check the filters
-    assert_equal_nose(fletcher32, filts['fletcher32'])
-    assert_equal_nose(shuffle, filts['shuffle'])
-    assert_equal_nose(compression, filts['compression'])
-    if filts['compression'] == 'gzip':
-        assert_equal_nose(gzip_level, filts['gzip_level'])
+    assert fletcher32 == filts['fletcher32']
+    assert shuffle == filts['shuffle']
+    assert compression == filts['compression']
+    if compression == 'gzip':
+        assert gzip_level == filts['gzip_level']
 
     # Compare
     assert_equal(out, data)
 
 
-def check_uncompressed_write_filters(method,
-                                     uncompressed_fletcher32_filter,
-                                     filters):
-    # Read out the filter arguments.
-    filts = {'compression': 'gzip',
-             'shuffle': True,
-             'fletcher32': True,
-             'gzip_level': 7}
-    for k, v in filters.items():
-        filts[k] = v
+@pytest.mark.parametrize(
+    'method,uncompressed_fletcher32_filter,compression,shuffle,'
+    'fletcher32,gzip_level',
+    [(method, uf, compression, shuffle, fletcher32, level)
+     for method in ('compression_disabled', 'data_too_small')
+     for uf in (True, False)
+     for compression in ('gzip', 'lzf')
+     for shuffle in (True, False)
+     for fletcher32 in (True, False)
+     for level in range(10)])
+def test_uncompressed_write_filtered_data(
+        method, uncompressed_fletcher32_filter, compression, shuffle,
+        fletcher32, gzip_level):
+    # Make the filters dict.
+    filts = {'compression': compression,
+             'shuffle': shuffle,
+             'fletcher32': fletcher32,
+             'gzip_level': gzip_level}
 
     # Make some random data. The dtype must be restricted so that it can
     # be read back reliably.
@@ -211,67 +224,9 @@ def check_uncompressed_write_filters(method,
             os.remove(fld[1])
 
     # Check the filters
-    assert_equal_nose(compression, None)
-    assert_equal_nose(shuffle, False)
-    assert_equal_nose(fletcher32, uncompressed_fletcher32_filter)
+    assert compression is None
+    assert shuffle is False
+    assert fletcher32 == uncompressed_fletcher32_filter
 
     # Compare
     assert_equal(out, data)
-
-
-def test_read_filtered_data():
-    for compression in ('gzip', 'lzf'):
-        for shuffle in (True, False):
-            for fletcher32 in (True, False):
-                if compression != 'gzip':
-                    filters = {'compression': compression,
-                               'shuffle': shuffle,
-                               'fletcher32': fletcher32}
-                    yield check_read_filters, filters
-                else:
-                    for level in range(10):
-                        filters = {'compression': compression,
-                                   'shuffle': shuffle,
-                                   'fletcher32': fletcher32,
-                                   'gzip_level': level}
-                        yield check_read_filters, filters
-
-
-def test_write_filtered_data():
-    for compression in ('gzip', 'lzf'):
-        for shuffle in (True, False):
-            for fletcher32 in (True, False):
-                if compression != 'gzip':
-                    filters = {'compression': compression,
-                               'shuffle': shuffle,
-                               'fletcher32': fletcher32}
-                    yield check_read_filters, filters
-                else:
-                    for level in range(10):
-                        filters = {'compression': compression,
-                                   'shuffle': shuffle,
-                                   'fletcher32': fletcher32,
-                                   'gzip_level': level}
-                        yield check_write_filters, filters
-
-
-def test_uncompressed_write_filtered_data():
-    for method in ('compression_disabled', 'data_too_small'):
-        for uncompressed_fletcher32_filter in (True, False):
-            for compression in ('gzip', 'lzf'):
-                for shuffle in (True, False):
-                    for fletcher32 in (True, False):
-                        if compression != 'gzip':
-                            filters = {'compression': compression,
-                                       'shuffle': shuffle,
-                                       'fletcher32': fletcher32}
-                            yield check_read_filters, filters
-                        else:
-                            for level in range(10):
-                                filters = {'compression': compression,
-                                           'shuffle': shuffle,
-                                           'fletcher32': fletcher32,
-                                           'gzip_level': level}
-                                yield check_uncompressed_write_filters,\
-                                    method, uncompressed_fletcher32_filter,\
-                                    filters

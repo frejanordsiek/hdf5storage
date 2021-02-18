@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2020, Freja Nordsiek
+# Copyright (c) 2013-2021, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,6 @@ import numpy as np
 
 import hdf5storage.utilities as utils
 
-from nose.tools import assert_equal as assert_equal_nose
-
 from asserts import assert_equal
 
 
@@ -47,7 +45,7 @@ def test_numpy_str_ascii_to_uint16_back():
         data = np.unicode_(str_ascii)
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)[0]
-        assert_equal_nose(out.tostring(), data.tostring())
+        assert out.tobytes() == data.tobytes()
         assert_equal(out, data)
 
 
@@ -56,7 +54,7 @@ def test_numpy_str_someunicode_to_uint16_back():
         data = np.unicode_(str_unicode)
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)[0]
-        assert_equal_nose(out.tostring(), data.tostring())
+        assert out.tobytes() == data.tobytes()
         assert_equal(out, data)
 
 
@@ -65,8 +63,8 @@ def test_numpy_str_ascii_to_uint32_back():
         data = np.unicode_(str_ascii)
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)[0]
-        assert_equal_nose(intermed.tostring(), data.tostring())
-        assert_equal_nose(out.tostring(), data.tostring())
+        assert intermed.tobytes() == data.tobytes()
+        assert out.tobytes() == data.tobytes()
         assert_equal(out, data)
 
 
@@ -75,6 +73,6 @@ def test_numpy_str_someunicode_to_uint32_back():
         data = np.unicode_(str_unicode)
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)[0]
-        assert_equal_nose(intermed.tostring(), data.tostring())
-        assert_equal_nose(out.tostring(), data.tostring())
+        assert intermed.tobytes() == data.tobytes()
+        assert out.tobytes() == data.tobytes()
         assert_equal(out, data)

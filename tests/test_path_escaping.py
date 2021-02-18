@@ -1,4 +1,4 @@
-# Copyright (c) 2016, Freja Nordsiek
+# Copyright (c) 2016-2021, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,6 @@ import random
 from hdf5storage.pathesc import escape_path, unescape_path, process_path
 
 from make_randoms import random_str_ascii, random_str_some_unicode
-
-from nose.tools import assert_equal
 
 random.seed()
 
@@ -73,14 +71,14 @@ def make_str_for_esc(include_escapes=None,
 def test_escaping():
     for i in range(20):
         s = make_str_for_esc(include_escapes=chars_to_escape,
-                                 include_leading_periods=True)
+                             include_leading_periods=True)
         s_e = s
         for j, c in enumerate(chars_to_escape):
             s_e = s_e.replace(c, substitutions[j])
         length = len(s_e)
         s_e = s_e.lstrip(period)
         s_e = period_substitute * (length - len(s_e)) + s_e
-        assert_equal(s_e, escape_path(s))
+        assert s_e == escape_path(s)
 
 
 def test_unescaping_x():
@@ -94,7 +92,7 @@ def test_unescaping_x():
         n = ord(c)
         c_e = prefix + random.choice(fmts).format(n)
         s_e = s[:index] + c_e + s[(index + 1):]
-        assert_equal(s, unescape_path(s_e))
+        assert s == unescape_path(s_e)
 
 
 def test_unescaping_u():
@@ -107,7 +105,7 @@ def test_unescaping_u():
         n = ord(c)
         c_e = prefix + random.choice(fmts).format(n)
         s_e = s[:index] + c_e + s[(index + 1):]
-        assert_equal(s, unescape_path(s_e))
+        assert s == unescape_path(s_e)
 
 
 def test_unescaping_U():
@@ -120,7 +118,7 @@ def test_unescaping_U():
         n = ord(c)
         c_e = prefix + random.choice(fmts).format(n)
         s_e = s[:index] + c_e + s[(index + 1):]
-        assert_equal(s, unescape_path(s_e))
+        assert s == unescape_path(s_e)
 
 
 def test_escape_reversibility_no_escapes():
@@ -128,8 +126,8 @@ def test_escape_reversibility_no_escapes():
         s = make_str_for_esc()
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
-        assert_equal(s, s_e)
-        assert_equal(s, s_e_u)
+        assert s == s_e
+        assert s == s_e_u
 
 
 def test_escape_reversibility_no_escapes_bytes():
@@ -138,8 +136,8 @@ def test_escape_reversibility_no_escapes_bytes():
         s = s.encode('utf-8')
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
-        assert_equal(s, s_e.encode('utf-8'))
-        assert_equal(s, s_e_u.encode('utf-8'))
+        assert s == s_e.encode('utf-8')
+        assert s == s_e_u.encode('utf-8')
 
 
 def test_escape_reversibility_escapes():
@@ -147,7 +145,7 @@ def test_escape_reversibility_escapes():
         s = make_str_for_esc(include_escapes=chars_to_escape)
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
-        assert_equal(s, s_e_u)
+        assert s == s_e_u
 
 
 def test_escape_reversibility_escapes_bytes():
@@ -156,7 +154,7 @@ def test_escape_reversibility_escapes_bytes():
         s = s.encode('utf-8')
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
-        assert_equal(s, s_e_u.encode('utf-8'))
+        assert s == s_e_u.encode('utf-8')
 
 
 def test_escape_reversibility_leading_periods():
@@ -164,7 +162,7 @@ def test_escape_reversibility_leading_periods():
         s = make_str_for_esc(include_leading_periods=True)
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
-        assert_equal(s, s_e_u)
+        assert s == s_e_u
 
 
 def test_escape_reversibility_leading_periods_bytes():
@@ -173,7 +171,7 @@ def test_escape_reversibility_leading_periods_bytes():
         s = s.encode('utf-8')
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
-        assert_equal(s, s_e_u.encode('utf-8'))
+        assert s == s_e_u.encode('utf-8')
 
 
 def test_escape_reversibility_escapes_leading_periods():
@@ -182,7 +180,7 @@ def test_escape_reversibility_escapes_leading_periods():
                              include_leading_periods=True)
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
-        assert_equal(s, s_e_u)
+        assert s == s_e_u
 
 
 def test_escape_reversibility_escapes_leading_periods_bytes():
@@ -192,7 +190,7 @@ def test_escape_reversibility_escapes_leading_periods_bytes():
         s = s.encode('utf-8')
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
-        assert_equal(s, s_e_u.encode('utf-8'))
+        assert s == s_e_u.encode('utf-8')
 
 
 def test_process_path_no_escapes():
@@ -202,8 +200,8 @@ def test_process_path_no_escapes():
         gs = posixpath.join(*beginning)
         ts = pth[-1]
         gname, tname = process_path(pth)
-        assert_equal(gs, gname)
-        assert_equal(ts, tname)
+        assert gs == gname
+        assert ts == tname
 
 
 def test_process_path_no_escapes_bytes():
@@ -213,8 +211,8 @@ def test_process_path_no_escapes_bytes():
         gs = posixpath.join(*beginning).decode('utf-8')
         ts = pth[-1].decode('utf-8')
         gname, tname = process_path(pth)
-        assert_equal(gs, gname)
-        assert_equal(ts, tname)
+        assert gs == gname
+        assert ts == tname
 
 
 def test_process_path_escapes():
@@ -225,8 +223,8 @@ def test_process_path_escapes():
         gs = posixpath.join(*beginning)
         ts = escape_path(pth[-1])
         gname, tname = process_path(pth)
-        assert_equal(gs, gname)
-        assert_equal(ts, tname)
+        assert gs == gname
+        assert ts == tname
 
 
 def test_process_path_escapes_bytes():
@@ -238,8 +236,8 @@ def test_process_path_escapes_bytes():
         gs = posixpath.join(*beginning)
         ts = escape_path(pth[-1])
         gname, tname = process_path(pth)
-        assert_equal(gs, gname)
-        assert_equal(ts, tname)
+        assert gs == gname
+        assert ts == tname
 
 
 def test_process_path_leading_periods():
@@ -250,8 +248,8 @@ def test_process_path_leading_periods():
         gs = posixpath.join(*beginning)
         ts = escape_path(pth[-1])
         gname, tname = process_path(pth)
-        assert_equal(gs, gname)
-        assert_equal(ts, tname)
+        assert gs == gname
+        assert ts == tname
 
 
 def test_process_path_leading_periods_bytes():
@@ -263,8 +261,8 @@ def test_process_path_leading_periods_bytes():
         gs = posixpath.join(*beginning)
         ts = escape_path(pth[-1])
         gname, tname = process_path(pth)
-        assert_equal(gs, gname)
-        assert_equal(ts, tname)
+        assert gs == gname
+        assert ts == tname
 
 
 def test_process_path_escapes_leading_periods():
@@ -276,8 +274,8 @@ def test_process_path_escapes_leading_periods():
         gs = posixpath.join(*beginning)
         ts = escape_path(pth[-1])
         gname, tname = process_path(pth)
-        assert_equal(gs, gname)
-        assert_equal(ts, tname)
+        assert gs == gname
+        assert ts == tname
 
 
 def test_process_path_escapes_leading_periods_bytes():
@@ -290,5 +288,5 @@ def test_process_path_escapes_leading_periods_bytes():
         gs = posixpath.join(*beginning)
         ts = escape_path(pth[-1])
         gname, tname = process_path(pth)
-        assert_equal(gs, gname)
-        assert_equal(ts, tname)
+        assert gs == gname
+        assert ts == tname

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016, Freja Nordsiek
+# Copyright (c) 2014-2021, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,35 +28,28 @@ import os
 import os.path
 import subprocess
 
-from nose.plugins.skip import SkipTest
+import pytest
 
 import hdf5storage
 
 from asserts import assert_equal_from_matlab
 
-mat_files = ['types_v7p3.mat', 'types_v7.mat',
-             'python_v7p3.mat', 'python_v7.mat']
-for i in range(0, len(mat_files)):
-    mat_files[i] = os.path.join(os.path.dirname(__file__), mat_files[i])
 
-script_names = ['make_mat_with_all_types.m', 'read_write_mat.m']
-for i in range(0, len(script_names)):
-    script_names[i] = os.path.join(os.path.dirname(__file__),
-                                   script_names[i])
+def test_back_and_forth_matlab():
+    mat_files = ['types_v7p3.mat', 'types_v7.mat',
+                 'python_v7p3.mat', 'python_v7.mat']
+    for i in range(0, len(mat_files)):
+        mat_files[i] = os.path.join(os.path.dirname(__file__), mat_files[i])
 
-types_v7 = dict()
-types_v7p3 = dict()
-python_v7 = dict()
-python_v7p3 = dict()
+    script_names = ['make_mat_with_all_types.m', 'read_write_mat.m']
+    for i in range(0, len(script_names)):
+        script_names[i] = os.path.join(os.path.dirname(__file__),
+                                       script_names[i])
 
-
-# Have a flag for whether matlab was found and run successfully or not,
-# so tests can be skipped if not.
-ran_matlab_successful = [False]
-
-
-def setup_module():
-    teardown_module()
+    types_v7 = dict()
+    types_v7p3 = dict()
+    python_v7 = dict()
+    python_v7p3 = dict()
     try:
         import scipy.io
         matlab_command = "run('" + script_names[0] + "')"
@@ -72,35 +65,16 @@ def setup_module():
         scipy.io.loadmat(file_name=mat_files[3], mdict=python_v7)
         hdf5storage.loadmat(file_name=mat_files[2], mdict=python_v7p3)
     except:
-        pass
-    else:
-        ran_matlab_successful[0] = True
+        pytest.skip('scipy.io or Matlab not found.')
+    finally:
+        for name in mat_files:
+            if os.path.exists(name):
+                os.remove(name)
 
+    for name in types_v7p3:
+        assert_equal_from_matlab(types_v7p3[name], types_v7[name])
 
-def teardown_module():
-    for name in mat_files:
-        if os.path.exists(name):
-            os.remove(name)
-
-
-def test_read_from_matlab():
-    if not ran_matlab_successful[0]:
-        raise SkipTest
-    for k in (set(types_v7.keys()) - set(['__version__', '__header__', \
-            '__globals__'])):
-        yield check_variable_from_matlab, k
-
-
-def test_to_matlab_back():
-    if not ran_matlab_successful[0]:
-        raise SkipTest
-    for k in set(types_v7p3.keys()):
-        yield check_variable_to_matlab_back, k
-
-
-def check_variable_from_matlab(name):
-    assert_equal_from_matlab(types_v7p3[name], types_v7[name])
-
-
-def check_variable_to_matlab_back(name):
-    assert_equal_from_matlab(python_v7p3[name], types_v7[name])
+    for name in (set(types_v7.keys()) - set(['__version__',
+                                             '__header__',
+                                             '__globals__'])):
+        assert_equal_from_matlab(types_v7p3[name], types_v7[name])

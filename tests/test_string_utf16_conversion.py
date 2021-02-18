@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2020, Freja Nordsiek
+# Copyright (c) 2013-2021, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ import tempfile
 import numpy as np
 import h5py
 
-from nose.tools import assert_equal as assert_equal_nose
+import pytest
 
 import hdf5storage
 
@@ -43,7 +43,8 @@ import hdf5storage
 # * str
 # * numpy.unicode_ scalars
 
-def check_conv_utf16(tp):
+@pytest.mark.parametrize('tp', (str, np.unicode_))
+def test_conv_utf16(tp):
     name = '/a'
     data = tp('abcdefghijklmnopqrstuvwxyz')
     fld = None
@@ -56,15 +57,9 @@ def check_conv_utf16(tp):
                           store_python_metadata=False,
                           convert_numpy_str_to_utf16=True)
         with h5py.File(filename, mode='r') as f:
-            assert_equal_nose(f[name].dtype.type, np.uint16)
+            assert f[name].dtype.type == np.uint16
     except:
         raise
     finally:
         if fld is not None:
             os.remove(fld[1])
-
-
-def test_conv_utf16():
-    tps = (str, np.unicode_)
-    for tp in tps:
-        yield check_conv_utf16, tp

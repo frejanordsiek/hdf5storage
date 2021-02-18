@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2020, Freja Nordsiek
+# Copyright (c) 2013-2021, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,11 @@ import numpy as np
 
 import h5py
 
+import pytest
+
 import hdf5storage
 from hdf5storage.pathesc import escape_path
 
-from nose.tools import assert_equal as assert_equal_nose
 
 from make_randoms import random_name, random_dict, random_int, \
     random_str_ascii, random_str_some_unicode, max_dict_key_length
@@ -52,8 +53,29 @@ dict_like = ['dict', 'OrderedDict']
 # Need a list of previously invalid characters.
 invalid_characters = ('\x00', '/')
 
+# Generate a bunch of random key_values_names.
+keys_values_names = [('keys', 'values')]
+for i in range(5):
+    names = ('a', 'a')
+    while names[0] == names[1]:
+        names = [random_str_ascii(8) for i in range(2)]
+    keys_values_names.append(names)
 
-def check_all_valid_str_keys(tp, option_keywords):
+# Set the other key types.
+other_key_types = ('bytes', 'numpy.bytes_', 'numpy.unicode_')
+
+
+@pytest.mark.parametrize(
+    'tp,option_keywords',
+    [(tp, {'store_python_metadata': pyth_meta,
+           'matlab_compatible': mat_meta,
+           'dict_like_keys_name': names[0],
+           'dict_like_values_name': names[1]})
+     for tp in dict_like
+     for pyth_meta in (True, False)
+     for mat_meta in (True, False)
+     for names in keys_values_names])
+def test_all_valid_str_keys(tp, option_keywords):
     options = hdf5storage.Options(**option_keywords)
     key_value_names = (options.dict_like_keys_name,
                        options.dict_like_values_name)
@@ -89,7 +111,18 @@ def check_all_valid_str_keys(tp, option_keywords):
             os.remove(fld[1])
 
 
-def check_str_key_previously_invalid_char(tp, ch, option_keywords):
+@pytest.mark.parametrize(
+    'tp,ch,option_keywords',
+    [(tp, ch, {'store_python_metadata': pyth_meta,
+               'matlab_compatible': mat_meta,
+               'dict_like_keys_name': names[0],
+               'dict_like_values_name': names[1]})
+     for tp in dict_like
+     for pyth_meta in (True, False)
+     for mat_meta in (True, False)
+     for ch in invalid_characters
+     for names in keys_values_names])
+def test_str_key_previously_invalid_char(tp, ch, option_keywords):
     options = hdf5storage.Options(**option_keywords)
     key_value_names = (options.dict_like_keys_name,
                        options.dict_like_values_name)
@@ -132,7 +165,18 @@ def check_str_key_previously_invalid_char(tp, ch, option_keywords):
             os.remove(fld[1])
 
 
-def check_string_type_non_str_key(tp, other_tp, option_keywords):
+@pytest.mark.parametrize(
+    'tp,other_tp,option_keywords',
+    [(tp, otp, {'store_python_metadata': pyth_meta,
+                'matlab_compatible': mat_meta,
+                'dict_like_keys_name': names[0],
+                'dict_like_values_name': names[1]})
+     for tp in dict_like
+     for pyth_meta in (True, False)
+     for mat_meta in (True, False)
+     for otp in other_key_types
+     for names in keys_values_names])
+def test_string_type_non_str_key(tp, other_tp, option_keywords):
     options = hdf5storage.Options(**option_keywords)
     key_value_names = (options.dict_like_keys_name,
                        options.dict_like_values_name)
@@ -168,7 +212,7 @@ def check_string_type_non_str_key(tp, other_tp, option_keywords):
                           options=options)
 
         with h5py.File(filename, mode='r') as f:
-            assert_equal_nose(set(keys), set(f[name].keys()))
+            assert set(keys) == set(f[name].keys())
 
     except:
         raise
@@ -177,7 +221,17 @@ def check_string_type_non_str_key(tp, other_tp, option_keywords):
             os.remove(fld[1])
 
 
-def check_int_key(tp, option_keywords):
+@pytest.mark.parametrize(
+    'tp,option_keywords',
+    [(tp, {'store_python_metadata': pyth_meta,
+           'matlab_compatible': mat_meta,
+           'dict_like_keys_name': names[0],
+           'dict_like_values_name': names[1]})
+     for tp in dict_like
+     for pyth_meta in (True, False)
+     for mat_meta in (True, False)
+     for names in keys_values_names])
+def test_int_key(tp, option_keywords):
     options = hdf5storage.Options(**option_keywords)
     key_value_names = (options.dict_like_keys_name,
                        options.dict_like_values_name)
@@ -205,93 +259,9 @@ def check_int_key(tp, option_keywords):
                           options=options)
 
         with h5py.File(filename, mode='r') as f:
-            assert_equal_nose(set(key_value_names), set(f[name].keys()))
+            assert set(key_value_names) == set(f[name].keys())
     except:
         raise
     finally:
         if fld is not None:
             os.remove(fld[1])
-
-
-def test_all_valid_str_keys():
-    # generate some random keys_values_names
-    keys_values_names = [('keys', 'values')]
-    for i in range(3):
-        names = ('a', 'a')
-        while names[0] == names[1]:
-            names = [random_str_ascii(8) for i in range(2)]
-        keys_values_names.append(names)
-    for pyth_meta in (True, False):
-        for mat_meta in (True, False):
-            for tp in dict_like:
-                for names in keys_values_names:
-                    options_keywords = { \
-                        'store_python_metadata': pyth_meta, \
-                        'matlab_compatible': mat_meta, \
-                        'dict_like_keys_name': names[0], \
-                        'dict_like_values_name': names[1]}
-                    yield check_all_valid_str_keys, tp, options_keywords
-
-
-def test_str_key_previously_invalid_char():
-    # generate some random keys_values_names
-    keys_values_names = [('keys', 'values')]
-    for i in range(3):
-        names = ('a', 'a')
-        while names[0] == names[1]:
-            names = [random_str_ascii(8) for i in range(2)]
-        keys_values_names.append(names)
-    for pyth_meta in (True, False):
-        for mat_meta in (True, False):
-            for tp in dict_like:
-                for c in invalid_characters:
-                    for names in keys_values_names:
-                        options_keywords = { \
-                            'store_python_metadata': pyth_meta, \
-                            'matlab_compatible': mat_meta, \
-                            'dict_like_keys_name': names[0], \
-                            'dict_like_values_name': names[1]}
-                        yield check_str_key_previously_invalid_char, tp, c, options_keywords
-
-
-def test_string_type_non_str_key():
-    # Set the other key types.
-    other_tps = ['bytes', 'numpy.bytes_', 'numpy.unicode_']
-    # generate some random keys_values_names
-    keys_values_names = [('keys', 'values')]
-    for i in range(1):
-        names = ('a', 'a')
-        while names[0] == names[1]:
-            names = [random_str_ascii(8) for i in range(2)]
-        keys_values_names.append(names)
-    for pyth_meta in (True, False):
-        for mat_meta in (True, False):
-            for tp in dict_like:
-                for other_tp in other_tps:
-                    for names in keys_values_names:
-                        options_keywords = { \
-                            'store_python_metadata': pyth_meta, \
-                            'matlab_compatible': mat_meta, \
-                            'dict_like_keys_name': names[0], \
-                            'dict_like_values_name': names[1]}
-                    yield check_string_type_non_str_key, tp, other_tp, options_keywords
-
-
-def test_int_key():
-    # generate some random keys_values_names
-    keys_values_names = [('keys', 'values')]
-    for i in range(3):
-        names = ('a', 'a')
-        while names[0] == names[1]:
-            names = [random_str_ascii(8) for i in range(2)]
-        keys_values_names.append(names)
-    for pyth_meta in (True, False):
-        for mat_meta in (True, False):
-            for tp in dict_like:
-                for names in keys_values_names:
-                    options_keywords = { \
-                        'store_python_metadata': pyth_meta, \
-                        'matlab_compatible': mat_meta, \
-                        'dict_like_keys_name': names[0], \
-                        'dict_like_values_name': names[1]}
-                    yield check_int_key, tp, options_keywords

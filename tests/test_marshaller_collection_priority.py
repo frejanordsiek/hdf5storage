@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2016, Freja Nordsiek
+# Copyright (c) 2014-2021, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,7 @@
 
 import random
 
-from nose.tools import raises
-from nose.tools import assert_equal as assert_equal_nose
+import pytest
 
 import hdf5storage
 import hdf5storage.Marshallers
@@ -48,27 +47,23 @@ class JunkMarshaller(hdf5storage.Marshallers.TypeMarshaller):
     pass
 
 
-@raises(TypeError)
-def check_error_non_sequence(obj):
-    hdf5storage.MarshallerCollection(priority=obj)
+@pytest.mark.parametrize('obj', (None, True, 1, 2.3, set(), dict()))
+def test_error_non_tuplelist(obj):
+    with pytest.raises(TypeError):
+        hdf5storage.MarshallerCollection(priority=obj)
 
 
-def test_error_non_tuplelist():
-    for v in (None, True, 1, 2.3, set(), dict()):
-        yield check_error_non_sequence, v
-
-
-@raises(ValueError)
 def test_error_missing_element():
     need = ('builtin', 'user', 'plugin')
-    hdf5storage.MarshallerCollection(priority=[random.choice(need)
-                                               for i in range(2)])
+    with pytest.raises(ValueError):
+        hdf5storage.MarshallerCollection(priority=[random.choice(need)
+                                                   for i in range(2)])
 
 
-@raises(ValueError)
 def test_error_extra_element():
-    hdf5storage.MarshallerCollection(priority=('builtin', 'user',
-                                               'plugin', 'extra'))
+    with pytest.raises(ValueError):
+        hdf5storage.MarshallerCollection(priority=('builtin', 'user',
+                                                   'plugin', 'extra'))
 
 
 def test_builtin_plugin_user():
@@ -77,7 +72,7 @@ def test_builtin_plugin_user():
                                           priority=('builtin', 'plugin',
                                                     'user'),
                                           marshallers=(m, ))
-    assert_equal_nose(m, mc._marshallers[-1])
+    assert m == mc._marshallers[-1]
     if has_example_hdf5storage_marshaller_plugin:
         assert isinstance(mc._marshallers[-2],
                           SubListMarshaller)
@@ -92,9 +87,9 @@ def test_builtin_user_plugin():
     if has_example_hdf5storage_marshaller_plugin:
         assert isinstance(mc._marshallers[-1],
                           SubListMarshaller)
-        assert_equal_nose(m, mc._marshallers[-2])
+        assert m == mc._marshallers[-2]
     else:
-        assert_equal_nose(m, mc._marshallers[-1])
+        assert m == mc._marshallers[-1]
 
 
 def test_plugin_builtin_user():
@@ -103,7 +98,7 @@ def test_plugin_builtin_user():
                                           priority=('plugin', 'builtin',
                                                     'user'),
                                           marshallers=(m, ))
-    assert_equal_nose(m, mc._marshallers[-1])
+    assert m == mc._marshallers[-1]
     if has_example_hdf5storage_marshaller_plugin:
         assert isinstance(mc._marshallers[0],
                           SubListMarshaller)
@@ -118,9 +113,9 @@ def test_plugin_user_builtin():
     if has_example_hdf5storage_marshaller_plugin:
         assert isinstance(mc._marshallers[0],
                           SubListMarshaller)
-        assert_equal_nose(m, mc._marshallers[1])
+        assert m == mc._marshallers[1]
     else:
-        assert_equal_nose(m, mc._marshallers[0])
+        assert m == mc._marshallers[0]
 
 
 def test_user_builtin_plugin():
@@ -129,7 +124,7 @@ def test_user_builtin_plugin():
                                           priority=('user', 'builtin',
                                                     'plugin'),
                                           marshallers=(m, ))
-    assert_equal_nose(m, mc._marshallers[0])
+    assert m == mc._marshallers[0]
     if has_example_hdf5storage_marshaller_plugin:
         assert isinstance(mc._marshallers[-1],
                           SubListMarshaller)
@@ -141,7 +136,7 @@ def test_user_plugin_builtin():
                                           priority=('user', 'plugin',
                                                     'builtin'),
                                           marshallers=(m, ))
-    assert_equal_nose(m, mc._marshallers[0])
+    assert m == mc._marshallers[0]
     if has_example_hdf5storage_marshaller_plugin:
         assert isinstance(mc._marshallers[1],
                           SubListMarshaller)
