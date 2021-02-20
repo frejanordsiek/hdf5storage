@@ -1485,14 +1485,12 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
 
         # The type string determines how to convert it back to a Python
         # type (just look up the entry in types). As it might be
-        # returned as an ndarray, it needs to be run through
-        # np.asscalar.
+        # returned as an ndarray, we need to use its item method.
         type_string = convert_attribute_to_string(
             attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
-            sdata = np.asscalar(data)
-            return tp(sdata)
+            return tp(data.item())
         else:
             # Must be some other type, so return it as is.
             return data
