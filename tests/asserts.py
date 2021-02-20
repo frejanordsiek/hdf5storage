@@ -57,7 +57,10 @@ def assert_equal(a, b, options=None):
     # have to be compared. Then, if they are not an object array,
     # numpy.testing.assert_equal will compare them elementwise. For
     # object arrays, each element must be iterated over to be compared.
-    assert type(a) == type(b)
+    if isinstance(b, np.dtype):
+        assert isinstance(a, np.dtype)
+    else:
+        assert type(a) == type(b)
     if type(b) in (dict, collections.Counter):
         assert set(a.keys()) == set(b.keys())
         for k in b:
