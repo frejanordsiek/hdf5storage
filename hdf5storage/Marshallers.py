@@ -1123,7 +1123,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if python_fields is not None:
                     fields = [unescape_path(k) for k in python_fields]
                 else:
-                    fields = [unescape_path(k.tostring().decode())
+                    fields = [unescape_path(k.tobytes().decode())
                               for k in matlab_fields]
                 # Now, there may be fields available that were not
                 # given, but still should be read. Keys that are not in
@@ -1203,7 +1203,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if python_fields is not None:
                     fields = [unescape_path(k) for k in python_fields]
                 else:
-                    fields = [k.tostring().decode()
+                    fields = [k.tobytes().decode()
                               for k in matlab_fields]
                 struct_dtype = list()
                 for k in fields:
@@ -1343,7 +1343,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 else:
                     dt_whole = list()
                     for k in matlab_fields:
-                        uk = unescape_path(k.tostring())
+                        uk = unescape_path(k.tobytes())
                         dt_whole.append((uk, 'object'))
                     data = np.zeros(shape=tuple(np.uint64(data)),
                                     dtype=dt_whole)
@@ -1773,7 +1773,7 @@ class PythonDictMarshaller(TypeMarshaller):
             if python_fields is not None:
                 fields.extend(python_fields)
             if matlab_fields is not None:
-                for s in [k.tostring().decode()
+                for s in [k.tobytes().decode()
                           for k in matlab_fields]:
                     if s not in fields:
                         fields.append(s)
