@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright (c) 2013-2021, Freja Nordsiek
 # All rights reserved.
 #
@@ -24,37 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import sys
-from setuptools import setup
 
-if sys.hexversion < 0x3050000:
-    raise NotImplementedError('Python < 3.5 not supported.')
-
-with open('README.rst') as file:
-    long_description = file.read()
-
-setup(name='hdf5storage',
-      version='0.2',
-      description='Utilities to read/write Python types to/from HDF5 files, including MATLAB v7.3 MAT files.',
-      long_description=long_description,
-      author='Freja Nordsiek',
-      author_email='fnordsie@posteo.net',
-      url='https://github.com/frejanordsiek/hdf5storage',
-      packages=['hdf5storage'],
-      install_requires=["setuptools", "numpy", "h5py>=2.3"],
-      license='BSD',
-      keywords='hdf5 matlab',
-      zip_safe=True,
-      classifiers=[
-          "Programming Language :: Python :: 3 :: Only",
-          "Development Status :: 3 - Alpha",
-          "License :: OSI Approved :: BSD License",
-          "Operating System :: OS Independent",
-          "Intended Audience :: Developers",
-          "Intended Audience :: Information Technology",
-          "Intended Audience :: Science/Research",
-          "Topic :: Scientific/Engineering",
-          "Topic :: Database",
-          "Topic :: Software Development :: Libraries :: Python Modules"
-          ]
-      )
+# All configuration information is now in pyproject.toml and setup.cfg.
+if __name__ == '__main__':
+    from setuptools import setup
+    setup()
