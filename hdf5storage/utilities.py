@@ -462,7 +462,7 @@ class LowLevelFile(object):
 
         Returns
         -------
-        obj_array : numpy.ndarray of numpy.object\_
+        obj_array : numpy.ndarray of numpy.object\\_
             The Python object array containing the items pointed to by
             `data`.
 
@@ -589,7 +589,7 @@ def convert_numpy_str_to_uint16(data):
 
     Parameters
     ----------
-    data : numpy.unicode\_ or numpy.ndarray of numpy.unicode\_
+    data : numpy.unicode\\_ or numpy.ndarray of numpy.unicode\\_
         The string or array of them to convert.
 
     Returns
@@ -642,7 +642,7 @@ def convert_numpy_str_to_uint32(data):
 
     Parameters
     ----------
-    data : numpy.unicode\_ or numpy.ndarray of numpy.unicode\_
+    data : numpy.unicode\\_ or numpy.ndarray of numpy.unicode\\_
         The string or array of them to convert.
 
     Returns
@@ -762,7 +762,7 @@ def convert_to_numpy_str(data, length=None):
 
     Returns
     -------
-    s : numpy.unicode\_ or numpy.ndarray of numpy.unicode\_ or data
+    s : numpy.unicode\\_ or numpy.ndarray of numpy.unicode\\_ or data
         If `data` can be decoded into a ``numpy.unicode_`` or a
         ``numpy.ndarray`` of them, the decoded version is returned.
         Otherwise, `data` is returned unchanged.
@@ -898,7 +898,7 @@ def convert_to_numpy_bytes(data, length=None):
 
     Returns
     -------
-    b : numpy.bytes\_ or numpy.ndarray of numpy.bytes\_ or data
+    b : numpy.bytes\\_ or numpy.ndarray of numpy.bytes\\_ or data
         If `data` can be decoded into a ``numpy.bytes_`` or a
         ``numpy.ndarray`` of them, the decoded version is returned.
         Otherwise, `data` is returned unchanged.
@@ -1285,7 +1285,7 @@ def set_attribute(target, name, value):
         Dataset or Group to set the attribute of.
     name : str
         Name of the attribute to set.
-    value : numpy type other than numpy.unicode\_
+    value : numpy type other than numpy.unicode\\_
         Value to set the attribute to.
 
     See Also
