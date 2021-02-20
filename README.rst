@@ -245,13 +245,13 @@ support writing it so MATlAB can read it.
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
 | np.ndarray         | 0.1     | *see notes*             | *see notes* | 0.1     | [9]_  [10]_ [11]_ |
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
-| np.matrix          | 0.1     | *see notes*             | *see notes* | 0.1     | [9]_              |
+| np.matrix          | 0.1     | *see notes*             | *see notes* | 0.1     | [9]_ [12]_        |
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
 | np.chararray       | 0.1     | *see notes*             | *see notes* | 0.1     | [9]_              |
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
 | np.recarray        | 0.1     | structured np.ndarray   | *see notes* | 0.1     | [9]_ [10]_        |
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
-| np.dtype           | 0.2     | np.bytes\_ or np.uint16 | char        | 0.2     | [6]_ [12]_        |
+| np.dtype           | 0.2     | np.bytes\_ or np.uint16 | char        | 0.2     | [6]_ [13]_        |
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
@@ -299,7 +299,9 @@ support writing it so MATlAB can read it.
 .. [11] Structured ``np.ndarray`` s with no elements, when written like a
         structure, will not be read back with the right dtypes for their
         fields (will all become 'object').
-.. [12] Stored in their string representation.
+.. [12] Will be read back as a ``np.ndarray`` if the ``np.matrix`` class
+        is removed.
+.. [13] Stored in their string representation.
 
 This table gives the MATLAB classes that can be read from a MAT file,
 the first version of this package that can read them, and the Python
@@ -310,9 +312,9 @@ type they are read as.
 +=================+=========+=====================================+
 | logical         | 0.1     | np.bool\_                           |
 +-----------------+---------+-------------------------------------+
-| single          | 0.1     | np.float32 or np.complex64 [13]_    |
+| single          | 0.1     | np.float32 or np.complex64 [14]_    |
 +-----------------+---------+-------------------------------------+
-| double          | 0.1     | np.float64 or np.complex128 [13]_   |
+| double          | 0.1     | np.float64 or np.complex128 [14]_   |
 +-----------------+---------+-------------------------------------+
 | uint8           | 0.1     | np.uint8                            |
 +-----------------+---------+-------------------------------------+
@@ -332,15 +334,15 @@ type they are read as.
 +-----------------+---------+-------------------------------------+
 | char            | 0.1     | np.str\_                            |
 +-----------------+---------+-------------------------------------+
-| struct          | 0.1     | structured np.ndarray or dict [14]_ |
+| struct          | 0.1     | structured np.ndarray or dict [15]_ |
 +-----------------+---------+-------------------------------------+
 | cell            | 0.1     | np.object\_                         |
 +-----------------+---------+-------------------------------------+
 | canonical empty | 0.1     | ``np.float64([])``                  |
 +-----------------+---------+-------------------------------------+
 
-.. [13] Depends on whether there is a complex part or not.
-.. [14] Controlled by an option.
+.. [14] Depends on whether there is a complex part or not.
+.. [15] Controlled by an option.
 
 
 Versions
@@ -453,6 +455,10 @@ Versions
        (only ``datetime.tzinfo`` class implemented is
        ``datetime.timezone``) in the new marshaller
        ``Marshallers.PythonDatetimeObjsMarshaller``.
+     * Issue #107. Added handling of the eventual removal of the
+       ``numpy.matrix`` class since it is pending deprecation. If the class
+       is not available, objects that were written as one are read back as
+       ``numpy.ndarray``.
      * Added the utility function ``utilities.convert_dtype_to_str`` to convet
        ``numpy.dtype`` to ``str`` in a way they can be converted back by
        passing through ``ast.literal_eval`` and then ``numpy.dtype``.

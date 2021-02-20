@@ -34,6 +34,7 @@ import pathlib
 import posixpath
 import random
 import string
+import warnings
 import tempfile
 
 import numpy as np
@@ -274,6 +275,8 @@ def test_numpy_structured_array_field_special_char(fmt, ch):
     write_readback(fmt, data)
 
 
+@pytest.mark.skipif(not hasattr(np, 'matrix'),
+                    reason='numpy.matrix class has been removed.')
 @pytest.mark.parametrize('fmt,dtype',
                          {(fmt, dt) for fmt in fmts
                           for dt in dtypes_by_option[fmt]})
@@ -281,7 +284,10 @@ def test_numpy_matrix(fmt, dtype):
     # Makes a random numpy array of the given type, converts it to
     # a matrix, writes it and reads it back, and then compares it.
     shape = random_numpy_shape(2, max_array_axis_length)
-    data = np.matrix(random_numpy(shape, dtype))
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', (PendingDeprecationWarning,
+                                         DeprecationWarning))
+        data = np.matrix(random_numpy(shape, dtype))
     write_readback(fmt, data)
 
 

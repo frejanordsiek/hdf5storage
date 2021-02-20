@@ -30,6 +30,8 @@ import ast
 import collections
 import datetime
 import importlib
+import inspect
+import warnings
 
 import numpy as np
 import h5py
@@ -538,7 +540,18 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # As np.str_ is the unicode type string in Python 3 and the bare
         # bytes string in Python 2, we have to use np.unicode_ which is
         # or points to the unicode one in both versions.
-        self.types = (np.ndarray, np.matrix,
+        #
+        # The numpy.matrix type is marked as pending deprecation, so we
+        # must test for its presence explicitly. If it is no longer
+        # around, we replace it with np.ndarray. We will set a flag on
+        # whether it exists anymore or not.
+        if hasattr(np, 'matrix') and inspect.isclass(np.matrix):
+            matrix = np.matrix
+            self._matrix_type_exists = True
+        else:
+            matrix = np.ndarray
+            self._matrix_type_exists = False
+        self.types = (np.ndarray, matrix,
                       np.chararray, np.core.records.recarray,
                       np.bool_, np.void,
                       np.uint8, np.uint16, np.uint32, np.uint64,
@@ -928,7 +941,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 'string',
                 data.dtype.name.replace('string', 'bytes').replace(
                     'unicode', 'str'))
-            if isinstance(data, np.matrix):
+            if self._matrix_type_exists and isinstance(data,
+                                                       np.matrix):
                 container = 'matrix'
             elif isinstance(data, np.chararray):
                 container = 'chararray'
@@ -1316,12 +1330,20 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         data = data.flat[0]
                 else:
                     data = data.flat[0]
-            elif container == 'matrix':
-                data = np.asmatrix(data)
+            elif container == 'ndarray' or (
+                    not self._matrix_type_exists
+                    and container == 'matrix'):
+                data = np.asarray(data)
             elif container == 'chararray':
                 data = data.view(np.chararray)
-            elif container == 'ndarray':
-                data = np.asarray(data)
+            elif container == 'matrix':
+                # We need to ignore deprecation warnings for the matrix
+                # type now that it is pending deprecation.
+                with warnings.catch_warnings():
+                    warnings.simplefilter(
+                        'ignore', (PendingDeprecationWarning,
+                                   DeprecationWarning))
+                    data = np.asmatrix(data)
 
         elif matlab_class in self.__MATLAB_classes_reverse:
             # MATLAB formatting information was given. The extraction

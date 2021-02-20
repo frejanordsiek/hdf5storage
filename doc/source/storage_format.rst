@@ -110,10 +110,10 @@ np.str\_                  0.1      np.uint32/16 [5]_                     Dataset
 np.bytes\_                0.1      np.bytes\_ or np.uint16 [6]_          Dataset
 np.object\_               0.1                                            Dataset
 np.ndarray                0.1      not or Group of contents [9]_         Dataset or Group [9]_
-np.matrix                 0.1      np.ndarray                            Dataset
+np.matrix [10]_           0.1      np.ndarray                            Dataset
 np.chararray              0.1      np.bytes\_ or np.uint16/32 [5]_ [6]_  Dataset
 np.recarray               0.1      structured np.ndarray [9]_            Dataset or Group [9]_
-np.dtype [10]_            0.2      np.bytes\_ or np.uint16 [6]_          Dataset
+np.dtype [11]_            0.2      np.bytes\_ or np.uint16 [6]_          Dataset
 ========================  =======  ====================================  ======================
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when
@@ -155,7 +155,9 @@ np.dtype [10]_            0.2      np.bytes\_ or np.uint16 [6]_          Dataset
        is written as a Group with its the contents of its individual
        fields written as Datasets within the Group having the fields as
        names.
-.. [10] Stored as its string representation converted to ``np.bytes_``.
+.. [10] Read back as ``np.ndarray`` after the class is removed from NumPy (it
+        is pending deprecation).
+.. [11] Stored as its string representation converted to ``np.bytes_``.
 
 
 Attributes
@@ -185,13 +187,13 @@ bool                'bool'                         'bool'                       
 None                'builtins.NoneType'            'float64'                        'double'
 Ellipsis            'builtins.ellipsis'            'float64'                        'double'
 NotImplemented      'builtins.NotImplementedType'  'float64'                        'double'
-int                 'int'                          'int64' or 'bytes#' [11]_ [12]_  'int64' or 'char'   *not used* or 2 [11]_
-long                'long'                         'int64' or 'bytes#' [11]_ [12]_  'int64' or 'char'   *not used* or 2 [11]_
+int                 'int'                          'int64' or 'bytes#' [12]_ [13]_  'int64' or 'char'   *not used* or 2 [12]_
+long                'long'                         'int64' or 'bytes#' [12]_ [13]_  'int64' or 'char'   *not used* or 2 [12]_
 float               'float'                        'float64'                        'double'
 complex             'complex'                      'complex128'                     'double'
-str                 'str'                          'str#' [12]_                     'char'              2
-bytes               'bytes'                        'bytes#' [12]_                   'char'              2
-bytearray           'bytearray'                    'bytes#' [12]_                   'char'              2
+str                 'str'                          'str#' [13]_                     'char'              2
+bytes               'bytes'                        'bytes#' [13]_                   'char'              2
+bytearray           'bytearray'                    'bytes#' [13]_                   'char'              2
 list                'list'                         'object'                         'cell'
 tuple               'tuple'                        'object'                         'cell'
 set                 'set'                          'object'                         'cell'
@@ -210,7 +212,7 @@ datetime.time       'datetime.time'                                             
 datetime.datetime   'datetime.datetime'                                             'struct'
 fractions.Fraction  'fractions.Fraction'                                            'struct'
 np.bool\_           'numpy.bool'                   'bool'                           'logical'           1
-np.void             'numpy.void'                   'void#' [12]_
+np.void             'numpy.void'                   'void#' [13]_
 np.uint8            'numpy.uint8'                  'uint8'                          'uint8'
 np.uint16           'numpy.uint16'                 'uint16'                         'uint16'
 np.uint32           'numpy.uint32'                 'uint32'                         'uint32'
@@ -224,24 +226,24 @@ np.float32          'numpy.float32'                'float32'                    
 np.float64          'numpy.float64'                'float64'                        'double'
 np.complex64        'numpy.complex64'              'complex64'                      'single'
 np.complex128       'numpy.complex128'             'complex128'                     'double'
-np.str\_            'numpy.str\_'                  'str#' [12]_                     'char' or 'uint32'  2 or 4 [13]_
-np.bytes\_          'numpy.bytes\_'                'bytes#' [12]_                   'char'              2
+np.str\_            'numpy.str\_'                  'str#' [13]_                     'char' or 'uint32'  2 or 4 [14]_
+np.bytes\_          'numpy.bytes\_'                'bytes#' [13]_                   'char'              2
 np.object\_         'numpy.object\_'               'object'                         'cell'
-np.ndarray          'numpy.ndarray'                [14]_                            [14]_ [15]_
-np.matrix           'numpy.matrix'                 [14]_                            [14]_
-np.chararray        'numpy.chararray'              [14]_                            'char' [14]_
-np.recarray         'numpy.recarray'               [14]_                            [14]_ [15]_
+np.ndarray          'numpy.ndarray'                [15]_                            [15]_ [16]_
+np.matrix           'numpy.matrix'                 [15]_                            [15]_
+np.chararray        'numpy.chararray'              [15]_                            'char' [15]_
+np.recarray         'numpy.recarray'               [15]_                            [15]_ [16]_
 ==================  =============================  ===============================  ==================  =====================
 
-.. [11] The former if it can fit in a ``np.int64`` and the latter if not.
-.. [12] '#' is replaced by the number of bits taken up by the string, or
+.. [12] The former if it can fit in a ``np.int64`` and the latter if not.
+.. [13] '#' is replaced by the number of bits taken up by the string, or
         each string in the case that it is an array of strings. This is 8
         and 32 bits per character for ``np.bytes_`` and ``np.str_``
         respectively.
-.. [13] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
-.. [14] The value that would be put in for a scalar of the same dtype is
+.. [14] ``2`` if it is stored as ``np.uint16`` or ``4`` if ``np.uint32``.
+.. [15] The value that would be put in for a scalar of the same dtype is
        used.
-.. [15] If it is structured (its dtype has fields),
+.. [16] If it is structured (its dtype has fields),
         :py:attr:`Options.structured_numpy_ndarray_as_struct` is set,
         and none of its fields are of dtype ``'object'``; it is set to
         ``'struct'`` overriding anything else.
@@ -271,6 +273,11 @@ scalar (its type is something such as ``np.uint16``, ``np.str_``, etc.),
 some form of array (its type is ``np.ndarray``), a matrix (type
 is ``np.matrix``), is a ``np.chararray``, or is a ``np.recarray`` is
 stored in this Attribute.
+
+.. note::
+
+   The ``np.matrix`` class is marked as pending deprecation. When it is removed,
+   objects with this container class will be read back as ``numpy.ndarray``.
 
 Python.Fields
 -------------
@@ -731,8 +738,8 @@ type they are read as if there is no Python metadata attached to them.
 MATLAB Class     Version  Python Type
 ===============  =======  =================================
 logical          0.1      np.bool\_
-single           0.1      np.float32 or np.complex64 [16]_
-double           0.1      np.float64 or np.complex128 [16]_
+single           0.1      np.float32 or np.complex64 [17]_
+double           0.1      np.float64 or np.complex128 [17]_
 uint8            0.1      np.uint8
 uint16           0.1      np.uint16
 uint32           0.1      np.uint32
@@ -742,10 +749,10 @@ int16            0.1      np.int16
 int32            0.1      np.int32
 int64            0.1      np.int64
 char             0.1      np.str\_
-struct           0.1      structured np.ndarray [17]_
+struct           0.1      structured np.ndarray [18]_
 cell             0.1      np.object\_
 canonical empty  0.1      ``np.float64([])``
 ===============  =======  =================================
 
-.. [16] Depends on whether there is a complex part or not.
-.. [17] If the ``structs_as_dicts`` option is set then a dict will be used instead.
+.. [17] Depends on whether there is a complex part or not.
+.. [18] If the ``structs_as_dicts`` option is set then a dict will be used instead.
