@@ -753,18 +753,23 @@ def test_fraction(fmt):
     'fmt,base_dtype',
     {(fmt, dt) for fmt in fmts
      for dt in {
-             np.dtype(v) for v
+             v for v
              in itertools.chain(np.sctypeDict,
                                 np.sctypeDict.values())
              if not isinstance(v, int)
              and v not in ('V', 'void', 'void0', 'Void0', np.void)}})
 def test_dtype(fmt, base_dtype):
+    # Suppress deprecation warnings for numeric style codes.
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', (PendingDeprecationWarning,
+                                         DeprecationWarning))
+        dtype = np.dtype(base_dtype)
     # Do the test for all endiannesses.
-    if base_dtype.byteorder != '|':
-        write_readback(fmt, base_dtype)
+    if dtype.byteorder == '|':
+        write_readback(fmt, dtype)
     else:
         for byteorder in '<>':
-            write_readback(fmt, base_dtype.newbyteorder(byteorder))
+            write_readback(fmt, dtype.newbyteorder(byteorder))
 
 
 @pytest.mark.parametrize('fmt', fmts)
