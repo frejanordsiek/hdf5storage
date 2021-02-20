@@ -48,4 +48,4 @@ install:
   - pip install -e examples/example_hdf5storage_marshaller_plugin
 
 # command to run tests
-script: nosetests
+script: pytest
