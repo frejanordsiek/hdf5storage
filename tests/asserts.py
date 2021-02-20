@@ -215,12 +215,9 @@ def assert_equal_none_format(a, b, options=None):
         # which can be compared.
         assert_equal_none_format(a, b.maps, options=options)
     elif isinstance(b, np.dtype):
-        cb = repr(b)[6:-1]
-        if cb.endswith('align=True'):
-            if cb.endswith('}, align=True'):
-                cb = cb[:-13] + ", 'align': True}"
-            else:
-                cb = str(b)
+        cb = str(b)
+        if cb[0] not in '([{':
+            cb = "'" + cb + "'"
         assert_equal_none_format(a, np.bytes_(cb, 'utf-8'),
                                  options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):
@@ -442,12 +439,9 @@ def assert_equal_matlab_format(a, b, options=None):
         # which can be compared.
         assert_equal_matlab_format(a, b.maps, options=options)
     elif isinstance(b, np.dtype):
-        cb = repr(b)[6:-1]
-        if cb.endswith('align=True'):
-            if cb.endswith('}, align=True'):
-                cb = cb[:-13] + ", 'align': True}"
-            else:
-                cb = str(b)
+        cb = str(b)
+        if cb[0] not in '([{':
+            cb = "'" + cb + "'"
         assert_equal_matlab_format(a, np.bytes_(cb, 'utf-8'),
                                    options=options)
     elif type(b) in (list, tuple, set, frozenset, collections.deque):

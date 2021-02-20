@@ -534,6 +534,48 @@ class LowLevelFile(object):
         return name
 
 
+def convert_dtype_to_str(dtype):
+    """ Convert a dtype to str.
+
+    Converts a ``numpy.dtype`` to ``str`` in such a way that the result
+    can be passed through ``ast.literal_eval`` and then passed directly
+    to the constructor of ``numpy.dtype`` to recreate `dtype`.
+
+    Warning
+    -------
+    The output of this function is suitable for ``ast.literal_eval``,
+    which is safe. **NEVER** use ``eval`` for this purpose because
+    ``eval`` is a security risk if the data is ever tampered with.
+
+    Parameters
+    ----------
+    dtype : numpy.dtype
+        The dtype to convert
+
+    Returns
+    -------
+    out : str
+        The converted dtype. Can be passed through ``ast.literal_eval``.
+
+    Raises
+    ------
+    TypeError
+        If the argument is not the right type.
+
+    See Also
+    --------
+    ast.literal_eval
+
+    """
+    if not isinstance(dtype, np.dtype):
+        raise TypeError('dtype must be a numpy.dtype.')
+    out = str(dtype)
+    if out[0] not in '([{':
+        return "'" + out + "'"
+    else:
+        return out
+
+
 def convert_numpy_str_to_uint16(data):
     """ Converts a ``numpy.unicode_`` to UTF-16 in numpy.uint16 form.
 

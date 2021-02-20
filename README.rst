@@ -453,6 +453,9 @@ Versions
        (only ``datetime.tzinfo`` class implemented is
        ``datetime.timezone``) in the new marshaller
        ``Marshallers.PythonDatetimeObjsMarshaller``.
+     * Added the utility function ``utilities.convert_dtype_to_str`` to convet
+       ``numpy.dtype`` to ``str`` in a way they can be converted back by
+       passing through ``ast.literal_eval`` and then ``numpy.dtype``.
      * Issue #40. Made it so that tests use tempfiles instead of
        using hardcoded filenames in the local directory.
      * Issue #41. Added tests using the Julia MAT package to check

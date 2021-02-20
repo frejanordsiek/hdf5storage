@@ -9,6 +9,7 @@ hdf5storage.utilities
 
    LowLevelFile
    does_dtype_have_a_zero_shape
+   convert_dtype_to_str
    convert_numpy_str_to_uint16
    convert_numpy_str_to_uint32
    convert_to_str
@@ -41,6 +42,11 @@ does_dtype_have_a_zero_shape
 
 .. autofunction:: does_dtype_have_a_zero_shape
 
+
+convert_dtype_to_str
+--------------------
+
+.. autofunction:: convert_dtype_to_str
 
 
 convert_numpy_str_to_uint16

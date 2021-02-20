@@ -40,7 +40,7 @@ from .utilities import does_dtype_have_a_zero_shape, \
     convert_to_str, convert_to_numpy_str, convert_to_numpy_bytes, \
     decode_complex, encode_complex, convert_attribute_to_string, \
     convert_attribute_to_string_array, set_attribute_string, \
-    set_attributes_all, del_attribute
+    set_attributes_all, del_attribute, convert_dtype_to_str
 import hdf5storage.exceptions
 
 
@@ -1387,21 +1387,16 @@ class NumpyDtypeMarshaller(NumpyScalarArrayMarshaller):
         self.update_type_lookups()
 
     def write(self, f, grp, name, data, type_string):
-        # Convert to string representation. repr with the leading
-        # "dtype(" and end ")". However, if align=True, we will need to
-        # add that to the dict representation.
-        cdata = repr(data)[6:-1]
-        if cdata.endswith('align=True'):
-            if cdata.endswith('}, align=True'):
-                cdata = cdata[:-13] + ", 'align': True}"
-            else:
-                cdata = str(data)
         # Pass it to the parent version of this function to write
         # it. The proper type_string needs to be grabbed now as the
         # parent function will have a modified form of data to guess
         # from if not given the right one explicitly.
+        #
+        # As for the conversion, we just use convert_dtype_to_str to
+        # convert it.
         return NumpyScalarArrayMarshaller.write(
-            self, f, grp, name, np.bytes_(cdata, 'utf-8'),
+            self, f, grp, name,
+            np.bytes_(convert_dtype_to_str(data), 'utf-8'),
             'numpy.dtype')
 
     def read(self, f, dsetgrp, attributes):

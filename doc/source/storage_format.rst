@@ -589,14 +589,11 @@ Stored by storings it :py:meth:`collections.ChainMap.maps` attribute as a
 np.dtype
 --------
 
-Stored in a string representation encoded as UTF-8 in ``np.bytes_``. It
-is read back by converting to ``str``, passing through
-:py:func:`ast.literal_eval`, and then passing through the constructor of
-``np.dtype``. The conversion to the string representation is generally
-just a matter of passing it through ``repr`` and removing the leading
-``'dtype('`` and trailing ``')'``. However, aligned dtypes either have
-to have align added to their dict representation as a string manually;
-or if the representation is as a list, pass through ``str`` instead.
+Stored in a string representation (just passing it through ``str`` and
+wrapping in single quotes if the first character is not ``'('``,
+``'['``, or ``'{'``) encoded as UTF-8 in ``np.bytes_``. It is read back
+by converting to ``str``, passing through :py:func:`ast.literal_eval`,
+and then passing that through the constructor of ``np.dtype``.
 
 .. versionadded:: 0.2
 
