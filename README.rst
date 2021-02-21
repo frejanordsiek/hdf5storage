@@ -1,6 +1,3 @@
-.. image:: https://travis-ci.org/frejanordsiek/hdf5storage.svg?branch=master
-    :target: https://travis-ci.org/frejanordsiek/hdf5storage
-
 Overview
 ========
 
