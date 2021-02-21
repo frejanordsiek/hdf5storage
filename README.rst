@@ -106,7 +106,7 @@ The documentation dependencies can be installed by ::
 
 To build the HTML documentation, run either ::
 
-    sphinx-build doc/source doc/build
+    sphinx-build doc/source doc/build/html
 
 or, using the legacy :file:`setup.py` script ::
 
