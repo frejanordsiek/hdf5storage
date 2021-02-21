@@ -10,27 +10,22 @@ notifications:
   email: false
 
 env:
-  - H5PY_VERSION="==2.5" EXTRA_PACKAGES="libquadmath0"
   - H5PY_VERSION="==2.6" EXTRA_PACKAGES="libquadmath0"
-  - H5PY_VERSION="==2.7" EXTRA_PACKAGES="libquadmath0"
   - H5PY_VERSION="==2.8" EXTRA_PACKAGES="libquadmath0"
-  - H5PY_VERSION="==2.9" EXTRA_PACKAGES="libquadmath0"
-  - H5PY_VERSION="" EXTRA_PACKAGES="libquadmath0"
+  - H5PY_VERSION="==2.10" EXTRA_PACKAGES="libquadmath0"
 
 python:
   - "3.5"
-  - "3.6"
   - "3.7"
-  - "3.8"
-  - "3.9-dev"
+  - "3.9"
 
 jobs:
   include:
-    - python: "3.8"
-      env: H5PY_VERSION="" EXTRA_PACKAGES=""
+    - python: "3.9"
+      env: H5PY_VERSION="==2.10" EXTRA_PACKAGES=""
       arch: ppc64le
-    - python: "3.8"
-      env: H5PY_VERSION="" EXTRA_PACKAGES=""
+    - python: "3.9"
+      env: H5PY_VERSION="==2.10" EXTRA_PACKAGES=""
       arch: s390x
 
 before_install:
