@@ -6,10 +6,9 @@
 Welcome to hdf5storage's documentation!
 =======================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
    information
    introduction
