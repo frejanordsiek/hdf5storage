@@ -39,10 +39,24 @@ import posixpath
 import random
 import sys
 
+import pkg_resources
 import numpy as np
 import h5py
 
 import hdf5storage.exceptions
+
+
+# We need to determine if h5py is one of the versions that cannot read
+# the MATLAB_fields Attribute in the normal fashion so that we can
+# handle it specially in LowLevelFile.read.
+_handle_matlab_fields_specially = (
+    pkg_resources.parse_version(h5py.__version__)
+    in (pkg_resources.parse_version('3.0'),
+        pkg_resources.parse_version('3.1')))
+
+if _handle_matlab_fields_specially:
+    import ctypes
+    import h5py._objects
 
 
 def does_dtype_have_a_zero_shape(dt):
@@ -90,6 +104,102 @@ def does_dtype_have_a_zero_shape(dt):
         if c.base != c:
             components.append(c.base)
     return False
+
+
+def read_matlab_fields_attribute(attrs):
+    """ Reads the ``MATLAB_fields`` Attribute.
+
+    On some versions of ``h5py``, the ``MATLAB_fields`` Attribute cannot
+    be read in the standard way and must instead be read in a more
+    manual fashion. This function reads the Attribute by the proper
+    method.
+
+    Parameters
+    ----------
+    attrs : h5py.AttributeManager
+        The Attribute manager to read from.
+
+    Returns
+    -------
+    value : numpy.ndarray or None
+        The value of the ``MATLAB_fields`` Attribute, or ``None`` if it
+        isn't available or its format is invalid.
+
+    Raises
+    ------
+    TypeError
+        If an argument has the wrong type.
+
+    """
+    if not isinstance(attrs, h5py.AttributeManager):
+        raise TypeError('attrs must be a h5py.AttributeManager.')
+    if not _handle_matlab_fields_specially:
+        return attrs.get('MATLAB_fields')
+    if 'MATLAB_fields' not in attrs:
+        return None
+    # The following method is loosely based on the method provided by
+    # takluyver at
+    # https://github.com/h5py/h5py/issues/1817#issuecomment-781385699
+    #
+    # but has been improved with a size check and reading it directly as
+    # uint64s instead of using struct.unpack as an intermediary.
+    with h5py._objects.phil:
+        attr_id = attrs.get_id('MATLAB_fields')
+        attr_size = attr_id.get_storage_size()
+        dt = np.dtype('p')
+        if attr_size % (2 * dt.itemsize) != 0:
+            return None
+        raw_buf = np.empty(attr_size // dt.itemsize, dtype=dt)
+        attr_id.read(raw_buf, mtype=attr_id.get_type())
+        attr = np.empty(len(raw_buf) // 2, dtype='object')
+        for i in range(len(attr)):
+            length = int(raw_buf[2 * i])
+            ptr = int(raw_buf[(2 * i) + 1])
+            buf = ctypes.create_string_buffer(length)
+            ctypes.memmove(buf, ptr, length)
+            attr[i] = np.frombuffer(buf, dtype='S1')
+        return attr
+
+
+def read_all_attributes_into(attrs, out):
+    """ Reads all Attributes into a MutableMapping (dict-like)
+
+    Reads all Attributes into the MutableMapping (dict-like) out,
+    including the special handling of the ``MATLAB_fields`` Attribute on
+    versions of ``h5py`` where it cannot be read in the standard
+    fashion.
+
+    Parameters
+    ----------
+    attrs : h5py.AttributeManager
+        The Attribute manager to read from.
+    out : MutableMapping
+        The MutableMapping (dict-like) to write the Attributes into.
+
+    Raises
+    ------
+    TypeError
+        If an argument has the wrong type.
+
+    See Also
+    --------
+    read_matlab_fields_attribute
+
+    """
+    if not isinstance(attrs, h5py.AttributeManager):
+        raise TypeError('attrs must be a h5py.AttributeManager.')
+    if not isinstance(out, (dict, collections.defaultdict,
+                            collections.abc.MutableMapping)):
+        raise TypeError('out must be a MutableMapping.')
+    if not _handle_matlab_fields_specially \
+            or 'MATLAB_fields' not in attrs:
+        out.update(attrs.items())
+    else:
+        for k in attrs:
+            if k != 'MATLAB_fields':
+                out[k] = attrs[k]
+            else:
+                out[k] = read_matlab_fields_attribute(attrs)
 
 
 class LowLevelFile(object):
@@ -267,10 +377,10 @@ class LowLevelFile(object):
                 raise KeyError('Could not find '
                                + posixpath.join(grp.name, name))
 
-        # Get all attributes with values.
-        defaultfactory = type(None)
-        attributes = collections.defaultdict(defaultfactory,
-                                             dsetgrp.attrs.items())
+        # Get all attributes with values, with the default being for any
+        # unavailable ones being None.
+        attributes = collections.defaultdict(type(None))
+        read_all_attributes_into(dsetgrp.attrs, attributes)
 
         # Get the different attributes that can be used to identify they
         # type, which are the type string and the MATLAB class.
@@ -1394,7 +1504,8 @@ def set_attributes_all(target, attributes, discard_others=True):
 
     """
     attrs = target.attrs
-    existing = dict(attrs.items())
+    existing = dict()
+    read_all_attributes_into(attrs, existing)
     # Generate special dtype for string arrays.
     str_arr_dtype = h5py.special_dtype(vlen=str)
     # Go through each attribute. If it is already present, modify it if
@@ -1408,6 +1519,9 @@ def set_attributes_all(target, attributes, discard_others=True):
                 value = np.bytes_(value)
             if k not in existing:
                 attrs.create(k, value)
+            elif k == 'MATLAB_fields':
+                if not np.array_equal(value, existing[k]):
+                    attrs.create(k, value)
             else:
                 try:
                     if value.dtype == existing[k].dtype \
