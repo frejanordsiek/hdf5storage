@@ -789,7 +789,7 @@ def test_dtype_structured(fmt):
         names = []
         for _ in range(random.randint(1, 5)):
             s = random_str_ascii(random.randint(1, 10))
-            while s in names and s[0].isdigit():
+            while s in names or s[0].isdigit():
                 s = random_str_ascii(random.randint(1, 10))
             names.append(s)
         desc = [(v, random.choice(base_dtypes),
@@ -805,7 +805,7 @@ def test_dtype_structured_with_offsets_titles(fmt):
         names = []
         for _ in range(random.randint(1, 5)):
             s = random_str_ascii(random.randint(1, 10))
-            while s in names and s[0].isdigit():
+            while s in names or s[0].isdigit():
                 s = random_str_ascii(random.randint(1, 10))
             names.append(s)
         titles = []
