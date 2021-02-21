@@ -19,6 +19,8 @@ hdf5storage.utilities
    get_attribute
    get_attribute_string
    get_attribute_string_array
+   read_all_attributes_into
+   read_matlab_fields_attribute
    set_attribute
    set_attribute_string
    set_attribute_string_array
@@ -95,6 +97,18 @@ get_attribute_string_array
 --------------------------
 
 .. autofunction:: get_attribute_string_array
+
+
+read_all_attributes_into
+------------------------
+
+.. autofunction:: read_all_attributes_into
+
+
+read_matlab_fields_attribute
+----------------------------
+
+.. autofunction:: read_matlab_fields_attribute
 
 
 set_attribute

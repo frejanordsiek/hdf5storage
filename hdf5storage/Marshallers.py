@@ -1013,8 +1013,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             defaultfactory = type(None)
         else:
             defaultfactory = lambda : None
-        attributes = collections.defaultdict(defaultfactory,
-                                             grp[name].attrs.items())
+        attributes = collections.defaultdict(defaultfactory)
+        read_all_attributes_into(grp[name].attrs, attributes)
 
         str_attrs = dict()
         for attr_name in ('Python.Type',
@@ -1052,12 +1052,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             python_fields = [convert_to_str(x)
                              for x in python_fields]
 
-        # If we are using h5py version >= 2.3, we can actually read the
-        # MATLAB_fields Attribute if it is present.
-        matlab_fields = None
-        if distutils.version.LooseVersion(_H5PY_VERSION) \
-                >= distutils.version.LooseVersion('2.3'):
-            matlab_fields = attributes['MATLAB_fields']
+        # Read the MATLAB_fields Attribute if it was present.
+        matlab_fields = attributes['MATLAB_fields']
 
         # If it is a Dataset, it can simply be read and then acted upon
         # (if it is an HDF5 Reference array, it will need to be read
