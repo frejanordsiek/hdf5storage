@@ -506,6 +506,8 @@ Versions
           cause the function to think that the file is a pre v7.3 format MAT
           file fall back to ``scipy.io.loadmat`` which won't work since the file
           is a v7.3 format MAT file.
+        * Fixed formatting issues in the docstrings and the documentation that
+          prevented the documentation from building.
 
 0.1.15. Bugfix release that fixed the following bugs.
         * Issue #68. Fixed bug where ``str`` and ``numpy.unicode_``
