@@ -32,6 +32,7 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev $EXTRA_PACKAGES
   - sudo chown -R $USER:$GROUP ~/.cache/pip/wheels # Fix for non-amd64 architectures
+  - python -m pip install --upgrade pip
 
 # command to install dependencies
 #
