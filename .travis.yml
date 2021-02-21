@@ -34,9 +34,6 @@ jobs:
     - python: "3.9"
       env: H5PY_VERSION="==2.10"
       arch: ppc64le
-    - python: "3.9"
-      env: H5PY_VERSION="==2.10" EXTRA_PACKAGES=""
-      arch: s390x
 
 before_install:
   - python -m pip install --upgrade pip
