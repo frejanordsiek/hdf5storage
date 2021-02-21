@@ -33,15 +33,24 @@ Dependencies
 This package only supports Python >= 3.5. Python < 3.5 support was dropped
 in version 0.2.
 
-This package requires the numpy and h5py (>= 2.3) packages to run. Note
-that support for h5py 2.1.x and 2.2.x has been dropped in version 0.2.
-An optional dependency is the scipy package.
+This package requires the python packages to run
+
+* `numpy <https://pypi.org/project/numpy>`_
+* `h5py <https://pypi.org/project/h5py>`_ >= 2.3
+* `setuptools <https://pypi.org/project/setuptools>`_
+
+Note that support for `h5py <https://pypi.org/project/h5py>`_ 2.1.x and 2.2.x
+has been dropped in version 0.2.
+This package also has the following optional dependencies
+
+* `scipy <https://pypi.org/project/scipy>`_
 
 Installing by pip
 -----------------
 
-This package is on `PyPI <https://pypi.org/project/hdf5storage>`_.
-To install hdf5storage using pip, run the command::
+This package is on `PyPI <https://pypi.org>`_ at
+`hdf5storage <https://pypi.org/project/hdf5storage>`_. To install hdf5storage
+using pip, run the command::
 
     pip install hdf5storage
 
@@ -68,13 +77,13 @@ Running Tests
 
 For testing, the package `pytest <https://pypi.org/project/pytest>`_
 (>= 5.0) is additionally required. There are some tests that require
-Matlab and scipy to be installed and be in the executable path
-respectively. In addition, there are some tests that require
-`Julia <http://julialang.org/>`_ with the
+Matlab and `scipy <https://pypi.org/project/scipy>`_ to be installed
+and be in the executable path respectively. In addition, there are some
+tests that require `Julia <http://julialang.org/>`_ with the
 `MAT <https://github.com/simonster/MAT.jl>`_ package. Not having them
 means that those tests cannot be run (they will be skipped) but all
 the other tests will run. To install all testing dependencies, other
-than scipy, Julia, Matlab run ::
+than `scipy <https://pypi.org/project/scipy>`_, Julia, Matlab run ::
 
     pip install -r requirements_tests.txt.
 
@@ -86,8 +95,11 @@ To run the tests ::
 Building Documentation
 ----------------------
 
-The documentation additionally requires sphinx (>= 1.7) and
-`sphinx_rtd_theme <https://pypi.org/project/sphinx-rtd-theme>`_.
+The documentation additionally requires the following packages
+
+* `sphinx <https://pypi.org/project/sphinx>`_ >= 1.7
+* `sphinx_rtd_theme <https://pypi.org/project/sphinx-rtd-theme>`_
+
 The documentation dependencies can be installed by ::
 
     pip install -r requirements_doc.txt
