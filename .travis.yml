@@ -41,6 +41,7 @@ install:
   - pip install -U numpy Cython
   - pip install h5py$H5PY_VERSION
   - pip install -r requirements_tests.txt
+  - pip install .
   - pip install -e examples/example_hdf5storage_marshaller_plugin
 
 # command to run tests
