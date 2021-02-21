@@ -261,6 +261,7 @@ Versions
         * Issue #81 and #82. ``h5py.File`` will require the mode to be
           passed explicitly in the future. All calls without passing it were
           fixed to pass it.
+        * Issue #102. Added support for h5py 3.0 and 3.1.
         * Issue #73. Fixed bug where a missing variable in ``loadmat`` would
           cause the function to think that the file is a pre v7.3 format MAT
           file fall back to ``scipy.io.loadmat`` which won't work since the file
