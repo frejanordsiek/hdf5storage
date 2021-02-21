@@ -1,36 +1,42 @@
-dist: xenial
-sudo: required
+dist: focal
+addons:
+  apt:
+    update: true
+    packages:
+      - gcc
+      - libhdf5-serial-dev
+      - libblas-dev
+      - liblapack-dev
+      - libatlas-base-dev
+      - libquadmath0
 
 language: python
+cache: pip
 
 notifications:
   email: false
 
 env:
   - H5PY_VER="==2.5"
-  - H5PY_VER="==2.6"
-  - H5PY_VER="==2.7"
-  - H5PY_VER="==2.8"
-  - H5PY_VER="==2.9"
-  - H5PY_VER=""
+  - H5PY_VER="==2.10"
+  - H5PY_VER="==3.0"
+  - H5PY_VER="==3.1"
 
 python:
   - "2.7"
   - "3.5"
-  - "3.6"
   - "3.7"
-  - "3.8"
-  - "3.9-dev"
+  - "3.9"
 
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y gcc libhdf5-serial-dev libblas-dev liblapack-dev libatlas-dev libatlas-base-dev libquadmath0
+  - python -m pip install --upgrade pip
 
 # command to install dependencies
 install:
   - pip install -U numpy Cython
   - pip install h5py$H5PY_VER
   - pip install -r requirements_tests.txt
+  - pip install .
 
 # command to run tests
 script: nosetests
