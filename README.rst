@@ -55,7 +55,11 @@ and then install the dependencies ::
 
     pip install -r requirements.txt
 
-Then to install the package, run the command with Python ::
+Then to install the package, run either ::
+
+    pip install .
+
+or, using the legacy :file:`setup.py` script ::
 
     python setup.py install
 
@@ -88,7 +92,11 @@ The documentation dependencies can be installed by ::
 
     pip install -r requirements_doc.txt
 
-To build the documentation ::
+To build the HTML documentation, run either ::
+
+    sphinx-build doc/source doc/build
+
+or, using the legacy :file:`setup.py` script ::
 
     python setup.py build_sphinx
 
