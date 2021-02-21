@@ -3,8 +3,11 @@ import sys
 if sys.hexversion < 0x2060000:
     raise NotImplementedError('Python < 2.6 not supported.')
 
-import ez_setup
-ez_setup.use_setuptools()
+try:
+    import ez_setup
+    ez_setup.use_setuptools()
+except:
+    pass
 
 from setuptools import setup
 
