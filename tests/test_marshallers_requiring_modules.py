@@ -24,7 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
+import os.path
 import sys
 import tempfile
 
@@ -177,23 +177,15 @@ def test_marshaller_read():
                                           marshallers=[m])
     options = hdf5storage.Options(marshaller_collection=mc)
 
-    fld = None
     name = '/the'
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         with h5py.File(filename, mode='w') as f:
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
             out = hdf5storage.utilities.LowLevelFile(
                 f, options).read_data(f, name)
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
     assert out == 'read'
 
@@ -209,23 +201,15 @@ def test_marshaller_read_approximate_missing_parent():
                                           marshallers=[m])
     options = hdf5storage.Options(marshaller_collection=mc)
 
-    fld = None
     name = '/the'
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         with h5py.File(filename, mode='w') as f:
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
             out = hdf5storage.utilities.LowLevelFile(
                 f, options).read_data(f, name)
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
     assert out == 'read_approximate'
 
@@ -241,22 +225,14 @@ def test_marshaller_read_approximate_missing_import():
                                           marshallers=[m])
     options = hdf5storage.Options(marshaller_collection=mc)
 
-    fld = None
     name = '/the'
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         with h5py.File(filename, mode='w') as f:
             f.create_dataset(name, data=np.int64([1]))
             f[name].attrs.create('Python.Type',
                                  b'ellipsis')
             out = hdf5storage.utilities.LowLevelFile(
                 f, options).read_data(f, name)
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
     assert out == 'read_approximate'

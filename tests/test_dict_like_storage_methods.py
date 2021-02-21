@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import os.path
 import random
 import tempfile
@@ -88,14 +87,10 @@ def test_all_valid_str_keys(tp, option_keywords):
     # Make a random name.
     name = random_name()
 
-    # Write the data to the proper file with the given name with the
-    # provided options. The file needs to be deleted after to keep junk
-    # from building up.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    # Write the data to the file with the given name with the provided
+    # options.
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
 
@@ -104,11 +99,6 @@ def test_all_valid_str_keys(tp, option_keywords):
                 assert escape_path(k) not in f[name]
             for k in data:
                 assert escape_path(k) in f[name]
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
 
 @pytest.mark.parametrize(
@@ -142,14 +132,10 @@ def test_str_key_previously_invalid_char(tp, ch, option_keywords):
     # Make a random name.
     name = random_name()
 
-    # Write the data to the proper file with the given name with the
-    # provided options. The file needs to be deleted after to keep junk
-    # from building up.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    # Write the data to the file with the given name with the provided
+    # options.
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
 
@@ -158,11 +144,6 @@ def test_str_key_previously_invalid_char(tp, ch, option_keywords):
                 assert escape_path(k) not in f[name]
             for k in data:
                 assert escape_path(k) in f[name]
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
 
 @pytest.mark.parametrize(
@@ -200,25 +181,15 @@ def test_string_type_non_str_key(tp, other_tp, option_keywords):
     # Make a random name.
     name = random_name()
 
-    # Write the data to the proper file with the given name with the
-    # provided options. The file needs to be deleted after to keep junk
-    # from building up.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    # Write the data to the file with the given name with the provided
+    # options.
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
 
         with h5py.File(filename, mode='r') as f:
             assert set(keys) == set(f[name].keys())
-
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
 
 @pytest.mark.parametrize(
@@ -247,21 +218,12 @@ def test_int_key(tp, option_keywords):
     # Make a random name.
     name = random_name()
 
-    # Write the data to the proper file with the given name with the
-    # provided options. The file needs to be deleted after to keep junk
-    # from building up.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    # Write the data to the file with the given name with the provided
+    # options.
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
 
         with h5py.File(filename, mode='r') as f:
             assert set(key_value_names) == set(f[name].keys())
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])

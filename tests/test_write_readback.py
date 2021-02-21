@@ -28,7 +28,6 @@ import collections
 import datetime
 import itertools
 import math
-import os
 import os.path
 import pathlib
 import posixpath
@@ -149,25 +148,16 @@ def write_readback(fmt, data, name=None, write_options=None,
         name_r = name_type_r(name[posixpath.isabs(name):])
     else:
         name_r = name
-    # Write the data to the proper file with the given name, read it
-    # back, and return the result. The file needs to be deleted
-    # after to keep junk from building up. Different options can be
-    # used for reading the data back.
-    f = None
-    try:
-        f = tempfile.mkstemp()
-        os.close(f[0])
-        filename = f[1]
+    # Write the data to the file with the given name, read it back, and
+    # return the result. The file needs to be deleted after to keep junk
+    # from building up. Different options can be used for reading the
+    # data back.
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.write(data, path=name_w, filename=filename,
                           options=write_options)
         out = hdf5storage.read(path=name_r, filename=filename,
                                options=read_options)
-    except:
-        raise
-    finally:
-        if f is not None:
-            os.remove(f[1])
-
     if check:
         assert_equal_by_option[fmt](out, data, options_by_format[fmt])
     return out

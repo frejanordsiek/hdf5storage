@@ -25,7 +25,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import os
 import os.path
 import random
 import tempfile
@@ -58,20 +57,12 @@ def test_multi_write():
             dtype=random.choice(dtypes))
 
     # Write it and then read it back item by item.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.writes(mdict=data, filename=filename)
         out = dict()
         for p in data:
             out[p] = hdf5storage.read(path=p, filename=filename)
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
     # Compare data and out.
     assert_equal(out, data)
@@ -92,20 +83,12 @@ def test_multi_read():
 
     paths = data.keys()
     # Write it item by item  and then read it back in one unit.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         for p in paths:
             hdf5storage.write(data=data[p], path=p, filename=filename)
         out = hdf5storage.reads(paths=list(data.keys()),
                                 filename=filename)
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
     # Compare data and out.
     for i, p in enumerate(paths):

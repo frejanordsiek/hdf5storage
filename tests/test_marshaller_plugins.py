@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import os.path
 import tempfile
 
@@ -77,20 +76,12 @@ def test_plugin_marshaller_SubList():
                                   marshaller_collection=mc)
     ell = [1, 2, 'b1', b'3991', True, None]
     data = example_hdf5storage_marshaller_plugin.SubList(ell)
-    f = None
     name = '/a'
-    try:
-        f = tempfile.mkstemp()
-        os.close(f[0])
-        filename = f[1]
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.write(data, path=name, filename=filename,
                           options=options)
         out = hdf5storage.read(path=name, filename=filename,
                                options=options)
-    except:
-        raise
-    finally:
-        if f is not None:
-            os.remove(f[1])
     assert ell == list(out)
     assert type(out) == example_hdf5storage_marshaller_plugin.SubList

@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import os.path
 import tempfile
 
@@ -47,19 +46,12 @@ import hdf5storage
 def test_conv_utf16(tp):
     name = '/a'
     data = tp('abcdefghijklmnopqrstuvwxyz')
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
+
         hdf5storage.write(data, path=name, filename=filename,
                           matlab_compatible=False,
                           store_python_metadata=False,
                           convert_numpy_str_to_utf16=True)
         with h5py.File(filename, mode='r') as f:
             assert f[name].dtype.type == np.uint16
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])

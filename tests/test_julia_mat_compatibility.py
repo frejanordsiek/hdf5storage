@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import os.path
 import subprocess
 import tempfile
@@ -113,31 +112,24 @@ def test_back_and_forth_julia():
     from_julia_v7_to_v7p3 = dict()
     from_julia_v7p3_to_v7p3 = dict()
 
-    temp_dir = None
-    try:
-        import scipy.io
-        temp_dir = tempfile.mkdtemp()
-        for i in range(0, len(mat_files)):
-            mat_files[i] = os.path.join(temp_dir, mat_files[i])
-        scipy.io.savemat(file_name=mat_files[0], mdict=to_julia)
-        hdf5storage.savemat(file_name=mat_files[1], mdict=to_julia)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        try:
+            import scipy.io
+            for i in range(0, len(mat_files)):
+                mat_files[i] = os.path.join(temp_dir, mat_files[i])
+            scipy.io.savemat(file_name=mat_files[0], mdict=to_julia)
+            hdf5storage.savemat(file_name=mat_files[1], mdict=to_julia)
 
-        #julia_command(script_names[0], mat_files[0], mat_files[2])
-        julia_command(script_names[0], mat_files[1], mat_files[3])
+            #julia_command(script_names[0], mat_files[0], mat_files[2])
+            julia_command(script_names[0], mat_files[1], mat_files[3])
 
-        #hdf5storage.loadmat(file_name=mat_files[2],
-        #                    mdict=from_julia_v7_to_v7p3)
-        hdf5storage.loadmat(file_name=mat_files[3],
-                            mdict=from_julia_v7p3_to_v7p3)
-    except:
-        pytest.skip('Julia or the MAT package are unavailable '
-                    'or their API/s have changed.')
-    finally:
-        for name in mat_files:
-            if os.path.exists(name):
-                os.remove(name)
-        if temp_dir is not None and os.path.exists(temp_dir):
-            os.rmdir(temp_dir)
+            #hdf5storage.loadmat(file_name=mat_files[2],
+            #                    mdict=from_julia_v7_to_v7p3)
+            hdf5storage.loadmat(file_name=mat_files[3],
+                                mdict=from_julia_v7p3_to_v7p3)
+        except:
+            pytest.skip('Julia or the MAT package are unavailable '
+                        'or their API/s have changed.')
 
     # Check the results.
     for name in to_julia:

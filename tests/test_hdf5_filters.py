@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import os.path
 import random
 import tempfile
@@ -67,23 +66,14 @@ def test_read_filtered_data(compression, shuffle, fletcher32,
     # Make a random name.
     name = random_name()
 
-    # Write the data to the proper file with the given name with the
-    # provided filters and read it backt. The file needs to be deleted
-    # after to keep junk from building up.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    # Write the data to the file with the given name with the provided
+    # filters and read it back.
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         with h5py.File(filename, mode='w') as f:
             f.create_dataset(name, data=data, chunks=True, **filts)
         out = hdf5storage.read(path=name, filename=filename,
                                matlab_compatible=False)
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
     # Compare
     assert_equal(out, data)
@@ -111,14 +101,10 @@ def test_write_filtered_data(compression, shuffle, fletcher32,
     # Make a random name.
     name = random_name()
 
-    # Write the data to the proper file with the given name with the
-    # provided filters and read it backt. The file needs to be deleted
-    # after to keep junk from building up.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    # Write the data to the file with the given name with the provided
+    # filters and read it back.
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.write(data, path=name, filename=filename,
                           store_python_metadata=False,
                           matlab_compatible=False,
@@ -135,11 +121,6 @@ def test_write_filtered_data(compression, shuffle, fletcher32,
                      'compression': d.compression,
                      'gzip_level': d.compression_opts}
             out = d[...]
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
     # Check the filters
     assert fletcher32 == filts['fletcher32']
@@ -192,14 +173,10 @@ def test_uncompressed_write_filtered_data(
         opts = {'compress': True,
                 'compress_size_threshold': data.nbytes + 1}
 
-    # Write the data to the proper file with the given name with the
-    # provided filters and read it backt. The file needs to be deleted
-    # after to keep junk from building up.
-    fld = None
-    try:
-        fld = tempfile.mkstemp()
-        os.close(fld[0])
-        filename = fld[1]
+    # Write the data to the file with the given name with the provided
+    # filters and read it back.
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, 'data.h5')
         hdf5storage.write(data, path=name, filename=filename, \
             store_python_metadata=False, matlab_compatible=False, \
             compression_algorithm=filts['compression'], \
@@ -217,11 +194,6 @@ def test_uncompressed_write_filtered_data(
             compression = d.compression
             gzip_level = d.compression_opts
             out = d[...]
-    except:
-        raise
-    finally:
-        if fld is not None:
-            os.remove(fld[1])
 
     # Check the filters
     assert compression is None
