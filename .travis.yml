@@ -9,7 +9,6 @@ addons:
       - libhdf5-serial-dev
       - libblas-dev
       - liblapack-dev
-      - libatlas-dev
       - libatlas-base-dev
       - libquadmath0
 
