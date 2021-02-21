@@ -821,7 +821,7 @@ def test_dtype_structured_with_offsets_titles(fmt):
         titles = []
         for _ in range(len(names)):
             s = random_str_some_unicode(random.randint(1, 10))
-            while s in titles:
+            while s in titles or s in names:
                 s = random_str_some_unicode(random.randint(1, 10))
             titles.append(s)
         formats = [(random.choice(base_dtypes),
