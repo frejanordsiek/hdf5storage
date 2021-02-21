@@ -174,7 +174,7 @@ def read_object_array(f, data, options):
 
     Returns
     -------
-    numpy.ndarray of numpy.object_
+    numpy.ndarray of numpy.object\\_
         The Python object array containing the items pointed to by
         `data`.
 

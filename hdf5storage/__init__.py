@@ -441,7 +441,7 @@ class Options(object):
 
     @property
     def convert_numpy_bytes_to_utf16(self):
-        """ Whether or not to convert numpy.bytes\_ to UTF-16.
+        """ Whether or not to convert numpy.bytes\\_ to UTF-16.
 
         bool
 
@@ -455,7 +455,7 @@ class Options(object):
 
         See Also
         --------
-        numpy.bytes\_
+        numpy.bytes_
         convert_numpy_str_to_utf16
 
         """
@@ -472,7 +472,7 @@ class Options(object):
 
     @property
     def convert_numpy_str_to_utf16(self):
-        """ Whether or not to convert numpy.str\_ to UTF-16.
+        """ Whether or not to convert numpy.str\\_ to UTF-16.
 
         bool
 
@@ -491,7 +491,7 @@ class Options(object):
 
         See Also
         --------
-        numpy.bytes\_
+        numpy.bytes_
         convert_numpy_str_to_utf16
 
         """
@@ -745,7 +745,6 @@ class Options(object):
         compress
         compress_size_threshold
         h5py.Group.create_dataset
-        http://www.hdfgroup.org/doc_resource/SZIP/Commercial_szip.html
 
         """
         return self._compression_algorithm
