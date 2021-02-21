@@ -38,31 +38,31 @@ TypeMarshaller
    :members: update_type_lookups, get_type_string, read, read_approximate, write, write_metadata
    :show-inheritance:
 
-   .. autoinstanceattribute:: TypeMarshaller.required_parent_modules
+   .. autoattribute:: TypeMarshaller.required_parent_modules
       :annotation: = ()
 
-   .. autoinstanceattribute:: TypeMarshaller.required_modules
+   .. autoattribute:: TypeMarshaller.required_modules
       :annotation: = ()
 
-   .. autoinstanceattribute:: TypeMarshaller.python_attributes
+   .. autoattribute:: TypeMarshaller.python_attributes
       :annotation: = {'Python.Type'}
 
-   .. autoinstanceattribute:: TypeMarshaller.matlab_attributes
+   .. autoattribute:: TypeMarshaller.matlab_attributes
       :annotation: = {'H5PATH'}
 
-   .. autoinstanceattribute:: TypeMarshaller.types
+   .. autoattribute:: TypeMarshaller.types
       :annotation: = ()
 
-   .. autoinstanceattribute:: TypeMarshaller.python_type_strings
+   .. autoattribute:: TypeMarshaller.python_type_strings
       :annotation: = ()
 
-   .. autoinstanceattribute:: TypeMarshaller.matlab_classes
+   .. autoattribute:: TypeMarshaller.matlab_classes
       :annotation: = ()
 
-   .. autoinstanceattribute:: TypeMarshaller.type_to_typestring
+   .. autoattribute:: TypeMarshaller.type_to_typestring
       :annotation: = dict()
 
-   .. autoinstanceattribute:: TypeMarshaller.typestring_to_type
+   .. autoattribute:: TypeMarshaller.typestring_to_type
       :annotation: = dict()
 
 
