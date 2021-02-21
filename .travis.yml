@@ -20,8 +20,9 @@ notifications:
 
 env:
   - H5PY_VERSION="==2.6"
-  - H5PY_VERSION="==2.8"
   - H5PY_VERSION="==2.10"
+  - H5PY_VERSION="==3.0"
+  - H5PY_VERSION="==3.1"
 
 python:
   - "3.5"
@@ -33,6 +34,11 @@ jobs:
     - python: "3.9"
       env: H5PY_VERSION="==2.10"
       arch: ppc64le
+  exclude
+    - python: "3.5"
+      env: H5PY_VERSION="==3.0"
+    - python: "3.5"
+      env: H5PY_VERSION="==3.1"
 
 before_install:
   - python -m pip install --upgrade pip
