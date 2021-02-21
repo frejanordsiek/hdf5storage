@@ -48,8 +48,10 @@ To install hdf5storage using pip, run the command::
 Installing from Source
 ----------------------
 
-To install hdf5storage from source, download the package and then
-install the dependencies ::
+To install hdf5storage from source, the
+`setuptools <https://pypi.org/project/setuptools>`_ and
+`wheel <https://pypi.org/project/wheel>`_ are required. Download this package
+and then install the dependencies ::
 
     pip install -r requirements.txt
 
