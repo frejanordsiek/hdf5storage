@@ -20,6 +20,7 @@ except:
 # also a dependency to get version parsing.
 try:
     from distutils.version import StrictVersion
+    extra_deps = []
 except:
     extra_deps = ['setuptools']
 
