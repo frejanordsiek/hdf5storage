@@ -264,6 +264,9 @@ Versions
           with ``distutils.version`` classes as a fallback instead of just the
           later to prepare for the removal of ``distutils`` (PEP 632) and
           prevent warnings on Python versions where it is marked as deprecated.
+        * Issue #110. Changed all uses of the ``tostring`` method on numpy types
+          to using ``tobytes`` if available, with ``tostring`` as the fallback
+          for old versions of numpy where it is not.
 
 0.1.16. Bugfix release that fixed the following bugs.
         * Issue #81 and #82. ``h5py.File`` will require the mode to be
