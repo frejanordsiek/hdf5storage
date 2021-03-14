@@ -141,22 +141,19 @@ def read_matlab_fields_attribute(attrs):
     # takluyver at
     # https://github.com/h5py/h5py/issues/1817#issuecomment-781385699
     #
-    # but has been improved with a size check, reading it directly as
-    # uint64s instead of using struct.unpack, and avoiding making
+    # but has been improved by reading it directly as (size_t, void*)
+    # pairs uint64s instead of using struct.unpack, and avoiding making
     # intermediate copies of the data by copying directly to the output
     # array.
     with h5py._objects.phil:
         attr_id = attrs.get_id('MATLAB_fields')
-        attr_size = attr_id.get_storage_size()
-        dt = np.dtype('p')
-        if attr_size % (2 * dt.itemsize) != 0:
-            return None
-        raw_buf = np.empty(attr_size // dt.itemsize, dtype=dt)
+        dt = np.dtype([('length', np.uintp), ('pointer', np.intp)])
+        raw_buf = np.empty(attr_id.shape, dtype=dt)
         attr_id.read(raw_buf, mtype=attr_id.get_type())
         attr = np.empty(len(raw_buf) // 2, dtype='object')
         for i in range(len(attr)):
-            length = int(raw_buf[2 * i])
-            ptr = int(raw_buf[(2 * i) + 1])
+            length = int(raw_buf[i]['length'])
+            ptr = int(raw_buf[i]['pointer'])
             attr[i] = np.empty(length, dtype='S1')
             ctypes.memmove(attr[i].ctypes.data, ptr, length)
         return attr

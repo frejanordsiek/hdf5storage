@@ -494,6 +494,10 @@ Versions
        `pytest <https://pypi.org/project/pytest>`_ instead of
        `nose <https://pypi.org/project/nose>`_.
 
+0.1.17. Bugfix release that fixed the following bugs.
+        * Issue #109. Fixed the fix Issue #102 for 32-bit platforms (previous
+          fix was segfaulting).
+
 0.1.16. Bugfix release that fixed the following bugs.
         * Issue #81 and #82. ``h5py.File`` will require the mode to be
           passed explicitly in the future. All calls without passing it were
