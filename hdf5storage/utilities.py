@@ -40,7 +40,10 @@ try:
 except ImportError:
     collections.abc = collections
 
-import distutils.version
+try:
+    from pkg_resources import parse_version
+except:
+    from distutils.version import StrictVersion as parse_version
 
 import numpy as np
 import h5py
@@ -50,12 +53,12 @@ import h5py
 # the MATLAB_fields Attribute in the normal fashion so that we can
 # handle it specially.
 _cant_read_matlab_fields = (
-    distutils.version.StrictVersion(h5py.__version__)
-    < distutils.version.StrictVersion('2.3'))
+    parse_version(h5py.__version__)
+    < parse_version('2.3'))
 _handle_matlab_fields_specially = (
-    distutils.version.StrictVersion(h5py.__version__)
-    in (distutils.version.StrictVersion('3.0'),
-        distutils.version.StrictVersion('3.1')))
+    parse_version(h5py.__version__)
+    in (parse_version('3.0'),
+        parse_version('3.1')))
 
 if _handle_matlab_fields_specially:
     import ctypes

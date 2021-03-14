@@ -31,7 +31,11 @@
 import sys
 import posixpath
 import collections
-import distutils.version
+
+try:
+    from pkg_resources import parse_version
+except:
+    from distutils.version import StrictVersion as parse_version
 
 import numpy as np
 import h5py
@@ -547,8 +551,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_classes = list(self.__MATLAB_classes.values())
 
         # For h5py >= 2.2, half precisions (np.float16) are supported.
-        if distutils.version.LooseVersion(_H5PY_VERSION) \
-                >= distutils.version.LooseVersion('2.2'):
+        if parse_version(_H5PY_VERSION) \
+                >= parse_version('2.2'):
             self.types.append(np.float16)
             self.python_type_strings.append('numpy.float16')
 
@@ -928,9 +932,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # written as a vlen='S1' array of bytes_ arrays of the
             # individual characters.
             if options.matlab_compatible \
-                    and distutils.version.LooseVersion( \
+                    and parse_version( \
                     _H5PY_VERSION) \
-                    >= distutils.version.LooseVersion('2.3'):
+                    >= parse_version('2.3'):
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
                     fs = np.empty(shape=(len(field_names),), dtype=dt)
@@ -1650,8 +1654,8 @@ class PythonDictMarshaller(TypeMarshaller):
         # should be deleted. It is written as a vlen='S1' array of
         # bytes_ arrays of the individual characters.
         if options.matlab_compatible \
-                and distutils.version.LooseVersion(_H5PY_VERSION) \
-                >= distutils.version.LooseVersion('2.3'):
+                and parse_version(_H5PY_VERSION) \
+                >= parse_version('2.3'):
             try:
                 dt = h5py.special_dtype(vlen=np.dtype('S1'))
                 fs = np.empty(shape=(len(fields),), dtype=dt)

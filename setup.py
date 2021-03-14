@@ -16,6 +16,14 @@ except:
     from setuptools import setup
 
 
+# If distutils.version.StrictVersion no longer exists, setuptools is
+# also a dependency to get version parsing.
+try:
+    from distutils.version import StrictVersion
+except:
+    extra_deps = ['setuptools']
+
+
 
 with open('README.rst') as file:
     long_description = file.read()
@@ -40,7 +48,7 @@ setup(name='hdf5storage',
                         "h5py>=2.1,<2.4 ; python_version == '3.0'",
                         "h5py>=2.1,<2.7 ; python_version == '3.1'",
                         "h5py>=2.1,<2.7 ; python_version == '3.2'",
-                        "h5py>=2.1 ; python_version >= '3.3'"],
+                        "h5py>=2.1 ; python_version >= '3.3'"] + extra_deps,
       license='BSD',
       keywords='hdf5 matlab',
       classifiers=[
