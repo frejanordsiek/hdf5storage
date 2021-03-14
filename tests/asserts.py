@@ -43,7 +43,7 @@ def assert_dtypes_equal(a, b):
     else:
         assert a.names == b.names
         for n in b.names:
-            assert a[n] == b[n]
+            assert_dtypes_equal(a[n], b[n])
 
 
 def assert_equal(a, b, options=None):
