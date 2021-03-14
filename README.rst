@@ -257,7 +257,7 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
-0.1.17. Bugfix release that fixed the following bugs.
+0.1.17. Bugfix and deprecation workaround release that fixed the following.
         * Issue #109. Fixed the fix Issue #102 for 32-bit platforms (previous
           fix was segfaulting).
         * Moved to using ``pkg_resources.parse_version`` from ``setuptools``
