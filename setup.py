@@ -3,13 +3,19 @@ import sys
 if sys.hexversion < 0x2060000:
     raise NotImplementedError('Python < 2.6 not supported.')
 
+# Try to import setuptools and if that fails, use ez_setup to get it
+# (fallback for old versions of python if it isn't installed).
 try:
-    import ez_setup
-    ez_setup.use_setuptools()
+    from setuptools import setup
 except:
-    pass
+    try:
+        import ez_setup
+        ez_setup.use_setuptools()
+    except:
+        pass
+    from setuptools import setup
 
-from setuptools import setup
+
 
 with open('README.rst') as file:
     long_description = file.read()
