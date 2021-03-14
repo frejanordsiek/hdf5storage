@@ -43,7 +43,7 @@ except ImportError:
 try:
     from pkg_resources import parse_version
 except:
-    from distutils.version import StrictVersion as parse_version
+    from distutils.version import StrictVersion as parse_version\
 
 import numpy as np
 import h5py
@@ -63,6 +63,35 @@ _handle_matlab_fields_specially = (
 if _handle_matlab_fields_specially:
     import ctypes
     import h5py._objects
+
+
+# Determine if numpy.ndarrays and scalars have a tobytes method or
+# not. If they don't, then the tostring method must be used instead.
+_numpy_has_tobytes = hasattr(np.array([1]), 'tobytes')
+
+
+def numpy_to_bytes(obj):
+    """ Get the raw bytes of a numpy object's data.
+
+    Calls the ``tobytes`` method on `obj` for new versions of ``numpy``
+    where the method exists, and ``tostring`` for old versions of
+    ``numpy`` where it does not.
+
+    Parameters
+    ----------
+    obj : numpy.generic or numpy.ndarray
+        Numpy scalar or array.
+
+    Returns
+    -------
+    data : bytes
+        The raw data.
+
+    """
+    if _numpy_has_tobytes:
+        return obj.tobytes()
+    else:
+        return obj.tostring()
 
 
 def read_matlab_fields_attribute(attrs):
@@ -301,7 +330,7 @@ def convert_numpy_str_to_uint16(data):
     shape = list(cdata.shape)
     shape[-1] *= (cdata.dtype.itemsize // 2)
     return np.ndarray(shape=shape, dtype='uint16',
-                      buffer=cdata.tostring())
+                      buffer=numpy_to_bytes(cdata))
 
 
 def convert_numpy_str_to_uint32(data):
@@ -381,16 +410,16 @@ def convert_to_str(data):
     if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
                   np.bytes_, np.unicode_)):
         if data.dtype.name == 'uint8':
-            return data.flatten().tostring().decode('UTF-8')
+            return numpy_to_bytes(data.flatten()).decode('UTF-8')
         elif data.dtype.name == 'uint16':
-            return data.flatten().tostring().decode('UTF-16')
+            return numpy_to_bytes(data.flatten()).decode('UTF-16')
         elif data.dtype.name == 'uint32':
-            return data.flatten().tostring().decode('UTF-32')
+            return numpy_to_bytes(data.flatten()).decode('UTF-32')
         elif data.dtype.char == 'S':
             return data.decode('UTF-8')
         else:
             if isinstance(data, np.ndarray):
-                return data.flatten.tostring().decode('UTF-32')
+                return numpy_to_bytes(data.flatten()).decode('UTF-32')
             else:
                 return data.encode('UTF-32').decode('UTF-32')
 
@@ -472,7 +501,7 @@ def convert_to_numpy_str(data, length=None):
         # needs to be have the dtype essentially changed by having its
         # bytes read into ndarray.
         return np.ndarray(shape=tuple(), dtype='U1',
-                          buffer=data.flatten().tostring())[()]
+                          buffer=numpy_to_bytes(data.flatten()))[()]
     elif isinstance(data, np.ndarray) and data.dtype.char == 'S':
         # We just need to convert it elementwise.
         new_data = np.zeros(shape=data.shape,
@@ -525,9 +554,10 @@ def convert_to_numpy_str(data, length=None):
         for i in range(0, new_data.shape[0]):
             chunk = data[(i*length):((i+1)*length)]
             if data.dtype.name == 'uint32':
-                new_data[i] = np.ndarray(shape=tuple(),
-                                         dtype=new_data.dtype,
-                                         buffer=chunk.tostring())[()]
+                new_data[i] = np.ndarray(
+                    shape=tuple(),
+                    dtype=new_data.dtype,
+                    buffer=numpy_to_bytes(chunk))[()]
             else:
                 new_data[i] = np.unicode_(convert_to_str(chunk))
 
@@ -607,7 +637,7 @@ def convert_to_numpy_bytes(data, length=None):
         # needs to be have the dtype essentially changed by having its
         # bytes read into ndarray.
         return np.ndarray(shape=tuple(), dtype='S1',
-                          buffer=data.flatten().tostring())[()]
+                          buffer=numpy_to_bytes(data.flatten()))[()]
     elif isinstance(data, np.ndarray) and data.dtype.char == 'U':
         # We just need to convert it elementwise.
         new_data = np.zeros(shape=data.shape,
@@ -665,9 +695,10 @@ def convert_to_numpy_bytes(data, length=None):
         for i in range(0, new_data.shape[0]):
             chunk = data[(i*length2):((i+1)*length2)]
             if data.dtype.name == 'uint8':
-                new_data[i] = np.ndarray(shape=tuple(),
-                                         dtype=new_data.dtype,
-                                         buffer=chunk.tostring())[()]
+                new_data[i] = np.ndarray(
+                    shape=tuple(),
+                    dtype=new_data.dtype,
+                    buffer=numpy_to_bytes(chunk))[()]
             else:
                 new_data[i] = np.bytes_( \
                     convert_to_str(chunk).encode('UTF-8'))

@@ -1130,7 +1130,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if python_fields is not None:
                     fields = python_fields
                 else:
-                    fields = [k.tostring().decode()
+                    fields = [numpy_to_bytes(k).decode()
                               for k in matlab_fields]
                 # Now, there may be fields available that were not
                 # given, but still should be read. Keys that are not in
@@ -1218,7 +1218,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 if python_fields is not None:
                     fields = python_fields
                 else:
-                    fields = [k.tostring().decode()
+                    fields = [numpy_to_bytes(k).decode()
                               for k in matlab_fields]
                 struct_dtype = list()
                 for k in fields:
@@ -1363,10 +1363,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     dt_whole = list()
                     for k in matlab_fields:
                         if sys.hexversion >= 0x03000000:
-                            dt_whole.append((k.tostring().decode(),
+                            dt_whole.append((numpy_to_bytes(k).decode(),
                                             'object'))
                         else:
-                            dt_whole.append((k.tostring(), 'object'))
+                            dt_whole.append((numpy_to_bytes(k),
+                                             'object'))
                     data = np.zeros(shape=tuple(np.uint64(data)),
                                     dtype=dt_whole)
 
