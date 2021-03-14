@@ -2,6 +2,7 @@ include *.txt
 include *.rst
 include *.py
 include *.cfg
+include *.toml
 recursive-include tests *.py *.m
 recursive-include doc *
 prune doc/build
