@@ -497,6 +497,10 @@ Versions
 0.1.17. Bugfix release that fixed the following bugs.
         * Issue #109. Fixed the fix Issue #102 for 32-bit platforms (previous
           fix was segfaulting).
+        * Moved to using ``pkg_resources.parse_version`` from ``setuptools``
+          with ``distutils.version`` classes as a fallback instead of just the
+          later to prepare for the removal of ``distutils`` (PEP 632) and
+          prevent warnings on Python versions where it is marked as deprecated.
 
 0.1.16. Bugfix release that fixed the following bugs.
         * Issue #81 and #82. ``h5py.File`` will require the mode to be
