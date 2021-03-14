@@ -494,7 +494,7 @@ Versions
        `pytest <https://pypi.org/project/pytest>`_ instead of
        `nose <https://pypi.org/project/nose>`_.
 
-0.1.17. Bugfix release that fixed the following bugs.
+0.1.17. Bugfix and deprecation workaround release that fixed the following.
         * Issue #109. Fixed the fix Issue #102 for 32-bit platforms (previous
           fix was segfaulting).
         * Moved to using ``pkg_resources.parse_version`` from ``setuptools``
