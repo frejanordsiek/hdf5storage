@@ -956,11 +956,11 @@ def set_attribute(target, name, value):
                 target_attributes)):
             target_attributes.create(name, value)
     else:
-        array = target_attributes[name]
-        if array.dtype != value.dtype \
-            or array.shape != value.shape:
+        attr = target_attributes[name]
+        if attr.dtype != value.dtype \
+            or attr.shape != value.shape:
             target_attributes.create(name, value)
-        elif np.any(array != value):
+        elif np.any(attr != value):
             target_attributes.modify(name, value)
 
 
