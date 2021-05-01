@@ -774,12 +774,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # already exists but is not a group, it needs to be deleted
             # before being created.
 
-            try:
-                if not isinstance(grp[name], h5py.Group):
-                    del grp[name]
-            except:
-                pass
-            dsetgrp = grp.create_group(name)
+            dsetgrp = grp.get(name)
+            if dsetgrp is None:
+                dsetgrp = grp.create_group(name)
+            elif not isinstance(dsetgrp, h5py.Group):
+                del grp[name]
+                dsetgrp = grp.create_group(name)
 
             # Write the metadata, and set the MATLAB_class to 'struct'
             # explicitly.
@@ -1095,13 +1095,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # struct_data.
             struct_data = dict()
             is_multi_element = True
-            for k in dset:
+            for k, fld in dset.items():
                 # Unescape the name.
                 unescaped_k = unescape_path(k)
                 # We must exclude group_for_references
-                if dset[k].name == f.options.group_for_references:
+                if fld.name == f.options.group_for_references:
                     continue
-                fld = dset[k]
                 if isinstance(fld, h5py.Group) \
                         or h5py.check_dtype(ref=fld.dtype) is None \
                         or len(set(fld.attrs) \
@@ -1624,12 +1623,11 @@ class PythonDictMarshaller(TypeMarshaller):
         # already exists but is not a group, it needs to be deleted
         # before being created.
 
-        try:
-            grp2 = grp[name]
-            if not isinstance(grp[name], h5py.Group):
-                del grp[name]
-                grp2 = grp.create_group(name)
-        except:
+        grp2 = grp.get(name)
+        if grp2 is None:
+            grp2 = grp.create_group(name)
+        elif not isinstance(grp2, h5py.Group):
+            del grp[name]
             grp2 = grp.create_group(name)
 
         # Write the metadata.

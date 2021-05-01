@@ -1913,15 +1913,14 @@ class File(collections.abc.MutableMapping):
                 # Check that the containing group is in the file and is
                 # indeed a group. If it isn't an error needs to be
                 # thrown.
-                if groupname not in self._file \
-                        or not isinstance(self._file[groupname],
-                                          h5py.Group):
+                grp = self._file.get(groupname)
+                if grp is None or not isinstance(grp, h5py.Group):
                     raise KeyError(
                         'Could not find containing Group '
                         + groupname + '.')
                 # Hand off everything to the low level reader.
                 datas.append(self._file_wrapper.read_data(
-                    self._file[groupname], targetname))
+                    grp, targetname))
         # Return it all.
         return datas
 

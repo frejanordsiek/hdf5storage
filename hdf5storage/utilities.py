@@ -368,9 +368,8 @@ class LowLevelFile(object):
         """
         if dsetgrp is None:
             # If name isn't found, return error.
-            try:
-                dsetgrp = grp[name]
-            except:
+            dsetgrp = grp.get(name)
+            if dsetgrp is None:
                 raise KeyError('Could not find '
                                + posixpath.join(grp.name, name))
 
@@ -493,20 +492,20 @@ class LowLevelFile(object):
         if self._canonical_empty is None:
             self._canonical_empty = self._refs_group.get(
                 'a', default=None)
-            if self._canonical_empty is not None and (
-                    not isinstance(self._canonical_empty, h5py.Dataset)
+            if self._canonical_empty is not None:
+                ce_attrs = self._canonical_empty.attrs
+                if (not isinstance(self._canonical_empty, h5py.Dataset)
                     or self._canonical_empty.shape != (2,)
                     or not self._canonical_empty.dtype.name.startswith(
                         'uint')
                     or np.any(self._canonical_empty[...]
                               != np.uint64([0, 0]))
-                    or get_attribute_string(self._canonical_empty,
-                                            'MATLAB_class')
-                    != 'canonical empty'
-                    or get_attribute(self._canonical_empty,
-                                     'MATLAB_empty') != 1):
-                del self._refs_group['a']
-                self._canonical_empty = None
+                    or convert_attribute_to_string(ce_attrs.get(
+                        'MATLAB_class')) != 'canonical empty'
+                    or ce_attrs.get(
+                        'MATLAB_empty') != 1):
+                    del self._refs_group['a']
+                    self._canonical_empty = None
             if self._canonical_empty is None:
                 self._canonical_empty = self._refs_group.create_dataset(
                     'a', data=np.uint64([0, 0]))
@@ -1263,10 +1262,7 @@ def get_attribute(target, name):
         isn't.
 
     """
-    if name not in target.attrs:
-        return None
-    else:
-        return target.attrs[name]
+    return target.attrs.get(name)
 
 
 def convert_attribute_to_string(value):
