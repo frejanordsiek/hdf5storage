@@ -946,17 +946,22 @@ def set_attribute(target, name, value):
         Value to set the attribute to.
 
     """
-    if name not in target.attrs:
-        target.attrs.create(name, value)
+
+    # use alias to speed up the code
+    target_attributes = target.attrs
+    if name not in target_attributes:
+        target_attributes.create(name, value)
     elif name == 'MATLAB_fields':
         if not np.array_equal(value, read_matlab_fields_attribute(
-                target.attrs)):
-            target.attrs.create(name, value)
-    elif target.attrs[name].dtype != value.dtype \
-            or target.attrs[name].shape != value.shape:
-        target.attrs.create(name, value)
-    elif np.any(target.attrs[name] != value):
-        target.attrs.modify(name, value)
+                target_attributes)):
+            target_attributes.create(name, value)
+    else:
+        array = target_attributes[name]
+        if array.dtype != value.dtype \
+            or array.shape != value.shape:
+            target_attributes.create(name, value)
+        elif np.any(array != value):
+            target_attributes.modify(name, value)
 
 
 def set_attribute_string(target, name, value):
