@@ -493,6 +493,10 @@ Versions
      * Issue #96. Changed unit testing to use
        `pytest <https://pypi.org/project/pytest>`_ instead of
        `nose <https://pypi.org/project/nose>`_.
+     * Issue #113. Removed the ``get_attribute``, ``get_attribute_string``,
+       ``get_attribute_string_array``, ``set_attribute``,
+       ``set_attribute_string``, ``set_attribute_string_array``, and
+       ``del_attribute`` functions in the ``utilities`` module.
 
 0.1.18. Performance improving release.
         * Pull Request #111 from Daniel Hrisca. Many repeated calls to the

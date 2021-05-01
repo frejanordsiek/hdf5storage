@@ -1244,29 +1244,6 @@ def encode_complex(data, complex_names):
                       (complex_names[1], dtype_name)])
 
 
-def get_attribute(target, name):
-    """ Gets an attribute from a Dataset or Group.
-
-    Gets the value of an Attribute if it is present (get ``None`` if
-    not).
-
-    Parameters
-    ----------
-    target : Dataset or Group
-        Dataset or Group to get the attribute of.
-    name : str
-        Name of the attribute to get.
-
-    Returns
-    -------
-    value
-        The value of the attribute if it is present, or ``None`` if it
-        isn't.
-
-    """
-    return target.attrs.get(name)
-
-
 def convert_attribute_to_string(value):
     """ Convert an attribute value to a string.
 
@@ -1301,29 +1278,6 @@ def convert_attribute_to_string(value):
         return None
 
 
-def get_attribute_string(target, name):
-    """ Gets a string attribute from a Dataset or Group.
-
-    Gets the value of an Attribute that is a string if it is present
-    (get ``None`` if it is not present or isn't a string type).
-
-    Parameters
-    ----------
-    target : Dataset or Group
-        Dataset or Group to get the string attribute of.
-    name : str
-        Name of the attribute to get.
-
-    Returns
-    -------
-    s : str or None
-        The ``str`` value of the attribute if it is present, or ``None``
-        if it isn't or isn't a type that can be converted to ``str``
-
-    """
-    return convert_attribute_to_string(get_attribute(target, name))
-
-
 def convert_attribute_to_string_array(value):
     """ Converts an Attribute value to a string array.
 
@@ -1349,130 +1303,12 @@ def convert_attribute_to_string_array(value):
     return [convert_to_str(x) for x in value]
 
 
-def get_attribute_string_array(target, name):
-    """ Gets a string array Attribute from a Dataset or Group.
-
-    Gets the value of an Attribute that is a string array if it is
-    present (get ``None`` if not).
-
-    Parameters
-    ----------
-    target : Dataset or Group
-        Dataset or Group to get the attribute of.
-    name : str
-        Name of the string array Attribute to get.
-
-    Returns
-    -------
-    array : list of str or None
-        The string array value of the Attribute if it is present, or
-        ``None`` if it isn't.
-
-    """
-    return convert_attribute_to_string_array(get_attribute(target,
-                                                           name))
-
-
-def set_attribute(target, name, value):
-    """ Sets an attribute on a Dataset or Group.
-
-    If the attribute `name` doesn't exist yet, it is created. If it
-    already exists, it is overwritten if it differs from `value`.
-
-    Notes
-    -----
-    ``set_attributes_all`` is the fastest way to set and delete
-    Attributes in bulk.
-
-    Parameters
-    ----------
-    target : Dataset or Group
-        Dataset or Group to set the attribute of.
-    name : str
-        Name of the attribute to set.
-    value : numpy type other than numpy.unicode\\_
-        Value to set the attribute to.
-
-    See Also
-    --------
-    set_attributes_all
-
-    """
-    try:
-        target.attrs.modify(name, value)
-    except:
-        target.attrs.create(name, value)
-
-
-def set_attribute_string(target, name, value):
-    """ Sets an attribute to a string on a Dataset or Group.
-
-    If the attribute `name` doesn't exist yet, it is created. If it
-    already exists, it is overwritten if it differs from `value`.
-
-    Notes
-    -----
-    ``set_attributes_all`` is the fastest way to set and delete
-    Attributes in bulk.
-
-    Parameters
-    ----------
-    target : Dataset or Group
-        Dataset or Group to set the string attribute of.
-    name : str
-        Name of the attribute to set.
-    value : string
-        Value to set the attribute to. Can be any sort of string type
-        that will convert to a ``numpy.bytes_``
-
-    See Also
-    --------
-    set_attributes_all
-
-    """
-    set_attribute(target, name, np.bytes_(value))
-
-
-def set_attribute_string_array(target, name, string_list):
-    """ Sets an attribute to an array of string on a Dataset or Group.
-
-    If the attribute `name` doesn't exist yet, it is created. If it
-    already exists, it is overwritten with the list of string
-    `string_list` (they will be vlen strings).
-
-    Notes
-    -----
-    ``set_attributes_all`` is the fastest way to set and delete
-    Attributes in bulk.
-
-    Parameters
-    ----------
-    target : Dataset or Group
-        Dataset or Group to set the string array attribute of.
-    name : str
-        Name of the attribute to set.
-    string_list : list of str
-        List of strings to set the attribute to. Strings must be ``str``
-
-    See Also
-    --------
-    set_attributes_all
-
-    """
-    s_list = [convert_to_str(s) for s in string_list]
-    target.attrs.create(name, s_list,
-                        dtype=h5py.special_dtype(vlen=str))
-
-
 def set_attributes_all(target, attributes, discard_others=True):
     """ Set Attributes in bulk and optionally discard others.
 
     Sets each Attribute in turn (modifying it in place if possible if it
     is already present) and optionally discarding all other Attributes
-    not explicitly set. This function yields much greater performance
-    than the required individual calls to ``set_attribute``,
-    ``set_attribute_string``, ``set_attribute_string_array`` and
-    ``del_attribute`` put together.
+    not explicitly set.
 
     .. versionadded:: 0.2
 
@@ -1484,18 +1320,12 @@ def set_attributes_all(target, attributes, discard_others=True):
         The Attributes to set. The keys (``str``) are the names. The
         values are ``tuple`` of the Attribute kind and the value to
         set. Valid kinds are ``'string_array'``, ``'string'``, and
-        ``'value'``. The values must correspond to what
-        ``set_attribute_string_array``, ``set_attribute_string`` and
-        ``set_attribute`` would take respectively.
+        ``'value'``. The values must be ``list`` of ``str``, any string
+        type, and any type that can be given to
+        ``h5py.AttributeManager.create`` for each kind respectively.
     discard_others : bool, optional
         Whether to discard all other Attributes not explicitly set
         (default) or not.
-
-    See Also
-    --------
-    set_attribute
-    set_attribute_string
-    set_attribute_string_array
 
     """
     attrs = target.attrs
@@ -1528,22 +1358,3 @@ def set_attributes_all(target, attributes, discard_others=True):
     if discard_others:
         for k in set(existing) - set(attributes):
             del attrs[k]
-
-
-def del_attribute(target, name):
-    """ Deletes an attribute on a Dataset or Group.
-
-    If the attribute `name` exists, it is deleted.
-
-    Parameters
-    ----------
-    target : Dataset or Group
-        Dataset or Group to delete attribute of.
-    name : str
-        Name of the attribute to delete.
-
-    """
-    try:
-        del target.attrs[name]
-    except:
-        pass

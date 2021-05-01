@@ -17,18 +17,11 @@ hdf5storage.utilities
    convert_to_numpy_bytes
    decode_complex
    encode_complex
-   get_attribute
    convert_attribute_to_string
-   get_attribute_string
    convert_attribute_to_string_array
-   get_attribute_string_array
    read_all_attributes_into
    read_matlab_fields_attribute
-   set_attribute
-   set_attribute_string
-   set_attribute_string_array
    set_attributes_all
-   del_attribute
 
 
 LowLevelFile
@@ -93,35 +86,16 @@ encode_complex
 .. autofunction:: encode_complex
 
 
-get_attribute
--------------
-
-.. autofunction:: get_attribute
-
-
-
 convert_attribute_to_string
 ---------------------------
 
 .. autofunction:: convert_attribute_to_string
 
 
-get_attribute_string
---------------------
-
-.. autofunction:: get_attribute_string
-
-
 convert_attribute_to_string_array
 ---------------------------------
 
 .. autofunction:: convert_attribute_to_string_array
-
-
-get_attribute_string_array
---------------------------
-
-.. autofunction:: get_attribute_string_array
 
 
 read_all_attributes_into
@@ -136,32 +110,9 @@ read_matlab_fields_attribute
 .. autofunction:: read_matlab_fields_attribute
 
 
-set_attribute
--------------
-
-.. autofunction:: set_attribute
-
-
-set_attribute_string
---------------------
-
-.. autofunction:: set_attribute_string
-
-
-set_attribute_string_array
---------------------------
-
-.. autofunction:: set_attribute_string_array
-
-
 set_attributes_all
 ------------------
 
 .. autofunction:: set_attributes_all
 
-
-del_attribute
--------------
-
-.. autofunction:: del_attribute
 

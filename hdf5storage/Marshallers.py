@@ -397,10 +397,7 @@ class TypeMarshaller(object):
             The Attributes to set. The keys (``str``) are the names. The
             values are ``tuple`` of the Attribute kind and the value to
             set. Valid kinds are ``'string_array'``, ``'string'``, and
-            ``'value'``. The values must correspond to what
-            ``set_attribute_string_array``, ``set_attribute_string`` and
-            ``set_attribute`` would take respectively. Default is
-            no Attributes to set (``None``).
+            ``'value'``. Default is no Attributes to set (``None``).
 
         Notes
         -----
