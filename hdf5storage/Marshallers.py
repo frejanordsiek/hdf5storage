@@ -41,8 +41,8 @@ from .utilities import does_dtype_have_a_zero_shape, \
     convert_numpy_str_to_uint16, convert_numpy_str_to_uint32, \
     convert_to_str, convert_to_numpy_str, convert_to_numpy_bytes, \
     decode_complex, encode_complex, convert_attribute_to_string, \
-    convert_attribute_to_string_array, set_attribute_string, \
-    set_attributes_all, del_attribute, convert_dtype_to_str
+    convert_attribute_to_string_array, set_attributes_all, \
+    convert_dtype_to_str
 import hdf5storage.exceptions
 
 
@@ -1661,14 +1661,18 @@ class PythonDictMarshaller(TypeMarshaller):
         # doing MATLAB compatibility (otherwise, the attribute needs to
         # be deleted).
         if f.options.matlab_compatible:
-            grp2name = grp2.name
+            grp2name = np.bytes_(grp2.name)
         for i, k in enumerate(names):
             obj = f.write_data(grp2, k, values[i], None)
             if obj is not None:
+                obj_attrs = obj.attrs
                 if f.options.matlab_compatible:
-                    set_attribute_string(obj, 'H5PATH', grp2name)
+                    obj_attrs.modify('H5PATH', grp2name)
                 else:
-                    del_attribute(obj, 'H5PATH')
+                    try:
+                        del obj_attrs['H5PATH']
+                    except KeyError:
+                        pass
         # Done
         return grp2
 

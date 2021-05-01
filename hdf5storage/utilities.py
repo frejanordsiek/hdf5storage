@@ -509,11 +509,10 @@ class LowLevelFile(object):
             if self._canonical_empty is None:
                 self._canonical_empty = self._refs_group.create_dataset(
                     'a', data=np.uint64([0, 0]))
-                set_attribute_string(self._canonical_empty,
-                                     'MATLAB_class',
-                                     'canonical empty')
-                set_attribute(self._canonical_empty, 'MATLAB_empty',
-                              np.uint8(1))
+                ce_attrs = self._canonical_empty.attrs
+                ce_attrs.modify('MATLAB_class',
+                                np.bytes_('canonical empty'))
+                ce_attrs.modify('MATLAB_empty', np.uint8(1))
 
         # We need to grab the special reference dtype and make an empty
         # array to store all the references in.
@@ -537,12 +536,15 @@ class LowLevelFile(object):
                                   None)
             if obj is not None:
                 data_refs_flat[index] = obj.ref
+                obj_attrs = obj.attrs
                 if self._options.matlab_compatible:
-                    set_attribute_string(obj,
-                                         'H5PATH',
-                                         self._refs_group_name)
+                    obj_attrs.modify('H5PATH',
+                                     np.bytes_(self._refs_group_name))
                 else:
-                    del_attribute(obj, 'H5PATH')
+                    try:
+                        del obj_attrs['H5PATH']
+                    except KeyError:
+                        pass
 
         # Now, the dtype needs to be changed to the reference type,
         # which will incidentally copy it.
