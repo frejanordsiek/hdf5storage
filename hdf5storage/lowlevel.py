@@ -151,14 +151,15 @@ def read_data(f, grp, name, options):
 
     """
     # If name isn't found, return error.
-    if name not in grp:
+    dsetgrp = grp.get(name)
+    if dsetgrp is None:
         raise CantReadError('Could not find '
                             + posixpath.join(grp.name, name))
 
     # Get the different attributes that can be used to identify they
     # type, which are the type string and the MATLAB class.
-    type_string = get_attribute_string(grp[name], 'Python.Type')
-    matlab_class = get_attribute_string(grp[name], 'MATLAB_class')
+    type_string = get_attribute_string(dsetgrp, 'Python.Type')
+    matlab_class = get_attribute_string(dsetgrp, 'MATLAB_class')
 
     # If the type_string is present, get the marshaller for it. If it is
     # not, use the one for the matlab class if it is given. Otherwise,
@@ -183,4 +184,4 @@ def read_data(f, grp, name, options):
     if m is not None:
         return m.read(f, grp, name, options)
     else:
-        raise CantReadError('Could not read ' + grp[name].name)
+        raise CantReadError('Could not read ' + dsetgrp.name)

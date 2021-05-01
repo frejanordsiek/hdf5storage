@@ -1308,10 +1308,9 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
         for groupname, targetname, data in towrite:
             # Need to make sure groupname is a valid group in f and grab its
             # handle to pass on to the low level function.
-            if groupname not in f:
+            grp = f.get(groupname)
+            if grp is None:
                 grp = f.require_group(groupname)
-            else:
-                grp = f[groupname]
 
             # Hand off to the low level function.
             lowlevel.write_data(f, grp, targetname, data,
@@ -1496,13 +1495,13 @@ def reads(paths, filename='data.h5', options=None, **keywords):
         for groupname, targetname in toread:
             # Check that the containing group is in f and is indeed a
             # group. If it isn't an error needs to be thrown.
-            if groupname not in f \
-                    or not isinstance(f[groupname], h5py.Group):
+            grp = f.get(groupname)
+            if grp is None or not isinstance(grp, h5py.Group):
                 raise CantReadError('Could not find containing Group '
                                     + groupname + '.')
 
             # Hand off everything to the low level reader.
-            datas.append(lowlevel.read_data(f, f[groupname],
+            datas.append(lowlevel.read_data(f, grp,
                                             targetname, options))
     except:
         raise

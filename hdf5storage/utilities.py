@@ -1023,5 +1023,6 @@ def del_attribute(target, name):
         Name of the attribute to delete.
 
     """
-    if name in target.attrs:
-        del target.attrs[name]
+    attr_manager = target.attrs
+    if name in attr_manager:
+        del attr_manager[name]

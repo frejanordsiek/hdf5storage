@@ -409,8 +409,9 @@ class TypeMarshaller(object):
 
         # The metadata that is written depends on the format.
 
+        dsetgrp = grp[name]
         if options.store_python_metadata:
-            set_attribute_string(grp[name], 'Python.Type', type_string)
+            set_attribute_string(dsetgrp, 'Python.Type', type_string)
 
         # If we are not storing python information or doing MATLAB
         # compatibility, then attributes not in the python and/or
@@ -424,8 +425,8 @@ class TypeMarshaller(object):
         if options.matlab_compatible:
             attributes_used |= self.matlab_attributes
 
-        for attribute in (set(grp[name].attrs.keys()) - attributes_used):
-            del_attribute(grp[name], attribute)
+        for attribute in (set(dsetgrp.attrs.keys()) - attributes_used):
+            del_attribute(dsetgrp, attribute)
 
     def read(self, f, grp, name, options):
         """ Read a Python object from file.
@@ -742,6 +743,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # Dataset as opposed to a HDF5 Reference array). The H5PATH
             # attribute needs to be set appropriately, while all other
             # attributes need to be deleted.
+            grp2_name = grp2.name
             for field in field_names:
                 new_data = np.zeros(shape=data_to_store.shape,
                                     dtype='object')
@@ -765,20 +767,21 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     write_data(f, grp2, field, new_data, None, options)
 
                 if field in grp2:
+                    grp2_field = grp2[field]
                     if options.matlab_compatible:
-                        set_attribute_string(grp2[field], 'H5PATH',
-                                             grp2.name)
+                        set_attribute_string(grp2_field, 'H5PATH',
+                                             grp2_name)
                     else:
-                        del_attribute(grp2[field], 'H5PATH')
+                        del_attribute(grp2_field, 'H5PATH')
 
                     # In the case that we wrote a Reference array (not a
                     # single element), then all other attributes need to
                     # be removed.
                     if np.prod(new_data.shape) != 1:
                         for attribute in (set( \
-                                grp2[field].attrs.keys()) \
+                                grp2_field.attrs.keys()) \
                                 - set(['H5PATH'])):
-                            del_attribute(grp2[field], attribute)
+                            del_attribute(grp2_field, attribute)
         else:
             wrote_as_struct = False
             # If it has fields and it isn't a Reference type, none of
@@ -1019,6 +1022,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if name not in grp:
             raise NotImplementedError(name + ' is not present.')
 
+        # Get the object.
+        dsetgrp = grp[name]
+
         # Get the different attributes this marshaller uses.
 
         if sys.hexversion >= 0x03000000:
@@ -1026,7 +1032,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         else:
             defaultfactory = lambda : None
         attributes = collections.defaultdict(defaultfactory)
-        read_all_attributes_into(grp[name].attrs, attributes)
+        read_all_attributes_into(dsetgrp.attrs, attributes)
 
         str_attrs = dict()
         for attr_name in ('Python.Type',
@@ -1072,19 +1078,19 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # recursively). If it is a Group, then it is a structured
         # ndarray like object that needs to be read field wise and
         # constructed.
-        if isinstance(grp[name], h5py.Dataset):
+        if isinstance(dsetgrp, h5py.Dataset):
             # Read the data.
-            data = grp[name][...]
+            data = dsetgrp[...]
 
             # If it is a reference type, then we need to make an object
             # array that is its replicate, but with the objects they are
             # pointing to in their elements instead of just the
             # references.
-            if h5py.check_dtype(ref=grp[name].dtype) is not None:
+            if h5py.check_dtype(ref=dsetgrp.dtype) is not None:
                 data = read_object_array(f, data, options)
         else:
             # Starting with an empty dict, all that has to be done is
-            # iterate through all the Datasets and Groups in grp[name]
+            # iterate through all the Datasets and Groups in dsetgrp
             # and add them to a dict with their name as the key. Since
             # we don't want an exception thrown by reading an element to
             # stop the whole reading process, the reading is wrapped in
@@ -1100,11 +1106,10 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # struct_data.
             struct_data = dict()
             is_multi_element = True
-            for k in grp[name]:
+            for k, fld in dsetgrp.items():
                 # We must exclude group_for_references
-                if grp[name][k].name == options.group_for_references:
+                if fld.name == options.group_for_references:
                     continue
-                fld = grp[name][k]
                 if isinstance(fld, h5py.Group) \
                         or h5py.check_dtype(ref=fld.dtype) is None \
                         or len(set(fld.attrs.keys()) \
@@ -1114,7 +1119,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         'Python.Empty']))) != 0:
                     is_multi_element = False
                 try:
-                    struct_data[k] = read_data(f, grp[name], k,
+                    struct_data[k] = read_data(f, dsetgrp, k,
                                                options)
                 except:
                     pass
@@ -1612,12 +1617,12 @@ class PythonDictMarshaller(TypeMarshaller):
         # before being created.
 
         if name not in grp:
-            grp.create_group(name)
+            grp2 = grp.create_group(name)
         elif not isinstance(grp[name], h5py.Group):
             del grp[name]
-            grp.create_group(name)
-
-        grp2 = grp[name]
+            grp2 = grp.create_group(name)
+        else:
+            grp2 = grp[name]
 
         # Write the metadata.
         self.write_metadata(f, grp, name, data, type_string, options)
@@ -1634,19 +1639,22 @@ class PythonDictMarshaller(TypeMarshaller):
         # needs to be set as the path of grp2 on all of them if we are
         # doing MATLAB compatibility (otherwise, the attribute needs to
         # be deleted).
+        grp2_name = grp2.name
         for k, v in data.items():
             write_data(f, grp2, k, v, None, options)
             if k in grp2:
                 if options.matlab_compatible:
-                    set_attribute_string(grp2[k], 'H5PATH', grp2.name)
+                    set_attribute_string(grp2[k], 'H5PATH', grp2_name)
                 else:
                     del_attribute(grp2[k], 'H5PATH')
 
     def write_metadata(self, f, grp, name, data, type_string, options):
-        # First, call the inherited version to do most of the work.
+        # First, call the inherited version to do most of the work and
+        # get the group.
 
         TypeMarshaller.write_metadata(self, f, grp, name, data,
                                       type_string, options)
+        grp2 = grp[name]
 
         # Grab all the keys and sort the list.
         fields = sorted(list(data.keys()))
@@ -1654,7 +1662,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # If we are storing python metadata, we need to set the
         # 'Python.Fields' Attribute to be all the keys.
         if options.store_python_metadata:
-            set_attribute_string_array(grp[name], 'Python.Fields',
+            set_attribute_string_array(grp2, 'Python.Fields',
                                        fields)
 
         # If we are making it MATLAB compatible and have h5py version
@@ -1672,11 +1680,11 @@ class PythonDictMarshaller(TypeMarshaller):
                     fs[i] = np.array([c.encode('ascii') for c in s],
                                      dtype='S1')
             except UnicodeDecodeError:
-                del_attribute(grp[name], 'MATLAB_fields')
+                del_attribute(grp2, 'MATLAB_fields')
             else:
-                set_attribute(grp[name], 'MATLAB_fields', fs)
+                set_attribute(grp2, 'MATLAB_fields', fs)
         else:
-            del_attribute(grp[name], 'MATLAB_fields')
+            del_attribute(grp2, 'MATLAB_fields')
 
         # If we are making it MATLAB compatible, the MATLAB_class
         # attribute needs to be set for the data type. If the type
@@ -1685,17 +1693,20 @@ class PythonDictMarshaller(TypeMarshaller):
 
         tp = type(data)
         if options.matlab_compatible and tp in self.__MATLAB_classes:
-            set_attribute_string(grp[name], 'MATLAB_class',
+            set_attribute_string(grp2, 'MATLAB_class',
                                  self.__MATLAB_classes[tp])
         else:
-            del_attribute(grp[name], 'MATLAB_class')
+            del_attribute(grp2, 'MATLAB_class')
 
     def read(self, f, grp, name, options):
         # If name is not present or is not a Group, then we can't read
         # it and have to throw an error.
-        if name not in grp or not isinstance(grp[name], h5py.Group):
-            raise NotImplementedError('No Group ' + name +
-                                      ' is present.')
+        grp2 = grp.get(name)
+        if grp2 is None:
+            raise NotImplementedError('No object with name ' + name
+                                      + 'is present.')
+        if not isinstance(grp2, h5py.Group):
+            raise NotImplementedError(name + ' is not a Group.')
 
         # Starting with an empty dict, all that has to be done is
         # iterate through all the Datasets and Groups in grp[name] and
@@ -1705,12 +1716,12 @@ class PythonDictMarshaller(TypeMarshaller):
         # block that just catches exceptions and then does nothing about
         # them (nothing needs to be done).
         data = dict()
-        for k in grp[name]:
+        for k, dsetgrp in grp2.items():
             # We must exclude group_for_references
-            if grp[name][k].name == options.group_for_references:
+            if dsetgrp.name == options.group_for_references:
                 continue
             try:
-                data[k] = read_data(f, grp[name], k, options)
+                data[k] = read_data(f, grp2, k, options)
             except:
                 pass
         return data
