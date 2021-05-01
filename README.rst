@@ -257,6 +257,11 @@ canonical empty  0.1      ``np.float64([])``
 Versions
 ========
 
+0.1.18. Performance improving release.
+        * Pull Request #111 from Daniel Hrisca. Many repeated calls to the
+          ``__getitem__`` methods of objects were turned into single calls.
+        * Further reducionts in ``__getitem__`` calls in the spirit of PR #111.
+
 0.1.17. Bugfix and deprecation workaround release that fixed the following.
         * Issue #109. Fixed the fix Issue #102 for 32-bit platforms (previous
           fix was segfaulting).
