@@ -497,6 +497,8 @@ Versions
        ``get_attribute_string_array``, ``set_attribute``,
        ``set_attribute_string``, ``set_attribute_string_array``, and
        ``del_attribute`` functions in the ``utilities`` module.
+     * Issue #115. Added an ``options`` argument to ``loadmat`` to explicitly
+       pass an ``Options`` instance.
 
 0.1.18. Performance improving release.
         * Pull Request #111 from Daniel Hrisca. Many repeated calls to the

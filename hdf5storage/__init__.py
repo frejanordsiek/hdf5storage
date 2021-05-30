@@ -2459,7 +2459,7 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
 
 def loadmat(file_name, mdict=None, appendmat=True,
             variable_names=None,
-            marshaller_collection=None, **keywords):
+            marshaller_collection=None, options=None, **keywords):
     """ Loads data to a MATLAB MAT file.
 
     Reads data from the specified variables (or all) in a MATLAB MAT
@@ -2476,6 +2476,10 @@ def loadmat(file_name, mdict=None, appendmat=True,
     Variables in `variable_names` that are missing from the file do not
     cause an exception and will just be missing from the output.
 
+    .. versionadded:: 0.2
+
+       The `options` argument.
+
     Parameters
     ----------
     file_name : str
@@ -2489,9 +2493,16 @@ def loadmat(file_name, mdict=None, appendmat=True,
         doesn't already end in it or not.
     variable_names: None or sequence, optional
         The variable names to read from the file. ``None`` selects all.
-    marshaller_collection : MarshallerCollection, optional
-        Collection of marshallers from disk to use. Only applicable if
-        not dispatching to SciPy (version 7.3 and newer files).
+    marshaller_collection : MarshallerCollection or None, optional
+        Collection of marshallers from disk to use, or ``None`` to use
+        the default (default). Ignored if `options` is passed. Only
+        applicable if not dispatching to SciPy (version 7.3 and newer
+        files).
+    options : Options or None, optional
+        The options to use when reading and/or writing, or ``None`` to
+        use the default. If passed, it overrides the
+        `marshaller_collection` argument. Only applicable if not
+        dispatching to SciPy (version 7.3 and newer files).
     **keywords :
         Additional keywords arguments to be passed onto
         ``scipy.io.loadmat`` if dispatching to SciPy if the file is not
@@ -2535,8 +2546,11 @@ def loadmat(file_name, mdict=None, appendmat=True,
     # OSError occurs, then it wasn't an HDF5 file and the scipy function
     # can be tried instead.
     try:
-        # Make the options with the given marshallers.
-        options = Options(marshaller_collection=marshaller_collection)
+        # Make the options with the given marshallers if we weren't
+        # given it.
+        if options is None:
+            options = Options(
+                marshaller_collection=marshaller_collection)
 
         # Append .mat if it isn't on the end of the file name and we are
         # supposed to.
