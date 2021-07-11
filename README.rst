@@ -364,6 +364,19 @@ type they are read as.
 .. [15] Controlled by an option.
 
 
+File Incompatibilities
+======================
+
+The storage of empty ``numpy.ndarray`` (or objects that would be stored like
+one) when the ``Options.store_shape_for_empty`` (implicitly set when Matlab
+compatibility is enabled) is incompatible with the main branch of this package
+before 2021-07-11 as well as all 0.1.x versions of this package since they
+have a bug (Issue #114). The incompatibility is caused by those versions
+storing the array shape in the Dataset after reversing the dimension order
+instead of before, meaning that the array is read with its dimensions reversed
+from what is expected if read after the bug fix or by Matlab.
+
+
 Versions
 ========
 

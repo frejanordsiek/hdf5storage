@@ -310,6 +310,16 @@ is stored in place of the data as an array of ``np.uint64`` if
 :py:attr:`Options.store_shape_for_empty` is set (set implicitly if the
 `matlab_compatible` option is set).
 
+.. warning::
+
+   The shape that is stored in the Dataset if
+   :py:attr:`Options.store_shape_for_empty` is set is the wrong order
+   (reverse) the main branch before 2021-07-11 and all 0.1.x versions
+   of this package (where it will not be fixed since it would break
+   compatibility). See
+   `Issue #114 <https://github.com/frejanordsiek/hdf5storage/issues/114>`_
+   for more information.
+
 H5PATH
 ------
 
