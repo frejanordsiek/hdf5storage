@@ -254,6 +254,23 @@ canonical empty  0.1      ``np.float64([])``
 .. [12] Depends on whether there is a complex part or not.
 
 
+File Incompatibilities
+======================
+
+The storage of empty ``numpy.ndarray`` (or objects that would be stored like
+one) when the ``Options.store_shape_for_empty`` (implicitly set when Matlab
+compatibility is enabled) is incompatible with both Matlab and the main
+branch of this package after 2021-07-11 due to a bug (Issue #114) that cannot
+be fixed without breaking compatibility in the 0.1.x series and thus
+will not be fixed (it is however fixed in the main branch after 2021-07-11)
+since such a fix would mean the version could not be of the form 0.1.x.
+
+The incompatibility is caused by storing the array shape in the Dataset after
+reversing the dimension order instead of before, meaning that the array is
+read with its dimensions reversed from what is expected if read by Matlab
+or the main branch after 2021-07-11.
+
+
 Versions
 ========
 
