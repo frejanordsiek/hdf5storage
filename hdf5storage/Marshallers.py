@@ -717,13 +717,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             data_to_store = np.uint8(data_to_store)
 
         # If data is empty, we instead need to store the shape of the
-        # array if the appropriate option is set.
+        # array if the appropriate option is set. The shape should be
+        # the shape before dimension reversal.
 
         if f.options.store_shape_for_empty and (data.size == 0 \
                 or ((data.dtype.type == np.bytes_ \
                 or data.dtype.type == np.str_) \
                 and data.nbytes == 0)):
-            data_to_store = np.uint64(data_to_store.shape)
+            if f.options.reverse_dimension_order:
+                data_to_store = np.uint64(data_to_store.shape[::-1])
+            else:
+                data_to_store = np.uint64(data_to_store.shape)
 
         # If it is a complex type, then it needs to be encoded to have
         # the proper complex field names.
@@ -1352,6 +1356,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # struct, then the proper dtype has to be constructed from
             # the field names if present (the dtype of each individual
             # field is set to object).
+            #
+            # If it was not empty, the order of the dimensions must be
+            # switched from Fortran order which MATLAB uses to C order which Python uses.
             if matlab_empty == 1:
                 if matlab_fields is None:
                     data = np.zeros(
@@ -1365,10 +1372,8 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                         dt_whole.append((uk, 'object'))
                     data = np.zeros(shape=tuple(np.uint64(data)),
                                     dtype=dt_whole)
-
-            # The order of the dimensions must be switched from Fortran
-            # order which MATLAB uses to C order which Python uses.
-            data = data.T
+            else:
+                data = data.T
 
             # Now, if the matlab class is 'single' or 'double', data
             # could possibly be a complex type which needs to be

@@ -370,6 +370,9 @@ Versions
 0.2. Feature release adding/changing the following, including some API breaking changes.
      * Issues #50 and #84. Python < 3.5 support dropped.
      * Issue #53. h5py 2.1.x and 2.2.x  support dropped.
+     * Issue #114. Fixed bug where the shape was stored in the opposite order as
+       Matlab for empty ndarrays when ``Options.store_shape_for_empty`` is set.
+       This causes a file compatibility change.
      * Issue #85. Changed to using the PEP 518 method of specifying
        build dependencies from using the older ``ez_setup.py`` to ensure
        ``setuptools`` was available for building.

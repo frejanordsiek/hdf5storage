@@ -305,7 +305,7 @@ Python and MATLAB Attributes respectively
 If the datatype being stored has zero elements, then this Attribute is
 set to ``1``. Otherwise, the Attribute is deleted. For Numpy types (or
 those converted to them), the shape after conversions to at least 2D,
-array transposes, and conversions of strings to unsigned integer types
+and conversions of strings to unsigned integer types (but before transposes)
 is stored in place of the data as an array of ``np.uint64`` if
 :py:attr:`Options.store_shape_for_empty` is set (set implicitly if the
 `matlab_compatible` option is set).
@@ -723,8 +723,8 @@ store_shape_for_empty
 ``bool``
 
 Whether, for empty arrays, to store the shape of the array (after
-transformations) as the Dataset for the object. This option is set to
-``True`` implicitly by ``matlab_compatible``.
+transformations except for transpose) as the Dataset for the object. This
+option is set to ``True`` implicitly by ``matlab_compatible``.
 
 
 How Data Is Read from MATLAB MAT Files
