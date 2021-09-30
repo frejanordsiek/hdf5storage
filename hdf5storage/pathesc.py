@@ -241,9 +241,9 @@ def process_path(pth):
 
     Parameters
     ----------
-    pth : str or bytes or pathlib.PurePath or Iterable
+    pth : str or bytes or pathlib.PurePath or Sequence
         The POSIX style path as a ``str`` or ``bytes`` or the
-        separated path in an Iterable with the elements being ``str``,
+        separated path in an Sequence with the elements being ``str``,
         ``bytes``, and ``pathlib.PurePath``. For separated paths,
         escaping will be done on each part.
 
@@ -277,27 +277,24 @@ def process_path(pth):
             p = posixpath.join(*parts[1:])
         else:
             p = posixpath.join(*parts)
-    elif not isinstance(pth, collections.abc.Iterable):
-        raise TypeError('p must be str, bytes, pathlib.PurePath, or '
-                        'an Iterable solely of one of those three.')
-    else:
-        # Check that all elements are unicode or bytes.
-        if not all([isinstance(s, (bytes, str, pathlib.PurePath))
-                    for s in pth]):
-            raise TypeError('Elements of p must be str, bytes, or '
-                            'pathlib.PurePath.')
-
+    elif isinstance(pth, collections.abc.Sequence):
         # Escape (and possibly convert to str) each element and then
         # join them all together.
-        parts = [None] * len(pth)
+        parts_seq = []
         for i, s in enumerate(pth):
             if isinstance(s, bytes):
                 s = s.decode('utf-8')
             elif isinstance(s, pathlib.PurePath):
                 s = str(s)
-            parts[i] = escape_path(s)
-        parts = tuple(parts)
+            elif not isinstance(s, str):
+                raise TypeError('Elements of p must be str, bytes, or '
+                                'pathlib.PurePath.')
+            parts_seq.append(escape_path(s))
+        parts = tuple(parts_seq)
         p = posixpath.join(*parts)
+    else:
+        raise TypeError('p must be str, bytes, pathlib.PurePath, or '
+                        'an Sequence solely of one of those three.')
 
     # Remove double slashes and a non-root trailing slash.
     path = posixpath.normpath(p)
