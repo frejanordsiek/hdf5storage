@@ -1700,8 +1700,9 @@ class File(collections.abc.MutableMapping):
     def close(self):
         """ Closes the file. """
         with self._lock:
-            self._file.close()
-            self._file = None
+            if self._file is not None:
+                self._file.close()
+                self._file = None
 
     def flush(self):
         """ Flush contents to disk.
