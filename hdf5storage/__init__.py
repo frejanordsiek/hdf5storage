@@ -1973,7 +1973,10 @@ class File(collections.abc.MutableMapping):
             If the file is not open.
 
         """
-        groupname, targetname = pathesc.process_path(path)
+        try:
+            groupname, targetname = pathesc.process_path(path)
+        except TypeError:
+            return False
         # File operations must be synchronized.
         with self._lock:
             # Check that the file is open.
