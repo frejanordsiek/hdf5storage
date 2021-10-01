@@ -1060,6 +1060,8 @@ class MarshallerCollection(object):
             raise TypeError('lazy_loading must be bool.')
         if not isinstance(priority, collections.abc.Sequence):
             raise TypeError('priority must be a Sequence.')
+        if len(priority) != 3:
+            raise ValueError('priority must have exactly 3 elements.')
         if sorted(priority) != sorted(('builtin', 'plugin', 'user')):
             raise ValueError('priority has a missing or invalid '
                              'element.')
