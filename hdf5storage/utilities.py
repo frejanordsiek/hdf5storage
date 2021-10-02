@@ -508,7 +508,7 @@ class LowLevelFile(object):
                     or not self._canonical_empty.dtype.name.startswith(
                         'uint')
                     or np.any(self._canonical_empty[...]
-                              != np.uint64([0, 0]))
+                              != np.array([0, 0], dtype=np.uint64))
                     or convert_attribute_to_string(ce_attrs.get(
                         'MATLAB_class')) != 'canonical empty'
                     or ce_attrs.get(
@@ -517,7 +517,7 @@ class LowLevelFile(object):
                     self._canonical_empty = None
             if self._canonical_empty is None:
                 self._canonical_empty = self._refs_group.create_dataset(
-                    'a', data=np.uint64([0, 0]))
+                    'a', data=np.array([0, 0], dtype=np.uint64))
                 ce_attrs = self._canonical_empty.attrs
                 ce_attrs.modify('MATLAB_class',
                                 np.bytes_('canonical empty'))
@@ -727,7 +727,7 @@ def convert_numpy_str_to_uint16(data):
     """
     # An empty string should be an empty uint16
     if data.nbytes == 0:
-        return np.uint16([])
+        return np.zeros((0, ), dtype='uint16')
 
     # We need to use the UTF-16 codec for our endianness. Using the
     # right one means we don't have to worry about removing the BOM.
@@ -775,7 +775,7 @@ def convert_numpy_str_to_uint32(data):
     """
     if data.nbytes == 0:
         # An empty string should be an empty uint32.
-        return np.uint32([])
+        return np.zeros((0, ), dtype='uint32')
     else:
         # We need to calculate the new shape from the current shape,
         # which will have to be expanded along the rows to fit all the
