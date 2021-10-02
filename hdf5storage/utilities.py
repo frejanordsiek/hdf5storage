@@ -151,10 +151,11 @@ def read_matlab_fields_attribute(attrs):
         raw_buf = np.empty(attr_id.shape, dtype=dt)
         attr_id.read(raw_buf, mtype=attr_id.get_type())
         attr = np.empty(raw_buf.shape, dtype='object')
-        for i, (length, ptr) in enumerate(raw_buf.flat):
+        attr_flat = attr.ravel()
+        for i, (length, ptr) in enumerate(raw_buf.ravel()):
             at = np.empty(length, dtype='S1')
             ctypes.memmove(at.ctypes.data, int(ptr), int(length))
-            attr.flat[i] = at
+            attr_flat[i] = at
         return attr
 
 
