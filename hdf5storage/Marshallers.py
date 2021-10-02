@@ -35,6 +35,7 @@ import sys
 import warnings
 
 import numpy as np
+import numpy.core.records
 import h5py
 
 from .pathesc import escape_path, unescape_path
@@ -716,33 +717,33 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # converted to uint32's byte for byte instead.
 
         if data.dtype.type == np.unicode_:
-            new_data = None
+            new_data2 = None
             if f.options.convert_numpy_str_to_utf16:
                 try:
-                    new_data = convert_numpy_str_to_uint16( \
+                    new_data2 = convert_numpy_str_to_uint16( \
                         data_to_store)
                 except:
                     pass
-            if new_data is None or (type(data_to_store) == np.unicode_ \
-                    and len(data_to_store) != len(new_data)) \
+            if new_data2 is None or (type(data_to_store) == np.unicode_ \
+                    and len(data_to_store) != len(new_data2)) \
                     or (isinstance(data_to_store, np.ndarray) \
-                    and new_data.shape[-1] != data_to_store.shape[-1] \
+                    and new_data2.shape[-1] != data_to_store.shape[-1] \
                     * (data_to_store.dtype.itemsize//4)):
                 data_to_store = convert_numpy_str_to_uint32(
                     data_to_store)
             else:
-                data_to_store = new_data
+                data_to_store = new_data2
 
         # Convert scalars to arrays if that option is set. For 1d
         # arrays, an option determines whether they become row or column
         # vectors.
 
         if f.options.make_atleast_2d:
-            new_data = np.atleast_2d(data_to_store)
+            new_data3 = np.atleast_2d(data_to_store)
             if len(data_to_store.shape) == 1 \
                     and f.options.oned_as == 'column':
-                new_data = new_data.T
-            data_to_store = new_data
+                new_data = new_data3.T
+            data_to_store = new_data3
 
         # Reverse the dimension order if that option is set.
 
@@ -844,27 +845,28 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 dsetgrpname = dsetgrp.name
             for i, field in enumerate(field_names):
                 esc_field = escaped_field_names[i]
-                new_data = np.zeros(shape=data_to_store.shape,
-                                    dtype='object')
+                new_data4 = np.zeros(shape=data_to_store.shape,
+                                     dtype='object')
+                new_data4_flat = new_data4.ravel()
                 for index, x in enumerate(data_to_store.flat):
-                    new_data.flat[index] = x[field]
+                    new_data4_flat[index] = x[field]
 
                 # If we are supposed to reverse dimension order, it has
                 # already been done, but write_data expects that it
                 # hasn't, so it needs to be reversed again before
                 # passing it on.
                 if f.options.reverse_dimension_order:
-                    new_data = new_data.T
+                    new_data4 = new_data4.T
 
                 # If there is only a single element, write it extracted
                 # (don't need to use a Reference array in this
                 # case). Otherwise, write the whole thing.
-                if np.prod(new_data.shape) == 1:
+                if np.prod(new_data4.shape) == 1:
                     field_obj = f.write_data(dsetgrp, esc_field,
-                                             new_data.flat[0], None)
+                                             new_data4.flat[0], None)
                 else:
                     field_obj = f.write_data(dsetgrp, esc_field,
-                                             new_data, None)
+                                             new_data4, None)
 
                 if field_obj is not None:
                     esc_attrs = dict()
@@ -876,7 +878,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     # be removed.
                     set_attributes_all(field_obj,
                                        esc_attrs,
-                                       np.prod(new_data.shape) != 1)
+                                       np.prod(new_data4.shape) != 1)
         else:
             wrote_as_struct = False
 
@@ -1866,11 +1868,16 @@ class PythonDictMarshaller(TypeMarshaller):
 
         stored_as = convert_attribute_to_string(
             attributes['Python.dict.StoredAs'])
-        keys_values_names = convert_attribute_to_string_array(
+        keys_values_names_opt = convert_attribute_to_string_array(
             attributes['Python.dict.keys_values_names'])
-        if keys_values_names is None:
+        keys_values_names: Tuple[str, str]
+        if keys_values_names_opt is None or len(
+                keys_values_names_opt) < 2:
             keys_values_names = (f.options.dict_like_keys_name,
                                  f.options.dict_like_values_name)
+        else:
+            keys_values_names = (keys_values_names_opt[0],
+                                 keys_values_names_opt[1])
         key_str_types = convert_attribute_to_string(
             attributes['Python.dict.key_str_types'])
 
@@ -1888,7 +1895,7 @@ class PythonDictMarshaller(TypeMarshaller):
                 and escape_path(keys_values_names[1]) in grp2:
             d = tuple([f.read_data(grp2, escape_path(k))
                        for k in keys_values_names])
-            items = zip(*d)
+            items = [(v1, v2) for v1, v2 in zip(d[0], d[1])]
         else:
             # Construct the fields to grab and their proper order
             # (important for OrderedDict) from python_fields,
@@ -1950,10 +1957,9 @@ class PythonDictMarshaller(TypeMarshaller):
         # be an OrderedDict, it should be that. Otherwise, it will be a
         # dict (inheriting classes are responsible for converting it).
         if type_string == 'collections.OrderedDict':
-            tp = collections.OrderedDict
+            return collections.OrderedDict(items)
         else:
-            tp = dict
-        return tp(items)
+            return dict(items)
 
 
 class PythonCounterMarshaller(PythonDictMarshaller):

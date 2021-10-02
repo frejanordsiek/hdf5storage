@@ -107,7 +107,7 @@ def does_dtype_have_a_zero_shape(dt: np.dtype) -> bool:
         c = components.pop()
         if 0 in c.shape:
             return True
-        if c.names is not None:
+        if c.fields is not None:
             components.extend([v[0] for v in c.fields.values()])
         if c.base != c:
             components.append(c.base)

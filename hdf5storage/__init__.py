@@ -2709,13 +2709,16 @@ def make_new_default_MarshallerCollection(
     get_default_MarshallerCollection
 
     """
-    _default_marshaller_collection[0] = MarshallerCollection(*args,
-                                                             **keywords)
+    mc = MarshallerCollection(*args, **keywords)
+    if len(_default_marshaller_collection) == 0:
+        _default_marshaller_collection.append(mc)
+    else:
+        _default_marshaller_collection[0] = mc
 
 
 # Make a default MarshallerCollection of just the builtins with lazy
 # loading. This will be used as the source for those used in options. It
 # must be packed into a list so that it can be set from functions inside
 # this module without scoping problems.
-_default_marshaller_collection = [None]
+_default_marshaller_collection: List[MarshallerCollection] = []
 make_new_default_MarshallerCollection(lazy_loading=True)
