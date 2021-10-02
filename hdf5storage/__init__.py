@@ -1633,7 +1633,6 @@ class File(collections.abc.MutableMapping):
         # attributes are available in __del__ even if there is an
         # exception in the constructor.
         self._file: Optional[h5py.File] = None
-        self._options = None
         self._lock: threading.Lock = threading.Lock()
         # Check the types of the arguments.
         if not isinstance(filename, str):
@@ -1737,6 +1736,7 @@ class File(collections.abc.MutableMapping):
                  value: Optional[BaseException],
                  traceback: Optional[types.TracebackType]) -> Optional[bool]:
         self.close()
+        return None
 
     def __del__(self) -> None:
         try:

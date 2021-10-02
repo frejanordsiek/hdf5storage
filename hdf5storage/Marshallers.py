@@ -1500,12 +1500,12 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
         # this library would save with either, but Python 3 needs to map
         # both to int, which can be done by just putting the type int
         # for its entry in types.
-        self.types = [bool, int, int, float, complex]
-        self.python_type_strings = ['bool', 'int', 'long', 'float',
-                                    'complex']
+        self.types = (bool, int, int, float, complex)
+        self.python_type_strings = ('bool', 'int', 'long', 'float',
+                                    'complex')
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
-        self.matlab_classes = []
+        self.matlab_classes = ()
 
         # Update the type lookups.
         self.update_type_lookups()
