@@ -525,6 +525,9 @@ Versions
        ``del_attribute`` functions in the ``utilities`` module.
      * Issue #115. Added an ``options`` argument to ``loadmat`` to explicitly
        pass an ``Options`` instance.
+     * The string converters ``convert_to_str``, ``convert_to_numpy_str``, and
+       ``convert_to_numpy_bytes`` in the ``utilities`` module have been changed
+       to raise ``TypeError`` when given types that cannot be converted.
      * Issue #118. Added type hints and configuration for
        `mypy <https://pypi.org/project/mypy>`_
 
