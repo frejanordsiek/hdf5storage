@@ -27,7 +27,7 @@ Installation
 Dependencies
 ------------
 
-This package only supports Python >= 3.5. Python < 3.5 support was dropped
+This package only supports Python >= 3.6. Python < 3.6 support was dropped
 in version 0.2.
 
 This package requires the python packages to run
@@ -381,7 +381,7 @@ Versions
 ========
 
 0.2. Feature release adding/changing the following, including some API breaking changes.
-     * Issues #50 and #84. Python < 3.5 support dropped.
+     * Issues #50 and #84 and #117. Python < 3.6 support dropped.
      * Issue #53. h5py 2.1.x and 2.2.x  support dropped.
      * Issue #114. Fixed bug where the shape was stored in the opposite order as
        Matlab for empty ndarrays when ``Options.store_shape_for_empty`` is set.
