@@ -659,10 +659,11 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         if data.dtype.type == np.bytes_ \
                 and f.options.convert_numpy_bytes_to_utf16:
             if data_to_store.nbytes == 0:
-                data_to_store = np.uint16([])
+                data_to_store = np.zeros((0, ), np.uint16)
             else:
-                new_data = np.uint16(np.atleast_1d(
-                    data_to_store).view(np.ndarray).view(np.uint8))
+                new_data = np.atleast_1d(
+                    data_to_store).view(np.ndarray).view(
+                        np.uint8).astype(np.uint16)
                 if np.all(new_data < 128):
                     data_to_store = new_data
 
@@ -1358,11 +1359,12 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # field is set to object).
             #
             # If it was not empty, the order of the dimensions must be
-            # switched from Fortran order which MATLAB uses to C order which Python uses.
+            # switched from Fortran order which MATLAB uses to C order
+            # which Python uses.
             if matlab_empty == 1:
                 if matlab_fields is None:
                     data = np.zeros(
-                        tuple(np.uint64(data)),
+                        tuple(np.asarray(data, dtype=np.uint64)),
                         dtype=self.__MATLAB_classes_reverse[
                             matlab_class])
                 else:
@@ -1370,7 +1372,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                     for k in matlab_fields:
                         uk = unescape_path(k.tobytes())
                         dt_whole.append((uk, 'object'))
-                    data = np.zeros(shape=tuple(np.uint64(data)),
+                    data = np.zeros(shape=tuple(np.asarray(data, dtype=np.uint64)),
                                     dtype=dt_whole)
             else:
                 data = data.T
@@ -1565,7 +1567,7 @@ class PythonNoneEllipsisNotImplementedMarshaller(
         # data and the right type_string set (parent can't guess right
         # from the modified form).
         return NumpyScalarArrayMarshaller.write(
-            self, f, grp, name, np.float64([]),
+            self, f, grp, name, np.zeros((0, ), np.float64),
             self.get_type_string(data, type_string))
 
     def read(self, f, dsetgrp, attributes):
