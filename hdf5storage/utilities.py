@@ -46,10 +46,18 @@ import h5py
 import hdf5storage.exceptions
 
 
+# Type hints
+from typing import Any, Optional, Type, Union, Tuple, Dict, List
+if sys.version_info >= (3, 9):
+    from collections.abc import MutableMapping
+else:
+    from typing import MutableMapping
+
+
 # We need to determine if h5py is one of the versions that cannot read
 # the MATLAB_fields Attribute in the normal fashion so that we can
 # handle it specially in LowLevelFile.read.
-_handle_matlab_fields_specially = (
+_handle_matlab_fields_specially: bool = (
     pkg_resources.parse_version(h5py.__version__)
     in (pkg_resources.parse_version('3.0'),
         pkg_resources.parse_version('3.1')))
@@ -59,7 +67,7 @@ if _handle_matlab_fields_specially:
     import h5py._objects
 
 
-def does_dtype_have_a_zero_shape(dt):
+def does_dtype_have_a_zero_shape(dt: np.dtype) -> bool:
     """ Determine whether a dtype (or its fields) have zero shape.
 
     Determines whether the given ``numpy.dtype`` has a shape with a zero
@@ -106,7 +114,8 @@ def does_dtype_have_a_zero_shape(dt):
     return False
 
 
-def read_matlab_fields_attribute(attrs):
+def read_matlab_fields_attribute(
+        attrs: h5py.AttributeManager) -> Any:
     """ Reads the ``MATLAB_fields`` Attribute.
 
     On some versions of ``h5py``, the ``MATLAB_fields`` Attribute cannot
@@ -152,6 +161,8 @@ def read_matlab_fields_attribute(attrs):
         attr_id.read(raw_buf, mtype=attr_id.get_type())
         attr = np.empty(raw_buf.shape, dtype='object')
         attr_flat = attr.ravel()
+        length: np.uintp
+        ptr: np.intp
         for i, (length, ptr) in enumerate(raw_buf.ravel()):
             at = np.empty(length, dtype='S1')
             ctypes.memmove(at.ctypes.data, int(ptr), int(length))
@@ -159,7 +170,8 @@ def read_matlab_fields_attribute(attrs):
         return attr
 
 
-def read_all_attributes_into(attrs, out):
+def read_all_attributes_into(attrs: h5py.AttributeManager,
+                             out: MutableMapping[str, Any]) -> None:
     """ Reads all Attributes into a MutableMapping (dict-like)
 
     Reads all Attributes into the MutableMapping (dict-like) out,
@@ -229,7 +241,8 @@ class LowLevelFile(object):
         The options used for reading and writing.
 
     """
-    def __init__(self, f, options):
+    def __init__(self, f: h5py.File,
+                 options: 'hdf5storage.Options') -> None:
         # Check the types of the arguments real quick to be on the safe
         # side. options has to be checked using the __module__ and
         # __name__ attributes since we can't import the main hdf5storage
@@ -239,38 +252,40 @@ class LowLevelFile(object):
         if options.__class__.__module__ != 'hdf5storage' \
                 or options.__class__.__name__ != 'Options':
             raise TypeError('options must be a hdf5storage.Options.')
-        self._f = f
-        self._options = options
+        self._f: h5py.File = f
+        self._options: 'hdf5storage.Options' = options
 
         # We need to keep track of the references group after we first
         # use it, whether we created it or not, and a reference to the
         # canonical empty. They will initially be None to indicate that
         # we don't know yet (accessed lazily). We will also store the
         # name of the references group.
-        self._refs_group = None
-        self._created_refs_group = None
-        self._canonical_empty = None
-        self._refs_group_name = None
+        self._refs_group: Optional[h5py.Group] = None
+        self._created_refs_group: Optional[bool] = None
+        self._canonical_empty: Optional[h5py.Dataset] = None
+        self._refs_group_name: Optional[str] = None
         # When we are creating names for the references group, we don't
         # have to worry about checking for a name already being present
         # if we created the Group. Instead, we can just use a counter
         # that we increment by one each time a name is needed. We start
         # it at 0xB since 'a' is the name of the canonical empty and we
         # want to skip past it in hexidecimal.
-        self._refs_group_counter = 0xB
+        self._refs_group_counter: int = 0xB
         # Length in characters we will use for random names in the
         # references Group.
-        self._refs_group_name_length = 16
+        self._refs_group_name_length: int = 16
 
     @property
-    def f(self):
+    def f(self) -> h5py.File:
         return self._f
 
     @property
-    def options(self):
+    def options(self) -> 'hdf5storage.Options':
         return self._options
 
-    def write_data(self, grp, name, data, type_string):
+    def write_data(self, grp: h5py.Group, name: str, data: Any,
+                   type_string: Optional[str]) -> Optional[
+                       Union[h5py.Dataset, h5py.Group]]:
         """ Writes a piece of data into the file in the given group.
 
         Low level method to store a Python type (`data`) into the
@@ -313,6 +328,7 @@ class LowLevelFile(object):
         # be here and imported. A workaround must be when data is a
         # dtype since dtypes are no longer type numpy.dtype in numpy
         # 1.20.
+        tp: Union[np.dtype, Type[Any]]
         if isinstance(data, np.dtype):
             tp = np.dtype
         else:
@@ -332,7 +348,10 @@ class LowLevelFile(object):
             raise NotImplementedError('Can''t write data type: '
                                       + str(tp))
 
-    def read_data(self, grp, name, dsetgrp=None):
+    def read_data(self, grp: Optional[h5py.Group], name: Optional[str],
+                  dsetgrp: Optional[
+                      Union[h5py.Dataset,
+                            h5py.Group]] = None) -> Any:
         """ Writes a piece of data into the file.
 
         Low level method to read a Python type of the specified name
@@ -384,7 +403,8 @@ class LowLevelFile(object):
 
         # Get all attributes with values, with the default being for any
         # unavailable ones being None.
-        attributes = collections.defaultdict(type(None))
+        attributes: collections.defaultdict = collections.defaultdict(
+            type(None))
         read_all_attributes_into(dsetgrp.attrs, attributes)
 
         # Get the different attributes that can be used to identify they
@@ -436,7 +456,8 @@ class LowLevelFile(object):
             raise hdf5storage.exceptions.CantReadError('Could not read '
                                                        + dsetgrp.name)
 
-    def write_object_array(self, data):
+    def write_object_array(self, data: np.ndarray) -> Union[
+            np.ndarray, h5py.Reference]:
         """ Writes an array of objects recursively.
 
         Writes the elements of the given object array recursively in the
@@ -559,7 +580,9 @@ class LowLevelFile(object):
         # which will incidentally copy it.
         return data_refs
 
-    def read_object_array(self, data):
+    def read_object_array(self, data: Union[
+            np.ndarray, h5py.Reference]) -> Union[
+                np.ndarray, np.object_]:
         """ Reads an array of objects recursively.
 
         Reads the elements of the given HDF5 Reference array recursively
@@ -600,7 +623,7 @@ class LowLevelFile(object):
                 None, None, dsetgrp=self._f[x])
         return data_derefed
 
-    def next_unused_ref_group_name(self):
+    def next_unused_ref_group_name(self) -> str:
         """ Gives the next unused name that the references Group.
 
         Generates the next unused name for use in the references
@@ -706,7 +729,7 @@ class LowLevelFile(object):
         return name
 
 
-def convert_dtype_to_str(dtype):
+def convert_dtype_to_str(dtype: np.dtype) -> str:
     """ Convert a dtype to str.
 
     Converts a ``numpy.dtype`` to ``str`` in such a way that the result
@@ -748,7 +771,8 @@ def convert_dtype_to_str(dtype):
         return out
 
 
-def convert_numpy_str_to_uint16(data):
+def convert_numpy_str_to_uint16(
+        data: Union[np.str_, np.ndarray]) -> np.ndarray:
     """ Converts a ``numpy.unicode_`` to UTF-16 in numpy.uint16 form.
 
     Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
@@ -803,7 +827,8 @@ def convert_numpy_str_to_uint16(data):
                       buffer=cdata)
 
 
-def convert_numpy_str_to_uint32(data):
+def convert_numpy_str_to_uint32(
+        data: Union[np.str_, np.ndarray]) -> np.ndarray:
     """ Converts ``numpy.unicode_`` to its numpy.uint32 representation.
 
     Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
@@ -1177,7 +1202,11 @@ def convert_to_numpy_bytes(data, length=None):
         return data
 
 
-def decode_complex(data, complex_names=(None, None)):
+def decode_complex(data: Union[np.ndarray, np.generic],
+                   complex_names: Tuple[
+                       Optional[str],
+                       Optional[str]] = (None, None)) -> Union[
+                           np.ndarray, np.generic]:
     """ Decodes possibly complex data read from an HDF5 file.
 
     Decodes possibly complex datasets read from an HDF5 file. HDF5
@@ -1266,7 +1295,9 @@ def decode_complex(data, complex_names=(None, None)):
         return data
 
 
-def encode_complex(data, complex_names):
+def encode_complex(data: Union[np.ndarray, np.complexfloating],
+                   complex_names: Tuple[str, str]) -> Union[
+                       np.ndarray, np.generic]:
     """ Encodes complex data to having arbitrary complex field names.
 
     Encodes complex `data` to have the real and imaginary field names
@@ -1308,7 +1339,7 @@ def encode_complex(data, complex_names):
                       (complex_names[1], dtype_name)])
 
 
-def convert_attribute_to_string(value):
+def convert_attribute_to_string(value: Any) -> Optional[str]:
     """ Convert an attribute value to a string.
 
     Converts the attribute value to a string if possible (get ``None``
@@ -1342,7 +1373,7 @@ def convert_attribute_to_string(value):
         return None
 
 
-def convert_attribute_to_string_array(value):
+def convert_attribute_to_string_array(value: Any) -> Optional[List[str]]:
     """ Converts an Attribute value to a string array.
 
     Converts the value of an Attribute to a string array if possible
@@ -1367,7 +1398,9 @@ def convert_attribute_to_string_array(value):
     return [convert_to_str(x) for x in value]
 
 
-def set_attributes_all(target, attributes, discard_others=True):
+def set_attributes_all(target: Union[h5py.Dataset, h5py.Group],
+                       attributes: Dict[str, Tuple[str, Any]],
+                       discard_others: bool = True) -> None:
     """ Set Attributes in bulk and optionally discard others.
 
     Sets each Attribute in turn (modifying it in place if possible if it
@@ -1393,7 +1426,7 @@ def set_attributes_all(target, attributes, discard_others=True):
 
     """
     attrs = target.attrs
-    existing = dict()
+    existing: Dict[str, Any] = dict()
     read_all_attributes_into(attrs, existing)
     # Generate special dtype for string arrays.
     str_arr_dtype = h5py.special_dtype(vlen=str)

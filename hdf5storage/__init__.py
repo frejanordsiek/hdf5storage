@@ -47,6 +47,7 @@ import pkgutil
 import posixpath
 import sys
 import threading
+import types
 
 import h5py
 
@@ -54,6 +55,28 @@ from . import pathesc
 from . import plugins
 from . import utilities
 from . import Marshallers
+
+
+# Type hints
+from typing import Union, Optional, Type, Any, Tuple, Dict, List
+if sys.version_info >= (3, 9):
+    from collections.abc import Iterable, Iterator, Sequence, Mapping
+else:
+    from typing import Iterable, Iterator, Sequence, Mapping
+
+# Define types for the Options arguments and fields that only allow
+# certain values.
+if sys.version_info >= (3, 8):
+    from typing import Literal
+    ActionMatlabIncompatible = Literal['ignore', 'discard', 'error']
+    OnedAs = Literal['row', 'column']
+    CompressionAlgorithm = Literal['gzip', 'lzf', 'szip']
+    MatfileFormat = Literal['4', '5', '7.3']
+else:
+    ActionMatlabIncompatible = str
+    OnedAs = str
+    CompressionAlgorithm = str
+    MatfileFormat = str
 
 
 class Options(object):
@@ -171,58 +194,61 @@ class Options(object):
         Collection of marshallers to disk.
 
     """
-    def __init__(self, store_python_metadata=True,
-                 matlab_compatible=True,
-                 action_for_matlab_incompatible='error',
-                 delete_unused_variables=False,
-                 structured_numpy_ndarray_as_struct=False,
-                 make_atleast_2d=False,
-                 convert_numpy_bytes_to_utf16=False,
-                 convert_numpy_str_to_utf16=False,
-                 convert_bools_to_uint8=False,
-                 reverse_dimension_order=False,
-                 structs_as_dicts=False,
-                 store_shape_for_empty=False,
-                 complex_names=('r', 'i'),
-                 group_for_references="/#refs#",
-                 oned_as='row',
-                 dict_like_keys_name='keys',
-                 dict_like_values_name='values',
-                 compress=True,
-                 compress_size_threshold=16*1024,
-                 compression_algorithm='gzip',
-                 gzip_compression_level=7,
-                 shuffle_filter=True,
-                 compressed_fletcher32_filter=True,
-                 uncompressed_fletcher32_filter=False,
-                 marshaller_collection=None,
-                 **keywords):
+    def __init__(self, store_python_metadata: bool = True,
+                 matlab_compatible: bool = True,
+                 action_for_matlab_incompatible:
+                 ActionMatlabIncompatible = 'error',
+                 delete_unused_variables: bool = False,
+                 structured_numpy_ndarray_as_struct: bool = False,
+                 make_atleast_2d: bool = False,
+                 convert_numpy_bytes_to_utf16: bool = False,
+                 convert_numpy_str_to_utf16: bool = False,
+                 convert_bools_to_uint8: bool = False,
+                 reverse_dimension_order: bool = False,
+                 structs_as_dicts: bool = False,
+                 store_shape_for_empty: bool = False,
+                 complex_names: Tuple[str, str] = ('r', 'i'),
+                 group_for_references: str = "/#refs#",
+                 oned_as: OnedAs = 'row',
+                 dict_like_keys_name: str = 'keys',
+                 dict_like_values_name: str = 'values',
+                 compress: bool = True,
+                 compress_size_threshold: int = 16*1024,
+                 compression_algorithm: CompressionAlgorithm = 'gzip',
+                 gzip_compression_level: int = 7,
+                 shuffle_filter: bool = True,
+                 compressed_fletcher32_filter: bool = True,
+                 uncompressed_fletcher32_filter: bool = False,
+                 marshaller_collection: Optional[
+                     'MarshallerCollection'] = None,
+                 **keywords: Any) -> None:
         # Set the defaults.
 
-        self._store_python_metadata = True
-        self._action_for_matlab_incompatible = 'error'
-        self._delete_unused_variables = False
-        self._structured_numpy_ndarray_as_struct = False
-        self._make_atleast_2d = False
-        self._convert_numpy_bytes_to_utf16 = False
-        self._convert_numpy_str_to_utf16 = False
-        self._convert_bools_to_uint8 = False
-        self._reverse_dimension_order = False
-        self._structs_as_dicts = False
-        self._store_shape_for_empty = False
-        self._complex_names = ('r', 'i')
-        self._group_for_references = "/#refs#"
-        self._oned_as = 'row'
-        self._dict_like_keys_name = 'keys'
-        self._dict_like_values_name = 'values'
-        self._compress = True
-        self._compress_size_threshold = 16*1024
-        self._compression_algorithm = 'gzip'
-        self._gzip_compression_level = 7
-        self._shuffle_filter = True
-        self._compressed_fletcher32_filter = True
-        self._uncompressed_fletcher32_filter = False
-        self._matlab_compatible = True
+        self._store_python_metadata: bool = True
+        self._action_for_matlab_incompatible: \
+            ActionMatlabIncompatible = 'error'
+        self._delete_unused_variables: bool = False
+        self._structured_numpy_ndarray_as_struct: bool = False
+        self._make_atleast_2d: bool = False
+        self._convert_numpy_bytes_to_utf16: bool = False
+        self._convert_numpy_str_to_utf16: bool = False
+        self._convert_bools_to_uint8: bool = False
+        self._reverse_dimension_order: bool = False
+        self._structs_as_dicts: bool = False
+        self._store_shape_for_empty: bool = False
+        self._complex_names: Tuple[str, str] = ('r', 'i')
+        self._group_for_references: str = "/#refs#"
+        self._oned_as: OnedAs = 'row'
+        self._dict_like_keys_name: str = 'keys'
+        self._dict_like_values_name: str = 'values'
+        self._compress: bool = True
+        self._compress_size_threshold: int = 16*1024
+        self._compression_algorithm: CompressionAlgorithm = 'gzip'
+        self._gzip_compression_level: int = 7
+        self._shuffle_filter: bool = True
+        self._compressed_fletcher32_filter: bool = True
+        self._uncompressed_fletcher32_filter: bool = False
+        self._matlab_compatible: bool = True
 
         # Apply all the given options using the setters, making sure to
         # do matlab_compatible last since it will override most of the
@@ -258,6 +284,7 @@ class Options(object):
 
         # Use the given marshaller collection if it was
         # given. Otherwise, use the default.
+        self._marshaller_collection: 'MarshallerCollection'
         if isinstance(marshaller_collection, MarshallerCollection):
             self._marshaller_collection = marshaller_collection
         else:
@@ -265,7 +292,7 @@ class Options(object):
                 get_default_MarshallerCollection()
 
     @property
-    def marshaller_collection(self):
+    def marshaller_collection(self) -> 'MarshallerCollection':
         """ The MarshallerCollection to use.
 
         MarshallerCollection
@@ -288,7 +315,8 @@ class Options(object):
         return self._marshaller_collection
 
     @marshaller_collection.setter
-    def marshaller_collection(self, value):
+    def marshaller_collection(
+            self, value: 'MarshallerCollection') -> None:
         # Check that it is a MarshallerCollection, and then set it. This
         # option does not effect MATLAB compatibility
         if isinstance(value, MarshallerCollection):
@@ -296,7 +324,7 @@ class Options(object):
 
 
     @property
-    def store_python_metadata(self):
+    def store_python_metadata(self) -> bool:
         """ Whether or not to store Python metadata.
 
         bool
@@ -309,14 +337,14 @@ class Options(object):
         return self._store_python_metadata
 
     @store_python_metadata.setter
-    def store_python_metadata(self, value):
+    def store_python_metadata(self, value: bool) -> None:
         # Check that it is a bool, and then set it. This option does not
         # effect MATLAB compatibility
         if isinstance(value, bool):
             self._store_python_metadata = value
 
     @property
-    def matlab_compatible(self):
+    def matlab_compatible(self) -> bool:
         """ Whether or not to make the file compatible with MATLAB.
 
         bool
@@ -350,7 +378,7 @@ class Options(object):
         return self._matlab_compatible
 
     @matlab_compatible.setter
-    def matlab_compatible(self, value):
+    def matlab_compatible(self, value: bool) -> None:
         # If it is a bool, it can be set. If it is set to true, then
         # several other options need to be set appropriately.
         if isinstance(value, bool):
@@ -369,7 +397,8 @@ class Options(object):
                 self._compression_algorithm = 'gzip'
 
     @property
-    def action_for_matlab_incompatible(self):
+    def action_for_matlab_incompatible(
+            self) -> ActionMatlabIncompatible:
         """ The action to do when writing non-MATLAB compatible data.
 
         {'ignore', 'discard', 'error'}
@@ -389,14 +418,15 @@ class Options(object):
         return self._action_for_matlab_incompatible
 
     @action_for_matlab_incompatible.setter
-    def action_for_matlab_incompatible(self, value):
+    def action_for_matlab_incompatible(
+            self, value: ActionMatlabIncompatible) -> None:
         # Check that it is one of the allowed values, and then set
         # it. This option does not effect MATLAB compatibility.
         if value in ('ignore', 'discard', 'error'):
             self._action_for_matlab_incompatible = value
 
     @property
-    def delete_unused_variables(self):
+    def delete_unused_variables(self) -> bool:
         """ Whether or not to delete file variables not written to.
 
         bool
@@ -411,7 +441,7 @@ class Options(object):
         return self._delete_unused_variables
 
     @delete_unused_variables.setter
-    def delete_unused_variables(self, value):
+    def delete_unused_variables(self, value: bool) -> None:
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
@@ -420,7 +450,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def structured_numpy_ndarray_as_struct(self):
+    def structured_numpy_ndarray_as_struct(self) -> bool:
         """ Whether or not to convert structured ndarrays to structs.
 
         bool
@@ -437,7 +467,7 @@ class Options(object):
         return self._structured_numpy_ndarray_as_struct
 
     @structured_numpy_ndarray_as_struct.setter
-    def structured_numpy_ndarray_as_struct(self, value):
+    def structured_numpy_ndarray_as_struct(self, value: bool) -> None:
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
@@ -446,7 +476,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def make_atleast_2d(self):
+    def make_atleast_2d(self) -> bool:
         """ Whether or not to convert scalar types to 2D arrays.
 
         bool
@@ -467,7 +497,7 @@ class Options(object):
         return self._make_atleast_2d
 
     @make_atleast_2d.setter
-    def make_atleast_2d(self, value):
+    def make_atleast_2d(self, value: bool) -> None:
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
@@ -476,7 +506,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def convert_numpy_bytes_to_utf16(self):
+    def convert_numpy_bytes_to_utf16(self) -> bool:
         """ Whether or not to convert ``numpy.bytes_`` to UTF-16.
 
         bool
@@ -498,7 +528,7 @@ class Options(object):
         return self._convert_numpy_bytes_to_utf16
 
     @convert_numpy_bytes_to_utf16.setter
-    def convert_numpy_bytes_to_utf16(self, value):
+    def convert_numpy_bytes_to_utf16(self, value: bool) -> None:
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
@@ -507,7 +537,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def convert_numpy_str_to_utf16(self):
+    def convert_numpy_str_to_utf16(self) -> bool:
         """ Whether or not to convert ``numpy.unicode_`` to UTF-16.
 
         bool
@@ -534,7 +564,7 @@ class Options(object):
         return self._convert_numpy_str_to_utf16
 
     @convert_numpy_str_to_utf16.setter
-    def convert_numpy_str_to_utf16(self, value):
+    def convert_numpy_str_to_utf16(self, value: bool) -> None:
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
@@ -543,7 +573,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def convert_bools_to_uint8(self):
+    def convert_bools_to_uint8(self) -> bool:
         """ Whether or not to convert bools to ``numpy.uint8``.
 
         bool
@@ -560,7 +590,7 @@ class Options(object):
         return self._convert_bools_to_uint8
 
     @convert_bools_to_uint8.setter
-    def convert_bools_to_uint8(self, value):
+    def convert_bools_to_uint8(self, value: bool) -> None:
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
@@ -569,7 +599,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def reverse_dimension_order(self):
+    def reverse_dimension_order(self) -> bool:
         """ Whether or not to reverse the order of array dimensions.
 
         bool
@@ -587,7 +617,7 @@ class Options(object):
         return self._reverse_dimension_order
 
     @reverse_dimension_order.setter
-    def reverse_dimension_order(self, value):
+    def reverse_dimension_order(self, value: bool) -> None:
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
@@ -596,7 +626,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def structs_as_dicts(self):
+    def structs_as_dicts(self) -> bool:
         """ Whether Matlab structs should be read as dicts.
 
         bool
@@ -610,12 +640,12 @@ class Options(object):
         return self._structs_as_dicts
 
     @structs_as_dicts.setter
-    def structs_as_dicts(self, value):
+    def structs_as_dicts(self, value: bool) -> None:
         if isinstance(value, bool):
             self._structs_as_dicts = value
 
     @property
-    def store_shape_for_empty(self):
+    def store_shape_for_empty(self) -> bool:
         """ Whether to write the shape if an object has no elements.
 
         bool
@@ -635,7 +665,7 @@ class Options(object):
         return self._store_shape_for_empty
 
     @store_shape_for_empty.setter
-    def store_shape_for_empty(self, value):
+    def store_shape_for_empty(self, value: bool) -> None:
         # Check that it is a bool, and then set it. If it is false, we
         # are not doing MATLAB compatible formatting.
         if isinstance(value, bool):
@@ -644,7 +674,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def complex_names(self):
+    def complex_names(self) -> Tuple[str, str]:
         """ Names to use for the real and imaginary fields.
 
         tuple of two str
@@ -661,7 +691,7 @@ class Options(object):
         return self._complex_names
 
     @complex_names.setter
-    def complex_names(self, value):
+    def complex_names(self, value: Tuple[str, str]) -> None:
         # Check that it is a tuple of two strings, and then set it. If
         # it is something other than ('real', 'imag'), then we are not
         # doing MATLAB compatible formatting.
@@ -673,7 +703,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def group_for_references(self):
+    def group_for_references(self) -> str:
         """ Path for where to put objects pointed at by references.
 
         str
@@ -695,7 +725,7 @@ class Options(object):
         return self._group_for_references
 
     @group_for_references.setter
-    def group_for_references(self, value):
+    def group_for_references(self, value: str) -> None:
         # Check that it an str and a valid absolute POSIX path, and then
         # set it. If it is something other than "/#refs#", then we are
         # not doing MATLAB compatible formatting.
@@ -707,7 +737,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def oned_as(self):
+    def oned_as(self) -> OnedAs:
         """ Vector that 1D arrays become when making everything >= 2D.
 
         {'row', 'column'}
@@ -724,13 +754,13 @@ class Options(object):
         return self._oned_as
 
     @oned_as.setter
-    def oned_as(self, value):
+    def oned_as(self, value: OnedAs) -> None:
         # Check that it is one of the valid values before setting it.
         if value in ('row', 'column'):
             self._oned_as = value
 
     @property
-    def dict_like_keys_name(self):
+    def dict_like_keys_name(self) -> str:
         """ The Dataset name for the keys of dict like objects.
 
         str
@@ -750,13 +780,13 @@ class Options(object):
         return self._dict_like_keys_name
 
     @dict_like_keys_name.setter
-    def dict_like_keys_name(self, value):
+    def dict_like_keys_name(self, value: str) -> None:
         # Check that it is an str before setting it.
         if isinstance(value, str):
             self._dict_like_keys_name = value
 
     @property
-    def dict_like_values_name(self):
+    def dict_like_values_name(self) -> str:
         """ The Dataset name for the values of dict like objects.
 
         str
@@ -776,13 +806,13 @@ class Options(object):
         return self._dict_like_values_name
 
     @dict_like_values_name.setter
-    def dict_like_values_name(self, value):
+    def dict_like_values_name(self, value: str) -> None:
         # Check that it is an str before setting it.
         if isinstance(value, str):
             self._dict_like_values_name = value
 
     @property
-    def compress(self):
+    def compress(self) -> bool:
         """ Whether to compress large python objects (datasets).
 
         bool
@@ -801,13 +831,13 @@ class Options(object):
         return self._compress
 
     @compress.setter
-    def compress(self, value):
+    def compress(self, value: bool) -> None:
         # Check that it is a bool, and then set it.
         if isinstance(value, bool):
             self._compress = value
 
     @property
-    def compress_size_threshold(self):
+    def compress_size_threshold(self) -> int:
         """ Minimum size of a python object before it is compressed.
 
         int
@@ -823,13 +853,13 @@ class Options(object):
         return self._compress_size_threshold
 
     @compress_size_threshold.setter
-    def compress_size_threshold(self, value):
+    def compress_size_threshold(self, value: int) -> None:
         # Check that it is a non-negative integer, and then set it.
         if isinstance(value, int) and value >= 0:
             self._compress_size_threshold = value
 
     @property
-    def compression_algorithm(self):
+    def compression_algorithm(self) -> CompressionAlgorithm:
         """ Algorithm to use for compression.
 
         {'gzip', 'lzf', 'szip'}
@@ -864,7 +894,8 @@ class Options(object):
         return self._compression_algorithm
 
     @compression_algorithm.setter
-    def compression_algorithm(self, value):
+    def compression_algorithm(
+            self, value: CompressionAlgorithm) -> None:
         # Check that it is one of the valid values before setting it. If
         # it is something other than 'gzip', then we are not doing
         # MATLAB compatible formatting.
@@ -874,7 +905,7 @@ class Options(object):
             self._matlab_compatible = False
 
     @property
-    def gzip_compression_level(self):
+    def gzip_compression_level(self) -> int:
         """ The compression level to use when doing the gzip algorithm.
 
         int
@@ -893,13 +924,13 @@ class Options(object):
         return self._gzip_compression_level
 
     @gzip_compression_level.setter
-    def gzip_compression_level(self, value):
+    def gzip_compression_level(self, value: int) -> None:
         # Check that it is an integer between 0 and 9.
         if isinstance(value, int) and value >= 0 and value <= 9:
             self._gzip_compression_level = value
 
     @property
-    def shuffle_filter(self):
+    def shuffle_filter(self) -> bool:
         """ Whether to use the shuffle filter on compressed python objects.
 
         bool
@@ -917,13 +948,13 @@ class Options(object):
         return self._shuffle_filter
 
     @shuffle_filter.setter
-    def shuffle_filter(self, value):
+    def shuffle_filter(self, value: bool) -> None:
         # Check that it is a bool, and then set it.
         if isinstance(value, bool):
             self._shuffle_filter = value
 
     @property
-    def compressed_fletcher32_filter(self):
+    def compressed_fletcher32_filter(self) -> bool:
         """ Whether to use the fletcher32 filter on compressed python objects.
 
         bool
@@ -943,13 +974,13 @@ class Options(object):
         return self._compressed_fletcher32_filter
 
     @compressed_fletcher32_filter.setter
-    def compressed_fletcher32_filter(self, value):
+    def compressed_fletcher32_filter(self, value: bool) -> None:
         # Check that it is a bool, and then set it.
         if isinstance(value, bool):
             self._compressed_fletcher32_filter = value
 
     @property
-    def uncompressed_fletcher32_filter(self):
+    def uncompressed_fletcher32_filter(self) -> bool:
         """ Whether to use the fletcher32 filter on uncompressed non-scalar python objects.
 
         bool
@@ -973,7 +1004,7 @@ class Options(object):
         return self._uncompressed_fletcher32_filter
 
     @uncompressed_fletcher32_filter.setter
-    def uncompressed_fletcher32_filter(self, value):
+    def uncompressed_fletcher32_filter(self, value: bool) -> None:
         # Check that it is a bool, and then set it.
         if isinstance(value, bool):
             self._uncompressed_fletcher32_filter = value
@@ -1051,9 +1082,13 @@ class MarshallerCollection(object):
     hdf5storage.Marshallers.TypeMarshaller
 
     """
-    def __init__(self, load_plugins=False, lazy_loading=True,
-                 priority=('builtin', 'plugin', 'user'),
-                 marshallers=[]):
+    def __init__(
+            self, load_plugins: bool = False,
+            lazy_loading: bool = True,
+            priority: Sequence[str] = ('builtin', 'plugin', 'user'),
+            marshallers: Union[
+                Marshallers.TypeMarshaller,
+                Iterable[Marshallers.TypeMarshaller]] = []) -> None:
         if not isinstance(load_plugins, bool):
             raise TypeError('load_plugins must be bool.')
         if not isinstance(lazy_loading, bool):
@@ -1065,9 +1100,9 @@ class MarshallerCollection(object):
         if sorted(priority) != sorted(('builtin', 'plugin', 'user')):
             raise ValueError('priority has a missing or invalid '
                              'element.')
-        self._load_plugins = load_plugins
-        self._lazy_loading = lazy_loading
-        self._priority = tuple(priority)
+        self._load_plugins: bool = load_plugins
+        self._lazy_loading: bool = lazy_loading
+        self._priority: Tuple[str, str, str] = tuple(priority)
 
         # Two lists of marshallers need to be maintained: one for the
         # builtin ones in the Marshallers module, and another for user
@@ -1075,7 +1110,7 @@ class MarshallerCollection(object):
 
         # Grab all the marshallers in the Marshallers module (they are
         # the classes that inherit from TypeMarshaller) by inspection.
-        self._builtin_marshallers = [
+        self._builtin_marshallers: List[Marshallers.TypeMarshaller] = [
             m()
             for key, m in dict(inspect.getmembers(
                     Marshallers,
@@ -1088,7 +1123,7 @@ class MarshallerCollection(object):
         # entry points, call them to get the marshallers, and check that
         # they inherit from TypeMarshaller before adding them to the
         # list of marshallers.
-        self._plugin_marshallers = []
+        self._plugin_marshallers: List[Marshallers.TypeMarshaller] = []
         if load_plugins:
             plgs = plugins.find_thirdparty_marshaller_plugins()
             for ver in plugins.supported_marshaller_api_versions():
@@ -1109,7 +1144,7 @@ class MarshallerCollection(object):
         # Start with an initially empty list of user marshallers. The
         # ones given as an argument will be added using the adding
         # function.
-        self._user_marshallers = []
+        self._user_marshallers: List[Marshallers.TypeMarshaller] = []
 
         # A list of all the marshallers will be needed along with
         # dictionaries to lookup up the marshaller to use for given
@@ -1117,18 +1152,18 @@ class MarshallerCollection(object):
         # keys). Additional lists will be used to keep track of whether
         # the required parent modules for each marshaller are present or
         # not and whether the required modules are imported or not.
-        self._marshallers = []
-        self._has_required_modules = []
-        self._imported_required_modules = []
-        self._types = dict()
-        self._type_strings = dict()
-        self._matlab_classes = dict()
+        self._marshallers: List[Marshallers.TypeMarshaller] = []
+        self._has_required_modules: List[bool] = []
+        self._imported_required_modules: List[bool] = []
+        self._types: Dict[Union[str, Type[Any]], int] = dict()
+        self._type_strings: Dict[str, int] = dict()
+        self._matlab_classes: Dict[str, int] = dict()
 
         # Add any user given marshallers.
         self.add_marshaller(marshallers)
 
     @property
-    def priority(self):
+    def priority(self) -> Tuple[str, str, str]:
         """ The priority order when choosing the marshaller to use.
 
         tuple of str
@@ -1143,7 +1178,7 @@ class MarshallerCollection(object):
         """
         return self._priority
 
-    def _update_marshallers(self):
+    def _update_marshallers(self) -> None:
         """ Update the full marshaller list and other data structures.
 
         Makes a full list of both builtin and user marshallers and
@@ -1249,7 +1284,8 @@ class MarshallerCollection(object):
                 if matlab_class not in self._matlab_classes:
                     self._matlab_classes[matlab_class] = i
 
-    def _import_marshaller_modules(self, m):
+    def _import_marshaller_modules(
+            self, m: Marshallers.TypeMarshaller) -> bool:
         """ Imports the modules required by the marshaller.
 
         Parameters
@@ -1275,7 +1311,9 @@ class MarshallerCollection(object):
         else:
             return True
 
-    def add_marshaller(self, marshallers):
+    def add_marshaller(self, marshallers: Union[
+            Marshallers.TypeMarshaller,
+            Iterable[Marshallers.TypeMarshaller]]) -> None:
         """ Add a marshaller/s to the user provided list.
 
         Adds a marshaller or an Iterable of them to the user provided
@@ -1313,7 +1351,9 @@ class MarshallerCollection(object):
                 self._user_marshallers.append(m)
         self._update_marshallers()
 
-    def remove_marshaller(self, marshallers):
+    def remove_marshaller(self, marshallers: Union[
+        Marshallers.TypeMarshaller,
+            Iterable[Marshallers.TypeMarshaller]]) -> None:
         """ Removes a marshaller/s from the user provided list.
 
         Removes a marshaller or an Iterable of them from the user
@@ -1332,7 +1372,7 @@ class MarshallerCollection(object):
                 self._user_marshallers.remove(m)
         self._update_marshallers()
 
-    def clear_marshallers(self):
+    def clear_marshallers(self) -> None:
         """ Clears the list of user provided marshallers.
 
         Removes all user provided marshallers, but not the builtin ones
@@ -1343,7 +1383,9 @@ class MarshallerCollection(object):
         self._user_marshallers.clear()
         self._update_marshallers()
 
-    def get_marshaller_for_type(self, tp):
+    def get_marshaller_for_type(
+            self, tp: Union[str, Type[Any]]) -> Tuple[
+                Optional[Marshallers.TypeMarshaller], bool]:
         """ Gets the appropriate marshaller for a type.
 
         Retrieves the marshaller, if any, that can be used to read/write
@@ -1386,7 +1428,8 @@ class MarshallerCollection(object):
         self._imported_required_modules[index] = success
         return m, success
 
-    def get_marshaller_for_type_string(self, type_string):
+    def get_marshaller_for_type_string(self, type_string: str) -> Tuple[
+            Optional[Marshallers.TypeMarshaller], bool]:
         """ Gets the appropriate marshaller for a type string.
 
         Retrieves the marshaller, if any, that can be used to read/write
@@ -1426,7 +1469,9 @@ class MarshallerCollection(object):
         else:
             return None, False
 
-    def get_marshaller_for_matlab_class(self, matlab_class):
+    def get_marshaller_for_matlab_class(
+            self, matlab_class: str) -> Tuple[
+                Optional[Marshallers.TypeMarshaller], bool]:
         """ Gets the appropriate marshaller for a MATLAB class string.
 
         Retrieves the marshaller, if any, that can be used to read/write
@@ -1577,16 +1622,19 @@ class File(collections.abc.MutableMapping):
 
     """
 
-    def __init__(self, filename='data.h5', writable=False,
-                 truncate_existing=False, truncate_invalid_matlab=False,
-                 options=None, **keywords):
+    def __init__(self, filename: str = 'data.h5',
+                 writable: bool = False,
+                 truncate_existing: bool = False,
+                 truncate_invalid_matlab: bool = False,
+                 options: Optional[Options] = None,
+                 **keywords: Any) -> None:
         # Before we do anything else, we need to make the attributes for
         # the file handle, the options, and a lock. This way, these
         # attributes are available in __del__ even if there is an
         # exception in the constructor.
-        self._file = None
+        self._file: Optional[h5py.File] = None
         self._options = None
-        self._lock = threading.Lock()
+        self._lock: threading.Lock = threading.Lock()
         # Check the types of the arguments.
         if not isinstance(filename, str):
             raise TypeError('filename must be str.')
@@ -1608,8 +1656,8 @@ class File(collections.abc.MutableMapping):
         else:
             options = copy.copy(options)
         # Store the required arguments.
-        self._writable = True
-        self._options = options
+        self._writable: bool = True
+        self._options: Options = options
         # Open the file. If writable is False, we can just open it. If
         # it is True, the process is longer.
         if not writable:
@@ -1679,32 +1727,35 @@ class File(collections.abc.MutableMapping):
                 self._file = h5py.File(filename, mode='a')
         # Make the lowlevel file wrapper which will be used for the
         # actual reading and writing
-        self._file_wrapper = utilities.LowLevelFile(self._file, options)
+        self._file_wrapper: utilities.LowLevelFile = \
+            utilities.LowLevelFile(self._file, options)
 
-    def __enter__(self):
+    def __enter__(self) -> 'File':
         return self
 
-    def __exit__(self, tp, value, traceback):
+    def __exit__(self, tp: Optional[Type[BaseException]],
+                 value: Optional[BaseException],
+                 traceback: Optional[types.TracebackType]) -> Optional[bool]:
         self.close()
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             self.close()
         except:
             pass
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return (self._file is None)
 
-    def close(self):
+    def close(self) -> None:
         """ Closes the file. """
         with self._lock:
             if self._file is not None:
                 self._file.close()
                 self._file = None
 
-    def flush(self):
+    def flush(self) -> None:
         """ Flush contents to disk.
 
         Raises
@@ -1719,7 +1770,7 @@ class File(collections.abc.MutableMapping):
             if self._writable:
                 self._file.flush()
 
-    def write(self, data, path='/'):
+    def write(self, data: Any, path: pathesc.Path = '/') -> None:
         """ Writes one piece of data into the file.
 
         A wrapper around the ``writes`` method to write a single piece
@@ -1755,7 +1806,7 @@ class File(collections.abc.MutableMapping):
         """
         self.writes({path: data})
 
-    def writes(self, mdict):
+    def writes(self, mdict: Mapping[pathesc.Path, Any]) -> None:
         """ Write one or more pieces of data to the file.
 
         Stores one or more python objects in `mdict` to the specified
@@ -1828,7 +1879,7 @@ class File(collections.abc.MutableMapping):
                     targetname, data,
                     None)
 
-    def read(self, path='/'):
+    def read(self, path: pathesc.Path = '/') -> Any:
         """ Reads one piece of data from the file.
 
         A wrapper around the ``reads`` method to read a single piece of
@@ -1861,7 +1912,7 @@ class File(collections.abc.MutableMapping):
         """
         return self.reads((path, ))[0]
 
-    def reads(self, paths):
+    def reads(self, paths: Iterable[pathesc.Path]) -> List[Any]:
         """ Read pieces of data from the file.
 
         Parameters
@@ -1927,7 +1978,7 @@ class File(collections.abc.MutableMapping):
         # Return it all.
         return datas
 
-    def __len__(self):
+    def __len__(self) -> int:
         """ Get the number of objects stored in the file root.
 
         Returns
@@ -1958,7 +2009,7 @@ class File(collections.abc.MutableMapping):
             else:
                 return length
 
-    def __contains__(self, path):
+    def __contains__(self, path: Any) -> bool:
         """ Checks if an object exists at the specified `path`.
 
         Parameters
@@ -1985,7 +2036,7 @@ class File(collections.abc.MutableMapping):
             # Do the check.
             return (posixpath.join(groupname, targetname) in self._file)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         """ Get an Iterator over the names in the file root.
 
         Warning
@@ -2024,7 +2075,7 @@ class File(collections.abc.MutableMapping):
             else:
                 return it
 
-    def __getitem__(self, path):
+    def __getitem__(self, path: pathesc.Path) -> Any:
         """ Reads the object at the specified `path` from the file.
 
         A wrapper around the ``reads`` method to read a single piece of
@@ -2057,7 +2108,7 @@ class File(collections.abc.MutableMapping):
         """
         return self.reads((path, ))[0]
 
-    def __setitem__(self, path, data):
+    def __setitem__(self, path: pathesc.Path, data: Any) -> None:
         """ Writes one piece of data into the file.
 
         A wrapper around the ``writes`` method to write a single piece
@@ -2093,7 +2144,7 @@ class File(collections.abc.MutableMapping):
         """
         self.writes({path: data})
 
-    def __delitem__(self, path):
+    def __delitem__(self, path: pathesc.Path) -> None:
         """ Deletes one path from the file.
 
         Deletes one location from the file specified by `path`.
@@ -2129,7 +2180,7 @@ class File(collections.abc.MutableMapping):
             del self._file[posixpath.join(groupname, targetname)]
 
 
-def writes(mdict, **keywords):
+def writes(mdict: Mapping[pathesc.Path, Any], **keywords: Any) -> None:
     """ Writes data into an HDF5 file.
 
     Wrapper around ``File`` and ``File.writes``. Specifically, this
@@ -2175,7 +2226,7 @@ def writes(mdict, **keywords):
         f.writes(mdict)
 
 
-def write(data, path='/', **keywords):
+def write(data: Any, path: pathesc.Path = '/', **keywords: Any) -> Any:
     """ Writes one piece of data into an HDF5 file.
 
     Wrapper around ``File`` and ``File.write``. Specifically, this
@@ -2227,7 +2278,7 @@ def write(data, path='/', **keywords):
         f.write(data, path)
 
 
-def reads(paths, **keywords):
+def reads(paths: Iterable[pathesc.Path], **keywords: Any) -> List[Any]:
     """ Reads pieces of data from an HDF5 file.
 
     Wrapper around ``File`` and ``File.reads`` with the exception that
@@ -2289,7 +2340,7 @@ def reads(paths, **keywords):
         return f.reads(paths)
 
 
-def read(path='/', **keywords):
+def read(path: pathesc.Path = '/', **keywords: Any) -> Any:
     """ Reads one piece of data from an HDF5 file.
 
     Wrapper around ``File`` and ``File.reads`` with the exception that
@@ -2335,6 +2386,7 @@ def read(path='/', **keywords):
     File.reads
 
     """
+    extra_kws: Dict[str, bool]
     if 'matlab_compatible' in keywords or (
             'options' in keywords
             and keywords['options'] is not None):
@@ -2345,11 +2397,19 @@ def read(path='/', **keywords):
         return f.read(path)
 
 
-def savemat(file_name, mdict, appendmat=True, format='7.3',
-            oned_as='row', store_python_metadata=True,
-            action_for_matlab_incompatible='error',
-            marshaller_collection=None, truncate_existing=False,
-            truncate_invalid_matlab=False, **keywords):
+def savemat(file_name: str,
+            mdict: Mapping[pathesc.Path, Any],
+            appendmat: bool = True,
+            format: MatfileFormat = '7.3',
+            oned_as: OnedAs = 'row',
+            store_python_metadata: bool = True,
+            action_for_matlab_incompatible:
+            ActionMatlabIncompatible = 'error',
+            marshaller_collection: Optional[
+                MarshallerCollection] = None,
+            truncate_existing: bool = False,
+            truncate_invalid_matlab: bool = False,
+            **keywords: Any) -> None:
     """ Save a dictionary of python objects to a MATLAB MAT file.
 
     Saves the data provided in the dictionary `mdict` to a MATLAB MAT
@@ -2463,9 +2523,14 @@ def savemat(file_name, mdict, appendmat=True, format='7.3',
            options=options)
 
 
-def loadmat(file_name, mdict=None, appendmat=True,
-            variable_names=None,
-            marshaller_collection=None, options=None, **keywords):
+def loadmat(
+        file_name: str,
+        mdict: Optional[Dict[Any, Any]] = None,
+        appendmat: bool = True,
+        variable_names: Optional[Sequence[pathesc.Path]] = None,
+        marshaller_collection: Optional[MarshallerCollection] = None,
+        options: Optional[Options] = None,
+        **keywords: Any) -> Dict[Any, Any]:
     """ Loads data to a MATLAB MAT file.
 
     Reads data from the specified variables (or all) in a MATLAB MAT
@@ -2574,6 +2639,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
 
         # Read everything if we were instructed.
         with File(filename, writable=False, options=options) as f:
+            data: Dict[Any, Any]
             if variable_names is None:
                 data = {pathesc.unescape_path(k): v for k, v in f.items()}
             else:
@@ -2596,7 +2662,7 @@ def loadmat(file_name, mdict=None, appendmat=True,
             **keywords)
 
 
-def get_default_MarshallerCollection():
+def get_default_MarshallerCollection() -> MarshallerCollection:
     """ Gets the default MarshallerCollection.
 
     The initial default only includes the builtin marshallers in the
@@ -2621,7 +2687,8 @@ def get_default_MarshallerCollection():
     return _default_marshaller_collection[0]
 
 
-def make_new_default_MarshallerCollection(*args, **keywords):
+def make_new_default_MarshallerCollection(
+        *args: Any, **keywords: Any) -> None:
     """ Makes a new default MarshallerCollection.
 
     Replaces the current default ``MarshallerCollection`` with a new

@@ -89,6 +89,16 @@ To run the tests ::
     pytest
 
 
+Type Checking
+-------------
+
+This package now has type annotations since version 0.2, which can be checked
+with a type checker like `mypy <https://pypi.org/project/mypy>`_. To check with
+`mypy <https://pypi.org/project/mypy>`_, run ::
+
+    mypy -p hdf5storage
+
+
 Building Documentation
 ----------------------
 
@@ -515,6 +525,8 @@ Versions
        ``del_attribute`` functions in the ``utilities`` module.
      * Issue #115. Added an ``options`` argument to ``loadmat`` to explicitly
        pass an ``Options`` instance.
+     * Issue #118. Added type hints and configuration for
+       `mypy <https://pypi.org/project/mypy>`_
 
 0.1.18. Performance improving release.
         * Pull Request #111 from Daniel Hrisca. Many repeated calls to the

@@ -32,7 +32,11 @@
 import pkg_resources
 
 
-def supported_marshaller_api_versions():
+# Type hints
+from typing import Tuple, Dict
+
+
+def supported_marshaller_api_versions() -> Tuple[str]:
     """ Get the Marshaller API versions that are supported.
 
     Gets the different Marshaller API versions that this version of
@@ -53,7 +57,8 @@ def supported_marshaller_api_versions():
     return ('1.0', )
 
 
-def find_thirdparty_marshaller_plugins():
+def find_thirdparty_marshaller_plugins() -> Dict[
+        str, Dict[str, pkg_resources.EntryPoint]]:
     """ Find, but don't load, all third party marshaller plugins.
 
     Third party marshaller plugins declare the entry point

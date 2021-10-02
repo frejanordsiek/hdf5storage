@@ -31,6 +31,19 @@ import collections.abc
 import pathlib
 import posixpath
 import re
+import sys
+
+# Type hints
+from typing import Union, Dict, Tuple
+if sys.version_info >= (3, 9):
+    from re import Pattern, Match
+    from collections.abc import Sequence
+else:
+    from typing import Pattern, Match, Sequence
+
+# Define the type for all paths
+Path = Union[str, bytes, pathlib.PurePath,
+             Sequence[Union[str, bytes, pathlib.PurePath]]]
 
 
 # For escaping and unescaping unicode paths, we need compiled regular
@@ -39,21 +52,21 @@ import re
 # conversions. Compiling the regular expressions here at initialization
 # will help performance by not having to compile new ones every time a
 # path is processed.
-_find_dots_re = re.compile('\\.+')
-_find_invalid_escape_re = re.compile(
+_find_dots_re: Pattern[str] = re.compile('\\.+')
+_find_invalid_escape_re: Pattern[str] = re.compile(
     '(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]'
     '|x[0-9a-fA-F]?($|[^0-9a-fA-F])'
     '|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])'
     '|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))')
-_find_fslashnull_re = re.compile('[\\\\/\x00]')
-_find_escapes_re = re.compile(
+_find_fslashnull_re: Pattern[str] = re.compile('[\\\\/\x00]')
+_find_escapes_re: Pattern[str] = re.compile(
     '\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})')
-_char_escape_conversions = {'\x00': '\\x00',
-                            '/': '\\x2f',
-                            '\\': '\\\\'}
+_char_escape_conversions: Dict[str, str] = {'\x00': '\\x00',
+                                            '/': '\\x2f',
+                                            '\\': '\\\\'}
 
 
-def _replace_fun_escape(m):
+def _replace_fun_escape(m: Match[str]) -> str:
     """ Hex/unicode escape single characters found in regex matches.
 
     Supports single hex/unicode escapes of the form ``'\\xYY'``,
@@ -98,7 +111,7 @@ def _replace_fun_escape(m):
                                   '0 - 0xFFFFFFFF.')
 
 
-def _replace_fun_unescape(m):
+def _replace_fun_unescape(m: Match[str]) -> str:
     """ Decode single hex/unicode escapes found in regex matches.
 
     Supports single hex/unicode escapes of the form ``'\\xYY'``,
@@ -127,7 +140,7 @@ def _replace_fun_unescape(m):
         return slsh * (count - 1) + c
 
 
-def escape_path(pth):
+def escape_path(pth: Union[str, bytes]) -> str:
     """ Hex/unicode escapes a path.
 
     Escapes a path so that it can be represented faithfully in an HDF5
@@ -175,7 +188,7 @@ def escape_path(pth):
     return prefix + _find_fslashnull_re.sub(_replace_fun_escape, s)
 
 
-def unescape_path(pth):
+def unescape_path(pth: Union[str, bytes]) -> str:
     """ Hex/unicode unescapes a path.
 
     Unescapes a path. Valid escapeds are ``'\\xYY'``, ``'\\uYYYY', or
@@ -220,7 +233,7 @@ def unescape_path(pth):
     return s.replace(b'\\\\'.decode('ascii'), b'\\'.decode('ascii'))
 
 
-def process_path(pth):
+def process_path(pth: Path) -> Tuple[str, str]:
     """ Processes paths.
 
     Processes the provided path and breaks it into it Group part
