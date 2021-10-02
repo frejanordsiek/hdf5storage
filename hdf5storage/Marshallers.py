@@ -1393,7 +1393,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 with warnings.catch_warnings():
                     warnings.simplefilter(
                         'ignore', (PendingDeprecationWarning,
-                                   DeprecationWarning))
+                                   DeprecationWarning)) # type: ignore
                     data = np.asmatrix(data)
 
         elif matlab_class in self.__MATLAB_classes_reverse:
@@ -1560,7 +1560,7 @@ class PythonScalarMarshaller(NumpyScalarArrayMarshaller):
             attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
-            return tp(data.item())
+            return tp(data.item()) # type: ignore
         else:
             # Must be some other type, so return it as is.
             return data
@@ -1659,7 +1659,7 @@ class PythonNoneEllipsisNotImplementedMarshaller(
         # called to produce an instance.
         type_string = convert_attribute_to_string(
             attributes['Python.Type'])
-        return self.typestring_to_type[type_string]()
+        return self.typestring_to_type[type_string]() # type: ignore
 
 
 class PythonDictMarshaller(TypeMarshaller):
@@ -1985,7 +1985,7 @@ class PythonCounterMarshaller(PythonDictMarshaller):
             attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
-            return tp(data)
+            return tp(data) # type: ignore
         else:
             # Must be some other type, so return it as is.
             return data
@@ -2108,7 +2108,7 @@ class PythonDatetimeObjsMarshaller(PythonDictMarshaller):
             attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
-            return tp(**data)
+            return tp(**data) # type: ignore
         else:
             # Must be some other type, so return it as is.
             return data
@@ -2156,7 +2156,7 @@ class PythonFractionMarshaller(PythonDictMarshaller):
         # work, and then pass the result through the contructor of
         # Fraction.
         data = PythonDictMarshaller.read(self, f, dsetgrp, attributes)
-        return importlib.import_module('fractions').Fraction(**data)
+        return importlib.import_module('fractions').Fraction(**data) # type: ignore
 
     def read_approximate(
             self, f: 'hdf5storage.utilities.LowLevelFile',
@@ -2252,7 +2252,7 @@ class PythonTupleSetDequeMarshaller(PythonListMarshaller):
             attributes['Python.Type'])
         if type_string in self.typestring_to_type:
             tp = self.typestring_to_type[type_string]
-            return tp(data)
+            return tp(data) # type: ignore
         else:
             # Must be some other type, so return it as is.
             return data

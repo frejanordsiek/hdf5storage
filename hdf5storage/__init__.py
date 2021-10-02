@@ -2336,7 +2336,7 @@ def reads(paths: Iterable[pathesc.Path], **keywords: Any) -> List[Any]:
         extra_kws = dict()
     else:
         extra_kws = {'matlab_compatible': False}
-    with File(writable=False, **extra_kws, **keywords) as f:
+    with File(writable=False, **extra_kws, **keywords) as f: # type: ignore
         return f.reads(paths)
 
 
@@ -2393,7 +2393,7 @@ def read(path: pathesc.Path = '/', **keywords: Any) -> Any:
         extra_kws = dict()
     else:
         extra_kws = {'matlab_compatible': False}
-    with File(writable=False, **extra_kws, **keywords) as f:
+    with File(writable=False, **extra_kws, **keywords) as f: # type: ignore
         return f.read(path)
 
 
