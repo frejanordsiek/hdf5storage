@@ -340,10 +340,12 @@ class LowLevelFile(object):
 
         Parameters
         ----------
-        grp : h5py.Group or h5py.File
-            The Group to read the data from.
-        name : str
-            The name of the data to read.
+        grp : h5py.Group or h5py.File or None
+            The Group to read the data from. Can be ``None`` if
+            `dsetgrp` is not ``None``.
+        name : str or None
+            The name of the data to read. Can be ``None`` if `dsetgrp`
+            is not ``None``.
         dsetgrp : h5py.Dataset or h5py.Group or None, optional
             The Dataset or Group object to read if that has already been
             obtained and thus should not be re-obtained (``None``
@@ -368,6 +370,12 @@ class LowLevelFile(object):
 
         """
         if dsetgrp is None:
+            if grp is None:
+                raise TypeError('grp must not be None if dsetgrp is '
+                                'None.')
+            if name is None:
+                raise TypeError('name must not be None if dsetgrp is '
+                                'None.')
             # If name isn't found, return error.
             dsetgrp = grp.get(name)
             if dsetgrp is None:
