@@ -625,6 +625,61 @@ class LowLevelFile(object):
             name = '%x' % self._refs_group_counter
             self._refs_group_counter += 1
             return name
+
+        # We need the Group to hold references. We might already have
+        # it. If not, we need to create the Group if it isn't present
+        # and get its handle, while storing the handle and noting
+        # whether we created it or not.
+        if self._refs_group is None:
+            self._refs_group = self._f.get(
+                self._options.group_for_references,
+                default=None)
+            if self._refs_group is None or not isinstance(
+                    self._refs_group, h5py.Group):
+                # It doesn't exist yet or isn't a Group, so it needs to
+                # be created (and deleted if it is something else).
+                if self._refs_group is not None:
+                    del self._f[self._options.group_for_references]
+                self._refs_group = self._f.create_group(
+                    self._options.group_for_references)
+                self._created_refs_group = True
+            else:
+                # Was already present, which means we didn't create it.
+                self._created_refs_group = False
+            # Get the name if we don't have it.
+            if self._refs_group_name is None:
+                self._refs_group_name = self._refs_group.name
+
+        # The Dataset 'a' needs to be present as the canonical empty. It
+        # is just a np.uint32/64([0, 0]) with its a MATLAB_class of
+        # 'canonical empty' and the 'MATLAB_empty' attribute set. If it
+        # isn't present or is incorrectly formatted, it is created
+        # truncating anything previously there.
+        if self._canonical_empty is None:
+            self._canonical_empty = self._refs_group.get(
+                'a', default=None)
+            if self._canonical_empty is not None:
+                ce_attrs = self._canonical_empty.attrs
+                if (not isinstance(self._canonical_empty, h5py.Dataset)
+                    or self._canonical_empty.shape != (2,)
+                    or not self._canonical_empty.dtype.name.startswith(
+                        'uint')
+                    or np.any(self._canonical_empty[...]
+                              != np.array([0, 0], dtype=np.uint64))
+                    or convert_attribute_to_string(ce_attrs.get(
+                        'MATLAB_class')) != 'canonical empty'
+                    or ce_attrs.get(
+                        'MATLAB_empty') != 1):
+                    del self._refs_group['a']
+                    self._canonical_empty = None
+            if self._canonical_empty is None:
+                self._canonical_empty = self._refs_group.create_dataset(
+                    'a', data=np.array([0, 0], dtype=np.uint64))
+                ce_attrs = self._canonical_empty.attrs
+                ce_attrs.modify('MATLAB_class',
+                                np.bytes_('canonical empty'))
+                ce_attrs.modify('MATLAB_empty', np.uint8(1))
+
         # We need to make a random name and check for collisions.
         #
         # While
