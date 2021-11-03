@@ -584,7 +584,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                       np.int8, np.int16, np.int32, np.int64,
                       np.float16, np.float32, np.float64,
                       np.complex64, np.complex128,
-                      np.bytes_, np.unicode_, np.object_)
+                      np.bytes_, np.unicode_, np.object_,
+                      np.byte, np.short, np.intc, np.int_, np.longlong,
+                      np.ubyte, np.ushort, np.uintc, np.uint, np.ulonglong)
         self._numpy_types: Tuple[
             Union[str, Type[Any]], ...] = self.types
         # Using Python 3 type strings.
@@ -601,7 +603,9 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                                     'numpy.complex64',
                                     'numpy.complex128',
                                     'numpy.bytes_', 'numpy.str_',
-                                    'numpy.object_')
+                                    'numpy.object_',
+                                    'numpy.byte', 'numpy.short', 'numpy.intc', 'numpy.int_', 'numpy.longlong',
+                                    'numpy.ubyte', 'numpy.ushort', 'numpy.uintc', 'numpy.uint', 'numpy.ulonglong')
 
         # If we are storing in MATLAB format, we will need to be able to
         # set the MATLAB_class attribute. The different numpy types just
@@ -624,7 +628,17 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             np.complex128: 'double',
             np.bytes_: 'char',
             np.unicode_: 'char',
-            np.object_: 'cell'}
+            np.object_: 'cell',
+            np.byte: 'int8',
+            np.short: 'int16',
+            np.intc: 'int32',
+            np.int_: 'int32',
+            np.longlong: 'int64',
+            np.ubyte: 'uint8',
+            np.ushort: 'uint16',
+            np.uintc: 'uint32',
+            np.uint: 'uint32',
+            np.ulonglong: 'uint64',}
 
         # Make a dict to look up the opposite direction (given a matlab
         # class, what numpy type to use.
