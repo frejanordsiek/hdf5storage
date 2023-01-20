@@ -1706,9 +1706,16 @@ class File(collections.abc.MutableMapping):
                 #
                 # Platform is going to be changed to hdf5storage
                 # version.
+                #
+                # For the month and day names, we are forcing the use
+                # of English names for MATLAB compatibility.
                 s = 'MATLAB 7.3 MAT-file, Platform: hdf5storage ' \
-                    + __version__ + ', Created on: ' \
-                    + now.strftime('%a %b %d %H:%M:%S %Y') \
+                    + __version__ + ', Created on: {0} {1}'.format( \
+                    ('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')[ \
+                    now.weekday()], \
+                    ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', \
+                    'Aug', 'Sep', 'Oct', 'Nov', 'Dec')[now.month - 1]) \
+                    + now.strftime(' %d %H:%M:%S %Y') \
                     + ' HDF5 schema 1.00 .'
 
                 # Make the bytearray while padding with spaces up to
