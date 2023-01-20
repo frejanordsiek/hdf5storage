@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2021, Freja Nordsiek
+# Copyright (c) 2013-2023, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
