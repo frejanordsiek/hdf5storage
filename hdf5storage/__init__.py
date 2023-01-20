@@ -1271,8 +1271,12 @@ def writes(mdict, filename='data.h5', truncate_existing=False,
 
         s = 'MATLAB 7.3 MAT-file, Platform: CPython ' \
             + '{0}.{1}.{2}'.format(v['major'], v['minor'], v['micro']) \
-            + ', Created on: ' \
-            + now.strftime('%a %b %d %H:%M:%S %Y') \
+            + ', Created on: {0} {1}'.format(
+            ('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')[ \
+            now.weekday()], \
+            ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', \
+             'Sep', 'Oct', 'Nov', 'Dec')[now.month - 1]) \
+            + now.strftime(' %d %H:%M:%S %Y') \
             + ' HDF5 schema 1.00 .'
 
         # Make the bytearray while padding with spaces up to 128-12
