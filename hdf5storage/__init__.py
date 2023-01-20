@@ -1102,7 +1102,8 @@ class MarshallerCollection(object):
                              'element.')
         self._load_plugins: bool = load_plugins
         self._lazy_loading: bool = lazy_loading
-        self._priority: Tuple[str, str, str] = tuple(priority)
+        self._priority: Tuple[str, str, str] = tuple(
+            priority) # type: ignore
 
         # Two lists of marshallers need to be maintained: one for the
         # builtin ones in the Marshallers module, and another for user

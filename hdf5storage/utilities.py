@@ -1010,7 +1010,7 @@ def convert_to_numpy_str(
             if isinstance(data, np.bytes_):
                 return np.unicode_(data.decode('UTF-8'))
             else:
-                return np.char.encode(data, 'UTF-32')
+                return np.char.encode(data, 'UTF-32') # type: ignore
         elif isinstance(data, (np.uint8, np.uint16)):
             # They are single UTF-8 or UTF-16 scalars, which can be
             # wrapped into an array and recursed.
@@ -1339,9 +1339,11 @@ def decode_complex(data: Union[np.ndarray, np.generic],
     # the right form.
     if cnames[0] is not None and cnames[1] is not None:
         cdata = np.result_type(
-            data[cnames[0]].dtype,
-            data[cnames[1]].dtype, 'complex64').type(data[cnames[0]])
-        cdata.imag = data[cnames[1]]
+            data[cnames[0]].dtype, # type: ignore
+            data[cnames[1]].dtype, # type: ignore
+            'complex64').type(
+                data[cnames[0]]) # type: ignore
+        cdata.imag = data[cnames[1]] # type: ignore
         return cdata
     else:
         return data

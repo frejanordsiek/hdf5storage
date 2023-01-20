@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2021, Freja Nordsiek
+# Copyright (c) 2013-2023, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -2156,7 +2156,7 @@ class PythonFractionMarshaller(PythonDictMarshaller):
         # work, and then pass the result through the contructor of
         # Fraction.
         data = PythonDictMarshaller.read(self, f, dsetgrp, attributes)
-        return importlib.import_module('fractions').Fraction(**data) # type: ignore
+        return importlib.import_module('fractions').Fraction(**data)
 
     def read_approximate(
             self, f: 'hdf5storage.utilities.LowLevelFile',
