@@ -901,7 +901,8 @@ class MarshallerCollection(object):
         # the classes) by inspection.
         self._builtin_marshallers = [m() for key, m in dict(
                                      inspect.getmembers(Marshallers,
-                                     inspect.isclass)).items()]
+                                     inspect.isclass)).items()
+                                     if m != Marshallers.parse_version]
         self._user_marshallers = []
 
         # A list of all the marshallers will be needed along with
