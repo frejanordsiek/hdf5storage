@@ -27,16 +27,16 @@ Installation
 Dependencies
 ------------
 
-This package only supports Python >= 3.6. Python < 3.6 support was dropped
+This package only supports Python >= 3.7. Python < 3.7 support was dropped
 in version 0.2.
 
 This package requires the python packages to run
 
 * `numpy <https://pypi.org/project/numpy>`_
-* `h5py <https://pypi.org/project/h5py>`_ >= 2.3
+* `h5py <https://pypi.org/project/h5py>`_ >= 3.3
 * `setuptools <https://pypi.org/project/setuptools>`_
 
-Note that support for `h5py <https://pypi.org/project/h5py>`_ 2.1.x and 2.2.x
+Note that support for `h5py <https://pypi.org/project/h5py>`_ 2.1 to 3.2.x
 has been dropped in version 0.2.
 This package also has the following optional dependencies
 
@@ -391,8 +391,8 @@ Versions
 ========
 
 0.2. Feature release adding/changing the following, including some API breaking changes.
-     * Issues #50 and #84 and #117. Python < 3.6 support dropped.
-     * Issue #53. h5py 2.1.x and 2.2.x  support dropped.
+     * Issues #50 and #84 and #117 and #126. Python < 3.7 support dropped.
+     * Issue #53 and #126. h5py < 3.3 support dropped.
      * Issue #114. Fixed bug where the shape was stored in the opposite order as
        Matlab for empty ndarrays when ``Options.store_shape_for_empty`` is set.
        This causes a file compatibility change.

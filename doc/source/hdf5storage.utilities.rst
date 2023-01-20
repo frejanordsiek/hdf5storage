@@ -20,7 +20,6 @@ hdf5storage.utilities
    convert_attribute_to_string
    convert_attribute_to_string_array
    read_all_attributes_into
-   read_matlab_fields_attribute
    set_attributes_all
 
 
@@ -102,12 +101,6 @@ read_all_attributes_into
 ------------------------
 
 .. autofunction:: read_all_attributes_into
-
-
-read_matlab_fields_attribute
-----------------------------
-
-.. autofunction:: read_matlab_fields_attribute
 
 
 set_attributes_all

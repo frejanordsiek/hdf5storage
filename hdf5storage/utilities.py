@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2021, Freja Nordsiek
+# Copyright (c) 2013-2023, Freja Nordsiek
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,19 +54,6 @@ else:
     from typing import MutableMapping
 
 
-# We need to determine if h5py is one of the versions that cannot read
-# the MATLAB_fields Attribute in the normal fashion so that we can
-# handle it specially in LowLevelFile.read.
-_handle_matlab_fields_specially: bool = (
-    pkg_resources.parse_version(h5py.__version__)
-    in (pkg_resources.parse_version('3.0'),
-        pkg_resources.parse_version('3.1')))
-
-if _handle_matlab_fields_specially:
-    import ctypes
-    import h5py._objects
-
-
 def does_dtype_have_a_zero_shape(dt: np.dtype) -> bool:
     """ Determine whether a dtype (or its fields) have zero shape.
 
@@ -114,70 +101,11 @@ def does_dtype_have_a_zero_shape(dt: np.dtype) -> bool:
     return False
 
 
-def read_matlab_fields_attribute(
-        attrs: h5py.AttributeManager) -> Any:
-    """ Reads the ``MATLAB_fields`` Attribute.
-
-    On some versions of ``h5py``, the ``MATLAB_fields`` Attribute cannot
-    be read in the standard way and must instead be read in a more
-    manual fashion. This function reads the Attribute by the proper
-    method.
-
-    Parameters
-    ----------
-    attrs : h5py.AttributeManager
-        The Attribute manager to read from.
-
-    Returns
-    -------
-    value : numpy.ndarray or None
-        The value of the ``MATLAB_fields`` Attribute, or ``None`` if it
-        isn't available or its format is invalid.
-
-    Raises
-    ------
-    TypeError
-        If an argument has the wrong type.
-
-    """
-    if not isinstance(attrs, h5py.AttributeManager):
-        raise TypeError('attrs must be a h5py.AttributeManager.')
-    if not _handle_matlab_fields_specially:
-        return attrs.get('MATLAB_fields')
-    if 'MATLAB_fields' not in attrs:
-        return None
-    # The following method is loosely based on the method provided by
-    # takluyver at
-    # https://github.com/h5py/h5py/issues/1817#issuecomment-781385699
-    #
-    # but has been improved by reading it directly as (size_t, void*)
-    # pairs uint64s instead of using struct.unpack, and avoiding making
-    # intermediate copies of the data by copying directly to the output
-    # array.
-    with h5py._objects.phil:
-        attr_id = attrs.get_id('MATLAB_fields')
-        dt = np.dtype([('length', np.uintp), ('pointer', np.intp)])
-        raw_buf = np.empty(attr_id.shape, dtype=dt)
-        attr_id.read(raw_buf, mtype=attr_id.get_type())
-        attr = np.empty(raw_buf.shape, dtype='object')
-        attr_flat = attr.ravel()
-        length: np.uintp
-        ptr: np.intp
-        for i, (length, ptr) in enumerate(raw_buf.ravel()):
-            at = np.empty(length, dtype='S1')
-            ctypes.memmove(at.ctypes.data, int(ptr), int(length))
-            attr_flat[i] = at
-        return attr
-
-
 def read_all_attributes_into(attrs: h5py.AttributeManager,
                              out: MutableMapping[str, Any]) -> None:
     """ Reads all Attributes into a MutableMapping (dict-like)
 
-    Reads all Attributes into the MutableMapping (dict-like) out,
-    including the special handling of the ``MATLAB_fields`` Attribute on
-    versions of ``h5py`` where it cannot be read in the standard
-    fashion.
+    Reads all Attributes into the MutableMapping (dict-like) out.
 
     Parameters
     ----------
@@ -191,25 +119,13 @@ def read_all_attributes_into(attrs: h5py.AttributeManager,
     TypeError
         If an argument has the wrong type.
 
-    See Also
-    --------
-    read_matlab_fields_attribute
-
     """
     if not isinstance(attrs, h5py.AttributeManager):
         raise TypeError('attrs must be a h5py.AttributeManager.')
     if not isinstance(out, (dict, collections.defaultdict,
                             collections.abc.MutableMapping)):
         raise TypeError('out must be a MutableMapping.')
-    if not _handle_matlab_fields_specially \
-            or 'MATLAB_fields' not in attrs:
-        out.update(attrs.items())
-    else:
-        for k in attrs:
-            if k != 'MATLAB_fields':
-                out[k] = attrs[k]
-            else:
-                out[k] = read_matlab_fields_attribute(attrs)
+    out.update(attrs.items())
 
 
 class LowLevelFile(object):
