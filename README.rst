@@ -531,6 +531,15 @@ Versions
      * Issue #118. Added type hints and configuration for
        `mypy <https://pypi.org/project/mypy>`_
 
+0.1.19. Bugfix release.
+        * Issue #122 and #124. Replaced use of deprecated ``numpy.asscalar``
+          functions with the ``numpy.ndarray.item`` method.
+        * Issue #123. Forced the use of English month and day of the week names
+          in the HDF5 header for MATLAB compatibility.
+        * Issue #125. Fixed accidental collection of
+          ``pkg_resources.parse_version`` from setuptools as a Marshaller now
+          that it is a class.
+
 0.1.18. Performance improving release.
         * Pull Request #111 from Daniel Hrisca. Many repeated calls to the
           ``__getitem__`` methods of objects were turned into single calls.
