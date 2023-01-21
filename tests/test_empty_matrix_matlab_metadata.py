@@ -28,13 +28,11 @@ import os.path
 import random
 import tempfile
 
-import numpy
 import h5py
+import make_randoms
+import numpy
 
 import hdf5storage
-
-import make_randoms
-
 
 # A series of tests to make sure that empty arrays are stored properly
 # in matlab compatible mode. Specifically, the shape must be stored in
@@ -83,7 +81,7 @@ def test_read_empty():
                 for prefix in ("u", "")
                 for suffix in ("8", "16", "32", "64")
             ]
-            + ["single", "double"]
+            + ["single", "double"],
         )
         with tempfile.TemporaryDirectory() as folder:
             filename = os.path.join(folder, "data.h5")

@@ -32,7 +32,6 @@ __version__ = "0.2"
 
 import hdf5storage.Marshallers as hm
 
-
 # Going to make a class that subclasses lists but doesn't really do
 # anything else, but it will be enought to need a new marshaller.
 

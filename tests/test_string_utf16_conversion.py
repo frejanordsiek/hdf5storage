@@ -27,13 +27,11 @@
 import os.path
 import tempfile
 
-import numpy as np
 import h5py
-
+import numpy as np
 import pytest
 
 import hdf5storage
-
 
 # A test to make sure that the following are written as UTF-16
 # (uint16) if they don't contain doublets and the
@@ -43,7 +41,7 @@ import hdf5storage
 # * numpy.unicode_ scalars
 
 
-@pytest.mark.parametrize("tp", (str, np.unicode_))
+@pytest.mark.parametrize("tp", [str, np.unicode_])
 def test_conv_utf16(tp):
     name = "/a"
     data = tp("abcdefghijklmnopqrstuvwxyz")

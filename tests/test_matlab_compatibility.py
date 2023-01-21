@@ -29,10 +29,9 @@ import os.path
 import subprocess
 
 import pytest
+from asserts import assert_equal_from_matlab
 
 import hdf5storage
-
-from asserts import assert_equal_from_matlab
 
 
 def test_back_and_forth_matlab():
@@ -44,16 +43,16 @@ def test_back_and_forth_matlab():
     for i in range(0, len(script_names)):
         script_names[i] = os.path.join(os.path.dirname(__file__), script_names[i])
 
-    types_v7 = dict()
-    types_v7p3 = dict()
-    python_v7 = dict()
-    python_v7p3 = dict()
+    types_v7 = {}
+    types_v7p3 = {}
+    python_v7 = {}
+    python_v7p3 = {}
     try:
         import scipy.io
 
         matlab_command = "run('" + script_names[0] + "')"
         subprocess.check_call(
-            ["matlab", "-nosplash", "-nodesktop", "-nojvm", "-r", matlab_command]
+            ["matlab", "-nosplash", "-nodesktop", "-nojvm", "-r", matlab_command],
         )
         scipy.io.loadmat(file_name=mat_files[1], mdict=types_v7)
         hdf5storage.loadmat(file_name=mat_files[0], mdict=types_v7p3)
@@ -61,7 +60,7 @@ def test_back_and_forth_matlab():
         hdf5storage.savemat(file_name=mat_files[2], mdict=types_v7p3)
         matlab_command = "run('" + script_names[1] + "')"
         subprocess.check_call(
-            ["matlab", "-nosplash", "-nodesktop", "-nojvm", "-r", matlab_command]
+            ["matlab", "-nosplash", "-nodesktop", "-nojvm", "-r", matlab_command],
         )
         scipy.io.loadmat(file_name=mat_files[3], mdict=python_v7)
         hdf5storage.loadmat(file_name=mat_files[2], mdict=python_v7p3)
@@ -75,7 +74,5 @@ def test_back_and_forth_matlab():
     for name in types_v7p3:
         assert_equal_from_matlab(types_v7p3[name], types_v7[name])
 
-    for name in set(types_v7.keys()) - set(
-        ["__version__", "__header__", "__globals__"]
-    ):
+    for name in set(types_v7.keys()) - {"__version__", "__header__", "__globals__"}:
         assert_equal_from_matlab(types_v7p3[name], types_v7[name])

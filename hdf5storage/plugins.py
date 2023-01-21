@@ -24,16 +24,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-""" Module for finding plugins and indicating supported API versions
+"""Module for finding plugins and indicating supported API versions."""
 
-"""
+from typing import Dict, Tuple
 
-# From setuptools, despite name.
 import pkg_resources
-
-
-# Type hints
-from typing import Tuple, Dict
 
 
 def supported_marshaller_api_versions() -> Tuple[str]:
@@ -58,7 +53,8 @@ def supported_marshaller_api_versions() -> Tuple[str]:
 
 
 def find_thirdparty_marshaller_plugins() -> Dict[
-    str, Dict[str, pkg_resources.EntryPoint]
+    str,
+    Dict[str, pkg_resources.EntryPoint],
 ]:
     """Find, but don't load, all third party marshaller plugins.
 
@@ -86,7 +82,7 @@ def find_thirdparty_marshaller_plugins() -> Dict[
 
     """
     all_plugins = tuple(
-        pkg_resources.iter_entry_points("hdf5storage.marshallers.plugins")
+        pkg_resources.iter_entry_points("hdf5storage.marshallers.plugins"),
     )
     return {
         ver: {p.module_name: p for p in all_plugins if p.name == ver}

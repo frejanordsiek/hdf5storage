@@ -29,20 +29,19 @@ import os.path
 import random
 import tempfile
 
-import hdf5storage
-
 from asserts import assert_equal
 from make_randoms import (
-    min_dict_keys,
+    dict_value_subarray_dimensions,
+    dtypes,
     max_dict_keys,
+    max_dict_value_subarray_axis_length,
+    min_dict_keys,
     random_name,
     random_numpy,
     random_numpy_shape,
-    dict_value_subarray_dimensions,
-    max_dict_value_subarray_axis_length,
-    dtypes,
 )
 
+import hdf5storage
 
 random.seed()
 
@@ -54,12 +53,13 @@ random.seed()
 def test_multi_write():
     # Makes a random dict of random paths and variables (random number
     # of randomized paths with random numpy arrays as values).
-    data = dict()
-    for i in range(0, random.randint(min_dict_keys, max_dict_keys)):
+    data = {}
+    for _ in range(0, random.randint(min_dict_keys, max_dict_keys)):
         name = random_name()
         data[name] = random_numpy(
             random_numpy_shape(
-                dict_value_subarray_dimensions, max_dict_value_subarray_axis_length
+                dict_value_subarray_dimensions,
+                max_dict_value_subarray_axis_length,
             ),
             dtype=random.choice(dtypes),
         )
@@ -68,7 +68,7 @@ def test_multi_write():
     with tempfile.TemporaryDirectory() as folder:
         filename = os.path.join(folder, "data.h5")
         hdf5storage.writes(mdict=data, filename=filename)
-        out = dict()
+        out = {}
         for p in data:
             out[p] = hdf5storage.read(path=p, filename=filename)
 
@@ -79,12 +79,13 @@ def test_multi_write():
 def test_multi_read():
     # Makes a random dict of random paths and variables (random number
     # of randomized paths with random numpy arrays as values).
-    data = dict()
-    for i in range(0, random.randint(min_dict_keys, max_dict_keys)):
+    data = {}
+    for _ in range(0, random.randint(min_dict_keys, max_dict_keys)):
         name = random_name()
         data[name] = random_numpy(
             random_numpy_shape(
-                dict_value_subarray_dimensions, max_dict_value_subarray_axis_length
+                dict_value_subarray_dimensions,
+                max_dict_value_subarray_axis_length,
             ),
             dtype=random.choice(dtypes),
         )

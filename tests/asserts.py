@@ -110,7 +110,7 @@ def assert_equal(a, b, options=None):
                 npt.assert_equal(a, b)
         else:
             for index, x in np.ndenumerate(a):
-                assert_equal(a[index], b[index], options)
+                assert_equal(x, b[index], options)
 
 
 def assert_equal_none_format(a, b, options=None):
@@ -147,20 +147,25 @@ def assert_equal_none_format(a, b, options=None):
             np.bytes_: lambda x: bytes(x).decode("UTF-8"),
             np.unicode_: lambda x: str(x),
         }
-        tp_conv = lambda x: converters[type(x)](x)
-        tp_conv_str = lambda x: tp_conv(x)
+
+        def tp_conv(x):
+            return converters[type(x)](x)
+
+        def tp_conv_str(x):
+            return tp_conv(x)
+
         tps = tuple(converters.keys())
-        for k in b.keys():
+        for k in b:
             if type(k) not in tps:
                 all_str_keys = False
                 break
             try:
-                k_str = tp_conv(k)
+                tp_conv(k)
             except:
                 all_str_keys = False
                 break
         if all_str_keys:
-            assert set(a.dtype.names) == set([tp_conv_str(k) for k in b.keys()])
+            assert set(a.dtype.names) == {tp_conv_str(k) for k in b}
             for k in b:
                 assert_equal_none_format(a[tp_conv_str(k)][0], b[k], options)
         else:
@@ -174,7 +179,9 @@ def assert_equal_none_format(a, b, options=None):
         # For slices and ranges, we won't get it back exactly but it
         # will match what we get back for them turned into a dict.
         assert_equal_none_format(
-            a, {"start": b.start, "stop": b.stop, "step": b.step}, options=options
+            a,
+            {"start": b.start, "stop": b.stop, "step": b.step},
+            options=options,
         )
     elif type(b) == datetime.timezone:
         cb = {"offset": b.utcoffset(None)}
@@ -189,7 +196,9 @@ def assert_equal_none_format(a, b, options=None):
         )
     elif type(b) == datetime.date:
         assert_equal_none_format(
-            a, {"year": b.year, "month": b.month, "day": b.day}, options=options
+            a,
+            {"year": b.year, "month": b.month, "day": b.day},
+            options=options,
         )
     elif type(b) == datetime.time:
         assert_equal_none_format(
@@ -222,7 +231,9 @@ def assert_equal_none_format(a, b, options=None):
         # We won't get a fraction back, but we can check if we get back
         # something equivalent dict equivalent.
         assert_equal_none_format(
-            a, {"numerator": b.numerator, "denominator": b.denominator}, options=options
+            a,
+            {"numerator": b.numerator, "denominator": b.denominator},
+            options=options,
         )
     elif type(b) == collections.ChainMap:
         # We won't get back a chainmap, but instead a list of the maps
@@ -260,12 +271,14 @@ def assert_equal_none_format(a, b, options=None):
     else:
         if b.dtype.name != "object":
             if b.dtype.char in ("U", "S"):
-                if b.dtype.char == "S" and b.shape == tuple() and len(b) == 0:
+                if b.dtype.char == "S" and b.shape == () and len(b) == 0:
                     assert_equal(
-                        a, np.zeros(shape=tuple(), dtype=b.dtype.char), options
+                        a,
+                        np.zeros(shape=(), dtype=b.dtype.char),
+                        options,
                     )
                 elif b.dtype.char == "U":
-                    if b.shape == tuple() and len(b) == 0:
+                    if b.shape == () and len(b) == 0:
                         c = np.uint32(())
                     else:
                         c = np.atleast_1d(b).view(np.uint32)
@@ -298,7 +311,7 @@ def assert_equal_none_format(a, b, options=None):
                 has_zero_shape = False
                 if b.dtype.names is not None:
                     parts = [b.dtype]
-                    while 0 != len(parts):
+                    while len(parts) != 0:
                         part = parts.pop()
                         if 0 in part.shape:
                             has_zero_shape = True
@@ -330,7 +343,7 @@ def assert_equal_none_format(a, b, options=None):
                 assert dict(a.dtype.fields) == dict(b.dtype.fields)
             assert a.shape == b.shape
             for index, x in np.ndenumerate(a):
-                assert_equal_none_format(a[index], b[index], options)
+                assert_equal_none_format(x, b[index], options)
 
 
 def assert_equal_matlab_format(a, b, options=None):
@@ -372,20 +385,25 @@ def assert_equal_matlab_format(a, b, options=None):
             np.bytes_: lambda x: bytes(x).decode("UTF-8"),
             np.unicode_: lambda x: str(x),
         }
-        tp_conv = lambda x: converters[type(x)](x)
-        tp_conv_str = lambda x: tp_conv(x)
-        tps = tuple(converters.keys())
-        for k in b.keys():
+
+        def tp_conv(x):
+            return converters[type(x)](x)
+
+        def tp_conv_str(x):
+            return tp_conv(x)
+
+        tps = tuple(converters)
+        for k in b:
             if type(k) not in tps:
                 all_str_keys = False
                 break
             try:
-                k_str = tp_conv(k)
+                tp_conv(k)
             except:
                 all_str_keys = False
                 break
         if all_str_keys:
-            assert set(a.dtype.names) == set([tp_conv_str(k) for k in b.keys()])
+            assert set(a.dtype.names) == {tp_conv_str(k) for k in b}
             for k in b:
                 assert_equal_matlab_format(a[tp_conv_str(k)][0], b[k], options)
         else:
@@ -399,7 +417,9 @@ def assert_equal_matlab_format(a, b, options=None):
         # For slices and ranges, we won't get it back exactly but it
         # will match what we get back for them turned into a dict.
         assert_equal_matlab_format(
-            a, {"start": b.start, "stop": b.stop, "step": b.step}, options=options
+            a,
+            {"start": b.start, "stop": b.stop, "step": b.step},
+            options=options,
         )
     elif type(b) == datetime.timezone:
         cb = {"offset": b.utcoffset(None)}
@@ -414,7 +434,9 @@ def assert_equal_matlab_format(a, b, options=None):
         )
     elif type(b) == datetime.date:
         assert_equal_matlab_format(
-            a, {"year": b.year, "month": b.month, "day": b.day}, options=options
+            a,
+            {"year": b.year, "month": b.month, "day": b.day},
+            options=options,
         )
     elif type(b) == datetime.time:
         assert_equal_matlab_format(
@@ -447,7 +469,9 @@ def assert_equal_matlab_format(a, b, options=None):
         # We won't get a fraction back, but we can check if we get back
         # something equivalent dict equivalent.
         assert_equal_matlab_format(
-            a, {"numerator": b.numerator, "denominator": b.denominator}, options=options
+            a,
+            {"numerator": b.numerator, "denominator": b.denominator},
+            options=options,
         )
     elif type(b) == collections.ChainMap:
         # We won't get back a chainmap, but instead a list of the maps
@@ -490,12 +514,14 @@ def assert_equal_matlab_format(a, b, options=None):
     else:
         if b.dtype.name != "object":
             if b.dtype.char in ("U", "S"):
-                if len(b) == 0 and (b.shape == tuple() or b.shape == (0,)):
+                if len(b) == 0 and (b.shape == () or b.shape == (0,)):
                     assert_equal(a, np.zeros(shape=(1, 0), dtype="U"), options)
                 elif b.dtype.char == "U":
                     c = np.atleast_1d(b)
                     c = np.atleast_2d(
-                        c.view(np.dtype("U" + str(c.shape[-1] * c.dtype.itemsize // 4)))
+                        c.view(
+                            np.dtype("U" + str(c.shape[-1] * c.dtype.itemsize // 4)),
+                        ),
                     )
                     assert a.dtype == c.dtype
                     assert a.shape == c.shape
@@ -550,13 +576,13 @@ def assert_equal_matlab_format(a, b, options=None):
                     b = b.flatten()
                     for k in b.dtype.names:
                         for index, x in np.ndenumerate(a):
-                            assert_equal_from_matlab(a[k][index], b[k][index], options)
+                            assert_equal_from_matlab(x[k], b[k][index], options)
         else:
             c = np.atleast_2d(b)
             assert a.dtype == c.dtype
             assert a.shape == c.shape
             for index, x in np.ndenumerate(a):
-                assert_equal_matlab_format(a[index], c[index], options)
+                assert_equal_matlab_format(x, c[index], options)
 
 
 def assert_equal_from_matlab(a, b, options=None):
@@ -579,7 +605,7 @@ def assert_equal_from_matlab(a, b, options=None):
         a = a.flatten()
         b = b.flatten()
         for index, x in np.ndenumerate(a):
-            assert_equal_from_matlab(a[index], b[index], options)
+            assert_equal_from_matlab(x, b[index], options)
     elif b.dtype.names is not None or a.dtype.names is not None:
         assert a.dtype.names is not None
         assert b.dtype.names is not None
@@ -588,7 +614,7 @@ def assert_equal_from_matlab(a, b, options=None):
         b = b.flatten()
         for k in b.dtype.names:
             for index, x in np.ndenumerate(a):
-                assert_equal_from_matlab(a[k][index], b[k][index], options)
+                assert_equal_from_matlab(x[k], b[k][index], options)
     else:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)

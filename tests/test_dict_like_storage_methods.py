@@ -28,24 +28,20 @@ import os.path
 import random
 import tempfile
 
-import numpy as np
-
 import h5py
-
+import numpy as np
 import pytest
+from make_randoms import (
+    max_dict_key_length,
+    random_dict,
+    random_int,
+    random_name,
+    random_str_ascii,
+    random_str_some_unicode,
+)
 
 import hdf5storage
 from hdf5storage.pathesc import escape_path
-
-
-from make_randoms import (
-    random_name,
-    random_dict,
-    random_int,
-    random_str_ascii,
-    random_str_some_unicode,
-    max_dict_key_length,
-)
 
 random.seed()
 
@@ -70,7 +66,7 @@ other_key_types = ("bytes", "numpy.bytes_", "numpy.unicode_")
 
 
 @pytest.mark.parametrize(
-    "tp,option_keywords",
+    ("tp", "option_keywords"),
     [
         (
             tp,
@@ -113,7 +109,7 @@ def test_all_valid_str_keys(tp, option_keywords):
 
 
 @pytest.mark.parametrize(
-    "tp,ch,option_keywords",
+    ("tp", "ch", "option_keywords"),
     [
         (
             tp,
@@ -164,7 +160,7 @@ def test_str_key_previously_invalid_char(tp, ch, option_keywords):
 
 
 @pytest.mark.parametrize(
-    "tp,other_tp,option_keywords",
+    ("tp", "other_tp", "option_keywords"),
     [
         (
             tp,
@@ -217,7 +213,7 @@ def test_string_type_non_str_key(tp, other_tp, option_keywords):
 
 
 @pytest.mark.parametrize(
-    "tp,option_keywords",
+    ("tp", "option_keywords"),
     [
         (
             tp,

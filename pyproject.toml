@@ -6,3 +6,95 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 target-version = ["py37"]
 extend-exclude = ["docs"]
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+target-version = "py37"
+extend-exclude = ["doc", "examples", ".egg-info"]
+line-length = 88
+select = [
+    "A",
+    "ANN",
+    "ARG",
+    "B",
+    "COM",
+    "C4",
+    "D",
+    "DTZ",
+    "E",
+    "EM",
+    "ERA",
+    "F",
+    "I",
+    "INP",
+    "ISC",
+    "N",
+    "PGH",
+    "PIE",
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW",
+    "PT",
+    "Q",
+    "RET",
+    "RUF",
+    "S",
+    "SIM",
+    "TID",
+    "T10",
+    "T20",
+    "UP",
+    "W",
+    "YTT",
+]
+ignore = [
+    "ANN401",
+    "EM101",
+    "PLR2004",
+    "RUF005",
+    "SIM108",
+    "UP024",
+]
+
+[tool.ruff.per-file-ignores]
+"hdf5storage/__init__.py" = [
+    "A002",
+    "ARG002",
+]
+"hdf5storage/Marshallers.py" = [
+    "ARG002",
+    "D101",
+    "D102",
+    "E722",
+]
+"hdf5storage/utilities.py" = [
+    "E722",
+]
+"tests/*.py" = [
+    "ANN001",
+    "ANN101",
+    "ANN201",
+    "ANN202",
+    "ARG002",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "E722",
+    "INP001",
+    "N802",
+    "PT011",
+    "S101",
+]
+"tests/make_randoms.py" = [
+    "RUF001",
+]
+
+[tool.ruff.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff.pydocstyle]
+convention = "numpy"

@@ -24,19 +24,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-""" Module of Exceptions. """
+"""Module of Exceptions."""
 
 
 class Hdf5storageError(IOError):
     """Base class of hdf5storage package exceptions."""
 
-    pass
-
 
 class CantReadError(Hdf5storageError):
     """Exception for a failure to read the desired data."""
-
-    pass
 
 
 class TypeNotMatlabCompatibleError(Hdf5storageError):
@@ -54,5 +50,3 @@ class TypeNotMatlabCompatibleError(Hdf5storageError):
     hdf5storage.Options.action_for_matlab_incompatible
 
     """
-
-    pass

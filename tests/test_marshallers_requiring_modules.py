@@ -28,12 +28,12 @@ import os.path
 import sys
 import tempfile
 
-import numpy as np
 import h5py
+import numpy as np
 
 import hdf5storage
-import hdf5storage.utilities
 import hdf5storage.Marshallers
+import hdf5storage.utilities
 
 
 class Tmarshaller(hdf5storage.Marshallers.TypeMarshaller):
@@ -48,7 +48,7 @@ def test_missing_required_parent():
     m = hdf5storage.Marshallers.TypeMarshaller()
     m.required_parent_modules = ["ainivieanvueaq"]
     m.python_type_strings = ["vi8vaeaniea"]
-    m.types = [s for s in m.python_type_strings]
+    m.types = list(m.python_type_strings)
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(marshallers=[m])
     assert mc._has_required_modules[-1] is False
@@ -67,7 +67,7 @@ def test_missing_required_lazy():
     m.required_parent_modules = ["numpy"]
     m.required_modules = ["ainivieanvueaq"]
     m.python_type_strings = ["vi8vaeaniea"]
-    m.types = [s for s in m.python_type_strings]
+    m.types = list(m.python_type_strings)
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(lazy_loading=True, marshallers=[m])
     assert mc._has_required_modules[-1]
@@ -86,7 +86,7 @@ def test_missing_required_non_lazy():
     m.required_parent_modules = ["numpy"]
     m.required_modules = ["ainivieanvueaq"]
     m.python_type_strings = ["vi8vaeaniea"]
-    m.types = [s for s in m.python_type_strings]
+    m.types = list(m.python_type_strings)
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(lazy_loading=False, marshallers=[m])
     assert mc._has_required_modules[-1] is False

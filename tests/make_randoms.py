@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2013-2020, Freja Nordsiek
 # All rights reserved.
 #
@@ -37,7 +35,6 @@ import warnings
 
 import numpy as np
 import numpy.random
-
 
 random.seed()
 
@@ -126,7 +123,11 @@ def random_float():
 
 
 def random_numpy(
-    shape, dtype, allow_nan=True, allow_unicode=False, object_element_dtypes=None
+    shape,
+    dtype,
+    allow_nan=True,
+    allow_unicode=False,
+    object_element_dtypes=None,
 ):
     # Makes a random numpy array of the specified shape and dtype
     # string. The method is slightly different depending on the
@@ -142,55 +143,55 @@ def random_numpy(
     if dtype == "S":
         length = random.randint(1, max_string_length)
         data = np.zeros(shape=shape, dtype="S" + str(length))
-        for index, x in np.ndenumerate(data):
+        for index, _ in np.ndenumerate(data):
             if allow_unicode:
                 chars = random_bytes_fullrange(length)
             else:
                 chars = random_bytes(length)
             data[index] = np.bytes_(chars)
         return data
-    elif dtype == "U":
+    if dtype == "U":
         length = random.randint(1, max_string_length)
         data = np.zeros(shape=shape, dtype="U" + str(length))
-        for index, x in np.ndenumerate(data):
+        for index, _ in np.ndenumerate(data):
             if allow_unicode:
                 chars = random_str_some_unicode(length)
             else:
                 chars = random_str_ascii(length)
             data[index] = np.unicode_(chars)
         return data
-    elif dtype == "object":
+    if dtype == "object":
         if object_element_dtypes is None:
             object_element_dtypes = dtypes
         data = np.zeros(shape=shape, dtype="object")
-        for index, x in np.ndenumerate(data):
+        for index, _ in np.ndenumerate(data):
             data[index] = random_numpy(
                 shape=random_numpy_shape(
-                    object_subarray_dimensions, max_object_subarray_axis_length
+                    object_subarray_dimensions,
+                    max_object_subarray_axis_length,
                 ),
                 dtype=random.choice(object_element_dtypes),
             )
         return data
-    else:
-        nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
-        bts = np.random.bytes(nbytes * np.prod(shape))
-        if dtype == "bool":
-            bts = b"".join([{True: b"\x01", False: b"\x00"}[ch > 127] for ch in bts])
-        data = np.ndarray(shape=shape, dtype=dtype, buffer=bts)
-        # If it is a floating point type and we are supposed to
-        # remove NaN's, then turn them to zeros. Numpy will throw
-        # RuntimeWarnings for some NaN values, so those warnings need to
-        # be caught and ignored.
-        if not allow_nan and data.dtype.kind in ("f", "c"):
-            data = data.copy()
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                if data.dtype.kind == "f":
-                    data[np.isnan(data)] = 0.0
-                else:
-                    data.real[np.isnan(data.real)] = 0.0
-                    data.imag[np.isnan(data.imag)] = 0.0
-        return data
+    nbytes = np.ndarray(shape=(1,), dtype=dtype).nbytes
+    bts = np.random.bytes(nbytes * np.prod(shape))
+    if dtype == "bool":
+        bts = b"".join([{True: b"\x01", False: b"\x00"}[ch > 127] for ch in bts])
+    data = np.ndarray(shape=shape, dtype=dtype, buffer=bts)
+    # If it is a floating point type and we are supposed to
+    # remove NaN's, then turn them to zeros. Numpy will throw
+    # RuntimeWarnings for some NaN values, so those warnings need to
+    # be caught and ignored.
+    if not allow_nan and data.dtype.kind in ("f", "c"):
+        data = data.copy()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            if data.dtype.kind == "f":
+                data[np.isnan(data)] = 0.0
+            else:
+                data.real[np.isnan(data.real)] = 0.0
+                data.imag[np.isnan(data.imag)] = 0.0
+    return data
 
 
 def random_numpy_scalar(dtype, object_element_dtypes=None):
@@ -199,12 +200,13 @@ def random_numpy_scalar(dtype, object_element_dtypes=None):
     # string of any length.
     if dtype == "S":
         return np.bytes_(random_bytes(random.randint(1, max_string_length)))
-    elif dtype == "U":
+    if dtype == "U":
         return np.unicode_(random_str_ascii(random.randint(1, max_string_length)))
-    else:
-        return random_numpy(
-            tuple(), dtype, object_element_dtypes=object_element_dtypes
-        )[()]
+    return random_numpy(
+        (),
+        dtype,
+        object_element_dtypes=object_element_dtypes,
+    )[()]
 
 
 def random_numpy_shape(dimensions, max_length, min_length=1):
@@ -213,24 +215,20 @@ def random_numpy_shape(dimensions, max_length, min_length=1):
     return tuple([random.randint(min_length, max_length) for x in range(0, dimensions)])
 
 
-def random_list(N, python_or_numpy="numpy"):
+def random_list(n, python_or_numpy="numpy"):
     # Makes a random list of the specified type. If instructed, it
     # will be composed entirely from random numpy arrays (make a
     # random object array and then convert that to a
     # list). Otherwise, it will be a list of random bytes.
     if python_or_numpy == "numpy":
-        return random_numpy((N,), dtype="object").tolist()
-    else:
-        data = []
-        for i in range(0, N):
-            data.append(random_bytes(random.randint(1, max_string_length)))
-        return data
+        return random_numpy((n,), dtype="object").tolist()
+    return [random_bytes(random.randint(1, max_string_length)) for _ in range(n)]
 
 
 def random_slice():
     # Make a random slice, whose parts could be None or int.
     parts = []
-    for i in range(3):
+    for _ in range(3):
         if random.choice((True, False)):
             parts.append(None)
         elif random.choice((True, False)):
@@ -243,7 +241,7 @@ def random_slice():
 def random_range():
     # Make a random range. The last element must not be zero.
     parts = []
-    for i in range(3):
+    for _ in range(3):
         if random.choice((True, False)):
             parts.append(random.randint(-(2**30), 2**30))
         else:
@@ -267,15 +265,16 @@ def random_dict(tp="dict"):
     # Makes a random dict or dict-like object tp (random number of
     # randomized keys with random numpy arrays as values). The only
     # supported values of tp are 'dict', 'OrderedDict', and 'Counter'.
-    data = dict()
-    for i in range(0, random.randint(min_dict_keys, max_dict_keys)):
+    data = {}
+    for _ in range(0, random.randint(min_dict_keys, max_dict_keys)):
         name = random_str_ascii(max_dict_key_length)
         if tp == "Counter":
             data[name] = random.randint(-(2**65), 2**65)
         else:
             data[name] = random_numpy(
                 random_numpy_shape(
-                    dict_value_subarray_dimensions, max_dict_value_subarray_axis_length
+                    dict_value_subarray_dimensions,
+                    max_dict_value_subarray_axis_length,
                 ),
                 dtype=random.choice(dtypes),
             )
@@ -284,15 +283,14 @@ def random_dict(tp="dict"):
     # convert it. If it is an OrderedDict, we need to randomize the order.
     if tp == "dict":
         return data
-    elif tp == "Counter":
+    if tp == "Counter":
         return collections.Counter(data)
-    elif tp == "OrderedDict":
+    if tp == "OrderedDict":
         # An ordered dict is made by randomizing the field order.
         itms = list(data.items())
         random.shuffle(itms)
         return collections.OrderedDict(itms)
-    else:
-        return data
+    return data
 
 
 def random_chainmap():
@@ -301,12 +299,16 @@ def random_chainmap():
         *[
             random_dict(random.choice(("dict", "OrderedDict", "Counter")))
             for i in range(random.randint(3, 8))
-        ]
+        ],
     )
 
 
 def random_structured_numpy_array(
-    shape, field_shapes=None, nonascii_fields=False, nondigits_fields=False, names=None
+    shape,
+    field_shapes=None,
+    nonascii_fields=False,
+    nondigits_fields=False,
+    names=None,
 ):
     # Make random field names (if not provided with field names),
     # dtypes, and sizes. Though, if field_shapes is explicitly given,
@@ -327,13 +329,12 @@ def random_structured_numpy_array(
             for i in range(
                 0,
                 random.randint(
-                    min_structured_ndarray_fields, max_structured_ndarray_fields
+                    min_structured_ndarray_fields,
+                    max_structured_ndarray_fields,
                 ),
             )
         ]
-    dts = [
-        random.choice(list(set(dtypes) - set(("S", "U")))) for i in range(len(names))
-    ]
+    dts = [random.choice(list(set(dtypes) - {"S", "U"})) for _ in range(len(names))]
     if field_shapes is None:
         shapes = [
             random_numpy_shape(
@@ -352,12 +353,11 @@ def random_structured_numpy_array(
     # array and then proceed by assigning each field.
     if dt.itemsize == 0:
         return np.zeros(shape=shape, dtype="int8").astype(dt)
-    else:
-        data = np.empty(shape=shape, dtype=dt)
-        for index, x in np.ndenumerate(data):
-            for i, name in enumerate(names):
-                data[name][index] = random_numpy(shapes[i], dts[i], allow_nan=False)
-        return data
+    data = np.empty(shape=shape, dtype=dt)
+    for index, _ in np.ndenumerate(data):
+        for i, name in enumerate(names):
+            data[name][index] = random_numpy(shapes[i], dts[i], allow_nan=False)
+    return data
 
 
 def random_datetime_timezone():
@@ -373,18 +373,18 @@ def random_datetime_timezone():
             datetime.timedelta(seconds=mult * random.randint(-bound, bound)),
             name=random_str_some_unicode(10),
         )
-    else:
-        return datetime.timezone(
-            datetime.timedelta(seconds=mult * random.randint(-bound, bound))
-        )
+    return datetime.timezone(
+        datetime.timedelta(seconds=mult * random.randint(-bound, bound)),
+    )
 
 
 def random_name():
     # Makes a random POSIX path of a random depth.
     depth = random.randint(1, max_posix_path_depth)
     path = "/"
-    for i in range(0, depth):
+    for _ in range(0, depth):
         path = posixpath.join(
-            path, random_str_ascii(random.randint(1, max_posix_path_lengths))
+            path,
+            random_str_ascii(random.randint(1, max_posix_path_lengths)),
         )
     return path

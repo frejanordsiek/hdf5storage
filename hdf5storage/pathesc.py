@@ -24,7 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-""" Module for handling paths. """
+"""Module for handling paths."""
 
 
 import collections.abc
@@ -32,19 +32,20 @@ import pathlib
 import posixpath
 import re
 import sys
-
-# Type hints
-from typing import Union, Dict, Tuple
+from typing import Dict, Tuple, Union
 
 if sys.version_info >= (3, 9):
-    from re import Pattern, Match
     from collections.abc import Sequence
+    from re import Match, Pattern
 else:
-    from typing import Pattern, Match, Sequence
+    from typing import Match, Pattern, Sequence
 
 # Define the type for all paths
 Path = Union[
-    str, bytes, pathlib.PurePath, Sequence[Union[str, bytes, pathlib.PurePath]]
+    str,
+    bytes,
+    pathlib.PurePath,
+    Sequence[Union[str, bytes, pathlib.PurePath]],
 ]
 
 
@@ -59,20 +60,20 @@ _find_invalid_escape_re: Pattern[str] = re.compile(
     "(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]"
     "|x[0-9a-fA-F]?($|[^0-9a-fA-F])"
     "|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])"
-    "|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))"
+    "|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))",
 )
 _find_fslashnull_re: Pattern[str] = re.compile("[\\\\/\x00]")
 _find_escapes_re: Pattern[str] = re.compile(
-    "\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})"
+    "\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})",
 )
 _char_escape_conversions: Dict[str, str] = {"\x00": "\\x00", "/": "\\x2f", "\\": "\\\\"}
 
 
 def _replace_fun_escape(m: Match[str]) -> str:
-    """Hex/unicode escape single characters found in regex matches.
+    r"""Hex/unicode escape single characters found in regex matches.
 
-    Supports single hex/unicode escapes of the form ``'\\xYY'``,
-    ``'\\uYYYY'``, and ``'\\UYYYYYYYY'`` where Y is a hex digit and
+    Supports single hex/unicode escapes of the form ``'\xYY'``,
+    ``'\uYYYY'``, and ``'\UYYYYYYYY'`` where Y is a hex digit and
     converting single backslashes to double backslashes.
 
     .. versionadded:: 0.2
@@ -102,23 +103,22 @@ def _replace_fun_escape(m: Match[str]) -> str:
     # on its size.
     value = ord(c)
     if value <= 0xFF:
-        return "\\x{0:02x}".format(value)
-    elif value <= 0xFFFF:
-        return "\\u{0:04x}".format(value)
-    elif value <= 0xFFFFFFFF:
-        return "\\U{0:08x}".format(value)
-    else:
-        raise NotImplementedError(
-            "Cannot escape a character whose code it outside of the range "
-            "0 - 0xFFFFFFFF."
-        )
+        return f"\\x{value:02x}"
+    if value <= 0xFFFF:
+        return f"\\u{value:04x}"
+    if value <= 0xFFFFFFFF:
+        return f"\\U{value:08x}"
+    raise NotImplementedError(
+        "Cannot escape a character whose code it outside of the range "
+        "0 - 0xFFFFFFFF.",
+    )
 
 
 def _replace_fun_unescape(m: Match[str]) -> str:
-    """Decode single hex/unicode escapes found in regex matches.
+    r"""Decode single hex/unicode escapes found in regex matches.
 
-    Supports single hex/unicode escapes of the form ``'\\xYY'``,
-    ``'\\uYYYY'``, and ``'\\UYYYYYYYY'`` where Y is a hex digit. Only
+    Supports single hex/unicode escapes of the form ``'\xYY'``,
+    ``'\uYYYY'``, and ``'\UYYYYYYYY'`` where Y is a hex digit. Only
     decodes if there is an odd number of backslashes.
 
     .. versionadded:: 0.2
@@ -138,22 +138,21 @@ def _replace_fun_unescape(m: Match[str]) -> str:
     count = s.count(slsh)
     if count % 2 == 0:
         return s
-    else:
-        c = chr(int(s[(count + 1) :], base=16))
-        return slsh * (count - 1) + c
+    c = chr(int(s[(count + 1) :], base=16))
+    return slsh * (count - 1) + c
 
 
 def escape_path(pth: Union[str, bytes]) -> str:
-    """Hex/unicode escapes a path.
+    r"""Hex/unicode escapes a path.
 
     Escapes a path so that it can be represented faithfully in an HDF5
     file without changing directories. This means that leading ``'.'``
     must be escaped. ``'/'`` and null must be escaped to. Backslashes
     are escaped as double backslashes. Other escaped characters are
-    replaced with ``'\\xYY'``, ``'\\uYYYY', or ``'\\UYYYYYYYY'`` where Y
+    replaced with ``'\xYY'``, ``'\uYYYY', or ``'\UYYYYYYYY'`` where Y
     are hex digits depending on the unicode numerical value of the
     character. for ``'.'``, both slashes, and null; this will be the
-    former (``'\\xYY'``).
+    former (``'\xYY'``).
 
     .. versionadded:: 0.2
 
@@ -192,10 +191,10 @@ def escape_path(pth: Union[str, bytes]) -> str:
 
 
 def unescape_path(pth: Union[str, bytes]) -> str:
-    """Hex/unicode unescapes a path.
+    r"""Hex/unicode unescapes a path.
 
-    Unescapes a path. Valid escapeds are ``'\\xYY'``, ``'\\uYYYY', or
-    ``'\\UYYYYYYYY'`` where Y are hex digits giving the character's
+    Unescapes a path. Valid escapeds are ``'\xYY'``, ``'\uYYYY', or
+    ``'\UYYYYYYYY'`` where Y are hex digits giving the character's
     unicode numerical value and double backslashes which are the escape
     for single backslashes.
 
@@ -297,14 +296,14 @@ def process_path(pth: Path) -> Tuple[str, str]:
         # Escape (and possibly convert to str) each element and then
         # join them all together.
         parts_seq = []
-        for i, s in enumerate(pth):
+        for s in pth:
             if isinstance(s, bytes):
                 s = s.decode("utf-8")
             elif isinstance(s, pathlib.PurePath):
                 s = str(s)
             elif not isinstance(s, str):
                 raise TypeError(
-                    "Elements of p must be str, bytes, or pathlib.PurePath."
+                    "Elements of p must be str, bytes, or pathlib.PurePath.",
                 )
             parts_seq.append(escape_path(s))
         parts = tuple(parts_seq)
@@ -312,7 +311,7 @@ def process_path(pth: Path) -> Tuple[str, str]:
     else:
         raise TypeError(
             "p must be str, bytes, pathlib.PurePath, or an Sequence solely of one of "
-            "those three."
+            "those three.",
         )
 
     # Remove double slashes and a non-root trailing slash.

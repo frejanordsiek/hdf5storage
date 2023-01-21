@@ -29,19 +29,17 @@ import subprocess
 import tempfile
 
 import numpy as np
-
 import pytest
-
-import hdf5storage
-
 from asserts import assert_equal_from_matlab
 from make_randoms import (
     dtypes,
-    random_numpy_scalar,
     random_numpy,
+    random_numpy_scalar,
     random_numpy_shape,
     random_structured_numpy_array,
 )
+
+import hdf5storage
 
 
 def julia_command(julia_file, fin, fout):
@@ -64,7 +62,7 @@ def test_back_and_forth_julia():
     for i in range(0, len(script_names)):
         script_names[i] = os.path.join(os.path.dirname(__file__), script_names[i])
 
-    to_julia = dict()
+    to_julia = {}
 
     # Julia MAT tends to squeeze extra singleton dimensions beyond 2,
     # meaning a (1, 1, 1) goes to (1, 1). In addition, string
@@ -72,7 +70,7 @@ def test_back_and_forth_julia():
     # will be excluded and the minimum length along each dimension will
     # be 2.
 
-    dtypes_exclude = set(("S", "U"))
+    dtypes_exclude = {"S", "U"}
     dtypes_to_do = tuple(set(dtypes).difference(dtypes_exclude))
 
     for dt in dtypes_to_do:
@@ -80,7 +78,8 @@ def test_back_and_forth_julia():
     for dm in (2, 3):
         for dt in dtypes_to_do:
             to_julia[dt + "_array_" + str(dm)] = random_numpy(
-                random_numpy_shape(dm, 6, min_length=2), dt
+                random_numpy_shape(dm, 6, min_length=2),
+                dt,
             )
     for dt in dtypes_to_do:
         if dt in ("S", "U"):
@@ -94,7 +93,8 @@ def test_back_and_forth_julia():
     to_julia["float64_inf"] = np.float64(-np.inf)
 
     to_julia["object"] = random_numpy_scalar(
-        "object", object_element_dtypes=dtypes_to_do
+        "object",
+        object_element_dtypes=dtypes_to_do,
     )
     to_julia["object_array_2"] = random_numpy(
         random_numpy_shape(2, 6, min_length=2),
@@ -110,21 +110,16 @@ def test_back_and_forth_julia():
     # Julia MAT doesn't seem to read and then write back empty object
     # types.
 
-    # to_julia['object_empty'] = np.array([], dtype='object')
-
     to_julia["struct"] = random_structured_numpy_array((1,), nondigits_fields=True)
     to_julia["struct_empty"] = random_structured_numpy_array(
-        tuple(), nondigits_fields=True
+        (),
+        nondigits_fields=True,
     )
 
     # Something goes wrong with 2 dimensional structure arrays that warrants
     # further investigation.
 
-    # to_julia['struct_array_2'] = random_structured_numpy_array(
-    #    (3, 5), nondigits_fields=True)
-
-    from_julia_v7_to_v7p3 = dict()
-    from_julia_v7p3_to_v7p3 = dict()
+    from_julia_v7p3_to_v7p3 = {}
 
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
@@ -135,7 +130,6 @@ def test_back_and_forth_julia():
             scipy.io.savemat(file_name=mat_files[0], mdict=to_julia)
             hdf5storage.savemat(file_name=mat_files[1], mdict=to_julia)
 
-            # julia_command(script_names[0], mat_files[0], mat_files[2])
             julia_command(script_names[0], mat_files[1], mat_files[3])
 
             # hdf5storage.loadmat(file_name=mat_files[2],
@@ -144,7 +138,7 @@ def test_back_and_forth_julia():
         except:
             pytest.skip(
                 "Julia or the MAT package are unavailable "
-                "or their API/s have changed."
+                "or their API/s have changed.",
             )
 
     # Check the results.

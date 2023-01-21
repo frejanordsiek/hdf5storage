@@ -27,9 +27,9 @@
 import posixpath
 import random
 
-from hdf5storage.pathesc import escape_path, unescape_path, process_path
-
 from make_randoms import random_str_ascii, random_str_some_unicode
+
+from hdf5storage.pathesc import escape_path, process_path, unescape_path
 
 random.seed()
 
@@ -66,14 +66,15 @@ def make_str_for_esc(
     random.shuffle(sl)
     s = b"".decode("ascii").join(sl).lstrip(period)
     if include_leading_periods:
-        s = period * random.randint(1, 10) + s
+        return period * random.randint(1, 10) + s
     return s
 
 
 def test_escaping():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(
-            include_escapes=chars_to_escape, include_leading_periods=True
+            include_escapes=chars_to_escape,
+            include_leading_periods=True,
         )
         s_e = s
         for j, c in enumerate(chars_to_escape):
@@ -87,7 +88,7 @@ def test_escaping():
 def test_unescaping_x():
     fmts = [b"{0:02x}".decode("ascii"), b"{0:02X}".decode("ascii")]
     prefix = b"\\x".decode("ascii")
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(no_unicode=True, pack_digits=True)
         index = random.randrange(1, len(s) - 1)
         c = s[index]
@@ -100,7 +101,7 @@ def test_unescaping_x():
 def test_unescaping_u():
     fmts = [b"{0:04x}".decode("ascii"), b"{0:04X}".decode("ascii")]
     prefix = b"\\u".decode("ascii")
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(pack_digits=True)
         index = random.randrange(1, len(s) - 1)
         c = s[index]
@@ -113,7 +114,7 @@ def test_unescaping_u():
 def test_unescaping_U():
     fmts = [b"{0:08x}".decode("ascii"), b"{0:08X}".decode("ascii")]
     prefix = b"\\U".decode("ascii")
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(pack_digits=True)
         index = random.randrange(1, len(s) - 1)
         c = s[index]
@@ -124,7 +125,7 @@ def test_unescaping_U():
 
 
 def test_escape_reversibility_no_escapes():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc()
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
@@ -133,7 +134,7 @@ def test_escape_reversibility_no_escapes():
 
 
 def test_escape_reversibility_no_escapes_bytes():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc()
         s = s.encode("utf-8")
         s_e = escape_path(s)
@@ -143,7 +144,7 @@ def test_escape_reversibility_no_escapes_bytes():
 
 
 def test_escape_reversibility_escapes():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(include_escapes=chars_to_escape)
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
@@ -151,7 +152,7 @@ def test_escape_reversibility_escapes():
 
 
 def test_escape_reversibility_escapes_bytes():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(include_escapes=chars_to_escape)
         s = s.encode("utf-8")
         s_e = escape_path(s)
@@ -160,7 +161,7 @@ def test_escape_reversibility_escapes_bytes():
 
 
 def test_escape_reversibility_leading_periods():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(include_leading_periods=True)
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
@@ -168,7 +169,7 @@ def test_escape_reversibility_leading_periods():
 
 
 def test_escape_reversibility_leading_periods_bytes():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(include_leading_periods=True)
         s = s.encode("utf-8")
         s_e = escape_path(s)
@@ -177,9 +178,10 @@ def test_escape_reversibility_leading_periods_bytes():
 
 
 def test_escape_reversibility_escapes_leading_periods():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(
-            include_escapes=chars_to_escape, include_leading_periods=True
+            include_escapes=chars_to_escape,
+            include_leading_periods=True,
         )
         s_e = escape_path(s)
         s_e_u = unescape_path(s_e)
@@ -187,9 +189,10 @@ def test_escape_reversibility_escapes_leading_periods():
 
 
 def test_escape_reversibility_escapes_leading_periods_bytes():
-    for i in range(20):
+    for _ in range(20):
         s = make_str_for_esc(
-            include_escapes=chars_to_escape, include_leading_periods=True
+            include_escapes=chars_to_escape,
+            include_leading_periods=True,
         )
         s = s.encode("utf-8")
         s_e = escape_path(s)
@@ -198,7 +201,7 @@ def test_escape_reversibility_escapes_leading_periods_bytes():
 
 
 def test_process_path_no_escapes():
-    for i in range(10):
+    for _ in range(10):
         pth = [make_str_for_esc() for j in range(10)]
         beginning = tuple(pth[:-1])
         gs = posixpath.join(*beginning)
@@ -209,7 +212,7 @@ def test_process_path_no_escapes():
 
 
 def test_process_path_no_escapes_bytes():
-    for i in range(10):
+    for _ in range(10):
         pth = [make_str_for_esc().encode("utf-8") for j in range(10)]
         beginning = tuple(pth[:-1])
         gs = posixpath.join(*beginning).decode("utf-8")
@@ -220,7 +223,7 @@ def test_process_path_no_escapes_bytes():
 
 
 def test_process_path_escapes():
-    for i in range(10):
+    for _ in range(10):
         pth = [make_str_for_esc(include_escapes=chars_to_escape) for j in range(10)]
         beginning = tuple([escape_path(s) for s in pth[:-1]])
         gs = posixpath.join(*beginning)
@@ -231,7 +234,7 @@ def test_process_path_escapes():
 
 
 def test_process_path_escapes_bytes():
-    for i in range(10):
+    for _ in range(10):
         pth = [
             make_str_for_esc(include_escapes=chars_to_escape).encode("utf-8")
             for j in range(10)
@@ -245,7 +248,7 @@ def test_process_path_escapes_bytes():
 
 
 def test_process_path_leading_periods():
-    for i in range(10):
+    for _ in range(10):
         pth = [make_str_for_esc(include_leading_periods=True) for j in range(10)]
         beginning = tuple([escape_path(s) for s in pth[:-1]])
         gs = posixpath.join(*beginning)
@@ -256,7 +259,7 @@ def test_process_path_leading_periods():
 
 
 def test_process_path_leading_periods_bytes():
-    for i in range(10):
+    for _ in range(10):
         pth = [
             make_str_for_esc(include_leading_periods=True).encode("utf-8")
             for j in range(10)
@@ -270,10 +273,11 @@ def test_process_path_leading_periods_bytes():
 
 
 def test_process_path_escapes_leading_periods():
-    for i in range(10):
+    for _ in range(10):
         pth = [
             make_str_for_esc(
-                include_escapes=chars_to_escape, include_leading_periods=True
+                include_escapes=chars_to_escape,
+                include_leading_periods=True,
             )
             for j in range(10)
         ]
@@ -286,10 +290,11 @@ def test_process_path_escapes_leading_periods():
 
 
 def test_process_path_escapes_leading_periods_bytes():
-    for i in range(10):
+    for _ in range(10):
         pth = [
             make_str_for_esc(
-                include_escapes=chars_to_escape, include_leading_periods=True
+                include_escapes=chars_to_escape,
+                include_leading_periods=True,
             ).encode("utf-8")
             for j in range(10)
         ]

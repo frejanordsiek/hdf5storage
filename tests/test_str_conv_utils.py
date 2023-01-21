@@ -27,11 +27,9 @@
 import string
 
 import numpy as np
-
-import hdf5storage.utilities as utils
-
 from asserts import assert_equal
 
+import hdf5storage.utilities as utils
 
 # Make two strings, one with the main ascii characters and another with
 # the same characters plus a lot of unicode characters.
@@ -40,7 +38,7 @@ str_unicode = str_ascii + "".join([chr(500 + i) for i in range(1000)])
 
 
 def test_numpy_str_ascii_to_uint16_back():
-    for i in range(100):
+    for _ in range(100):
         data = np.unicode_(str_ascii)
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)[0]
@@ -49,7 +47,7 @@ def test_numpy_str_ascii_to_uint16_back():
 
 
 def test_numpy_str_someunicode_to_uint16_back():
-    for i in range(100):
+    for _ in range(100):
         data = np.unicode_(str_unicode)
         intermed = utils.convert_numpy_str_to_uint16(data)
         out = utils.convert_to_numpy_str(intermed)[0]
@@ -58,7 +56,7 @@ def test_numpy_str_someunicode_to_uint16_back():
 
 
 def test_numpy_str_ascii_to_uint32_back():
-    for i in range(100):
+    for _ in range(100):
         data = np.unicode_(str_ascii)
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)[0]
@@ -68,7 +66,7 @@ def test_numpy_str_ascii_to_uint32_back():
 
 
 def test_numpy_str_someunicode_to_uint32_back():
-    for i in range(100):
+    for _ in range(100):
         data = np.unicode_(str_unicode)
         intermed = utils.convert_numpy_str_to_uint32(data)
         out = utils.convert_to_numpy_str(intermed)[0]

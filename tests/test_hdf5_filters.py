@@ -29,25 +29,23 @@ import random
 import tempfile
 
 import h5py
-
 import pytest
-
-import hdf5storage
-
 from asserts import assert_equal
 from make_randoms import (
+    dtypes,
+    max_array_axis_length,
+    random_name,
     random_numpy,
     random_numpy_shape,
-    max_array_axis_length,
-    dtypes,
-    random_name,
 )
+
+import hdf5storage
 
 random.seed()
 
 
 @pytest.mark.parametrize(
-    "compression,shuffle,fletcher32,gzip_level",
+    ("compression", "shuffle", "fletcher32", "gzip_level"),
     [
         (compression, shuffle, fletcher32, level)
         for compression in ("gzip", "lzf")
@@ -66,7 +64,7 @@ def test_read_filtered_data(compression, shuffle, fletcher32, gzip_level):
     dims = random.randint(1, 4)
     data = random_numpy(
         shape=random_numpy_shape(dims, max_array_axis_length),
-        dtype=random.choice(tuple(set(dtypes) - set(["U"]))),
+        dtype=random.choice(tuple(set(dtypes) - {"U"})),
     )
     # Make a random name.
     name = random_name()
@@ -84,7 +82,7 @@ def test_read_filtered_data(compression, shuffle, fletcher32, gzip_level):
 
 
 @pytest.mark.parametrize(
-    "compression,shuffle,fletcher32,gzip_level",
+    ("compression", "shuffle", "fletcher32", "gzip_level"),
     [
         (compression, shuffle, fletcher32, level)
         for compression in ("gzip", "lzf")
@@ -98,10 +96,11 @@ def test_write_filtered_data(compression, shuffle, fletcher32, gzip_level):
     # Make some random data. The dtype must be restricted so that it can
     # be read back reliably.
     dims = random.randint(1, 4)
-    dts = tuple(set(dtypes) - set(["U", "S", "bool", "complex64", "complex128"]))
+    dts = tuple(set(dtypes) - {"U", "S", "bool", "complex64", "complex128"})
 
     data = random_numpy(
-        shape=random_numpy_shape(dims, max_array_axis_length), dtype=random.choice(dts)
+        shape=random_numpy_shape(dims, max_array_axis_length),
+        dtype=random.choice(dts),
     )
     # Make a random name.
     name = random_name()
@@ -146,8 +145,14 @@ def test_write_filtered_data(compression, shuffle, fletcher32, gzip_level):
 
 
 @pytest.mark.parametrize(
-    "method,uncompressed_fletcher32_filter,compression,shuffle,"
-    "fletcher32,gzip_level",
+    (
+        "method",
+        "uncompressed_fletcher32_filter",
+        "compression",
+        "shuffle",
+        "fletcher32",
+        "gzip_level",
+    ),
     [
         (method, uf, compression, shuffle, fletcher32, level)
         for method in ("compression_disabled", "data_too_small")
@@ -159,7 +164,12 @@ def test_write_filtered_data(compression, shuffle, fletcher32, gzip_level):
     ],
 )
 def test_uncompressed_write_filtered_data(
-    method, uncompressed_fletcher32_filter, compression, shuffle, fletcher32, gzip_level
+    method,
+    uncompressed_fletcher32_filter,
+    compression,
+    shuffle,
+    fletcher32,
+    gzip_level,
 ):
     # Make the filters dict.
     filts = {
@@ -172,10 +182,11 @@ def test_uncompressed_write_filtered_data(
     # Make some random data. The dtype must be restricted so that it can
     # be read back reliably.
     dims = random.randint(1, 4)
-    dts = tuple(set(dtypes) - set(["U", "S", "bool", "complex64", "complex128"]))
+    dts = tuple(set(dtypes) - {"U", "S", "bool", "complex64", "complex128"})
 
     data = random_numpy(
-        shape=random_numpy_shape(dims, max_array_axis_length), dtype=random.choice(dts)
+        shape=random_numpy_shape(dims, max_array_axis_length),
+        dtype=random.choice(dts),
     )
     # Make a random name.
     name = random_name()

@@ -28,7 +28,6 @@ import os.path
 import tempfile
 
 import pkg_resources
-
 import pytest
 
 import hdf5storage
@@ -67,12 +66,14 @@ def test_find_thirdparty_marshaller_plugins():
 
 @pytest.mark.skipif(
     has_example_hdf5storage_marshaller_plugin,
-    reason="requires example_hdf5storage_marshaller_" "plugin",
+    reason="requires example_hdf5storage_marshaller_plugin",
 )
 def test_plugin_marshaller_SubList():
     mc = hdf5storage.MarshallerCollection(load_plugins=True, lazy_loading=True)
     options = hdf5storage.Options(
-        store_python_metadata=True, matlab_compatible=False, marshaller_collection=mc
+        store_python_metadata=True,
+        matlab_compatible=False,
+        marshaller_collection=mc,
     )
     ell = [1, 2, "b1", b"3991", True, None]
     data = example_hdf5storage_marshaller_plugin.SubList(ell)

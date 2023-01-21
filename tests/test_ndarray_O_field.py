@@ -27,11 +27,10 @@
 import os.path
 import tempfile
 
-import numpy as np
 import h5py
+import numpy as np
 
 import hdf5storage
-
 
 # A series of tests to make sure that structured ndarrays with a field
 # that has an object dtype are written like structs (are HDF5 Groups)

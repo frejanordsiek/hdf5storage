@@ -25,6 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import collections
+import contextlib
 import datetime
 import itertools
 import math
@@ -33,41 +34,38 @@ import pathlib
 import posixpath
 import random
 import string
-import warnings
 import tempfile
+import warnings
 
 import numpy as np
-
 import pytest
-
-import hdf5storage
-
-from asserts import assert_equal, assert_equal_none_format, assert_equal_matlab_format
+from asserts import assert_equal, assert_equal_matlab_format, assert_equal_none_format
 from make_randoms import (
+    max_array_axis_length,
+    max_dict_key_length,
+    max_list_length,
+    max_string_length,
+    max_structured_ndarray_axis_length,
+    random_bytes,
+    random_chainmap,
+    random_datetime_timezone,
+    random_dict,
+    random_float,
+    random_fraction,
+    random_int,
+    random_list,
+    random_name,
+    random_numpy,
     random_numpy_scalar,
     random_numpy_shape,
-    random_numpy,
-    random_name,
-    max_array_axis_length,
-    max_structured_ndarray_axis_length,
-    random_structured_numpy_array,
-    random_str_ascii,
-    max_dict_key_length,
-    random_list,
-    max_list_length,
-    random_dict,
-    random_str_some_unicode,
-    random_int,
-    random_float,
-    max_string_length,
-    random_bytes,
-    random_slice,
     random_range,
-    random_chainmap,
-    random_fraction,
-    random_datetime_timezone,
+    random_slice,
+    random_str_ascii,
+    random_str_some_unicode,
+    random_structured_numpy_array,
 )
 
+import hdf5storage
 
 random.seed()
 
@@ -123,33 +121,42 @@ base_dtypes = tuple((set(dtypes_non_mat) | {"U2", "S3"}) - {"U", "S"})
 
 
 # A fixture of the Options to use depending on the format.
-options_by_format = dict()
+options_by_format = {}
 
 
 @pytest.fixture(scope="module", autouse=True)
-def get_options():
+def _get_options():
     options_by_format.update(
         {
             "PythonMatlab": hdf5storage.Options(
-                store_python_metadata=True, matlab_compatible=True
+                store_python_metadata=True,
+                matlab_compatible=True,
             ),
             "Python": hdf5storage.Options(
-                store_python_metadata=True, matlab_compatible=False
+                store_python_metadata=True,
+                matlab_compatible=False,
             ),
             "Matlab": hdf5storage.Options(
-                store_python_metadata=False, matlab_compatible=True
+                store_python_metadata=False,
+                matlab_compatible=True,
             ),
             "None": hdf5storage.Options(
-                store_python_metadata=False, matlab_compatible=False
+                store_python_metadata=False,
+                matlab_compatible=False,
             ),
-        }
+        },
     )
 
 
 # Function to write and then readback and optionall check everything
 # with the appropriate assert_equal.
 def write_readback(
-    fmt, data, name=None, write_options=None, read_options=None, check=True
+    fmt,
+    data,
+    name=None,
+    write_options=None,
+    read_options=None,
+    check=True,
 ):
     # Use the default options for writing and reading if they are not
     # given.
@@ -203,7 +210,8 @@ def write_readback(
 
 
 @pytest.mark.parametrize(
-    "fmt,dtype", {(fmt, dt) for fmt in fmts for dt in dtypes_by_option[fmt]}
+    ("fmt", "dtype"),
+    {(fmt, dt) for fmt in fmts for dt in dtypes_by_option[fmt]},
 )
 def test_numpy_scalar(fmt, dtype):
     # Makes a random numpy scalar of the given type, writes it and
@@ -213,7 +221,7 @@ def test_numpy_scalar(fmt, dtype):
 
 
 @pytest.mark.parametrize(
-    "fmt,dtype,dimensions",
+    ("fmt", "dtype", "dimensions"),
     {
         (fmt, dt, dims)
         for fmt in fmts
@@ -230,7 +238,8 @@ def test_numpy_array(fmt, dtype, dimensions):
 
 
 @pytest.mark.parametrize(
-    "fmt,dtype", {(fmt, dt) for fmt in fmts for dt in dtypes_by_option[fmt]}
+    ("fmt", "dtype"),
+    {(fmt, dt) for fmt in fmts for dt in dtypes_by_option[fmt]},
 )
 def test_numpy_empty(fmt, dtype):
     # Makes an empty numpy array of the given type, writes it and
@@ -240,7 +249,7 @@ def test_numpy_empty(fmt, dtype):
 
 
 @pytest.mark.parametrize(
-    "fmt,dtype,num_chars",
+    ("fmt", "dtype", "num_chars"),
     {(fmt, dt, n) for fmt in fmts for dt in "SU" for n in range(1, 10)},
 )
 def test_numpy_stringlike_empty(fmt, dtype, num_chars):
@@ -251,7 +260,8 @@ def test_numpy_stringlike_empty(fmt, dtype, num_chars):
 
 
 @pytest.mark.parametrize(
-    "fmt,dimensions", {(fmt, dims) for fmt in fmts for dims in range(1, 4)}
+    ("fmt", "dimensions"),
+    {(fmt, dims) for fmt in fmts for dims in range(1, 4)},
 )
 def test_numpy_structured_array(fmt, dimensions):
     # Makes a random structured ndarray of the given type, writes it
@@ -262,7 +272,8 @@ def test_numpy_structured_array(fmt, dimensions):
 
 
 @pytest.mark.parametrize(
-    "fmt,dimensions", {(fmt, dims) for fmt in fmts for dims in range(1, 4)}
+    ("fmt", "dimensions"),
+    {(fmt, dims) for fmt in fmts for dims in range(1, 4)},
 )
 def test_numpy_structured_array_empty(fmt, dimensions):
     # Makes a random structured ndarray of the given type, writes it
@@ -287,7 +298,7 @@ def test_numpy_structured_array_unicode_fields(fmt):
 
 
 @pytest.mark.parametrize(
-    "fmt,ch",
+    ("fmt", "ch"),
     {
         (fmt, ch)
         for fmt in fmts
@@ -310,10 +321,12 @@ def test_numpy_structured_array_field_special_char(fmt, ch):
 
 
 @pytest.mark.skipif(
-    not hasattr(np, "matrix"), reason="numpy.matrix class has been removed."
+    not hasattr(np, "matrix"),
+    reason="numpy.matrix class has been removed.",
 )
 @pytest.mark.parametrize(
-    "fmt,dtype", {(fmt, dt) for fmt in fmts for dt in dtypes_by_option[fmt]}
+    ("fmt", "dtype"),
+    {(fmt, dt) for fmt in fmts for dt in dtypes_by_option[fmt]},
 )
 def test_numpy_matrix(fmt, dtype):
     # Makes a random numpy array of the given type, converts it to
@@ -326,7 +339,8 @@ def test_numpy_matrix(fmt, dtype):
 
 
 @pytest.mark.parametrize(
-    "fmt,dimensions", {(fmt, dims) for fmt in fmts for dims in range(1, 4)}
+    ("fmt", "dimensions"),
+    {(fmt, dims) for fmt in fmts for dims in range(1, 4)},
 )
 def test_numpy_recarray(fmt, dimensions):
     # Makes a random structured ndarray of the given type, converts
@@ -338,7 +352,8 @@ def test_numpy_recarray(fmt, dimensions):
 
 
 @pytest.mark.parametrize(
-    "fmt,dimensions", {(fmt, dims) for fmt in fmts for dims in range(1, 4)}
+    ("fmt", "dimensions"),
+    {(fmt, dims) for fmt in fmts for dims in range(1, 4)},
 )
 def test_numpy_recarray_empty(fmt, dimensions):
     # Makes a random structured ndarray of the given type, converts
@@ -360,7 +375,7 @@ def test_numpy_recarray_unicode_fields(fmt):
 
 
 @pytest.mark.parametrize(
-    "fmt,ch",
+    ("fmt", "ch"),
     {
         (fmt, ch)
         for fmt in fmts
@@ -385,7 +400,8 @@ def test_numpy_recarray_field_special_char(fmt, ch):
 
 
 @pytest.mark.parametrize(
-    "fmt,dimensions", {(fmt, dims) for fmt in fmts for dims in range(1, 4)}
+    ("fmt", "dimensions"),
+    {(fmt, dims) for fmt in fmts for dims in range(1, 4)},
 )
 def test_numpy_chararray(fmt, dimensions):
     # Makes a random numpy array of bytes, converts it to a
@@ -396,7 +412,8 @@ def test_numpy_chararray(fmt, dimensions):
 
 
 @pytest.mark.parametrize(
-    "fmt,num_chars", {(fmt, dims) for fmt in fmts for dims in range(1, 10)}
+    ("fmt", "num_chars"),
+    {(fmt, dims) for fmt in fmts for dims in range(1, 10)},
 )
 def test_numpy_chararray_empty(fmt, num_chars):
     # Makes an empty numpy array of bytes of the given number of
@@ -407,7 +424,8 @@ def test_numpy_chararray_empty(fmt, num_chars):
 
 
 @pytest.mark.parametrize(
-    "fmt,zero_shaped", {(fmt, z) for fmt in fmts for z in (True, False)}
+    ("fmt", "zero_shaped"),
+    {(fmt, z) for fmt in fmts for z in (True, False)},
 )
 def test_numpy_sized_dtype_nested_0(fmt, zero_shaped):
     dtypes = (
@@ -424,14 +442,15 @@ def test_numpy_sized_dtype_nested_0(fmt, zero_shaped):
         "complex64",
         "complex128",
     )
-    for i in range(10):
+    for _ in range(10):
         dt = (random.choice(dtypes), (2, 2 * zero_shaped))
         data = np.zeros((2,), dtype=dt)
         write_readback(fmt, data)
 
 
 @pytest.mark.parametrize(
-    "fmt,zero_shaped", {(fmt, z) for fmt in fmts for z in (True, False)}
+    ("fmt", "zero_shaped"),
+    {(fmt, z) for fmt in fmts for z in (True, False)},
 )
 def test_numpy_sized_dtype_nested_1(fmt, zero_shaped):
     dtypes = (
@@ -448,7 +467,7 @@ def test_numpy_sized_dtype_nested_1(fmt, zero_shaped):
         "complex64",
         "complex128",
     )
-    for i in range(10):
+    for _ in range(10):
         dt = [
             ("a", random.choice(dtypes), (1, 2)),
             ("b", random.choice(dtypes), (1, 1, 4 * zero_shaped)),
@@ -459,7 +478,8 @@ def test_numpy_sized_dtype_nested_1(fmt, zero_shaped):
 
 
 @pytest.mark.parametrize(
-    "fmt,zero_shaped", {(fmt, z) for fmt in fmts for z in (True, False)}
+    ("fmt", "zero_shaped"),
+    {(fmt, z) for fmt in fmts for z in (True, False)},
 )
 def test_numpy_sized_dtype_nested_2(fmt, zero_shaped):
     dtypes = (
@@ -476,7 +496,7 @@ def test_numpy_sized_dtype_nested_2(fmt, zero_shaped):
         "complex64",
         "complex128",
     )
-    for i in range(10):
+    for _ in range(10):
         dt = [
             ("a", random.choice(dtypes), (1, 3)),
             (
@@ -500,7 +520,8 @@ def test_numpy_sized_dtype_nested_2(fmt, zero_shaped):
 
 
 @pytest.mark.parametrize(
-    "fmt,zero_shaped", {(fmt, z) for fmt in fmts for z in (True, False)}
+    ("fmt", "zero_shaped"),
+    {(fmt, z) for fmt in fmts for z in (True, False)},
 )
 def test_numpy_sized_dtype_nested_3(fmt, zero_shaped):
     dtypes = (
@@ -517,7 +538,7 @@ def test_numpy_sized_dtype_nested_3(fmt, zero_shaped):
         "complex64",
         "complex128",
     )
-    for i in range(10):
+    for _ in range(10):
         dt = [
             ("a", random.choice(dtypes), (3, 2)),
             (
@@ -540,7 +561,7 @@ def test_numpy_sized_dtype_nested_3(fmt, zero_shaped):
 
 
 @pytest.mark.parametrize(
-    "fmt,tp,same_dims",
+    ("fmt", "tp", "same_dims"),
     {
         (fmt, tp, s)
         for fmt in fmts
@@ -574,7 +595,7 @@ def test_python_collection(fmt, tp, same_dims):
                 [
                     random_numpy(shape, random.choice(dtypes), allow_nan=True)
                     for i in range(random.randrange(2, 7))
-                ]
+                ],
             )
 
         elif same_dims == "diff-dims":
@@ -584,14 +605,14 @@ def test_python_collection(fmt, tp, same_dims):
     write_readback(fmt, data)
 
 
-@pytest.mark.parametrize("fmt,tp", {(fmt, tp) for fmt in fmts for tp in dict_like})
+@pytest.mark.parametrize(("fmt", "tp"), {(fmt, tp) for fmt in fmts for tp in dict_like})
 def test_dict_like(fmt, tp):
     data = random_dict(tp)
     write_readback(fmt, data)
 
 
 @pytest.mark.parametrize(
-    "fmt,tp,other_tp",
+    ("fmt", "tp", "other_tp"),
     {
         (fmt, tp, otp)
         for fmt in fmts
@@ -618,7 +639,7 @@ def test_dict_like_other_type_key(fmt, tp, other_tp):
     write_readback(fmt, data)
 
 
-@pytest.mark.parametrize("fmt,tp", {(fmt, tp) for fmt in fmts for tp in dict_like})
+@pytest.mark.parametrize(("fmt", "tp"), {(fmt, tp) for fmt in fmts for tp in dict_like})
 def test_dict_like_key_null_character(fmt, tp):
     data = random_dict(tp)
     ch = "\x00"
@@ -627,7 +648,7 @@ def test_dict_like_key_null_character(fmt, tp):
     write_readback(fmt, data)
 
 
-@pytest.mark.parametrize("fmt,tp", {(fmt, tp) for fmt in fmts for tp in dict_like})
+@pytest.mark.parametrize(("fmt", "tp"), {(fmt, tp) for fmt in fmts for tp in dict_like})
 def test_dict_like_key_forward_slash(fmt, tp):
     data = random_dict(tp)
     ch = "/"
@@ -636,7 +657,7 @@ def test_dict_like_key_forward_slash(fmt, tp):
     write_readback(fmt, data)
 
 
-@pytest.mark.parametrize("fmt,tp", {(fmt, tp) for fmt in fmts for tp in dict_like})
+@pytest.mark.parametrize(("fmt", "tp"), {(fmt, tp) for fmt in fmts for tp in dict_like})
 def test_dict_like_key_back_slash(fmt, tp):
     data = random_dict(tp)
     ch = "\\"
@@ -645,7 +666,7 @@ def test_dict_like_key_back_slash(fmt, tp):
     write_readback(fmt, data)
 
 
-@pytest.mark.parametrize("fmt,tp", {(fmt, tp) for fmt in fmts for tp in dict_like})
+@pytest.mark.parametrize(("fmt", "tp"), {(fmt, tp) for fmt in fmts for tp in dict_like})
 def test_dict_like_key_leading_periods(fmt, tp):
     data = random_dict(tp)
     prefix = "." * random.randint(1, 10)
@@ -838,7 +859,7 @@ def test_fraction(fmt):
 
 
 @pytest.mark.parametrize(
-    "fmt,base_dtype",
+    ("fmt", "base_dtype"),
     {
         (fmt, dt)
         for fmt in fmts
@@ -875,17 +896,18 @@ def test_dtype_flexible(fmt):
 
 
 @pytest.mark.parametrize(
-    "fmt,base_dtype", {(fmt, dt) for fmt in fmts for dt in base_dtypes}
+    ("fmt", "base_dtype"),
+    {(fmt, dt) for fmt in fmts for dt in base_dtypes},
 )
 def test_dtype_shaped(fmt, base_dtype):
-    for i in range(10):
+    for _ in range(10):
         desc = (base_dtype, random_numpy_shape(random.randint(1, 4), 10))
         write_readback(fmt, np.dtype(desc))
 
 
 @pytest.mark.parametrize("fmt", fmts)
 def test_dtype_structured(fmt):
-    for i in range(10):
+    for _ in range(10):
         names = []
         for _ in range(random.randint(1, 5)):
             s = random_str_ascii(random.randint(1, 10))
@@ -906,7 +928,7 @@ def test_dtype_structured(fmt):
 
 @pytest.mark.parametrize("fmt", fmts)
 def test_dtype_structured_with_offsets_titles(fmt):
-    for i in range(10):
+    for _ in range(10):
         names = []
         for _ in range(random.randint(1, 5)):
             s = random_str_ascii(random.randint(1, 10))
@@ -932,7 +954,8 @@ def test_dtype_structured_with_offsets_titles(fmt):
         }
         desc_with_itemsize = desc.copy()
         desc_with_itemsize["itemsize"] = np.dtype(desc).itemsize + random.randint(
-            1, 100
+            1,
+            100,
         )
         # Make the dtypes in all combinations of the description and
         # align. Note that if the type isn't valid at all, it is not
@@ -940,10 +963,8 @@ def test_dtype_structured_with_offsets_titles(fmt):
         dts = []
         for d in (desc, desc_with_itemsize):
             for align in (False, True):
-                try:
+                with contextlib.suppress(Exception):
                     dts.append(np.dtype(d, align=align))
-                except:
-                    pass
         for dt in dts:
             write_readback(fmt, dt)
 
