@@ -1770,6 +1770,7 @@ class File(collections.abc.MutableMapping):
         )
 
     def __enter__(self: "File") -> "File":
+        """Open the HDF5 file."""
         return self
 
     def __exit__(
@@ -1778,14 +1779,17 @@ class File(collections.abc.MutableMapping):
         value: Optional[BaseException],
         traceback: Optional[types.TracebackType],
     ) -> None:
+        """Close the HDF5 file."""
         self.close()
 
     def __del__(self: "File") -> None:
+        """Delete this wrapper around the HDF5 file."""
         with contextlib.suppress(Exception):
             self.close()
 
     @property
     def closed(self: "File") -> bool:
+        """bool: Whether the file is closed or not."""
         return self._file is None
 
     def close(self: "File") -> None:

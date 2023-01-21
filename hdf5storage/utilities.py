@@ -201,10 +201,12 @@ class LowLevelFile:
 
     @property
     def f(self: "LowLevelFile") -> h5py.File:
+        """h5py.File: The raw file handle."""
         return self._f
 
     @property
     def options(self: "LowLevelFile") -> "hdf5storage.Options":
+        """hdf5storage.Options: The options used for reading and writing."""
         return self._options
 
     def write_data(
