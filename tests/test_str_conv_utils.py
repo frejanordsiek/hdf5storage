@@ -36,8 +36,7 @@ from asserts import assert_equal
 # Make two strings, one with the main ascii characters and another with
 # the same characters plus a lot of unicode characters.
 str_ascii = string.ascii_letters + string.digits
-str_unicode = str_ascii + ''.join([chr(500 + i)
-                                   for i in range(1000)])
+str_unicode = str_ascii + "".join([chr(500 + i) for i in range(1000)])
 
 
 def test_numpy_str_ascii_to_uint16_back():

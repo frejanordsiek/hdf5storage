@@ -28,6 +28,7 @@
 
 
 # All configuration information is now in pyproject.toml and setup.cfg.
-if __name__ == '__main__':
+if __name__ == "__main__":
     from setuptools import setup
+
     setup()

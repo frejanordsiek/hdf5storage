@@ -2,3 +2,7 @@
 # Minimum requirements for the build system to execute.
 requires = ["setuptools", "wheel"]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+target-version = ["py37"]
+extend-exclude = ["docs"]

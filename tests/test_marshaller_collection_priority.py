@@ -37,6 +37,7 @@ random.seed()
 # depend on it.
 try:
     from example_hdf5storage_marshaller_plugin import SubListMarshaller
+
     has_example_hdf5storage_marshaller_plugin = True
 except:
     has_example_hdf5storage_marshaller_plugin = False
@@ -47,46 +48,44 @@ class JunkMarshaller(hdf5storage.Marshallers.TypeMarshaller):
     pass
 
 
-@pytest.mark.parametrize('obj', (None, True, 1, 2.3, set(), dict()))
+@pytest.mark.parametrize("obj", (None, True, 1, 2.3, set(), dict()))
 def test_error_non_tuplelist(obj):
     with pytest.raises(TypeError):
         hdf5storage.MarshallerCollection(priority=obj)
 
 
 def test_error_missing_element():
-    need = ('builtin', 'user', 'plugin')
+    need = ("builtin", "user", "plugin")
     with pytest.raises(ValueError):
-        hdf5storage.MarshallerCollection(priority=[random.choice(need)
-                                                   for i in range(2)])
+        hdf5storage.MarshallerCollection(
+            priority=[random.choice(need) for i in range(2)]
+        )
 
 
 def test_error_extra_element():
     with pytest.raises(ValueError):
-        hdf5storage.MarshallerCollection(priority=('builtin', 'user',
-                                                   'plugin', 'extra'))
+        hdf5storage.MarshallerCollection(
+            priority=("builtin", "user", "plugin", "extra")
+        )
 
 
 def test_builtin_plugin_user():
     m = JunkMarshaller()
-    mc = hdf5storage.MarshallerCollection(load_plugins=True,
-                                          priority=('builtin', 'plugin',
-                                                    'user'),
-                                          marshallers=(m, ))
+    mc = hdf5storage.MarshallerCollection(
+        load_plugins=True, priority=("builtin", "plugin", "user"), marshallers=(m,)
+    )
     assert m == mc._marshallers[-1]
     if has_example_hdf5storage_marshaller_plugin:
-        assert isinstance(mc._marshallers[-2],
-                          SubListMarshaller)
+        assert isinstance(mc._marshallers[-2], SubListMarshaller)
 
 
 def test_builtin_user_plugin():
     m = JunkMarshaller()
-    mc = hdf5storage.MarshallerCollection(load_plugins=True,
-                                          priority=('builtin', 'user',
-                                                    'plugin'),
-                                          marshallers=(m, ))
+    mc = hdf5storage.MarshallerCollection(
+        load_plugins=True, priority=("builtin", "user", "plugin"), marshallers=(m,)
+    )
     if has_example_hdf5storage_marshaller_plugin:
-        assert isinstance(mc._marshallers[-1],
-                          SubListMarshaller)
+        assert isinstance(mc._marshallers[-1], SubListMarshaller)
         assert m == mc._marshallers[-2]
     else:
         assert m == mc._marshallers[-1]
@@ -94,25 +93,21 @@ def test_builtin_user_plugin():
 
 def test_plugin_builtin_user():
     m = JunkMarshaller()
-    mc = hdf5storage.MarshallerCollection(load_plugins=True,
-                                          priority=('plugin', 'builtin',
-                                                    'user'),
-                                          marshallers=(m, ))
+    mc = hdf5storage.MarshallerCollection(
+        load_plugins=True, priority=("plugin", "builtin", "user"), marshallers=(m,)
+    )
     assert m == mc._marshallers[-1]
     if has_example_hdf5storage_marshaller_plugin:
-        assert isinstance(mc._marshallers[0],
-                          SubListMarshaller)
+        assert isinstance(mc._marshallers[0], SubListMarshaller)
 
 
 def test_plugin_user_builtin():
     m = JunkMarshaller()
-    mc = hdf5storage.MarshallerCollection(load_plugins=True,
-                                          priority=('plugin', 'user',
-                                                    'builtin'),
-                                          marshallers=(m, ))
+    mc = hdf5storage.MarshallerCollection(
+        load_plugins=True, priority=("plugin", "user", "builtin"), marshallers=(m,)
+    )
     if has_example_hdf5storage_marshaller_plugin:
-        assert isinstance(mc._marshallers[0],
-                          SubListMarshaller)
+        assert isinstance(mc._marshallers[0], SubListMarshaller)
         assert m == mc._marshallers[1]
     else:
         assert m == mc._marshallers[0]
@@ -120,23 +115,19 @@ def test_plugin_user_builtin():
 
 def test_user_builtin_plugin():
     m = JunkMarshaller()
-    mc = hdf5storage.MarshallerCollection(load_plugins=True,
-                                          priority=('user', 'builtin',
-                                                    'plugin'),
-                                          marshallers=(m, ))
+    mc = hdf5storage.MarshallerCollection(
+        load_plugins=True, priority=("user", "builtin", "plugin"), marshallers=(m,)
+    )
     assert m == mc._marshallers[0]
     if has_example_hdf5storage_marshaller_plugin:
-        assert isinstance(mc._marshallers[-1],
-                          SubListMarshaller)
+        assert isinstance(mc._marshallers[-1], SubListMarshaller)
 
 
 def test_user_plugin_builtin():
     m = JunkMarshaller()
-    mc = hdf5storage.MarshallerCollection(load_plugins=True,
-                                          priority=('user', 'plugin',
-                                                    'builtin'),
-                                          marshallers=(m, ))
+    mc = hdf5storage.MarshallerCollection(
+        load_plugins=True, priority=("user", "plugin", "builtin"), marshallers=(m,)
+    )
     assert m == mc._marshallers[0]
     if has_example_hdf5storage_marshaller_plugin:
-        assert isinstance(mc._marshallers[1],
-                          SubListMarshaller)
+        assert isinstance(mc._marshallers[1], SubListMarshaller)

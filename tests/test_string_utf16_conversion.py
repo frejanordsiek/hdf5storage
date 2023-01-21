@@ -42,16 +42,21 @@ import hdf5storage
 # * str
 # * numpy.unicode_ scalars
 
-@pytest.mark.parametrize('tp', (str, np.unicode_))
-def test_conv_utf16(tp):
-    name = '/a'
-    data = tp('abcdefghijklmnopqrstuvwxyz')
-    with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
 
-        hdf5storage.write(data, path=name, filename=filename,
-                          matlab_compatible=False,
-                          store_python_metadata=False,
-                          convert_numpy_str_to_utf16=True)
-        with h5py.File(filename, mode='r') as f:
+@pytest.mark.parametrize("tp", (str, np.unicode_))
+def test_conv_utf16(tp):
+    name = "/a"
+    data = tp("abcdefghijklmnopqrstuvwxyz")
+    with tempfile.TemporaryDirectory() as folder:
+        filename = os.path.join(folder, "data.h5")
+
+        hdf5storage.write(
+            data,
+            path=name,
+            filename=filename,
+            matlab_compatible=False,
+            store_python_metadata=False,
+            convert_numpy_str_to_utf16=True,
+        )
+        with h5py.File(filename, mode="r") as f:
             assert f[name].dtype.type == np.uint16

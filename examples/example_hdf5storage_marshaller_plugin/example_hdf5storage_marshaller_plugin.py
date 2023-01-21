@@ -28,13 +28,14 @@ This is an example package for providing hdf5storage plugins.
 
 """
 
-__version__ = '0.2'
+__version__ = "0.2"
 
 import hdf5storage.Marshallers as hm
 
 
 # Going to make a class that subclasses lists but doesn't really do
 # anything else, but it will be enought to need a new marshaller.
+
 
 class SubList(list):
     def __init__(self, *args, **keywords):
@@ -49,9 +50,10 @@ class SubList(list):
 class SubListMarshaller(hm.PythonTupleSetDequeMarshaller):
     def __init__(self):
         hm.PythonTupleSetDequeMarshaller.__init__(self)
-        self.types = ['example_hdf5storage_marshaller_plugin.SubList']
-        self.python_type_strings = ['hdf5storage_marshallers_plugins_'
-                                    'example.SubList']
+        self.types = ["example_hdf5storage_marshaller_plugin.SubList"]
+        self.python_type_strings = [
+            "hdf5storage_marshallers_plugins_" "example.SubList"
+        ]
         # As the parent class already has MATLAB strings handled, there
         # are no MATLAB classes that this marshaller should be used for.
         self.matlab_classes = []
@@ -61,8 +63,7 @@ class SubListMarshaller(hm.PythonTupleSetDequeMarshaller):
     def read(self, f, dsetgrp, attributes):
         # Use the grand-parent class version to read it and do most of
         # the work.
-        data = hm.PythonListMarshaller.read(self, f, dsetgrp,
-                                            attributes)
+        data = hm.PythonListMarshaller.read(self, f, dsetgrp, attributes)
         return SubList(data)
 
 
@@ -74,5 +75,4 @@ class SubListMarshaller(hm.PythonTupleSetDequeMarshaller):
 # (perhaps some particular versions of hdf5storage require a work around
 # on some issue or another).
 def get_marshallers_1p0(hdf5storage_version):
-    return (SubListMarshaller(), )
-
+    return (SubListMarshaller(),)

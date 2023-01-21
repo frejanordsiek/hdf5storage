@@ -35,25 +35,34 @@ import pytest
 import hdf5storage
 
 from asserts import assert_equal_from_matlab
-from make_randoms import dtypes, random_numpy_scalar, random_numpy, \
-    random_numpy_shape, random_structured_numpy_array
+from make_randoms import (
+    dtypes,
+    random_numpy_scalar,
+    random_numpy,
+    random_numpy_shape,
+    random_structured_numpy_array,
+)
 
 
 def julia_command(julia_file, fin, fout):
-    subprocess.check_call(['julia', julia_file,
-                           fin, fout],
-                          stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL)
+    subprocess.check_call(
+        ["julia", julia_file, fin, fout],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def test_back_and_forth_julia():
-    mat_files = ['to_julia_v7.mat', 'to_julia_v7p3.mat',
-                 'julia_v7_to_v7p3.mat', 'julia_v7p3_to_v7p3.mat']
+    mat_files = [
+        "to_julia_v7.mat",
+        "to_julia_v7p3.mat",
+        "julia_v7_to_v7p3.mat",
+        "julia_v7p3_to_v7p3.mat",
+    ]
 
-    script_names = ['julia_read_mat.jl']
+    script_names = ["julia_read_mat.jl"]
     for i in range(0, len(script_names)):
-        script_names[i] = os.path.join(os.path.dirname(__file__),
-                                       script_names[i])
+        script_names[i] = os.path.join(os.path.dirname(__file__), script_names[i])
 
     to_julia = dict()
 
@@ -63,50 +72,55 @@ def test_back_and_forth_julia():
     # will be excluded and the minimum length along each dimension will
     # be 2.
 
-    dtypes_exclude = set(('S', 'U'))
+    dtypes_exclude = set(("S", "U"))
     dtypes_to_do = tuple(set(dtypes).difference(dtypes_exclude))
 
     for dt in dtypes_to_do:
         to_julia[dt] = random_numpy_scalar(dt)
     for dm in (2, 3):
         for dt in dtypes_to_do:
-            to_julia[dt + '_array_' + str(dm)] = \
-                random_numpy(random_numpy_shape(dm, 6, min_length=2),
-                             dt)
+            to_julia[dt + "_array_" + str(dm)] = random_numpy(
+                random_numpy_shape(dm, 6, min_length=2), dt
+            )
     for dt in dtypes_to_do:
-        if dt in ('S', 'U'):
-            to_julia[dt + '_empty'] = np.array([], dtype=dt + str(6))
+        if dt in ("S", "U"):
+            to_julia[dt + "_empty"] = np.array([], dtype=dt + str(6))
         else:
-            to_julia[dt + '_empty'] = np.array([], dtype=dt)
+            to_julia[dt + "_empty"] = np.array([], dtype=dt)
 
-    to_julia['float32_nan'] = np.float32(np.NaN)
-    to_julia['float32_inf'] = np.float32(np.inf)
-    to_julia['float64_nan'] = np.float64(np.NaN)
-    to_julia['float64_inf'] = np.float64(-np.inf)
+    to_julia["float32_nan"] = np.float32(np.NaN)
+    to_julia["float32_inf"] = np.float32(np.inf)
+    to_julia["float64_nan"] = np.float64(np.NaN)
+    to_julia["float64_inf"] = np.float64(-np.inf)
 
-    to_julia['object'] = random_numpy_scalar(
-        'object', object_element_dtypes=dtypes_to_do)
-    to_julia['object_array_2'] = random_numpy(
+    to_julia["object"] = random_numpy_scalar(
+        "object", object_element_dtypes=dtypes_to_do
+    )
+    to_julia["object_array_2"] = random_numpy(
         random_numpy_shape(2, 6, min_length=2),
-        'object', object_element_dtypes=dtypes_to_do)
-    to_julia['object_array_3'] = random_numpy(
+        "object",
+        object_element_dtypes=dtypes_to_do,
+    )
+    to_julia["object_array_3"] = random_numpy(
         random_numpy_shape(3, 6, min_length=2),
-        'object', object_element_dtypes=dtypes_to_do)
+        "object",
+        object_element_dtypes=dtypes_to_do,
+    )
 
     # Julia MAT doesn't seem to read and then write back empty object
     # types.
 
-    #to_julia['object_empty'] = np.array([], dtype='object')
+    # to_julia['object_empty'] = np.array([], dtype='object')
 
-    to_julia['struct'] = random_structured_numpy_array(
-        (1,), nondigits_fields=True)
-    to_julia['struct_empty'] = random_structured_numpy_array(
-        tuple(), nondigits_fields=True)
+    to_julia["struct"] = random_structured_numpy_array((1,), nondigits_fields=True)
+    to_julia["struct_empty"] = random_structured_numpy_array(
+        tuple(), nondigits_fields=True
+    )
 
     # Something goes wrong with 2 dimensional structure arrays that warrants
     # further investigation.
 
-    #to_julia['struct_array_2'] = random_structured_numpy_array(
+    # to_julia['struct_array_2'] = random_structured_numpy_array(
     #    (3, 5), nondigits_fields=True)
 
     from_julia_v7_to_v7p3 = dict()
@@ -115,27 +129,28 @@ def test_back_and_forth_julia():
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
             import scipy.io
+
             for i in range(0, len(mat_files)):
                 mat_files[i] = os.path.join(temp_dir, mat_files[i])
             scipy.io.savemat(file_name=mat_files[0], mdict=to_julia)
             hdf5storage.savemat(file_name=mat_files[1], mdict=to_julia)
 
-            #julia_command(script_names[0], mat_files[0], mat_files[2])
+            # julia_command(script_names[0], mat_files[0], mat_files[2])
             julia_command(script_names[0], mat_files[1], mat_files[3])
 
-            #hdf5storage.loadmat(file_name=mat_files[2],
+            # hdf5storage.loadmat(file_name=mat_files[2],
             #                    mdict=from_julia_v7_to_v7p3)
-            hdf5storage.loadmat(file_name=mat_files[3],
-                                mdict=from_julia_v7p3_to_v7p3)
+            hdf5storage.loadmat(file_name=mat_files[3], mdict=from_julia_v7p3_to_v7p3)
         except:
-            pytest.skip('Julia or the MAT package are unavailable '
-                        'or their API/s have changed.')
+            pytest.skip(
+                "Julia or the MAT package are unavailable "
+                "or their API/s have changed."
+            )
 
     # Check the results.
     for name in to_julia:
         assert name in from_julia_v7p3_to_v7p3
-        #assert name in from_julia_v7_to_v7p3
-        assert_equal_from_matlab(from_julia_v7p3_to_v7p3[name],
-                                 to_julia[name])
-        #assert_equal_from_matlab(from_julia_v7_to_v7p3[name],
+        # assert name in from_julia_v7_to_v7p3
+        assert_equal_from_matlab(from_julia_v7p3_to_v7p3[name], to_julia[name])
+        # assert_equal_from_matlab(from_julia_v7_to_v7p3[name],
         #                         to_julia[name])

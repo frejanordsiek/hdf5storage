@@ -36,15 +36,13 @@ from asserts import assert_equal_from_matlab
 
 
 def test_back_and_forth_matlab():
-    mat_files = ['types_v7p3.mat', 'types_v7.mat',
-                 'python_v7p3.mat', 'python_v7.mat']
+    mat_files = ["types_v7p3.mat", "types_v7.mat", "python_v7p3.mat", "python_v7.mat"]
     for i in range(0, len(mat_files)):
         mat_files[i] = os.path.join(os.path.dirname(__file__), mat_files[i])
 
-    script_names = ['make_mat_with_all_types.m', 'read_write_mat.m']
+    script_names = ["make_mat_with_all_types.m", "read_write_mat.m"]
     for i in range(0, len(script_names)):
-        script_names[i] = os.path.join(os.path.dirname(__file__),
-                                       script_names[i])
+        script_names[i] = os.path.join(os.path.dirname(__file__), script_names[i])
 
     types_v7 = dict()
     types_v7p3 = dict()
@@ -52,20 +50,23 @@ def test_back_and_forth_matlab():
     python_v7p3 = dict()
     try:
         import scipy.io
+
         matlab_command = "run('" + script_names[0] + "')"
-        subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
-                              '-nojvm', '-r', matlab_command])
+        subprocess.check_call(
+            ["matlab", "-nosplash", "-nodesktop", "-nojvm", "-r", matlab_command]
+        )
         scipy.io.loadmat(file_name=mat_files[1], mdict=types_v7)
         hdf5storage.loadmat(file_name=mat_files[0], mdict=types_v7p3)
 
         hdf5storage.savemat(file_name=mat_files[2], mdict=types_v7p3)
         matlab_command = "run('" + script_names[1] + "')"
-        subprocess.check_call(['matlab', '-nosplash', '-nodesktop',
-                              '-nojvm', '-r', matlab_command])
+        subprocess.check_call(
+            ["matlab", "-nosplash", "-nodesktop", "-nojvm", "-r", matlab_command]
+        )
         scipy.io.loadmat(file_name=mat_files[3], mdict=python_v7)
         hdf5storage.loadmat(file_name=mat_files[2], mdict=python_v7p3)
     except:
-        pytest.skip('scipy.io or Matlab not found.')
+        pytest.skip("scipy.io or Matlab not found.")
     finally:
         for name in mat_files:
             if os.path.exists(name):
@@ -74,7 +75,7 @@ def test_back_and_forth_matlab():
     for name in types_v7p3:
         assert_equal_from_matlab(types_v7p3[name], types_v7[name])
 
-    for name in (set(types_v7.keys()) - set(['__version__',
-                                             '__header__',
-                                             '__globals__'])):
+    for name in set(types_v7.keys()) - set(
+        ["__version__", "__header__", "__globals__"]
+    ):
         assert_equal_from_matlab(types_v7p3[name], types_v7[name])

@@ -38,23 +38,22 @@ import hdf5storage.Marshallers
 
 class Tmarshaller(hdf5storage.Marshallers.TypeMarshaller):
     def read(self, f, dsetgrp, attributes):
-        return 'read'
+        return "read"
 
     def read_approximate(self, f, dsetgrp, attributes):
-        return 'read_approximate'
+        return "read_approximate"
 
 
 def test_missing_required_parent():
     m = hdf5storage.Marshallers.TypeMarshaller()
-    m.required_parent_modules = ['ainivieanvueaq']
-    m.python_type_strings = ['vi8vaeaniea']
+    m.required_parent_modules = ["ainivieanvueaq"]
+    m.python_type_strings = ["vi8vaeaniea"]
     m.types = [s for s in m.python_type_strings]
     m.update_type_lookups()
     mc = hdf5storage.MarshallerCollection(marshallers=[m])
     assert mc._has_required_modules[-1] is False
     assert mc._imported_required_modules[-1] is False
-    mback, has_modules = mc.get_marshaller_for_type_string( \
-        m.python_type_strings[0])
+    mback, has_modules = mc.get_marshaller_for_type_string(m.python_type_strings[0])
     assert mback is not None
     assert has_modules is False
     assert mc._has_required_modules[-1] is False
@@ -65,17 +64,15 @@ def test_missing_required_parent():
 
 def test_missing_required_lazy():
     m = hdf5storage.Marshallers.TypeMarshaller()
-    m.required_parent_modules = ['numpy']
-    m.required_modules = ['ainivieanvueaq']
-    m.python_type_strings = ['vi8vaeaniea']
+    m.required_parent_modules = ["numpy"]
+    m.required_modules = ["ainivieanvueaq"]
+    m.python_type_strings = ["vi8vaeaniea"]
     m.types = [s for s in m.python_type_strings]
     m.update_type_lookups()
-    mc = hdf5storage.MarshallerCollection(lazy_loading=True,
-                                          marshallers=[m])
+    mc = hdf5storage.MarshallerCollection(lazy_loading=True, marshallers=[m])
     assert mc._has_required_modules[-1]
     assert mc._imported_required_modules[-1] is False
-    mback, has_modules = mc.get_marshaller_for_type_string( \
-        m.python_type_strings[0])
+    mback, has_modules = mc.get_marshaller_for_type_string(m.python_type_strings[0])
     assert mback is not None
     assert has_modules is False
     assert mc._has_required_modules[-1] is False
@@ -86,17 +83,15 @@ def test_missing_required_lazy():
 
 def test_missing_required_non_lazy():
     m = hdf5storage.Marshallers.TypeMarshaller()
-    m.required_parent_modules = ['numpy']
-    m.required_modules = ['ainivieanvueaq']
-    m.python_type_strings = ['vi8vaeaniea']
+    m.required_parent_modules = ["numpy"]
+    m.required_modules = ["ainivieanvueaq"]
+    m.python_type_strings = ["vi8vaeaniea"]
     m.types = [s for s in m.python_type_strings]
     m.update_type_lookups()
-    mc = hdf5storage.MarshallerCollection(lazy_loading=False,
-                                          marshallers=[m])
+    mc = hdf5storage.MarshallerCollection(lazy_loading=False, marshallers=[m])
     assert mc._has_required_modules[-1] is False
     assert mc._imported_required_modules[-1] is False
-    mback, has_modules = mc.get_marshaller_for_type_string( \
-        m.python_type_strings[0])
+    mback, has_modules = mc.get_marshaller_for_type_string(m.python_type_strings[0])
     assert mback is not None
     assert has_modules is False
     assert mc._has_required_modules[-1] is False
@@ -107,21 +102,19 @@ def test_missing_required_non_lazy():
 
 def test_has_required_lazy():
     m = hdf5storage.Marshallers.TypeMarshaller()
-    m.required_parent_modules = ['tarfile']
-    m.required_modules = ['tarfile']
-    m.python_type_strings = ['ellipsis']
-    m.types = ['builtins.ellipsis']
+    m.required_parent_modules = ["tarfile"]
+    m.required_modules = ["tarfile"]
+    m.python_type_strings = ["ellipsis"]
+    m.types = ["builtins.ellipsis"]
     m.update_type_lookups()
     for name in m.required_modules:
         assert name not in sys.modules
-    mc = hdf5storage.MarshallerCollection(lazy_loading=True,
-                                          marshallers=[m])
+    mc = hdf5storage.MarshallerCollection(lazy_loading=True, marshallers=[m])
     for name in m.required_modules:
         assert name not in sys.modules
     assert mc._has_required_modules[-1]
     assert mc._imported_required_modules[-1] is False
-    mback, has_modules = mc.get_marshaller_for_type_string( \
-        m.python_type_strings[0])
+    mback, has_modules = mc.get_marshaller_for_type_string(m.python_type_strings[0])
     assert mback is not None
     assert has_modules
     assert mc._has_required_modules[-1]
@@ -131,12 +124,10 @@ def test_has_required_lazy():
 
     # Do it again, but this time the modules are already loaded so that
     # flag should be set.
-    mc = hdf5storage.MarshallerCollection(lazy_loading=True,
-                                          marshallers=[m])
+    mc = hdf5storage.MarshallerCollection(lazy_loading=True, marshallers=[m])
     assert mc._has_required_modules[-1]
     assert mc._imported_required_modules[-1]
-    mback, has_modules = mc.get_marshaller_for_type_string( \
-        m.python_type_strings[0])
+    mback, has_modules = mc.get_marshaller_for_type_string(m.python_type_strings[0])
     assert mback is not None
     assert has_modules
     assert mc._has_required_modules[-1]
@@ -145,21 +136,19 @@ def test_has_required_lazy():
 
 def test_has_required_non_lazy():
     m = hdf5storage.Marshallers.TypeMarshaller()
-    m.required_parent_modules = ['getopt']
-    m.required_modules = ['getopt']
-    m.python_type_strings = ['ellipsis']
-    m.types = ['builtins.ellipsis']
+    m.required_parent_modules = ["getopt"]
+    m.required_modules = ["getopt"]
+    m.python_type_strings = ["ellipsis"]
+    m.types = ["builtins.ellipsis"]
     m.update_type_lookups()
     for name in m.required_modules:
         assert name not in sys.modules
-    mc = hdf5storage.MarshallerCollection(lazy_loading=False,
-                                          marshallers=[m])
+    mc = hdf5storage.MarshallerCollection(lazy_loading=False, marshallers=[m])
     for name in m.required_modules:
         assert name in sys.modules
     assert mc._has_required_modules[-1]
     assert mc._imported_required_modules[-1]
-    mback, has_modules = mc.get_marshaller_for_type_string( \
-        m.python_type_strings[0])
+    mback, has_modules = mc.get_marshaller_for_type_string(m.python_type_strings[0])
     assert mback is not None
     assert has_modules
     assert mc._has_required_modules[-1]
@@ -168,71 +157,62 @@ def test_has_required_non_lazy():
 
 def test_marshaller_read():
     m = Tmarshaller()
-    m.required_parent_modules = ['json']
-    m.required_modules = ['json']
-    m.python_type_strings = ['ellipsis']
-    m.types = ['builtins.ellipsis']
+    m.required_parent_modules = ["json"]
+    m.required_modules = ["json"]
+    m.python_type_strings = ["ellipsis"]
+    m.types = ["builtins.ellipsis"]
     m.update_type_lookups()
-    mc = hdf5storage.MarshallerCollection(lazy_loading=True,
-                                          marshallers=[m])
+    mc = hdf5storage.MarshallerCollection(lazy_loading=True, marshallers=[m])
     options = hdf5storage.Options(marshaller_collection=mc)
 
-    name = '/the'
+    name = "/the"
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
-        with h5py.File(filename, mode='w') as f:
+        filename = os.path.join(folder, "data.h5")
+        with h5py.File(filename, mode="w") as f:
             f.create_dataset(name, data=np.int64([1]))
-            f[name].attrs.create('Python.Type',
-                                 b'ellipsis')
-            out = hdf5storage.utilities.LowLevelFile(
-                f, options).read_data(f, name)
+            f[name].attrs.create("Python.Type", b"ellipsis")
+            out = hdf5storage.utilities.LowLevelFile(f, options).read_data(f, name)
 
-    assert out == 'read'
+    assert out == "read"
 
 
 def test_marshaller_read_approximate_missing_parent():
     m = Tmarshaller()
-    m.required_parent_modules = ['aiveneiavie']
-    m.required_modules = ['json']
-    m.python_type_strings = ['ellipsis']
-    m.types = ['builtins.ellipsis']
+    m.required_parent_modules = ["aiveneiavie"]
+    m.required_modules = ["json"]
+    m.python_type_strings = ["ellipsis"]
+    m.types = ["builtins.ellipsis"]
     m.update_type_lookups()
-    mc = hdf5storage.MarshallerCollection(lazy_loading=True,
-                                          marshallers=[m])
+    mc = hdf5storage.MarshallerCollection(lazy_loading=True, marshallers=[m])
     options = hdf5storage.Options(marshaller_collection=mc)
 
-    name = '/the'
+    name = "/the"
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
-        with h5py.File(filename, mode='w') as f:
+        filename = os.path.join(folder, "data.h5")
+        with h5py.File(filename, mode="w") as f:
             f.create_dataset(name, data=np.int64([1]))
-            f[name].attrs.create('Python.Type',
-                                 b'ellipsis')
-            out = hdf5storage.utilities.LowLevelFile(
-                f, options).read_data(f, name)
+            f[name].attrs.create("Python.Type", b"ellipsis")
+            out = hdf5storage.utilities.LowLevelFile(f, options).read_data(f, name)
 
-    assert out == 'read_approximate'
+    assert out == "read_approximate"
 
 
 def test_marshaller_read_approximate_missing_import():
     m = Tmarshaller()
-    m.required_parent_modules = ['json']
-    m.required_modules = ['aiveneiavie']
-    m.python_type_strings = ['ellipsis']
-    m.types = ['builtins.ellipsis']
+    m.required_parent_modules = ["json"]
+    m.required_modules = ["aiveneiavie"]
+    m.python_type_strings = ["ellipsis"]
+    m.types = ["builtins.ellipsis"]
     m.update_type_lookups()
-    mc = hdf5storage.MarshallerCollection(lazy_loading=True,
-                                          marshallers=[m])
+    mc = hdf5storage.MarshallerCollection(lazy_loading=True, marshallers=[m])
     options = hdf5storage.Options(marshaller_collection=mc)
 
-    name = '/the'
+    name = "/the"
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
-        with h5py.File(filename, mode='w') as f:
+        filename = os.path.join(folder, "data.h5")
+        with h5py.File(filename, mode="w") as f:
             f.create_dataset(name, data=np.int64([1]))
-            f[name].attrs.create('Python.Type',
-                                 b'ellipsis')
-            out = hdf5storage.utilities.LowLevelFile(
-                f, options).read_data(f, name)
+            f[name].attrs.create("Python.Type", b"ellipsis")
+            out = hdf5storage.utilities.LowLevelFile(f, options).read_data(f, name)
 
-    assert out == 'read_approximate'
+    assert out == "read_approximate"

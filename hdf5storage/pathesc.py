@@ -35,6 +35,7 @@ import sys
 
 # Type hints
 from typing import Union, Dict, Tuple
+
 if sys.version_info >= (3, 9):
     from re import Pattern, Match
     from collections.abc import Sequence
@@ -42,8 +43,9 @@ else:
     from typing import Pattern, Match, Sequence
 
 # Define the type for all paths
-Path = Union[str, bytes, pathlib.PurePath,
-             Sequence[Union[str, bytes, pathlib.PurePath]]]
+Path = Union[
+    str, bytes, pathlib.PurePath, Sequence[Union[str, bytes, pathlib.PurePath]]
+]
 
 
 # For escaping and unescaping unicode paths, we need compiled regular
@@ -52,22 +54,22 @@ Path = Union[str, bytes, pathlib.PurePath,
 # conversions. Compiling the regular expressions here at initialization
 # will help performance by not having to compile new ones every time a
 # path is processed.
-_find_dots_re: Pattern[str] = re.compile('\\.+')
+_find_dots_re: Pattern[str] = re.compile("\\.+")
 _find_invalid_escape_re: Pattern[str] = re.compile(
-    '(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]'
-    '|x[0-9a-fA-F]?($|[^0-9a-fA-F])'
-    '|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])'
-    '|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))')
-_find_fslashnull_re: Pattern[str] = re.compile('[\\\\/\x00]')
+    "(^|[^\\\\])\\\\(\\\\\\\\)*($|[^xuU\\\\]"
+    "|x[0-9a-fA-F]?($|[^0-9a-fA-F])"
+    "|u[0-9a-fA-F]{0,3}($|[^0-9a-fA-F])"
+    "|U[0-9a-fA-F]{0,7}($|[^0-9a-fA-F]))"
+)
+_find_fslashnull_re: Pattern[str] = re.compile("[\\\\/\x00]")
 _find_escapes_re: Pattern[str] = re.compile(
-    '\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})')
-_char_escape_conversions: Dict[str, str] = {'\x00': '\\x00',
-                                            '/': '\\x2f',
-                                            '\\': '\\\\'}
+    "\\\\+(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})"
+)
+_char_escape_conversions: Dict[str, str] = {"\x00": "\\x00", "/": "\\x2f", "\\": "\\\\"}
 
 
 def _replace_fun_escape(m: Match[str]) -> str:
-    """ Hex/unicode escape single characters found in regex matches.
+    """Hex/unicode escape single characters found in regex matches.
 
     Supports single hex/unicode escapes of the form ``'\\xYY'``,
     ``'\\uYYYY'``, and ``'\\UYYYYYYYY'`` where Y is a hex digit and
@@ -100,19 +102,20 @@ def _replace_fun_escape(m: Match[str]) -> str:
     # on its size.
     value = ord(c)
     if value <= 0xFF:
-        return '\\x{0:02x}'.format(value)
+        return "\\x{0:02x}".format(value)
     elif value <= 0xFFFF:
-        return '\\u{0:04x}'.format(value)
+        return "\\u{0:04x}".format(value)
     elif value <= 0xFFFFFFFF:
-        return '\\U{0:08x}'.format(value)
+        return "\\U{0:08x}".format(value)
     else:
-        raise NotImplementedError('Cannot escape a character whose '
-                                  'code it outside of the range '
-                                  '0 - 0xFFFFFFFF.')
+        raise NotImplementedError(
+            "Cannot escape a character whose code it outside of the range "
+            "0 - 0xFFFFFFFF."
+        )
 
 
 def _replace_fun_unescape(m: Match[str]) -> str:
-    """ Decode single hex/unicode escapes found in regex matches.
+    """Decode single hex/unicode escapes found in regex matches.
 
     Supports single hex/unicode escapes of the form ``'\\xYY'``,
     ``'\\uYYYY'``, and ``'\\UYYYYYYYY'`` where Y is a hex digit. Only
@@ -130,18 +133,18 @@ def _replace_fun_unescape(m: Match[str]) -> str:
         The unescaped character.
 
     """
-    slsh = b'\\'.decode('ascii')
+    slsh = b"\\".decode("ascii")
     s = m.group(0)
     count = s.count(slsh)
     if count % 2 == 0:
         return s
     else:
-        c = chr(int(s[(count + 1):], base=16))
+        c = chr(int(s[(count + 1) :], base=16))
         return slsh * (count - 1) + c
 
 
 def escape_path(pth: Union[str, bytes]) -> str:
-    """ Hex/unicode escapes a path.
+    """Hex/unicode escapes a path.
 
     Escapes a path so that it can be represented faithfully in an HDF5
     file without changing directories. This means that leading ``'.'``
@@ -175,21 +178,21 @@ def escape_path(pth: Union[str, bytes]) -> str:
 
     """
     if isinstance(pth, bytes):
-        pth = pth.decode('utf-8')
+        pth = pth.decode("utf-8")
     if not isinstance(pth, str):
-        raise TypeError('pth must be str or bytes.')
+        raise TypeError("pth must be str or bytes.")
     match = _find_dots_re.match(pth)
     if match is None:
-        prefix = ''
+        prefix = ""
         s = pth
     else:
-        prefix = '\\x2e' * match.end()
-        s = pth[match.end():]
+        prefix = "\\x2e" * match.end()
+        s = pth[match.end() :]
     return prefix + _find_fslashnull_re.sub(_replace_fun_escape, s)
 
 
 def unescape_path(pth: Union[str, bytes]) -> str:
-    """ Hex/unicode unescapes a path.
+    """Hex/unicode unescapes a path.
 
     Unescapes a path. Valid escapeds are ``'\\xYY'``, ``'\\uYYYY', or
     ``'\\UYYYYYYYY'`` where Y are hex digits giving the character's
@@ -221,20 +224,20 @@ def unescape_path(pth: Union[str, bytes]) -> str:
 
     """
     if isinstance(pth, bytes):
-        pth = pth.decode('utf-8')
+        pth = pth.decode("utf-8")
     if not isinstance(pth, str):
-        raise TypeError('pth must be str or bytes.')
+        raise TypeError("pth must be str or bytes.")
     # Look for invalid escapes.
     if _find_invalid_escape_re.search(pth) is not None:
-        raise ValueError('Invalid escape found.')
+        raise ValueError("Invalid escape found.")
     # Do all hex/unicode escapes.
     s = _find_escapes_re.sub(_replace_fun_unescape, pth)
     # Do all double backslash escapes.
-    return s.replace(b'\\\\'.decode('ascii'), b'\\'.decode('ascii'))
+    return s.replace(b"\\\\".decode("ascii"), b"\\".decode("ascii"))
 
 
 def process_path(pth: Path) -> Tuple[str, str]:
-    """ Processes paths.
+    """Processes paths.
 
     Processes the provided path and breaks it into it Group part
     (`groupname`) and target part (`targetname`). ``bytes`` paths are
@@ -281,12 +284,12 @@ def process_path(pth: Path) -> Tuple[str, str]:
     """
     # Do conversions and possibly escapes.
     if isinstance(pth, bytes):
-        p = pth.decode('utf-8')
+        p = pth.decode("utf-8")
     elif isinstance(pth, str):
         p = pth
     elif isinstance(pth, pathlib.PurePath):
         parts = pth.parts
-        if pth.root not in ('', '/'):
+        if pth.root not in ("", "/"):
             p = posixpath.join(*parts[1:])
         else:
             p = posixpath.join(*parts)
@@ -296,18 +299,21 @@ def process_path(pth: Path) -> Tuple[str, str]:
         parts_seq = []
         for i, s in enumerate(pth):
             if isinstance(s, bytes):
-                s = s.decode('utf-8')
+                s = s.decode("utf-8")
             elif isinstance(s, pathlib.PurePath):
                 s = str(s)
             elif not isinstance(s, str):
-                raise TypeError('Elements of p must be str, bytes, or '
-                                'pathlib.PurePath.')
+                raise TypeError(
+                    "Elements of p must be str, bytes, or pathlib.PurePath."
+                )
             parts_seq.append(escape_path(s))
         parts = tuple(parts_seq)
         p = posixpath.join(*parts)
     else:
-        raise TypeError('p must be str, bytes, pathlib.PurePath, or '
-                        'an Sequence solely of one of those three.')
+        raise TypeError(
+            "p must be str, bytes, pathlib.PurePath, or an Sequence solely of one of "
+            "those three."
+        )
 
     # Remove double slashes and a non-root trailing slash.
     path = posixpath.normpath(p)
@@ -321,10 +327,10 @@ def process_path(pth: Path) -> Tuple[str, str]:
 
     # If groupname got turned into blank, then it is just root.
     if len(groupname) == 0:
-        groupname = b'/'.decode('ascii')
+        groupname = b"/".decode("ascii")
 
     # If targetname got turned blank, then it is the current directory.
     if len(targetname) == 0:
-        targetname = b'.'.decode('ascii')
+        targetname = b".".decode("ascii")
 
     return groupname, targetname

@@ -40,38 +40,50 @@ import hdf5storage
 
 
 def test_O_field_compound():
-    name = '/a'
-    data = np.empty(shape=(1, ), dtype=[('O', 'int8'), ('a', 'uint16')])
+    name = "/a"
+    data = np.empty(shape=(1,), dtype=[("O", "int8"), ("a", "uint16")])
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
-        hdf5storage.write(data, path=name, filename=filename,
-                          matlab_compatible=False,
-                          structured_numpy_ndarray_as_struct=False)
-        with h5py.File(filename, mode='r') as f:
+        filename = os.path.join(folder, "data.h5")
+        hdf5storage.write(
+            data,
+            path=name,
+            filename=filename,
+            matlab_compatible=False,
+            structured_numpy_ndarray_as_struct=False,
+        )
+        with h5py.File(filename, mode="r") as f:
             assert isinstance(f[name], h5py.Dataset)
 
 
 def test_object_field_group():
-    name = '/a'
-    data = np.empty(shape=(1, ), dtype=[('a', 'O'), ('b', 'uint16')])
-    data['a'][0] = [1, 2]
+    name = "/a"
+    data = np.empty(shape=(1,), dtype=[("a", "O"), ("b", "uint16")])
+    data["a"][0] = [1, 2]
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
-        hdf5storage.write(data, path=name, filename=filename,
-                          matlab_compatible=False,
-                          structured_numpy_ndarray_as_struct=False)
-        with h5py.File(filename, mode='r') as f:
+        filename = os.path.join(folder, "data.h5")
+        hdf5storage.write(
+            data,
+            path=name,
+            filename=filename,
+            matlab_compatible=False,
+            structured_numpy_ndarray_as_struct=False,
+        )
+        with h5py.File(filename, mode="r") as f:
             assert isinstance(f[name], h5py.Group)
 
 
 def test_O_and_object_field_group():
-    name = '/a'
-    data = np.empty(shape=(1, ), dtype=[('a', 'O'), ('O', 'uint16')])
-    data['a'][0] = [1, 2]
+    name = "/a"
+    data = np.empty(shape=(1,), dtype=[("a", "O"), ("O", "uint16")])
+    data["a"][0] = [1, 2]
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
-        hdf5storage.write(data, path=name, filename=filename,
-                          matlab_compatible=False,
-                          structured_numpy_ndarray_as_struct=False)
-        with h5py.File(filename, mode='r') as f:
+        filename = os.path.join(folder, "data.h5")
+        hdf5storage.write(
+            data,
+            path=name,
+            filename=filename,
+            matlab_compatible=False,
+            structured_numpy_ndarray_as_struct=False,
+        )
+        with h5py.File(filename, mode="r") as f:
             assert isinstance(f[name], h5py.Group)

@@ -40,53 +40,58 @@ import make_randoms
 # in matlab compatible mode. Specifically, the shape must be stored in
 # the Dataset in the same order as it is in or is to be in Python.
 
+
 def test_write_empty():
     for _ in range(10):
         name = make_randoms.random_name()
-        shape = list(make_randoms.random_numpy_shape(
-            random.randrange(2, 10), 20))
+        shape = list(make_randoms.random_numpy_shape(random.randrange(2, 10), 20))
         shape[random.randrange(len(shape))] = 0
         shape = tuple(shape)
         dtype = random.choice(make_randoms.dtypes)
-        while dtype in ('S', 'U'):
+        while dtype in ("S", "U"):
             dtype = random.choice(make_randoms.dtypes)
         data = make_randoms.random_numpy(shape, dtype)
         with tempfile.TemporaryDirectory() as folder:
-            filename = os.path.join(folder, 'data.h5')
+            filename = os.path.join(folder, "data.h5")
             # Write
-            hdf5storage.write(data, path=name, filename=filename,
-                              matlab_compatible=True,
-                              store_python_metadata=False)
+            hdf5storage.write(
+                data,
+                path=name,
+                filename=filename,
+                matlab_compatible=True,
+                store_python_metadata=False,
+            )
             # Read to check.
-            with h5py.File(filename, mode='r') as f:
+            with h5py.File(filename, mode="r") as f:
                 dset = f[name]
                 assert isinstance(dset, h5py.Dataset)
-                assert dset.dtype == numpy.dtype('uint64')
+                assert dset.dtype == numpy.dtype("uint64")
                 assert tuple(dset[:]) == shape
-                assert 'MATLAB_empty' in dset.attrs
-                assert dset.attrs['MATLAB_empty'] == 1
+                assert "MATLAB_empty" in dset.attrs
+                assert dset.attrs["MATLAB_empty"] == 1
 
 
 def test_read_empty():
     for _ in range(10):
         name = make_randoms.random_name()
-        shape = list(make_randoms.random_numpy_shape(
-            random.randrange(2, 10), 20))
+        shape = list(make_randoms.random_numpy_shape(random.randrange(2, 10), 20))
         shape[random.randrange(len(shape))] = 0
         shape = tuple(shape)
         dtype = random.choice(
-            [prefix + 'int' + suffix
-             for prefix in ('u', '')
-             for suffix in ('8', '16', '32', '64')]
-            + ['single', 'double'])
+            [
+                prefix + "int" + suffix
+                for prefix in ("u", "")
+                for suffix in ("8", "16", "32", "64")
+            ]
+            + ["single", "double"]
+        )
         with tempfile.TemporaryDirectory() as folder:
-            filename = os.path.join(folder, 'data.h5')
+            filename = os.path.join(folder, "data.h5")
             # Make the file and the data.
-            with h5py.File(filename, mode='w') as f:
-                dset = f.create_dataset(name,
-                                        data=numpy.uint64(shape))
-                dset.attrs.create('MATLAB_class', numpy.bytes_(dtype))
-                dset.attrs.create('MATLAB_empty', numpy.uint8(1))
+            with h5py.File(filename, mode="w") as f:
+                dset = f.create_dataset(name, data=numpy.uint64(shape))
+                dset.attrs.create("MATLAB_class", numpy.bytes_(dtype))
+                dset.attrs.create("MATLAB_empty", numpy.uint8(1))
             # Read the data.
             data = hdf5storage.read(path=name, filename=filename)
             assert data.shape == shape

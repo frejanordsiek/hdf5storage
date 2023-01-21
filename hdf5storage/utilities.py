@@ -48,6 +48,7 @@ import hdf5storage.exceptions
 
 # Type hints
 from typing import Any, Optional, Type, Union, Tuple, Dict, List
+
 if sys.version_info >= (3, 9):
     from collections.abc import MutableMapping
 else:
@@ -55,7 +56,7 @@ else:
 
 
 def does_dtype_have_a_zero_shape(dt: np.dtype) -> bool:
-    """ Determine whether a dtype (or its fields) have zero shape.
+    """Determine whether a dtype (or its fields) have zero shape.
 
     Determines whether the given ``numpy.dtype`` has a shape with a zero
     element or if one of its fields does, or if one of its fields'
@@ -101,9 +102,10 @@ def does_dtype_have_a_zero_shape(dt: np.dtype) -> bool:
     return False
 
 
-def read_all_attributes_into(attrs: h5py.AttributeManager,
-                             out: MutableMapping[str, Any]) -> None:
-    """ Reads all Attributes into a MutableMapping (dict-like)
+def read_all_attributes_into(
+    attrs: h5py.AttributeManager, out: MutableMapping[str, Any]
+) -> None:
+    """Reads all Attributes into a MutableMapping (dict-like)
 
     Reads all Attributes into the MutableMapping (dict-like) out.
 
@@ -121,15 +123,16 @@ def read_all_attributes_into(attrs: h5py.AttributeManager,
 
     """
     if not isinstance(attrs, h5py.AttributeManager):
-        raise TypeError('attrs must be a h5py.AttributeManager.')
-    if not isinstance(out, (dict, collections.defaultdict,
-                            collections.abc.MutableMapping)):
-        raise TypeError('out must be a MutableMapping.')
+        raise TypeError("attrs must be a h5py.AttributeManager.")
+    if not isinstance(
+        out, (dict, collections.defaultdict, collections.abc.MutableMapping)
+    ):
+        raise TypeError("out must be a MutableMapping.")
     out.update(attrs.items())
 
 
 class LowLevelFile(object):
-    """ Low level wrapper for the HDF5 file object with utilities.
+    """Low level wrapper for the HDF5 file object with utilities.
 
     Wraps a ``h5py.File`` and provides numerous utilities to help with
     writing and reading Python objects to the file, providing the
@@ -157,19 +160,21 @@ class LowLevelFile(object):
         The options used for reading and writing.
 
     """
-    def __init__(self, f: h5py.File,
-                 options: 'hdf5storage.Options') -> None:
+
+    def __init__(self, f: h5py.File, options: "hdf5storage.Options") -> None:
         # Check the types of the arguments real quick to be on the safe
         # side. options has to be checked using the __module__ and
         # __name__ attributes since we can't import the main hdf5storage
         # module since that would lead to a circular import.
         if not isinstance(f, h5py.File):
-            raise TypeError('f must be a h5py.File.')
-        if options.__class__.__module__ != 'hdf5storage' \
-                or options.__class__.__name__ != 'Options':
-            raise TypeError('options must be a hdf5storage.Options.')
+            raise TypeError("f must be a h5py.File.")
+        if (
+            options.__class__.__module__ != "hdf5storage"
+            or options.__class__.__name__ != "Options"
+        ):
+            raise TypeError("options must be a hdf5storage.Options.")
         self._f: h5py.File = f
-        self._options: 'hdf5storage.Options' = options
+        self._options: "hdf5storage.Options" = options
 
         # We need to keep track of the references group after we first
         # use it, whether we created it or not, and a reference to the
@@ -196,13 +201,13 @@ class LowLevelFile(object):
         return self._f
 
     @property
-    def options(self) -> 'hdf5storage.Options':
+    def options(self) -> "hdf5storage.Options":
         return self._options
 
-    def write_data(self, grp: h5py.Group, name: str, data: Any,
-                   type_string: Optional[str]) -> Optional[
-                       Union[h5py.Dataset, h5py.Group]]:
-        """ Writes a piece of data into the file in the given group.
+    def write_data(
+        self, grp: h5py.Group, name: str, data: Any, type_string: Optional[str]
+    ) -> Optional[Union[h5py.Dataset, h5py.Group]]:
+        """Writes a piece of data into the file in the given group.
 
         Low level method to store a Python type (`data`) into the
         specified Group.
@@ -249,8 +254,7 @@ class LowLevelFile(object):
             tp = np.dtype
         else:
             tp = type(data)
-        m, has_modules = \
-            self._options.marshaller_collection.get_marshaller_for_type(tp)
+        m, has_modules = self._options.marshaller_collection.get_marshaller_for_type(tp)
 
         # If a marshaller was found and we have the required modules,
         # use it to write the data. Otherwise, return an error. If we
@@ -261,14 +265,15 @@ class LowLevelFile(object):
         if m is not None and has_modules:
             return m.write(self, grp, name, data, type_string)
         else:
-            raise NotImplementedError('Can''t write data type: '
-                                      + str(tp))
+            raise NotImplementedError("Can't write data type: " + str(tp))
 
-    def read_data(self, grp: Optional[h5py.Group], name: Optional[str],
-                  dsetgrp: Optional[
-                      Union[h5py.Dataset,
-                            h5py.Group]] = None) -> Any:
-        """ Writes a piece of data into the file.
+    def read_data(
+        self,
+        grp: Optional[h5py.Group],
+        name: Optional[str],
+        dsetgrp: Optional[Union[h5py.Dataset, h5py.Group]] = None,
+    ) -> Any:
+        """Writes a piece of data into the file.
 
         Low level method to read a Python type of the specified name
         from specified Group.
@@ -306,29 +311,23 @@ class LowLevelFile(object):
         """
         if dsetgrp is None:
             if grp is None:
-                raise TypeError('grp must not be None if dsetgrp is '
-                                'None.')
+                raise TypeError("grp must not be None if dsetgrp is None.")
             if name is None:
-                raise TypeError('name must not be None if dsetgrp is '
-                                'None.')
+                raise TypeError("name must not be None if dsetgrp is None.")
             # If name isn't found, return error.
             dsetgrp = grp.get(name)
             if dsetgrp is None:
-                raise KeyError('Could not find '
-                               + posixpath.join(grp.name, name))
+                raise KeyError("Could not find " + posixpath.join(grp.name, name))
 
         # Get all attributes with values, with the default being for any
         # unavailable ones being None.
-        attributes: collections.defaultdict = collections.defaultdict(
-            type(None))
+        attributes: collections.defaultdict = collections.defaultdict(type(None))
         read_all_attributes_into(dsetgrp.attrs, attributes)
 
         # Get the different attributes that can be used to identify they
         # type, which are the type string and the MATLAB class.
-        type_string = convert_attribute_to_string(
-            attributes['Python.Type'])
-        matlab_class = convert_attribute_to_string(
-            attributes['MATLAB_class'])
+        type_string = convert_attribute_to_string(attributes["Python.Type"])
+        matlab_class = convert_attribute_to_string(attributes["MATLAB_class"])
 
         # If the type_string is present, get the marshaller for it. If
         # it is not, use the one for the matlab class if it is
@@ -343,19 +342,15 @@ class LowLevelFile(object):
         has_modules = False
         mc = self._options.marshaller_collection
         if type_string is not None:
-            m, has_modules = mc.get_marshaller_for_type_string(
-                type_string)
+            m, has_modules = mc.get_marshaller_for_type_string(type_string)
         elif matlab_class is not None:
-            m, has_modules = mc.get_marshaller_for_matlab_class(
-                matlab_class)
-        elif hasattr(dsetgrp, 'dtype'):
+            m, has_modules = mc.get_marshaller_for_matlab_class(matlab_class)
+        elif hasattr(dsetgrp, "dtype"):
             # Numpy dataset
-            m, has_modules = mc.get_marshaller_for_type(
-                dsetgrp.dtype.type)
+            m, has_modules = mc.get_marshaller_for_type(dsetgrp.dtype.type)
         elif isinstance(dsetgrp, (h5py.Group, h5py.File)):
             # Groups and files are like Matlab struct
-            m, has_modules = mc.get_marshaller_for_matlab_class(
-                'struct')
+            m, has_modules = mc.get_marshaller_for_matlab_class("struct")
         if m is None:
             # use Numpy as a fallback
             m, has_modules = mc.get_marshaller_for_type(np.uint8)
@@ -369,12 +364,10 @@ class LowLevelFile(object):
             else:
                 return m.read_approximate(self, dsetgrp, attributes)
         else:
-            raise hdf5storage.exceptions.CantReadError('Could not read '
-                                                       + dsetgrp.name)
+            raise hdf5storage.exceptions.CantReadError("Could not read " + dsetgrp.name)
 
-    def write_object_array(self, data: np.ndarray) -> Union[
-            np.ndarray, h5py.Reference]:
-        """ Writes an array of objects recursively.
+    def write_object_array(self, data: np.ndarray) -> Union[np.ndarray, h5py.Reference]:
+        """Writes an array of objects recursively.
 
         Writes the elements of the given object array recursively in the
         HDF5 Group ``self.options.group_for_references`` and returns an
@@ -412,16 +405,16 @@ class LowLevelFile(object):
         # whether we created it or not.
         if self._refs_group is None:
             self._refs_group = self._f.get(
-                self._options.group_for_references,
-                default=None)
-            if self._refs_group is None or not isinstance(
-                    self._refs_group, h5py.Group):
+                self._options.group_for_references, default=None
+            )
+            if self._refs_group is None or not isinstance(self._refs_group, h5py.Group):
                 # It doesn't exist yet or isn't a Group, so it needs to
                 # be created (and deleted if it is something else).
                 if self._refs_group is not None:
                     del self._f[self._options.group_for_references]
                 self._refs_group = self._f.create_group(
-                    self._options.group_for_references)
+                    self._options.group_for_references
+                )
                 self._created_refs_group = True
             else:
                 # Was already present, which means we didn't create it.
@@ -436,35 +429,37 @@ class LowLevelFile(object):
         # isn't present or is incorrectly formatted, it is created
         # truncating anything previously there.
         if self._canonical_empty is None:
-            self._canonical_empty = self._refs_group.get(
-                'a', default=None)
+            self._canonical_empty = self._refs_group.get("a", default=None)
             if self._canonical_empty is not None:
                 ce_attrs = self._canonical_empty.attrs
-                if (not isinstance(self._canonical_empty, h5py.Dataset)
+                if (
+                    not isinstance(self._canonical_empty, h5py.Dataset)
                     or self._canonical_empty.shape != (2,)
-                    or not self._canonical_empty.dtype.name.startswith(
-                        'uint')
-                    or np.any(self._canonical_empty[...]
-                              != np.array([0, 0], dtype=np.uint64))
-                    or convert_attribute_to_string(ce_attrs.get(
-                        'MATLAB_class')) != 'canonical empty'
-                    or ce_attrs.get(
-                        'MATLAB_empty') != 1):
-                    del self._refs_group['a']
+                    or not self._canonical_empty.dtype.name.startswith("uint")
+                    or np.any(
+                        self._canonical_empty[...] != np.array([0, 0], dtype=np.uint64)
+                    )
+                    or convert_attribute_to_string(ce_attrs.get("MATLAB_class"))
+                    != "canonical empty"
+                    or ce_attrs.get("MATLAB_empty") != 1
+                ):
+                    del self._refs_group["a"]
                     self._canonical_empty = None
             if self._canonical_empty is None:
                 self._canonical_empty = self._refs_group.create_dataset(
-                    'a', data=np.array([0, 0], dtype=np.uint64))
+                    "a", data=np.array([0, 0], dtype=np.uint64)
+                )
                 ce_attrs = self._canonical_empty.attrs
-                ce_attrs.modify('MATLAB_class',
-                                np.bytes_('canonical empty'))
-                ce_attrs.modify('MATLAB_empty', np.uint8(1))
+                ce_attrs.modify("MATLAB_class", np.bytes_("canonical empty"))
+                ce_attrs.modify("MATLAB_empty", np.uint8(1))
 
         # We need to grab the special reference dtype and make an empty
         # array to store all the references in.
-        data_refs = np.full(data.shape, self._canonical_empty.ref,
-                            dtype=h5py.special_dtype(
-                                ref=h5py.Reference))
+        data_refs = np.full(
+            data.shape,
+            self._canonical_empty.ref,
+            dtype=h5py.special_dtype(ref=h5py.Reference),
+        )
 
         # Go through all the elements of data and write them, gabbing
         # their references and putting them in data_refs. They will be
@@ -478,17 +473,15 @@ class LowLevelFile(object):
         data_refs_flat = data_refs.reshape(-1)
         for index, x in enumerate(data.flat):
             name_for_ref = self.next_unused_ref_group_name()
-            obj = self.write_data(self._refs_group, name_for_ref, x,
-                                  None)
+            obj = self.write_data(self._refs_group, name_for_ref, x, None)
             if obj is not None:
                 data_refs_flat[index] = obj.ref
                 obj_attrs = obj.attrs
                 if self._options.matlab_compatible:
-                    obj_attrs.modify('H5PATH',
-                                     np.bytes_(self._refs_group_name))
+                    obj_attrs.modify("H5PATH", np.bytes_(self._refs_group_name))
                 else:
                     try:
-                        del obj_attrs['H5PATH']
+                        del obj_attrs["H5PATH"]
                     except KeyError:
                         pass
 
@@ -496,10 +489,10 @@ class LowLevelFile(object):
         # which will incidentally copy it.
         return data_refs
 
-    def read_object_array(self, data: Union[
-            np.ndarray, h5py.Reference]) -> Union[
-                np.ndarray, np.object_]:
-        """ Reads an array of objects recursively.
+    def read_object_array(
+        self, data: Union[np.ndarray, h5py.Reference]
+    ) -> Union[np.ndarray, np.object_]:
+        """Reads an array of objects recursively.
 
         Reads the elements of the given HDF5 Reference array recursively
         and constructs a ``numpy.object_`` array from its elements,
@@ -531,16 +524,15 @@ class LowLevelFile(object):
         """
         # Go through all the elements of data and read them using their
         # references, and the putting the output in new object array.
-        data_derefed = np.zeros(shape=data.shape, dtype='object')
+        data_derefed = np.zeros(shape=data.shape, dtype="object")
         data_derefed_flat = data_derefed.reshape(-1)
         data_flat = data[...].ravel()
         for index, x in enumerate(data_flat):
-            data_derefed_flat[index] = self.read_data(
-                None, None, dsetgrp=self._f[x])
+            data_derefed_flat[index] = self.read_data(None, None, dsetgrp=self._f[x])
         return data_derefed
 
     def next_unused_ref_group_name(self) -> str:
-        """ Gives the next unused name that the references Group.
+        """Gives the next unused name that the references Group.
 
         Generates the next unused name for use in the references
         Group. If the Group is full enough, there may be no available
@@ -561,7 +553,7 @@ class LowLevelFile(object):
         # counter to generate the name and not check for collisions and
         # increment the counter afterwards.
         if self._created_refs_group:
-            name = '%x' % self._refs_group_counter
+            name = "%x" % self._refs_group_counter
             self._refs_group_counter += 1
             return name
 
@@ -571,16 +563,16 @@ class LowLevelFile(object):
         # whether we created it or not.
         if self._refs_group is None:
             self._refs_group = self._f.get(
-                self._options.group_for_references,
-                default=None)
-            if self._refs_group is None or not isinstance(
-                    self._refs_group, h5py.Group):
+                self._options.group_for_references, default=None
+            )
+            if self._refs_group is None or not isinstance(self._refs_group, h5py.Group):
                 # It doesn't exist yet or isn't a Group, so it needs to
                 # be created (and deleted if it is something else).
                 if self._refs_group is not None:
                     del self._f[self._options.group_for_references]
                 self._refs_group = self._f.create_group(
-                    self._options.group_for_references)
+                    self._options.group_for_references
+                )
                 self._created_refs_group = True
             else:
                 # Was already present, which means we didn't create it.
@@ -595,29 +587,29 @@ class LowLevelFile(object):
         # isn't present or is incorrectly formatted, it is created
         # truncating anything previously there.
         if self._canonical_empty is None:
-            self._canonical_empty = self._refs_group.get(
-                'a', default=None)
+            self._canonical_empty = self._refs_group.get("a", default=None)
             if self._canonical_empty is not None:
                 ce_attrs = self._canonical_empty.attrs
-                if (not isinstance(self._canonical_empty, h5py.Dataset)
+                if (
+                    not isinstance(self._canonical_empty, h5py.Dataset)
                     or self._canonical_empty.shape != (2,)
-                    or not self._canonical_empty.dtype.name.startswith(
-                        'uint')
-                    or np.any(self._canonical_empty[...]
-                              != np.array([0, 0], dtype=np.uint64))
-                    or convert_attribute_to_string(ce_attrs.get(
-                        'MATLAB_class')) != 'canonical empty'
-                    or ce_attrs.get(
-                        'MATLAB_empty') != 1):
-                    del self._refs_group['a']
+                    or not self._canonical_empty.dtype.name.startswith("uint")
+                    or np.any(
+                        self._canonical_empty[...] != np.array([0, 0], dtype=np.uint64)
+                    )
+                    or convert_attribute_to_string(ce_attrs.get("MATLAB_class"))
+                    != "canonical empty"
+                    or ce_attrs.get("MATLAB_empty") != 1
+                ):
+                    del self._refs_group["a"]
                     self._canonical_empty = None
             if self._canonical_empty is None:
                 self._canonical_empty = self._refs_group.create_dataset(
-                    'a', data=np.array([0, 0], dtype=np.uint64))
+                    "a", data=np.array([0, 0], dtype=np.uint64)
+                )
                 ce_attrs = self._canonical_empty.attrs
-                ce_attrs.modify('MATLAB_class',
-                                np.bytes_('canonical empty'))
-                ce_attrs.modify('MATLAB_empty', np.uint8(1))
+                ce_attrs.modify("MATLAB_class", np.bytes_("canonical empty"))
+                ce_attrs.modify("MATLAB_empty", np.uint8(1))
 
         # We need to make a random name and check for collisions.
         #
@@ -637,7 +629,7 @@ class LowLevelFile(object):
         # https://stackoverflow.com/questions/2782229/most-lightweight-way-
         #   to-create-a-random-string-and-a-random-hexadecimal-number/
         #   35161595#35161595
-        fmt = '%0{0}x'.format(self._refs_group_name_length)
+        fmt = "%0{0}x".format(self._refs_group_name_length)
         bits = self._refs_group_name_length * 4
         name = fmt % random.getrandbits(bits)
         while name in self._refs_group:
@@ -646,7 +638,7 @@ class LowLevelFile(object):
 
 
 def convert_dtype_to_str(dtype: np.dtype) -> str:
-    """ Convert a dtype to str.
+    """Convert a dtype to str.
 
     Converts a ``numpy.dtype`` to ``str`` in such a way that the result
     can be passed through ``ast.literal_eval`` and then passed directly
@@ -679,17 +671,16 @@ def convert_dtype_to_str(dtype: np.dtype) -> str:
 
     """
     if not isinstance(dtype, np.dtype):
-        raise TypeError('dtype must be a numpy.dtype.')
+        raise TypeError("dtype must be a numpy.dtype.")
     out = str(dtype)
-    if out[0] not in '([{':
+    if out[0] not in "([{":
         return "'" + out + "'"
     else:
         return out
 
 
-def convert_numpy_str_to_uint16(
-        data: Union[np.str_, np.ndarray]) -> np.ndarray:
-    """ Converts a ``numpy.unicode_`` to UTF-16 in numpy.uint16 form.
+def convert_numpy_str_to_uint16(data: Union[np.str_, np.ndarray]) -> np.ndarray:
+    """Converts a ``numpy.unicode_`` to UTF-16 in numpy.uint16 form.
 
     Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
     strings) to UTF-16 in the equivalent array of ``numpy.uint16``. The
@@ -722,14 +713,14 @@ def convert_numpy_str_to_uint16(
     """
     # An empty string should be an empty uint16
     if data.nbytes == 0:
-        return np.zeros((0, ), dtype='uint16')
+        return np.zeros((0,), dtype="uint16")
 
     # We need to use the UTF-16 codec for our endianness. Using the
     # right one means we don't have to worry about removing the BOM.
-    if sys.byteorder == 'little':
-        codec = 'UTF-16LE'
+    if sys.byteorder == "little":
+        codec = "UTF-16LE"
     else:
-        codec = 'UTF-16BE'
+        codec = "UTF-16BE"
 
     # numpy.char.encode can do the conversion element wise. Then, we
     # just have convert to uin16 with the appropriate dimensions. The
@@ -738,14 +729,12 @@ def convert_numpy_str_to_uint16(
     # bytes) in the strings.
     cdata = np.char.encode(np.atleast_1d(data), codec)
     shape = list(cdata.shape)
-    shape[-1] *= (cdata.dtype.itemsize // 2)
-    return np.ndarray(shape=shape, dtype='uint16',
-                      buffer=cdata)
+    shape[-1] *= cdata.dtype.itemsize // 2
+    return np.ndarray(shape=shape, dtype="uint16", buffer=cdata)
 
 
-def convert_numpy_str_to_uint32(
-        data: Union[np.str_, np.ndarray]) -> np.ndarray:
-    """ Converts ``numpy.unicode_`` to its numpy.uint32 representation.
+def convert_numpy_str_to_uint32(data: Union[np.str_, np.ndarray]) -> np.ndarray:
+    """Converts ``numpy.unicode_`` to its numpy.uint32 representation.
 
     Convert a ``numpy.unicode_`` or an array of them (they are UTF-32
     strings) into the equivalent array of ``numpy.uint32`` that is byte
@@ -771,7 +760,7 @@ def convert_numpy_str_to_uint32(
     """
     if data.nbytes == 0:
         # An empty string should be an empty uint32.
-        return np.zeros((0, ), dtype='uint32')
+        return np.zeros((0,), dtype="uint32")
     else:
         # We need to calculate the new shape from the current shape,
         # which will have to be expanded along the rows to fit all the
@@ -781,14 +770,16 @@ def convert_numpy_str_to_uint32(
         # string (in flattened form so that it is contiguous) as uint32
         # and then reshaping it.
         shape = list(np.atleast_1d(data).shape)
-        shape[-1] *= data.dtype.itemsize//4
+        shape[-1] *= data.dtype.itemsize // 4
         return data.ravel().view(np.uint32).reshape(tuple(shape))
 
 
-def convert_to_str(data: Union[str, bytes, bytearray,
-                               np.unsignedinteger, np.bytes_,
-                               np.str_, np.ndarray]) -> str:
-    """ Decodes data to the ``str`` type.
+def convert_to_str(
+    data: Union[
+        str, bytes, bytearray, np.unsignedinteger, np.bytes_, np.str_, np.ndarray
+    ]
+) -> str:
+    """Decodes data to the ``str`` type.
 
     Decodes `data` to a ``str``. Unsigned integers, Python ``bytes``,
     and Numpy strings (``numpy.unicode_`` and ``numpy.bytes_``) are
@@ -828,40 +819,42 @@ def convert_to_str(data: Union[str, bytes, bytearray,
     # before it can be decoded back into an str. bytes is decoded
     # assuming it is in UTF-8. Otherwise, data has to be returned as is.
 
-    if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
-                  np.bytes_, np.unicode_)):
-        if data.dtype.name == 'uint8':
-            return data.tobytes().decode('UTF-8')
-        elif data.dtype.name == 'uint16':
-            return data.tobytes().decode('UTF-16')
-        elif data.dtype.name == 'uint32':
-            return data.tobytes().decode('UTF-32')
+    if isinstance(
+        data, (np.ndarray, np.uint8, np.uint16, np.uint32, np.bytes_, np.unicode_)
+    ):
+        if data.dtype.name == "uint8":
+            return data.tobytes().decode("UTF-8")
+        elif data.dtype.name == "uint16":
+            return data.tobytes().decode("UTF-16")
+        elif data.dtype.name == "uint32":
+            return data.tobytes().decode("UTF-32")
         elif data.dtype.type == np.bytes_:
             if data.dtype.itemsize == 0:
-                return ''
+                return ""
             else:
-                return data.tobytes().decode('UTF-8')
+                return data.tobytes().decode("UTF-8")
         elif data.dtype.type == np.str_:
             if data.dtype.itemsize == 0:
-                return ''
+                return ""
             else:
-                return data.tobytes().decode('UTF-32')
+                return data.tobytes().decode("UTF-32")
         else:
-            raise TypeError('Not a type that can be converted to str.')
+            raise TypeError("Not a type that can be converted to str.")
     elif isinstance(data, str):
         return data
     elif isinstance(data, (bytes, bytearray)):
-        return data.decode('UTF-8')
+        return data.decode("UTF-8")
     else:
-        raise TypeError('Not a type that can be converted to str.')
+        raise TypeError("Not a type that can be converted to str.")
 
 
 def convert_to_numpy_str(
-        data: Union[str, bytes, bytearray,
-                    np.unsignedinteger, np.bytes_,
-                    np.str_, np.ndarray],
-        length: Optional[int] = None) -> Any:
-    """ Decodes data to Numpy unicode string (``numpy.unicode_``).
+    data: Union[
+        str, bytes, bytearray, np.unsignedinteger, np.bytes_, np.str_, np.ndarray
+    ],
+    length: Optional[int] = None,
+) -> Any:
+    """Decodes data to Numpy unicode string (``numpy.unicode_``).
 
     Decodes `data` to Numpy unicode string (UTF-32), which is
     ``numpy.unicode_``, or an array of them. If it can't be decoded, it
@@ -916,17 +909,18 @@ def convert_to_numpy_str(
 
     """
     # The method of conversion depends on its type.
-    if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
-                  np.bytes_, np.unicode_)):
+    if isinstance(
+        data, (np.ndarray, np.uint8, np.uint16, np.uint32, np.bytes_, np.unicode_)
+    ):
         if data.dtype.type == np.unicode_:
             # It is already an np.str_ or array of them, so nothing needs to
             # be done.
             return data
         elif data.dtype.type == np.bytes_:
             if isinstance(data, np.bytes_):
-                return np.unicode_(data.decode('UTF-8'))
+                return np.unicode_(data.decode("UTF-8"))
             else:
-                return np.char.encode(data, 'UTF-32') # type: ignore
+                return np.char.encode(data, "UTF-32")  # type: ignore
         elif isinstance(data, (np.uint8, np.uint16)):
             # They are single UTF-8 or UTF-16 scalars, which can be
             # wrapped into an array and recursed.
@@ -935,10 +929,12 @@ def convert_to_numpy_str(
             # It is just the uint32 version of the character, so it just
             # needs to be have the dtype essentially changed by having
             # its bytes read into ndarray.
-            return np.ndarray(shape=tuple(), dtype='U1',
-                              buffer=data.data)[()]
-        elif isinstance(data, np.ndarray) \
-                and data.dtype.name in ('uint8', 'uint16', 'uint32'):
+            return np.ndarray(shape=tuple(), dtype="U1", buffer=data.data)[()]
+        elif isinstance(data, np.ndarray) and data.dtype.name in (
+            "uint8",
+            "uint16",
+            "uint32",
+        ):
             # It is an ndarray of some uint type. How it is converted
             # depends on its shape. If its shape is just (), then it is
             # just a scalar wrapped in an array, which can be converted
@@ -979,48 +975,48 @@ def convert_to_numpy_str(
             # error occurs since trailing nulls are dropped in numpy
             # bytes_ arrays. The dtype for each string element is just
             # 'SX' where X is the number of bytes.
-            if data.dtype.name == 'uint8':
-                encoding = 'UTF-8'
+            if data.dtype.name == "uint8":
+                encoding = "UTF-8"
                 swapbytes = False
-                dt = 'S' + str(length_to_use)
+                dt = "S" + str(length_to_use)
             else:
-                if data.dtype.name == 'uint16':
-                    encoding = 'UTF-16BE'
-                    dt = 'S' + str(2 * length_to_use)
+                if data.dtype.name == "uint16":
+                    encoding = "UTF-16BE"
+                    dt = "S" + str(2 * length_to_use)
                 else:
-                    encoding = 'UTF-32BE'
-                    dt = 'S' + str(4 * length_to_use)
-                if (data.dtype.byteorder == '<'
-                    or (sys.byteorder == 'little'
-                        and data.dtype.byteorder == '=')):
+                    encoding = "UTF-32BE"
+                    dt = "S" + str(4 * length_to_use)
+                if data.dtype.byteorder == "<" or (
+                    sys.byteorder == "little" and data.dtype.byteorder == "="
+                ):
                     swapbytes = True
                 else:
                     swapbytes = False
             # Copy is needed to prevent errors.
             if swapbytes:
-                return np.char.decode(data.copy().byteswap().view(dt),
-                                      encoding)
+                return np.char.decode(data.copy().byteswap().view(dt), encoding)
             else:
                 return np.char.decode(data.copy().view(dt), encoding)
         else:
-            raise TypeError('Not a type that can be converted to str.')
+            raise TypeError("Not a type that can be converted to str.")
     elif isinstance(data, str):
         # Easily converted through constructor.
         return np.unicode_(data)
     elif isinstance(data, (bytes, bytearray)):
         # All of them can be decoded and then passed through the
         # constructor.
-        return np.unicode_(data.decode('UTF-8'))
+        return np.unicode_(data.decode("UTF-8"))
     else:
-        raise TypeError('Not a type that can be converted to str.')
+        raise TypeError("Not a type that can be converted to str.")
 
 
 def convert_to_numpy_bytes(
-        data: Union[str, bytes, bytearray,
-                    np.unsignedinteger, np.bytes_,
-                    np.str_, np.ndarray],
-        length: Optional[int] = None) -> Any:
-    """ Decodes data to Numpy UTF-8 econded string (``numpy.bytes_``).
+    data: Union[
+        str, bytes, bytearray, np.unsignedinteger, np.bytes_, np.str_, np.ndarray
+    ],
+    length: Optional[int] = None,
+) -> Any:
+    """Decodes data to Numpy UTF-8 econded string (``numpy.bytes_``).
 
     Decodes `data` to a Numpy UTF-8 encoded string, which is
     ``numpy.bytes_``, or an array of them in which case it will be ASCII
@@ -1073,8 +1069,9 @@ def convert_to_numpy_bytes(
 
     """
     # The method of conversion depends on its type.
-    if isinstance(data, (np.ndarray, np.uint8, np.uint16, np.uint32,
-                  np.bytes_, np.unicode_)):
+    if isinstance(
+        data, (np.ndarray, np.uint8, np.uint16, np.uint32, np.bytes_, np.unicode_)
+    ):
         if data.dtype.type == np.bytes_:
             # It is already an np.bytes_ or array of them, so nothing
             # needs to be done.
@@ -1083,24 +1080,25 @@ def convert_to_numpy_bytes(
             # They are single UTF-16 or UTF-32 scalars, and are easily
             # converted to a UTF-8 string and then passed through the
             # constructor.
-            return np.bytes_(convert_to_str(data).encode('UTF-8'))
+            return np.bytes_(convert_to_str(data).encode("UTF-8"))
         elif isinstance(data, np.uint8):
             # It is just the uint8 version of the character, so it just
             # needs to be have the dtype essentially changed by having
             # its bytes read into ndarray.
-            return np.ndarray(shape=(), dtype='S1',
-                              buffer=data.data)[()]
+            return np.ndarray(shape=(), dtype="S1", buffer=data.data)[()]
         elif isinstance(data, np.unicode_):
-            return np.bytes_(data.encode('UTF-8'))
-        elif isinstance(data, np.ndarray) and data.dtype.char == 'U':
+            return np.bytes_(data.encode("UTF-8"))
+        elif isinstance(data, np.ndarray) and data.dtype.char == "U":
             # We just need to convert it elementwise.
-            new_data = np.zeros(shape=data.shape,
-                                dtype='S' + str(data.dtype.itemsize))
+            new_data = np.zeros(shape=data.shape, dtype="S" + str(data.dtype.itemsize))
             for index, x in np.ndenumerate(data):
-                new_data[index] = np.bytes_(x.encode('UTF-8'))
+                new_data[index] = np.bytes_(x.encode("UTF-8"))
             return new_data
-        elif isinstance(data, np.ndarray) \
-                and data.dtype.name in ('uint8', 'uint16', 'uint32'):
+        elif isinstance(data, np.ndarray) and data.dtype.name in (
+            "uint8",
+            "uint16",
+            "uint32",
+        ):
             # It is an ndarray of some uint type. How it is converted
             # depends on its shape. If its shape is just (), then it is
             # just a scalar wrapped in an array, which can be converted
@@ -1110,15 +1108,15 @@ def convert_to_numpy_bytes(
                 return convert_to_numpy_bytes(data[()])
 
             # As there are more than one element, it gets a bit more
-            #complicated. We need to take the subarrays of the specified
-            #length along columns (1D arrays will be treated as row
-            #arrays here), each of those converted to an str_ scalar
-            #(normal string) and stuffed into a new array.
+            # complicated. We need to take the subarrays of the specified
+            # length along columns (1D arrays will be treated as row
+            # arrays here), each of those converted to an str_ scalar
+            # (normal string) and stuffed into a new array.
             #
             # If the length was not given, it needs to be set to
-            #full. Then the shape of the new array needs to be
-            #calculated (divide the appropriate dimension, which depends
-            #on the number of dimentions).
+            # full. Then the shape of the new array needs to be
+            # calculated (divide the appropriate dimension, which depends
+            # on the number of dimentions).
             if len(shape) == 1:
                 if length is None:
                     length2 = shape[0]
@@ -1136,16 +1134,18 @@ def convert_to_numpy_bytes(
 
             # If it is uint8, we can just use the object directly as the
             # buffer for the new data.
-            if data.dtype.name == 'uint8':
-                return np.ndarray(shape=new_shape, dtype='S'+str(length2),
-                                  buffer=data)
+            if data.dtype.name == "uint8":
+                return np.ndarray(
+                    shape=new_shape, dtype="S" + str(length2), buffer=data
+                )
 
             # The new array can be made as all zeros (nulls) with enough
             # padding to hold everything (dtype='UL' where 'L' is the
             # length). It will start out as a 1d array and be reshaped into
             # the proper shape later (makes indexing easier).
-            new_data = np.zeros(shape=(int(np.prod(new_shape)),),
-                                dtype='S'+str(length2))
+            new_data = np.zeros(
+                shape=(int(np.prod(new_shape)),), dtype="S" + str(length2)
+            )
 
             # With data flattened into a 1d array, we just need to take
             # length sized chunks, convert them (if they are uint8 or 16,
@@ -1153,29 +1153,27 @@ def convert_to_numpy_bytes(
             # input buffer for an ndarray of type 'U').
             data = data.ravel()
             for i in range(0, new_data.shape[0]):
-                chunk = data[(i*length2):((i+1)*length2)]
-                new_data[i] = np.bytes_(
-                    convert_to_str(chunk).encode('UTF-8'))
+                chunk = data[(i * length2) : ((i + 1) * length2)]
+                new_data[i] = np.bytes_(convert_to_str(chunk).encode("UTF-8"))
 
             # Only thing is left is to reshape it.
             return new_data.reshape(tuple(new_shape))
         else:
-            raise TypeError('Not a type that can be converted to str.')
+            raise TypeError("Not a type that can be converted to str.")
     elif isinstance(data, (bytes, bytearray)):
         # Easily converted through constructor.
         return np.bytes_(data)
     elif isinstance(data, str):
-        return np.bytes_(data.encode('UTF-8'))
+        return np.bytes_(data.encode("UTF-8"))
     else:
-        raise TypeError('Not a type that can be converted to str.')
+        raise TypeError("Not a type that can be converted to str.")
 
 
-def decode_complex(data: Union[np.ndarray, np.generic],
-                   complex_names: Tuple[
-                       Optional[str],
-                       Optional[str]] = (None, None)) -> Union[
-                           np.ndarray, np.generic]:
-    """ Decodes possibly complex data read from an HDF5 file.
+def decode_complex(
+    data: Union[np.ndarray, np.generic],
+    complex_names: Tuple[Optional[str], Optional[str]] = (None, None),
+) -> Union[np.ndarray, np.generic]:
+    """Decodes possibly complex data read from an HDF5 file.
 
     Decodes possibly complex datasets read from an HDF5 file. HDF5
     doesn't have a native complex type, so they are stored as
@@ -1238,8 +1236,8 @@ def decode_complex(data: Union[np.ndarray, np.generic],
     # is and setting variables to the proper name if it is in it (they
     # are initialized to None so that we know if one isn't found).
 
-    real_fields = ['r', 're', 'real']
-    imag_fields = ['i', 'im', 'imag', 'imaginary']
+    real_fields = ["r", "re", "real"]
+    imag_fields = ["i", "im", "imag", "imaginary"]
 
     cnames = list(complex_names)
     for s in fields:
@@ -1255,20 +1253,22 @@ def decode_complex(data: Union[np.ndarray, np.generic],
     # the right form.
     if cnames[0] is not None and cnames[1] is not None:
         cdata = np.result_type(
-            data[cnames[0]].dtype, # type: ignore
-            data[cnames[1]].dtype, # type: ignore
-            'complex64').type(
-                data[cnames[0]]) # type: ignore
-        cdata.imag = data[cnames[1]] # type: ignore
+            data[cnames[0]].dtype,  # type: ignore
+            data[cnames[1]].dtype,  # type: ignore
+            "complex64",
+        ).type(
+            data[cnames[0]]
+        )  # type: ignore
+        cdata.imag = data[cnames[1]]  # type: ignore
         return cdata
     else:
         return data
 
 
-def encode_complex(data: Union[np.ndarray, np.complexfloating],
-                   complex_names: Tuple[str, str]) -> Union[
-                       np.ndarray, np.generic]:
-    """ Encodes complex data to having arbitrary complex field names.
+def encode_complex(
+    data: Union[np.ndarray, np.complexfloating], complex_names: Tuple[str, str]
+) -> Union[np.ndarray, np.generic]:
+    """Encodes complex data to having arbitrary complex field names.
 
     Encodes complex `data` to have the real and imaginary field names
     given in `complex_numbers`. This is needed because the field names
@@ -1299,18 +1299,17 @@ def encode_complex(data: Union[np.ndarray, np.complexfloating],
     # Grab the dtype name, and convert it to the right non-complex type
     # if it isn't already one.
     dtype_name = data.dtype.name
-    if dtype_name[0:7] == 'complex':
-        dtype_name = 'float' + str(int(float(dtype_name[7:])/2))
+    if dtype_name[0:7] == "complex":
+        dtype_name = "float" + str(int(float(dtype_name[7:]) / 2))
 
     # Create the new version of the data with the right field names for
     # the real and complex parts. This is easy to do with putting the
     # right dtype in the view function.
-    return data.view([(complex_names[0], dtype_name),
-                      (complex_names[1], dtype_name)])
+    return data.view([(complex_names[0], dtype_name), (complex_names[1], dtype_name)])
 
 
 def convert_attribute_to_string(value: Any) -> Optional[str]:
-    """ Convert an attribute value to a string.
+    """Convert an attribute value to a string.
 
     Converts the attribute value to a string if possible (get ``None``
     if isn't a string type).
@@ -1344,7 +1343,7 @@ def convert_attribute_to_string(value: Any) -> Optional[str]:
 
 
 def convert_attribute_to_string_array(value: Any) -> Optional[List[str]]:
-    """ Converts an Attribute value to a string array.
+    """Converts an Attribute value to a string array.
 
     Converts the value of an Attribute to a string array if possible
     (get ``None`` if not).
@@ -1368,10 +1367,12 @@ def convert_attribute_to_string_array(value: Any) -> Optional[List[str]]:
     return [convert_to_str(x) for x in value]
 
 
-def set_attributes_all(target: Union[h5py.Dataset, h5py.Group],
-                       attributes: Dict[str, Tuple[str, Any]],
-                       discard_others: bool = True) -> None:
-    """ Set Attributes in bulk and optionally discard others.
+def set_attributes_all(
+    target: Union[h5py.Dataset, h5py.Group],
+    attributes: Dict[str, Tuple[str, Any]],
+    discard_others: bool = True,
+) -> None:
+    """Set Attributes in bulk and optionally discard others.
 
     Sets each Attribute in turn (modifying it in place if possible if it
     is already present) and optionally discarding all other Attributes
@@ -1403,21 +1404,22 @@ def set_attributes_all(target: Union[h5py.Dataset, h5py.Group],
     # Go through each attribute. If it is already present, modify it if
     # possible and create it otherwise (deletes old value.)
     for k, (kind, value) in attributes.items():
-        if kind == 'string_array':
-            attrs.create(k, [convert_to_str(s) for s in value],
-                         dtype=str_arr_dtype)
+        if kind == "string_array":
+            attrs.create(k, [convert_to_str(s) for s in value], dtype=str_arr_dtype)
         else:
-            if kind == 'string':
+            if kind == "string":
                 value = np.bytes_(value)
             if k not in existing:
                 attrs.create(k, value)
-            elif k == 'MATLAB_fields':
+            elif k == "MATLAB_fields":
                 if not np.array_equal(value, existing[k]):
                     attrs.create(k, value)
             else:
                 try:
-                    if value.dtype == existing[k].dtype \
-                            and value.shape == existing[k].shape:
+                    if (
+                        value.dtype == existing[k].dtype
+                        and value.shape == existing[k].shape
+                    ):
                         attrs.modify(k, value)
                 except:
                     attrs.create(k, value)

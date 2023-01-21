@@ -32,9 +32,16 @@ import tempfile
 import hdf5storage
 
 from asserts import assert_equal
-from make_randoms import min_dict_keys, max_dict_keys, random_name, \
-    random_numpy, random_numpy_shape, dict_value_subarray_dimensions, \
-    max_dict_value_subarray_axis_length, dtypes
+from make_randoms import (
+    min_dict_keys,
+    max_dict_keys,
+    random_name,
+    random_numpy,
+    random_numpy_shape,
+    dict_value_subarray_dimensions,
+    max_dict_value_subarray_axis_length,
+    dtypes,
+)
 
 
 random.seed()
@@ -43,22 +50,23 @@ random.seed()
 # A series of tests to make sure that more than one data item can be
 # written or read at a time using the writes and reads functions.
 
+
 def test_multi_write():
     # Makes a random dict of random paths and variables (random number
     # of randomized paths with random numpy arrays as values).
     data = dict()
-    for i in range(0, random.randint(min_dict_keys, \
-            max_dict_keys)):
+    for i in range(0, random.randint(min_dict_keys, max_dict_keys)):
         name = random_name()
-        data[name] = \
-            random_numpy(random_numpy_shape( \
-            dict_value_subarray_dimensions, \
-            max_dict_value_subarray_axis_length), \
-            dtype=random.choice(dtypes))
+        data[name] = random_numpy(
+            random_numpy_shape(
+                dict_value_subarray_dimensions, max_dict_value_subarray_axis_length
+            ),
+            dtype=random.choice(dtypes),
+        )
 
     # Write it and then read it back item by item.
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
+        filename = os.path.join(folder, "data.h5")
         hdf5storage.writes(mdict=data, filename=filename)
         out = dict()
         for p in data:
@@ -72,23 +80,22 @@ def test_multi_read():
     # Makes a random dict of random paths and variables (random number
     # of randomized paths with random numpy arrays as values).
     data = dict()
-    for i in range(0, random.randint(min_dict_keys, \
-            max_dict_keys)):
+    for i in range(0, random.randint(min_dict_keys, max_dict_keys)):
         name = random_name()
-        data[name] = \
-            random_numpy(random_numpy_shape( \
-            dict_value_subarray_dimensions, \
-            max_dict_value_subarray_axis_length), \
-            dtype=random.choice(dtypes))
+        data[name] = random_numpy(
+            random_numpy_shape(
+                dict_value_subarray_dimensions, max_dict_value_subarray_axis_length
+            ),
+            dtype=random.choice(dtypes),
+        )
 
     paths = data.keys()
     # Write it item by item  and then read it back in one unit.
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
+        filename = os.path.join(folder, "data.h5")
         for p in paths:
             hdf5storage.write(data=data[p], path=p, filename=filename)
-        out = hdf5storage.reads(paths=list(data.keys()),
-                                filename=filename)
+        out = hdf5storage.reads(paths=list(data.keys()), filename=filename)
 
     # Compare data and out.
     for i, p in enumerate(paths):

@@ -37,7 +37,7 @@ from typing import Tuple, Dict
 
 
 def supported_marshaller_api_versions() -> Tuple[str]:
-    """ Get the Marshaller API versions that are supported.
+    """Get the Marshaller API versions that are supported.
 
     Gets the different Marshaller API versions that this version of
     ``hdf5storage`` supports.
@@ -54,12 +54,13 @@ def supported_marshaller_api_versions() -> Tuple[str]:
         first, lowest version last).
 
     """
-    return ('1.0', )
+    return ("1.0",)
 
 
 def find_thirdparty_marshaller_plugins() -> Dict[
-        str, Dict[str, pkg_resources.EntryPoint]]:
-    """ Find, but don't load, all third party marshaller plugins.
+    str, Dict[str, pkg_resources.EntryPoint]
+]:
+    """Find, but don't load, all third party marshaller plugins.
 
     Third party marshaller plugins declare the entry point
     ``'hdf5storage.marshallers.plugins'`` with the name being the
@@ -84,8 +85,10 @@ def find_thirdparty_marshaller_plugins() -> Dict[
     supported_marshaller_api_versions
 
     """
-    all_plugins = tuple(pkg_resources.iter_entry_points(
-        'hdf5storage.marshallers.plugins'))
-    return {ver: {p.module_name: p
-                  for p in all_plugins if p.name == ver}
-            for ver in supported_marshaller_api_versions()}
+    all_plugins = tuple(
+        pkg_resources.iter_entry_points("hdf5storage.marshallers.plugins")
+    )
+    return {
+        ver: {p.module_name: p for p in all_plugins if p.name == ver}
+        for ver in supported_marshaller_api_versions()
+    }

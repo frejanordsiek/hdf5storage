@@ -38,14 +38,14 @@ import hdf5storage.plugins
 # depend on it.
 try:
     import example_hdf5storage_marshaller_plugin
+
     has_example_hdf5storage_marshaller_plugin = True
 except:
     has_example_hdf5storage_marshaller_plugin = False
 
 
 def test_marshaller_api_versions():
-    assert ('1.0', ) == \
-        hdf5storage.plugins.supported_marshaller_api_versions()
+    assert ("1.0",) == hdf5storage.plugins.supported_marshaller_api_versions()
 
 
 def test_find_thirdparty_marshaller_plugins():
@@ -60,28 +60,26 @@ def test_find_thirdparty_marshaller_plugins():
         for k2, v2 in v.items():
             assert isinstance(k2, str)
             assert isinstance(v2, pkg_resources.EntryPoint)
-            if k2 == 'example_hdf5storage_marshaller_plugin':
+            if k2 == "example_hdf5storage_marshaller_plugin":
                 found_example = True
     assert has_example_hdf5storage_marshaller_plugin == found_example
 
 
-@pytest.mark.skipif(has_example_hdf5storage_marshaller_plugin,
-                    reason='requires example_hdf5storage_marshaller_'
-                    'plugin')
+@pytest.mark.skipif(
+    has_example_hdf5storage_marshaller_plugin,
+    reason="requires example_hdf5storage_marshaller_" "plugin",
+)
 def test_plugin_marshaller_SubList():
-    mc = hdf5storage.MarshallerCollection(load_plugins=True,
-                                          lazy_loading=True)
-    options = hdf5storage.Options(store_python_metadata=True,
-                                  matlab_compatible=False,
-                                  marshaller_collection=mc)
-    ell = [1, 2, 'b1', b'3991', True, None]
+    mc = hdf5storage.MarshallerCollection(load_plugins=True, lazy_loading=True)
+    options = hdf5storage.Options(
+        store_python_metadata=True, matlab_compatible=False, marshaller_collection=mc
+    )
+    ell = [1, 2, "b1", b"3991", True, None]
     data = example_hdf5storage_marshaller_plugin.SubList(ell)
-    name = '/a'
+    name = "/a"
     with tempfile.TemporaryDirectory() as folder:
-        filename = os.path.join(folder, 'data.h5')
-        hdf5storage.write(data, path=name, filename=filename,
-                          options=options)
-        out = hdf5storage.read(path=name, filename=filename,
-                               options=options)
+        filename = os.path.join(folder, "data.h5")
+        hdf5storage.write(data, path=name, filename=filename, options=options)
+        out = hdf5storage.read(path=name, filename=filename, options=options)
     assert ell == list(out)
     assert type(out) == example_hdf5storage_marshaller_plugin.SubList
