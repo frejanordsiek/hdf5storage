@@ -1711,7 +1711,7 @@ class File(collections.abc.MutableMapping):
                 self._file.close()
                 self._file = None
                 # Get the time.
-                now = datetime.datetime.now()
+                now = datetime.datetime.utcnow()
                 # Construct the leading string. The MATLAB one looks
                 # like
                 #

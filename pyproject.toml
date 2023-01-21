@@ -63,6 +63,7 @@ ignore = [
 "hdf5storage/__init__.py" = [
     "A002",
     "ARG002",
+    "DTZ003",
 ]
 "hdf5storage/Marshallers.py" = [
     "ARG002",
