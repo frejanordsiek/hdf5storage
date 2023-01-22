@@ -35,22 +35,26 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Lint with ruff
-        run: ruff --format=github .
+        run: |
+          python -m ruff --format=github .
   pylint:
     needs: setup
     runs-on: ubuntu-22.04
     steps:
       - name: Lint with pylint
-        run: pylint src/*/*.py
+        run: |
+          python -m pylint src/*/*.py
   mypy:
     needs: setup
     runs-on: ubuntu-22.04
     steps:
       - name: Type checking with mypy
-        run: mypy --install-types
+        run: |
+          python -m mypy --install-types
   black:
     needs: setup
     runs-on: ubuntu-22.04
     steps:
       - name: Formatting with black
-        run: black --diff --check src/*/*.py tests/*.py examples/*/src/*/*.py
+        run: |
+          python -m black --diff --check src/*/*.py tests/*.py examples/*/src/*/*.py
