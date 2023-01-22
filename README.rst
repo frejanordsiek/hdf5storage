@@ -85,16 +85,6 @@ To run the tests ::
     pytest
 
 
-Type Checking
--------------
-
-This package now has type annotations since version 0.2, which can be checked
-with a type checker like `mypy <https://pypi.org/project/mypy>`_. To check with
-`mypy <https://pypi.org/project/mypy>`_, run ::
-
-    mypy -p hdf5storage
-
-
 Building Documentation
 ----------------------
 
@@ -110,6 +100,41 @@ The documentation dependencies can be installed by ::
 To build the HTML documentation, run either ::
 
     sphinx-build doc/source doc/build/html
+
+
+Development
+===========
+
+All Python code is formatted using `black <https://pypi.org/project/black>`_.
+Releases and Pull Requests should pass all unit tests, and ideally pass type
+checking and have no warnings found by linting.
+
+
+Type Checking
+-------------
+
+This package now has type annotations since version 0.2, which can be checked
+with a type checker like `mypy <https://pypi.org/project/mypy>`_. To check with
+`mypy <https://pypi.org/project/mypy>`_, run ::
+
+    mypy -p hdf5storage
+
+
+Linting
+-------
+
+This package has the configuration in ``pyproject.toml`` for linting with
+
+* `ruff <https://pypi.org/project/ruff>`_
+* `pylint <https://pypi.org/project/pylint>`_
+
+To lint with `ruff <https://pypi.org/project/ruff>`_, run ::
+
+    ruff .
+
+To lint with `pylint <https://pypi.org/project/pylint>`_, run ::
+
+    pylint src/*/*.py
 
 
 Python 2
