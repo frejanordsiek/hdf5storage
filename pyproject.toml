@@ -42,7 +42,7 @@ docs = [
 ]
 
 [tool.setuptools]
-packages = ["hdf5storage"]
+package-dir = {"" = "src"}
 zip-safe = true
 
 [tool.distutils.bdist_wheel]
@@ -74,6 +74,7 @@ extend-exclude = ["docs"]
 profile = "black"
 
 [tool.ruff]
+src = ["src", "test"]
 target-version = "py37"
 extend-exclude = ["doc", "examples", ".egg-info"]
 line-length = 88
@@ -123,18 +124,18 @@ ignore = [
 ]
 
 [tool.ruff.per-file-ignores]
-"hdf5storage/__init__.py" = [
+"src/hdf5storage/__init__.py" = [
     "A002",
     "ARG002",
     "DTZ003",
 ]
-"hdf5storage/Marshallers.py" = [
+"src/hdf5storage/Marshallers.py" = [
     "ARG002",
     "D101",
     "D102",
     "E722",
 ]
-"hdf5storage/utilities.py" = [
+"src/hdf5storage/utilities.py" = [
     "E722",
 ]
 "tests/*.py" = [

@@ -38,7 +38,7 @@ repository = "https://github.com/frejanordsiek/hdf5storage/tests/example_hdf5sto
 "1.0" = "example_hdf5storage_marshaller_plugin:get_marshallers_1p0"
 
 [tool.setuptools]
-py-modules = ["example_hdf5storage_marshaller_plugin"]
+package-dir = {"" = "src"}
 zip-safe = true
 
 [tool.distutils.bdist_wheel]
