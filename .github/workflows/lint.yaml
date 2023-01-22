@@ -1,0 +1,55 @@
+name: Lint source code
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - 'MANIFEST.in'
+      - 'README.rst'
+      - 'THANKS.rst'
+      - 'COPYING.txt'
+      - 'requirements**.txt'
+      - '.gitignore'
+      - '.gitattributes'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@4
+        with:
+          python-version: "3.11"
+      - name: Install Python dependencies
+        run: |
+          python -m pip install -U ruff==0.0.227 pylint==2.15.10 mypy==0.991 black==22.12.0
+  ruff:
+    needs: setup
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Lint with ruff
+        run: ruff --format=github .
+  pylint:
+    needs: setup
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Lint with pylint
+        run: pylint src/*/*.py
+  mypy:
+    needs: setup
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Type checking with mypy
+        run: mypy --install-types
+  black:
+    needs: setup
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Formatting with black
+        run: black --diff --check src/*/*.py tests/*.py examples/*/src/*/*.py
