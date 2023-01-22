@@ -65,7 +65,7 @@ def test_find_thirdparty_marshaller_plugins():
 
 
 @pytest.mark.skipif(
-    has_example_hdf5storage_marshaller_plugin,
+    not has_example_hdf5storage_marshaller_plugin,
     reason="requires example_hdf5storage_marshaller_plugin",
 )
 def test_plugin_marshaller_SubList():
