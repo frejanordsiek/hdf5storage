@@ -1,3 +1,45 @@
 [build-system]
-# Minimum requirements for the build system to execute.
-requires = ["setuptools"]  # PEP 508 specifications.
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "example_hdf5storage_marshaller_plugin"
+version = "0.2"
+description = "Example marshaller plugin for hdf5storage package."
+readme = "README.rst"
+authors = [
+    {name = "Freja Nordsiek", email = "fnordsie@posteo.net"},
+]
+license = {text = "BSD"}
+keywords = ["hdf5storage"]
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "setuptools",
+    "numpy",
+    "h5py>=3.3",
+]
+
+[project.urls]
+repository = "https://github.com/frejanordsiek/hdf5storage/tests/example_hdf5storage_marshaller_plugin"
+
+[project.entry-points."hdf5storage.marshallers.plugins"]
+"1.0" = "example_hdf5storage_marshaller_plugin:get_marshallers_1p0"
+
+[tool.setuptools]
+py-modules = ["example_hdf5storage_marshaller_plugin"]
+zip-safe = true
+
+[tool.distutils.bdist_wheel]
+universal = true

@@ -1,7 +1,70 @@
 [build-system]
-# Minimum requirements for the build system to execute.
-requires = ["setuptools", "wheel"]  # PEP 508 specifications.
+requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "hdf5storage"
+version = "0.2"
+description = "Utilities to read/write Python types to/from HDF5 files, including MATLAB v7.3 MAT files."
+readme = "README.rst"
+authors = [
+    {name = "Freja Nordsiek", email = "fnordsie@posteo.net"},
+]
+license = {text = "BSD"}
+keywords = ["hdf5", "matlab"]
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "setuptools",
+    "numpy",
+    "h5py>=3.3",
+]
+
+[project.urls]
+repository = "https://github.com/frejanordsiek/hdf5storage"
+
+[project.optional-dependencies]
+tests = ["pytest>=6.0"]
+docs = [
+    "sphinx>=1.7",
+    "sphinx_rtd_theme",
+]
+
+[tool.setuptools]
+packages = ["hdf5storage"]
+zip-safe = true
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+
+[tool.mypy]
+packages = ["hdf5storage"]
+ignore_missing_imports = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
 
 [tool.black]
 target-version = ["py37"]

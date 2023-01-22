@@ -54,10 +54,9 @@ using pip, run the command::
 Installing from Source
 ----------------------
 
-To install hdf5storage from source, the
-`setuptools <https://pypi.org/project/setuptools>`_ and
-`wheel <https://pypi.org/project/wheel>`_ are required. Download this package
-and then install the dependencies ::
+To install hdf5storage from source,
+`setuptools <https://pypi.org/project/setuptools>`_ >= 61.0.0 is required.
+Download this package and then install the dependencies ::
 
     pip install -r requirements.txt
 
@@ -65,15 +64,12 @@ Then to install the package, run either ::
 
     pip install .
 
-or, using the legacy :file:`setup.py` script ::
-
-    python setup.py install
 
 Running Tests
 -------------
 
 For testing, the package `pytest <https://pypi.org/project/pytest>`_
-(>= 5.0) is additionally required. There are some tests that require
+(>= 6.0) is additionally required. There are some tests that require
 Matlab and `scipy <https://pypi.org/project/scipy>`_ to be installed
 and be in the executable path respectively. In addition, there are some
 tests that require `Julia <http://julialang.org/>`_ with the
@@ -115,9 +111,6 @@ To build the HTML documentation, run either ::
 
     sphinx-build doc/source doc/build/html
 
-or, using the legacy :file:`setup.py` script ::
-
-    python setup.py build_sphinx
 
 Python 2
 ========
@@ -399,6 +392,8 @@ Versions
      * Issue #85. Changed to using the PEP 518 method of specifying
        build dependencies from using the older ``ez_setup.py`` to ensure
        ``setuptools`` was available for building.
+     * The entire configuration is now put in the ``pyproject.toml`` files
+       (PEP 621) and the ``setup.py`` file has been removed.
      * Added a file object class :py:class:`hdf5storage.File` for
        opening a file and doing multiple read and/or write calls on the
        same file.
@@ -423,8 +418,8 @@ Versions
        branch.
      * Issue #65. Added the ability to load marshallers from other python
        packages via plugin using the
-       ``'hdf5storage.marshallers.plugins'`` entry point in their
-       ``setup.py`` files. Third party marshallers are not loaded into
+       ``'hdf5storage.marshallers.plugins'`` entry point in their setup.
+       Third party marshallers are not loaded into
        the default initial ``MarshallerCollection``. Users who want
        to use them must call ``make_new_default_MarshallerCollection``
        with the ``load_plugins`` option set to ``True``.
