@@ -298,16 +298,17 @@ def process_path(pth: Path) -> Tuple[str, str]:
         parts_seq = []
         for s in pth:
             if isinstance(s, bytes):
-                s = s.decode("utf-8")
+                val = s.decode("utf-8")
             elif isinstance(s, pathlib.PurePath):
-                s = str(s)
-            elif not isinstance(s, str):
+                val = str(s)
+            elif isinstance(s, str):
+                val = s
+            else:
                 raise TypeError(
                     "Elements of p must be str, bytes, or pathlib.PurePath.",
                 )
-            parts_seq.append(escape_path(s))
-        parts = tuple(parts_seq)
-        p = posixpath.join(*parts)
+            parts_seq.append(escape_path(val))
+        p = posixpath.join(*parts_seq)
     else:
         raise TypeError(
             "p must be str, bytes, pathlib.PurePath, or an Sequence solely of one of "

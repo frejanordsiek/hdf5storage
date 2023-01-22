@@ -306,6 +306,8 @@ class LowLevelFile:
 
         Raises
         ------
+        TypeError
+            If an argument has an invalid type.
         KeyError
             If the data cannot be found.
         CantReadError
@@ -563,7 +565,7 @@ class LowLevelFile:
         # counter to generate the name and not check for collisions and
         # increment the counter afterwards.
         if self._created_refs_group:
-            name = "%x" % self._refs_group_counter
+            name = f"{self._refs_group_counter:x}"
             self._refs_group_counter += 1
             return name
 
@@ -942,11 +944,11 @@ def convert_to_numpy_str(
             # needs to be have the dtype essentially changed by having
             # its bytes read into ndarray.
             return np.ndarray(shape=(), dtype="U1", buffer=data.data)[()]
-        if isinstance(data, np.ndarray) and data.dtype.name in (
+        if isinstance(data, np.ndarray) and data.dtype.name in {
             "uint8",
             "uint16",
             "uint32",
-        ):
+        }:
             # It is an ndarray of some uint type. How it is converted
             # depends on its shape. If its shape is just (), then it is
             # just a scalar wrapped in an array, which can be converted
@@ -998,12 +1000,9 @@ def convert_to_numpy_str(
                 else:
                     encoding = "UTF-32BE"
                     dt = "S" + str(4 * length_to_use)
-                if data.dtype.byteorder == "<" or (
+                swapbytes = data.dtype.byteorder == "<" or (
                     sys.byteorder == "little" and data.dtype.byteorder == "="
-                ):
-                    swapbytes = True
-                else:
-                    swapbytes = False
+                )
             # Copy is needed to prevent errors.
             if swapbytes:
                 return np.char.decode(data.copy().byteswap().view(dt), encoding)
@@ -1110,11 +1109,11 @@ def convert_to_numpy_bytes(
             for index, x in np.ndenumerate(data):
                 new_data[index] = np.bytes_(x.encode("UTF-8"))
             return new_data
-        if isinstance(data, np.ndarray) and data.dtype.name in (
+        if isinstance(data, np.ndarray) and data.dtype.name in {
             "uint8",
             "uint16",
             "uint32",
-        ):
+        }:
             # It is an ndarray of some uint type. How it is converted
             # depends on its shape. If its shape is just (), then it is
             # just a scalar wrapped in an array, which can be converted
@@ -1269,14 +1268,11 @@ def decode_complex(
     # parts. Otherwise, return what we were given because it isn't in
     # the right form.
     if cnames[0] is not None and cnames[1] is not None:
-        cdata = np.result_type(
-            data[cnames[0]].dtype,  # type: ignore[index]
-            data[cnames[1]].dtype,  # type: ignore[index]
-            "complex64",
-        ).type(
-            data[cnames[0]],  # type: ignore[index]
-        )
-        cdata.imag = data[cnames[1]]  # type: ignore[index]
+        real: Union[np.ndarray, np.generic] = data[cnames[0]]  # type: ignore[index]
+        imag: Union[np.ndarray, np.generic] = data[cnames[1]]  # type: ignore[index]
+        cdtype: np.dtype = np.result_type(real.dtype, imag.dtype, "complex64")
+        cdata = real.astype(cdtype)
+        cdata.imag = imag
         return cdata
     return data
 
@@ -1424,21 +1420,23 @@ def set_attributes_all(
             attrs.create(k, [convert_to_str(s) for s in value], dtype=str_arr_dtype)
         else:
             if kind == "string":
-                value = np.bytes_(value)
+                val = np.bytes_(value)
+            else:
+                val = value
             if k not in existing:
-                attrs.create(k, value)
+                attrs.create(k, val)
             elif k == "MATLAB_fields":
-                if not np.array_equal(value, existing[k]):
-                    attrs.create(k, value)
+                if not np.array_equal(val, existing[k]):
+                    attrs.create(k, val)
             else:
                 try:
                     if (
-                        value.dtype == existing[k].dtype
-                        and value.shape == existing[k].shape
+                        val.dtype == existing[k].dtype
+                        and val.shape == existing[k].shape
                     ):
-                        attrs.modify(k, value)
+                        attrs.modify(k, val)
                 except:
-                    attrs.create(k, value)
+                    attrs.create(k, val)
     # Discard all other attributes.
     if discard_others:
         for k in set(existing) - set(attributes):

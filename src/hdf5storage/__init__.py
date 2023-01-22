@@ -415,7 +415,7 @@ class Options:
     ) -> None:
         # Check that it is one of the allowed values, and then set
         # it. This option does not effect MATLAB compatibility.
-        if value in ("ignore", "discard", "error"):
+        if value in {"ignore", "discard", "error"}:
             self._action_for_matlab_incompatible = value
 
     @property
@@ -752,7 +752,7 @@ class Options:
     @oned_as.setter
     def oned_as(self: "Options", value: OnedAs) -> None:
         # Check that it is one of the valid values before setting it.
-        if value in ("row", "column"):
+        if value in {"row", "column"}:
             self._oned_as = value
 
     @property
@@ -894,7 +894,7 @@ class Options:
         # Check that it is one of the valid values before setting it. If
         # it is something other than 'gzip', then we are not doing
         # MATLAB compatible formatting.
-        if value in ("gzip", "lzf", "szip"):
+        if value in {"gzip", "lzf", "szip"}:
             self._compression_algorithm = value
         if self._compression_algorithm != "gzip":
             self._matlab_compatible = False
@@ -1220,8 +1220,6 @@ class MarshallerCollection:
                         raise ImportError("module not present")
             except ImportError:
                 self._has_required_modules[i] = False
-            except:
-                raise
             else:
                 self._has_required_modules[i] = True
 
@@ -1244,8 +1242,6 @@ class MarshallerCollection:
                     success = self._import_marshaller_modules(m)
                     self._has_required_modules[i] = success
                     self._imported_required_modules[i] = success
-            except:
-                raise
             else:
                 self._imported_required_modules[i] = True
 
@@ -1284,10 +1280,8 @@ class MarshallerCollection:
                 if matlab_class not in self._matlab_classes:
                     self._matlab_classes[matlab_class] = i
 
-    def _import_marshaller_modules(
-        self: "MarshallerCollection",
-        m: Marshallers.TypeMarshaller,
-    ) -> bool:
+    @staticmethod
+    def _import_marshaller_modules(m: Marshallers.TypeMarshaller) -> bool:
         """Imports the modules required by the marshaller.
 
         Parameters
@@ -1308,10 +1302,7 @@ class MarshallerCollection:
                     importlib.import_module(name)
         except ImportError:
             return False
-        except:
-            raise
-        else:
-            return True
+        return True
 
     def add_marshaller(
         self: "MarshallerCollection",
@@ -1873,6 +1864,8 @@ class File(collections.abc.MutableMapping):
             If the file is closed or it isn't writable.
         TypeError
             If a path in `mdict` is an invalid type.
+        ValueError
+            If `mdict` has an invalid path.
         NotImplementedError
             If writing an object in `mdict` is not supported.
         exceptions.TypeNotMatlabCompatibleError
@@ -1954,6 +1947,8 @@ class File(collections.abc.MutableMapping):
         ------
         IOError
             If the file is closed.
+        TypeError
+            If `path` is an invalid type.
         KeyError
             If the `path` cannot be found.
         exceptions.CantReadError
@@ -1985,6 +1980,10 @@ class File(collections.abc.MutableMapping):
         ------
         IOError
             If the file is closed.
+        TypeError
+            If `paths` or any of its elements is an invalid type.
+        ValueError
+            If `paths` has has an invalid element.
         KeyError
             If a path cannot be found.
         exceptions.CantReadError

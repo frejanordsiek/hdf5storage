@@ -163,3 +163,64 @@ max-doc-length = 88
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.pylint.main]
+py-version = "3.7"
+recursive = true
+ignore = [
+    ".git",
+    "dist",
+    "doc",
+    "examples",
+    "tests",
+]
+ignore-patterns = [
+    "^\\.",
+    "\\.egg-info$",
+]
+load-plugins = [
+    "pylint.extensions.bad_builtin",
+    "pylint.extensions.code_style",
+    "pylint.extensions.comparison_placement",
+    "pylint.extensions.docparams",
+    "pylint.extensions.docstyle",
+    "pylint.extensions.emptystring",
+    "pylint.extensions.eq_without_hash",
+    "pylint.extensions.for_any_all",
+    "pylint.extensions.no_self_use",
+    "pylint.extensions.overlapping_exceptions",
+    "pylint.extensions.private_import",
+    "pylint.extensions.redefined_loop_name",
+    "pylint.extensions.set_membership",
+    "pylint.extensions.typing",
+]
+
+[tool.pylint."messages control"]
+disable = [
+    "abstract-method",
+    "bare-except",
+    "chained-comparison",
+    "invalid-name",
+    "no-value-for-parameter",
+    "redefined-builtin",
+    "too-many-instance-attributes",
+    "unidiomatic-typecheck",
+    "unused-argument",
+]
+
+[tool.pylint.basic]
+no-docstring-rgx = "^(_.*|read|read_approximate|write|write_metadata|.*Marshaller)$"
+
+[tool.pylint.format]
+max-line-length = 88
+max-module-lines = 5000
+
+[tool.pylint.design]
+max-args = 30
+max-attributes = 15
+max-bool-expr = 10
+max-branches = 100
+max-locals = 40
+max-public-methods = 30
+max-returns = 20
+max-statements = 200

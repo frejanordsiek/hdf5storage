@@ -38,7 +38,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
 
 import h5py
 import numpy as np
-import numpy.core.records
 
 import hdf5storage.exceptions
 
@@ -813,10 +812,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
 
         if f.options.store_shape_for_empty and (
             data.size == 0
-            or (
-                (data.dtype.type == np.bytes_ or data.dtype.type == np.str_)
-                and data.nbytes == 0
-            )
+            or (data.dtype.type in (np.bytes_, np.str_) and data.nbytes == 0)
         ):
             if f.options.reverse_dimension_order:
                 data_to_store = np.uint64(data_to_store.shape[::-1])
@@ -1073,7 +1069,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
                 f.options.structured_numpy_ndarray_as_struct
                 or (has_obj or has_null)
                 or not all(data.shape)
-                or not all([all(data[n].shape) for n in data.dtype.names])
+                or not all(all(data[n].shape) for n in data.dtype.names)
             )
         ):
             # Grab the list of fields and escape them.
@@ -1105,8 +1101,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         # set and existing ones must be deleted.
 
         if data.size == 0 or (
-            (data.dtype.type == np.bytes_ or data.dtype.type == np.str_)
-            and data.nbytes == 0
+            data.dtype.type in (np.bytes_, np.str_) and data.nbytes == 0
         ):
             if f.options.store_python_metadata:
                 attributes["Python.Empty"] = ("value", np.uint8(1))
@@ -1499,7 +1494,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # Now, if the matlab class is 'single' or 'double', data
             # could possibly be a complex type which needs to be
             # properly decoded.
-            if matlab_class in ["single", "double"]:
+            if matlab_class in {"single", "double"}:
                 data = decode_complex(data)
 
             # If it is a logical, then it must be converted to
@@ -2006,8 +2001,8 @@ class PythonDictMarshaller(TypeMarshaller):
             and escape_path(keys_values_names[0]) in grp2
             and escape_path(keys_values_names[1]) in grp2
         ):
-            d = tuple([f.read_data(grp2, escape_path(k)) for k in keys_values_names])
-            items = [(v1, v2) for v1, v2 in zip(d[0], d[1])]
+            d = tuple(f.read_data(grp2, escape_path(k)) for k in keys_values_names)
+            items = list(zip(d[0], d[1]))
         else:
             # Construct the fields to grab and their proper order
             # (important for OrderedDict) from python_fields,
