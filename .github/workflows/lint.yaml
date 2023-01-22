@@ -60,11 +60,11 @@ jobs:
           cache: "pip"
       - name: Install Python dependencies
         run: |
-          python -m pip install -U mypy==0.991
+          python -m pip install -U mypy==0.991 types-setuptools
           python -m pip install .
       - name: Type checking with mypy
         run: |
-          python -m mypy --install-types src/
+          python -m mypy src/
   black:
     runs-on: ubuntu-22.04
     steps:
