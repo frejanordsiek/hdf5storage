@@ -27,7 +27,7 @@
 """Module of Exceptions."""
 
 
-class Hdf5storageError(IOError):
+class Hdf5storageError(OSError):
     """Base class of hdf5storage package exceptions."""
 
 

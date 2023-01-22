@@ -394,6 +394,7 @@ Versions
        ``setuptools`` was available for building.
      * The entire configuration is now put in the ``pyproject.toml`` files
        (PEP 621) and the ``setup.py`` file has been removed.
+     * Changed all ``IOError`` to ``OSError``.
      * Added a file object class :py:class:`hdf5storage.File` for
        opening a file and doing multiple read and/or write calls on the
        same file.

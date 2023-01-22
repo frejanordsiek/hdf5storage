@@ -1610,7 +1610,7 @@ class File(collections.abc.MutableMapping):
         If an argument has an invalid type.
     ValueError
         If an argument has an invalid value.
-    IOError
+    OSError
         If the file cannot be opened or some other file operation
         failed.
 
@@ -1795,13 +1795,13 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is closed.
 
         """
         with self._lock:
             if self._file is None:
-                raise IOError("File is closed.")
+                raise OSError("File is closed.")
             if self._writable:
                 self._file.flush()
 
@@ -1823,7 +1823,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is closed or it isn't writable.
         TypeError
             If `path` is an invalid type.
@@ -1860,7 +1860,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is closed or it isn't writable.
         TypeError
             If a path in `mdict` is an invalid type.
@@ -1881,7 +1881,7 @@ class File(collections.abc.MutableMapping):
             raise TypeError("mdict must be a Mapping.")
         # File had to be opened writable.
         if not self._writable:
-            raise IOError("File is not writable.")
+            raise OSError("File is not writable.")
         # Go through mdict, extract the paths and data, and process the
         # paths. A list of tulpes for each piece of data to write will
         # be constructed where he first element is the group name, the
@@ -1915,7 +1915,7 @@ class File(collections.abc.MutableMapping):
         with self._lock:
             # Check that the file is open.
             if self._file is None:
-                raise IOError("File is closed.")
+                raise OSError("File is closed.")
             # Go through each element of towrite and write them with the
             # low level write function.
             for groupname, targetname, data in towrite:
@@ -1945,7 +1945,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is closed.
         TypeError
             If `path` is an invalid type.
@@ -1978,7 +1978,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is closed.
         TypeError
             If `paths` or any of its elements is an invalid type.
@@ -2021,7 +2021,7 @@ class File(collections.abc.MutableMapping):
         with self._lock:
             # Check that the file is open.
             if self._file is None:
-                raise IOError("File is closed.")
+                raise OSError("File is closed.")
             # Read the data item by item
             datas = []
             for groupname, targetname in toread:
@@ -2046,7 +2046,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is not open.
 
         """
@@ -2054,7 +2054,7 @@ class File(collections.abc.MutableMapping):
         with self._lock:
             # Check that the file is open.
             if self._file is None:
-                raise IOError("File is closed.")
+                raise OSError("File is closed.")
             # Get the length from the file, and then, if the Group for
             # references is in the root group, subtract one if it is
             # present (impossible if the length is zero).
@@ -2078,7 +2078,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is not open.
 
         """
@@ -2090,7 +2090,7 @@ class File(collections.abc.MutableMapping):
         with self._lock:
             # Check that the file is open.
             if self._file is None:
-                raise IOError("File is closed.")
+                raise OSError("File is closed.")
             # Do the check.
             return posixpath.join(groupname, targetname) in self._file
 
@@ -2109,7 +2109,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is not open.
 
         See Also
@@ -2121,7 +2121,7 @@ class File(collections.abc.MutableMapping):
         with self._lock:
             # Check that the file is open.
             if self._file is None:
-                raise IOError("File is closed.")
+                raise OSError("File is closed.")
             # We will use the output of the __iter__ method of the file,
             # but if the Group for references is in the root Group, we
             # will need to filter it out.
@@ -2151,7 +2151,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is closed.
         KeyError
             If the `path` cannot be found.
@@ -2183,7 +2183,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is closed or it isn't writable.
         TypeError
             If `path` is an invalid type.
@@ -2216,7 +2216,7 @@ class File(collections.abc.MutableMapping):
 
         Raises
         ------
-        IOError
+        OSError
             If the file is closed or it isn't writable.
         TypeError
             If `path` is an invalid type.
@@ -2226,14 +2226,14 @@ class File(collections.abc.MutableMapping):
         """
         # File had to be opened writable.
         if not self._writable:
-            raise IOError("File is not writable.")
+            raise OSError("File is not writable.")
         # Process the path.
         groupname, targetname = pathesc.process_path(path)
         # File operations must be synchronized.
         with self._lock:
             # Check that the file is open.
             if self._file is None:
-                raise IOError("File is closed.")
+                raise OSError("File is closed.")
             del self._file[posixpath.join(groupname, targetname)]
 
 
@@ -2263,7 +2263,7 @@ def writes(mdict: Mapping[pathesc.Path, Any], **keywords: Any) -> None:
         If an argument has an invalid type.
     ValueError
         If an argument has an invalid value.
-    IOError
+    OSError
         If the file cannot be opened or some other file operation
         failed.
     NotImplementedError
@@ -2315,7 +2315,7 @@ def write(data: Any, path: pathesc.Path = "/", **keywords: Any) -> Any:
         If an argument has an invalid type.
     ValueError
         If an argument has an invalid value.
-    IOError
+    OSError
         If the file cannot be opened or some other file operation
         failed.
     NotImplementedError
@@ -2373,11 +2373,9 @@ def reads(paths: Iterable[pathesc.Path], **keywords: Any) -> List[Any]:
         If an argument has an invalid value.
     KeyError
         If a path cannot be found.
-    IOError
+    OSError
         If the file cannot be opened or some other file operation
         failed.
-    IOError
-        If the file is closed.
     exceptions.CantReadError
         If reading the data can't be done.
 
@@ -2429,11 +2427,9 @@ def read(path: pathesc.Path = "/", **keywords: Any) -> Any:
         If an argument has an invalid value.
     KeyError
         If the `path` cannot be found.
-    IOError
+    OSError
         If the file cannot be opened or some other file operation
         failed.
-    IOError
-        If the file is closed.
     exceptions.CantReadError
         If reading the data can't be done.
 
