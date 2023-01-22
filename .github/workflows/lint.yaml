@@ -64,7 +64,7 @@ jobs:
           python -m pip install .
       - name: Type checking with mypy
         run: |
-          python -m mypy --install-types
+          python -m mypy --install-types src/
   black:
     runs-on: ubuntu-22.04
     steps:
