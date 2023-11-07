@@ -2,7 +2,7 @@ Overview
 ========
 
 This Python package provides high level utilities to read/write a
-variety of Python types to/from HDF5 (Heirarchal Data Format) formatted
+variety of Python types to/from HDF5 (Hierarchical Data Format) formatted
 files. This package also provides support for MATLAB MAT v7.3 formatted
 files, which are just HDF5 files with a different extension and some
 extra meta-data.
@@ -12,7 +12,7 @@ because it allows arbitrary code to be executed in the interpreter. One
 wants to be able to read possibly HDF5 and MAT files from untrusted
 sources, so pickling is avoided in this package.
 
-The package's documetation is found at
+The package's documentation is found at
 http://pythonhosted.org/hdf5storage/
 
 The package's source code is found at
@@ -146,7 +146,7 @@ then support dropped. But it can still read files made by version 0.1.x
 of this library with Python 2.x, and this package still tries to write
 files compatible with 0.1.x when possible.
 
-Hierarchal Data Format 5 (HDF5)
+Hierarchical Data Format 5 (HDF5)
 ===============================
 
 HDF5 files (see http://www.hdfgroup.org/HDF5/) are a commonly used file
@@ -156,7 +156,7 @@ numbers, strings, etc.) as scalars and arrays, enums and compound types.
 It also handles differences in data representation on different hardware
 platforms (endianness, different floating point formats, etc.). As can
 be imagined from the name, data is represented in an HDF5 file in a
-hierarchal form modelling a Unix filesystem (Datasets are equivalent to
+hierarchical form modelling a Unix filesystem (Datasets are equivalent to
 files, Groups are equivalent to directories, and links are supported).
 
 This package interfaces HDF5 files using the h5py package
@@ -302,7 +302,7 @@ support writing it so MATlAB can read it.
 +--------------------+---------+-------------------------+-------------+---------+-------------------+
 
 .. [1] Depends on the selected options. Always ``np.uint8`` when doing
-       MATLAB compatiblity, or if the option is explicitly set.
+       MATLAB compatibility, or if the option is explicitly set.
 .. [2] In Python 2.x with the 0.1.x version of this package, it may be
        read back as a ``long`` if it can't fit in the size of an
        ``int``.
@@ -313,7 +313,7 @@ support writing it so MATlAB can read it.
        are unified into a single ``int`` type in Python 3.x. Read as an
        ``int`` in Python 3.x.
 .. [5] Depends on the selected options and whether it can be converted
-       to UTF-16 without using doublets. If the option is explicity set
+       to UTF-16 without using doublets. If the option is explicitly set
        (or implicitly when doing MATLAB compatibility) and it can be
        converted to UTF-16 without losing any characters that can't be
        represented in UTF-16 or using UTF-16 doublets (MATLAB doesn't
@@ -454,7 +454,7 @@ Versions
        to do extensive checking of the ``hdf5storage`` package version.
        The Marshaller API version will advance separately from the
        package version. The initial version is ``'1.0'``.
-     * Fixed bugs in ``savemat`` and ``loadmat`` with appening the file
+     * Fixed bugs in ``savemat`` and ``loadmat`` with appending the file
        extension to filenames that are ``bytes``.
      * Issue #27. Added support for paths with null characters, slashes,
        and leading periods. It is used for the field names of structured
@@ -564,7 +564,7 @@ Versions
 0.1.18. Performance improving release.
         * Pull Request #111 from Daniel Hrisca. Many repeated calls to the
           ``__getitem__`` methods of objects were turned into single calls.
-        * Further reducionts in ``__getitem__`` calls in the spirit of PR #111.
+        * Further reductions in ``__getitem__`` calls in the spirit of PR #111.
 
 0.1.17. Bugfix and deprecation workaround release that fixed the following.
         * Issue #109. Fixed the fix Issue #102 for 32-bit platforms (previous
@@ -617,7 +617,7 @@ Versions
           to signalling NaNs.
         * Added requirements files for building documentation and
           running tests.
-        * Made it so that Matlab compatability tests are skipped if
+        * Made it so that Matlab compatibility tests are skipped if
           Matlab is not found, instead of raising errors.
 
 0.1.13. Bugfix release fixing the following bug.
