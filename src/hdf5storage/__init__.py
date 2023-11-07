@@ -27,7 +27,7 @@
 """Module to read and write python types to/from HDF5.
 
 This is the hdf5storage package, a Python package to read and write
-python data types to HDF5 (Heirarchal Data Format) files beyond just
+python data types to HDF5 (Hierarchical Data Format) files beyond just
 Numpy types.
 
 Version 0.2
