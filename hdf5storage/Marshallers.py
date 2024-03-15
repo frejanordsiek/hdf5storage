@@ -32,11 +32,6 @@ import sys
 import posixpath
 import collections
 
-try:
-    from pkg_resources import parse_version
-except:
-    from distutils.version import StrictVersion as parse_version
-
 import numpy as np
 import h5py
 
@@ -51,6 +46,18 @@ try:
     _H5PY_VERSION = h5py.__version__
 except:
     _H5PY_VERSION = '2.0'
+
+# Get the major and minor version numbers of h5py for dtermining feature
+# support.
+_h5py_version_parts = tuple(_H5PY_VERSION.split('.'))
+_h5py_version_major_minor = (int(_h5py_version_parts[0]),
+                             int(_h5py_version_parts[1]))
+
+# For h5py >= 2.2, half precisions (np.float16) are supported.
+_support_half = _h5py_version_major_minor >= (2, 2)
+
+# For h5py >= 2.3, we can set MATLAB_fields.
+_support_matlab_fields = _h5py_version_major_minor >= (2, 3)
 
 
 def write_object_array(f, data, options):
@@ -552,8 +559,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
         self.matlab_classes = list(self.__MATLAB_classes.values())
 
         # For h5py >= 2.2, half precisions (np.float16) are supported.
-        if parse_version(_H5PY_VERSION) \
-                >= parse_version('2.2'):
+        if _support_half:
             self.types.append(np.float16)
             self.python_type_strings.append('numpy.float16')
 
@@ -942,10 +948,7 @@ class NumpyScalarArrayMarshaller(TypeMarshaller):
             # ASCII. Otherwise, the attribute should be deleted. It is
             # written as a vlen='S1' array of bytes_ arrays of the
             # individual characters.
-            if options.matlab_compatible \
-                    and parse_version( \
-                    _H5PY_VERSION) \
-                    >= parse_version('2.3'):
+            if options.matlab_compatible and _support_matlab_fields:
                 try:
                     dt = h5py.special_dtype(vlen=np.dtype('S1'))
                     fs = np.empty(shape=(len(field_names),), dtype=dt)
@@ -1670,9 +1673,7 @@ class PythonDictMarshaller(TypeMarshaller):
         # all keys are mappable to ASCII. Otherwise, the attribute
         # should be deleted. It is written as a vlen='S1' array of
         # bytes_ arrays of the individual characters.
-        if options.matlab_compatible \
-                and parse_version(_H5PY_VERSION) \
-                >= parse_version('2.3'):
+        if options.matlab_compatible and _support_matlab_fields:
             try:
                 dt = h5py.special_dtype(vlen=np.dtype('S1'))
                 fs = np.empty(shape=(len(fields),), dtype=dt)

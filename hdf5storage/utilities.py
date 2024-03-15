@@ -40,25 +40,24 @@ try:
 except ImportError:
     collections.abc = collections
 
-try:
-    from pkg_resources import parse_version
-except:
-    from distutils.version import StrictVersion as parse_version\
-
 import numpy as np
 import h5py
 
 
+# Get the major and minor version numbers of h5py for dtermining feature
+# support.
+_h5py_version_parts = tuple(_H5PY_VERSION.split('.'))
+_h5py_version_major_minor = (int(_h5py_version_parts[0]),
+                             int(_h5py_version_parts[1]))
+
 # We need to determine if h5py is one of the versions that cannot read
 # the MATLAB_fields Attribute in the normal fashion so that we can
 # handle it specially.
-_cant_read_matlab_fields = (
-    parse_version(h5py.__version__)
-    < parse_version('2.3'))
+_cant_read_matlab_fields = _h5py_version_major_minor < (2, 3)
 _handle_matlab_fields_specially = (
-    parse_version(h5py.__version__)
-    in (parse_version('3.0'),
-        parse_version('3.1')))
+    _h5py_version_major_minor
+    in ((3, 0), (3, 1)))
+
 
 if _handle_matlab_fields_specially:
     import ctypes
