@@ -33,9 +33,9 @@ jobs:
             h5py-version: '2.6'
           - python-version: '3.5'
             h5py-version: '2.10'
-          - python-version: '3.10'
+          - python-version: '3.9'
             h5py-version: '3.3'
-          - python-version: '3.10'
+          - python-version: '3.9'
             h5py-version: '3.10'
     steps:
     - uses: actions/checkout@v4
