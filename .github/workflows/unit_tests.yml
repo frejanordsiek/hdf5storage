@@ -51,7 +51,7 @@ jobs:
       env:
         H5PY_VERSION: ${{ matrix.h5py-version }}
       run: |
-        python -m pip install -U numpy Cython
+        python -m pip install -U numpy Cython<3.0
         python -m pip install h5py==$H5PY_VERSION
         python -m pip install -r requirements_tests.txt
         python -m pip install .
