@@ -46,7 +46,7 @@ import h5py
 
 # Get the major and minor version numbers of h5py for dtermining feature
 # support.
-_h5py_version_parts = tuple(_H5PY_VERSION.split('.'))
+_h5py_version_parts = tuple(h5py.__version__.split('.'))
 _h5py_version_major_minor = (int(_h5py_version_parts[0]),
                              int(_h5py_version_parts[1]))
 
